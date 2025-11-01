@@ -1,0 +1,305 @@
+<div class="token-table-wrap" style="display:block;">
+  <!-- 관리 바: 선택 삭제 + 필터 + 전체화면 -->
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button type="button" id="token-delete-selected" class="btn btn-secondary" style="padding:8px 12px; border-radius:10px;">선택 항목 삭제</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="text" placeholder="파일명/고객명 검색" class="input-field" style="padding:10px 12px; border-radius:10px; min-width:220px;">
+        <select class="input-field" style="padding:10px 12px; border-radius:10px;">
+          <option value="">전체 등급</option>
+          <option value="free">Free</option>
+          <option value="premium">Premium</option>
+          <option value="gold">Gold</option>
+          <option value="vip">VIP</option>
+        </select>
+        <select class="input-field" style="padding:10px 12px; border-radius:10px;">
+          <option value="">전체 구분</option>
+          <option value="conversion">변환</option>
+          <option value="grant">충전</option>
+        </select>
+        <button type="button" class="btn btn-primary" style="padding:8px 12px; border-radius:10px;">필터 적용</button>
+      </div>
+    </div>
+    <button type="button" id="token-fullscreen-open" class="btn btn-secondary" style="padding:6px 10px; border-radius:10px; min-width:auto;">↗️ 전체 화면으로 보기</button>
+  </div>
+
+  <!-- 상세 내역 테이블 (가짜 데이터) -->
+  <div style="overflow-x:auto;">
+    <table style="width:100%; min-width:1080px; border-collapse:separate; border-spacing:0;">
+      <colgroup>
+        <col style="width:46px;">
+        <col style="width:160px;">
+        <col style="width:120px;">
+        <col style="width:140px;">
+        <col>
+        <col style="width:120px;">
+        <col style="width:120px;">
+        <col style="width:140px;">
+      </colgroup>
+      <thead>
+        <tr style="background:linear-gradient(135deg,#F3F4F6 0%, #E5E7EB 100%); color:#111827;">
+          <th style="padding:12px 10px; border-top-left-radius:10px; text-align:center; border:1px solid #E5E7EB; border-right:none;"> 
+            <input type="checkbox">
+          </th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">날짜/시간</th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">회원등급</th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">변환구분</th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">파일명/고객사명</th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">충전량</th>
+          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">사용량</th>
+          <th style="padding:12px 10px; border-top-right-radius:10px; border:1px solid #E5E7EB; text-align:right;">최종 잔액</th>
+        </tr>
+      </thead>
+      <tbody id="token-main-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 페이지네이션 -->
+  <div id="token-pager" style="display:flex; gap:6px; justify-content:center; margin-top:12px;"></div>
+</div>
+
+<!-- 전체 화면 모달 -->
+<div id="token-fullscreen-modal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000;">
+  <div class="modal-content" style="width:95%; max-width:1400px; margin:1.5% auto; max-height:95vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);">
+    <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb;">
+      <h2 style="margin:0; font-size:1.25rem;">토큰 사용 현황 (전체 화면)</h2>
+      <button type="button" id="token-fullscreen-close" class="close" style="font-size:22px; border:none; background:transparent; cursor:pointer;">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;">
+      <!-- 동일한 컴포넌트 구조 복제 -->
+      <div class="token-table-wrap" id="token-fullscreen-wrap">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button type="button" id="token-fullscreen-delete" class="btn btn-secondary" style="padding:8px 12px; border-radius:10px;">선택 항목 삭제</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="text" placeholder="파일명/고객명 검색" class="input-field" style="padding:10px 12px; border-radius:10px; min-width:280px;">
+              <select class="input-field" style="padding:10px 12px; border-radius:10px;">
+                <option value="">전체 등급</option>
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+                <option value="gold">Gold</option>
+                <option value="vip">VIP</option>
+              </select>
+              <select class="input-field" style="padding:10px 12px; border-radius:10px;">
+                <option value="">전체 구분</option>
+                <option value="conversion">변환</option>
+                <option value="grant">충전</option>
+              </select>
+              <button type="button" class="btn btn-primary" style="padding:8px 12px; border-radius:10px;">필터 적용</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="token-fullscreen-table" style="width:100%; min-width:1080px; border-collapse:separate; border-spacing:0;">
+            <colgroup>
+              <col style="width:46px;">
+              <col style="width:160px;">
+              <col style="width:120px;">
+              <col style="width:140px;">
+              <col>
+              <col style="width:120px;">
+              <col style="width:120px;">
+              <col style="width:140px;">
+            </colgroup>
+            <thead>
+              <tr style="background:linear-gradient(135deg,#F3F4F6 0%, #E5E7EB 100%); color:#111827;">
+                <th style="padding:12px 10px; border-top-left-radius:10px; text-align:center; border:1px solid #E5E7EB; border-right:none;"><input type="checkbox"></th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">날짜/시간</th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">회원등급</th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">변환구분</th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">파일명</th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">충전량</th>
+                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">사용량</th>
+                <th style="padding:12px 10px; border-top-right-radius:10px; border:1px solid #E5E7EB; text-align:right;">최종 잔액</th>
+              </tr>
+            </thead>
+            <tbody id="token-fullscreen-tbody"></tbody>
+          </table>
+        </div>
+        <div id="token-fullscreen-pager" style="display:flex; gap:6px; justify-content:center; margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+(function(){
+  // 공통 페이지네이션 버튼 스타일(작고 투명, 얇은 테두리)
+  function pagerButton(page, current){
+    var active = page===current;
+    var base = 'display:inline-block;padding:4px 10px;border:1px solid #D1D5DB;border-radius:999px;background:' + (active?'#10B981':'transparent') + ';color:' + (active?'#fff':'#374151') + ';font-size:12px;cursor:pointer;';
+    return '<button data-page="'+page+'" style="'+base+'">'+page+'</button>';
+  }
+  var pageSize = 50; // 기본 50개
+  var stateMain = { page: 1, total: 0, sortKey: 'date', sortDir: 'desc' };
+  var stateFull = { page: 1, total: 0, sortKey: 'date', sortDir: 'desc' };
+
+  async function fetchPage(page, sortKey, sortDir){
+    try{
+      var params = new URLSearchParams();
+      params.set('limit', String(pageSize));
+      params.set('offset', String((page-1)*pageSize));
+      if (sortKey) params.set('sort', String(sortKey));
+      if (sortDir) params.set('order', String(sortDir));
+      var res = await fetch('/api/myhome-data?'+params.toString(), { credentials:'same-origin' });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error||'불러오기 실패');
+      var items = Array.isArray(d.activity_history) ? d.activity_history : [];
+      var total = d.total_count || d.total || d.activity_total || d.activity_history_total || items.length;
+      return { items: items, total: Number(total)||items.length };
+    }catch(e){
+      return { items: [], total: 0, error: e.message||String(e) };
+    }
+  }
+
+  function rowHtml(it){
+    return '<tr style="transition:background .2s;" onmouseover="this.style.background=\'#FAFAFB\'" onmouseout="this.style.background=\'\'">'
+      + '<td style="padding:10px; border-left:1px solid #E5E7EB; border-bottom:1px solid #F3F4F6; text-align:center;">'
+      + '<input type="checkbox" class="tk-row-check" data-id="'+(it.id||'')+'">'
+      + '</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.datetime_kst||'')+'</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.plan_type||'')+'</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.log_type||'')+'</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+( (it.log_type==="GOLD_CONVERSION" && it.customer_name) ? (String(it.customer_name)+ (it.filename? ' ('+String(it.filename)+')' : '')) : (it.filename||'-') )+'</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6; text-align:right; color:#10B981;">'+('+'+(it.charge_amount||0))+'</td>'
+      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6; text-align:right; color:#DC2626;">'+('-'+(it.usage_amount||0))+'</td>'
+      + '<td style="padding:10px; border-right:1px solid #E5E7EB; border-bottom:1px solid #F3F4F6; text-align:right; font-weight:600;">'+(it.balance_after||0)+'</td>'
+      + '</tr>';
+  }
+
+  async function renderBody(tbodyId, pagerId, state){
+    var tb = document.getElementById(tbodyId);
+    if (!tb) return;
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#6B7280;">불러오는 중...</td></tr>';
+    var r = await fetchPage(state.page, state.sortKey, state.sortDir);
+    state.total = r.total||0;
+    if (r.error){
+      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ef4444;">'+r.error+'</td></tr>';
+    } else {
+      tb.innerHTML = (r.items||[]).map(rowHtml).join('') || '<tr><td colspan="8" style="text-align:center;color:#6B7280;">데이터가 없습니다</td></tr>';
+    }
+    renderPager(pagerId, state);
+  }
+
+  function renderPager(containerId, state){
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var pages = Math.max(1, Math.ceil((state.total||0) / pageSize));
+    var html = '';
+    for (var p=1; p<=pages; p++) html += pagerButton(p, state.page);
+    el.innerHTML = html;
+    el.querySelectorAll('button[data-page]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.page = Number(this.getAttribute('data-page'))||1;
+        if (containerId === 'token-pager'){
+          renderBody('token-main-tbody', 'token-pager', stateMain);
+        } else if (containerId === 'token-fullscreen-pager'){
+          renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
+        }
+      });
+    });
+  }
+
+  // 초기 렌더 (요약 보기)
+  renderBody('token-main-tbody', 'token-pager', stateMain);
+
+  // 일괄 삭제: 요약 보기
+  var delMain = document.getElementById('token-delete-selected');
+  if (delMain){
+    delMain.addEventListener('click', async function(){
+      var ids = Array.from(document.querySelectorAll('#token-main-tbody .tk-row-check:checked')).map(function(cb){ return Number(cb.getAttribute('data-id')); }).filter(Boolean);
+      if (!ids.length){ alert('선택된 항목이 없습니다'); return; }
+      if (!confirm('선택 항목을 삭제하시겠습니까?')) return;
+      try{
+        var res = await fetch('/api/myhome-data/delete', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids: ids }) });
+        var r = await res.json();
+        if (!r.success){ alert(r.error||'삭제 실패'); return; }
+        await renderBody('token-main-tbody', 'token-pager', stateMain);
+      }catch(e){ alert('삭제 중 오류가 발생했습니다'); }
+    });
+  }
+
+  // 일괄 삭제: 전체 화면
+  var delFull = document.getElementById('token-fullscreen-delete');
+  if (delFull){
+    delFull.addEventListener('click', async function(){
+      var ids = Array.from(document.querySelectorAll('#token-fullscreen-tbody .tk-row-check:checked')).map(function(cb){ return Number(cb.getAttribute('data-id')); }).filter(Boolean);
+      if (!ids.length){ alert('선택된 항목이 없습니다'); return; }
+      if (!confirm('선택 항목을 삭제하시겠습니까?')) return;
+      try{
+        var res = await fetch('/api/myhome-data/delete', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids: ids }) });
+        var r = await res.json();
+        if (!r.success){ alert(r.error||'삭제 실패'); return; }
+        await renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
+      }catch(e){ alert('삭제 중 오류가 발생했습니다'); }
+    });
+  }
+
+  // 전체화면 모달 열기/닫기
+  var openBtn = document.getElementById('token-fullscreen-open');
+  var modal = document.getElementById('token-fullscreen-modal');
+  var closeBtn = document.getElementById('token-fullscreen-close');
+  if (openBtn && modal){
+    openBtn.addEventListener('click', function(){
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      stateFull.page = 1;
+      stateFull.sortKey = stateMain.sortKey;
+      stateFull.sortDir = stateMain.sortDir;
+      renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
+    });
+  }
+  if (closeBtn && modal){
+    closeBtn.addEventListener('click', function(){
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  }
+  if (modal){
+    modal.addEventListener('click', function(e){
+      if (e.target === modal){
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // 정렬: 헤더 클릭 핸들러 (요약/전체 공통)
+  function bindSortHandlers(){
+    function setHandlers(tableSelector, state, tbodyId, pagerId){
+      var table = document.querySelector(tableSelector);
+      if (!table) return;
+      var ths = table.querySelectorAll('thead th');
+      if (!ths || ths.length<8) return;
+      var map = {
+        1: 'date',           // 날짜/시간 -> created_at
+        2: 'plan_type',      // 회원등급
+        3: 'log_type',       // 변환구분
+        4: 'customer_name',  // 파일명/고객사명 -> 고객사명 기준 정렬
+        5: 'amount',         // 충전량
+        6: 'amount',         // 사용량(동일 키 사용)
+        7: 'balance_after'   // 잔액 (서버 미지원 시 기본 date 정렬 유지 권장)
+      };
+      ths.forEach(function(th, idx){
+        if (!(idx in map)) return;
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', function(){
+          var key = map[idx];
+          if (state.sortKey === key){
+            state.sortDir = (state.sortDir==='asc'?'desc':'asc');
+          } else {
+            state.sortKey = key; state.sortDir = 'desc';
+          }
+          state.page = 1;
+          renderBody(tbodyId, pagerId, state);
+        });
+      });
+    }
+    setHandlers('table', stateMain, 'token-main-tbody', 'token-pager');
+    setHandlers('#token-fullscreen-table', stateFull, 'token-fullscreen-tbody', 'token-fullscreen-pager');
+  }
+  bindSortHandlers();
+})();
+</script>
+

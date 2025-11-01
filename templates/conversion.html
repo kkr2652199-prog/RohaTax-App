@@ -1,0 +1,1149 @@
+{% extends 'base.html' %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conversion.css') }}">
+<script src="{{ url_for('static', filename='js/components/token_alert_modal.js') }}"></script>
+{% endblock %}
+{% block content %}
+    <!-- 고품질 토큰 부족 팝업 -->
+    {% if no_tokens %}
+    <div id="token-popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease-out;">
+        <div style="background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);padding:40px;border-radius:20px;max-width:500px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.1);transform:scale(1);animation:popIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);">
+            <!-- 아이콘 -->
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,#ff6b6b,#ee5a52);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 10px 25px rgba(255,107,107,0.3);">
+                <span style="font-size:2.5rem;color:white;">🔒</span>
+            </div>
+            
+            <!-- 제목 -->
+            <h2 style="margin:0 0 16px 0;color:#1a202c;font-size:1.75rem;font-weight:700;letter-spacing:-0.025em;">토큰이 부족합니다</h2>
+            
+            <!-- 설명 -->
+            <p style="margin:0 0 32px 0;color:#4a5568;font-size:1.1rem;line-height:1.6;font-weight:400;">변환앱을 사용하려면 충분한 토큰이 필요합니다.<br><span style="color:#e53e3e;font-weight:600;">관리자에게 토큰 구매를 요청하세요.</span></p>
+            
+            <!-- 버튼들 -->
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                <button onclick="window.location.href='/'" style="padding:14px 28px;background:linear-gradient(135deg,#4299e1,#3182ce);color:white;border:none;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;box-shadow:0 4px 15px rgba(66,153,225,0.3);transition:all 0.2s ease;min-width:120px;">
+                    🏠 홈으로
+                </button>
+                <button onclick="window.location.href='/admin'" style="padding:14px 28px;background:linear-gradient(135deg,#e53e3e,#c53030);color:white;border:none;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;box-shadow:0 4px 15px rgba(229,62,62,0.3);transition:all 0.2s ease;min-width:120px;">
+                    👨‍💼 관리자 문의
+                </button>
+            </div>
+            
+            <!-- 추가 정보 -->
+            <div style="margin-top:24px;padding:16px;background:rgba(66,153,225,0.1);border-radius:12px;border-left:4px solid #4299e1;">
+                <p style="margin:0;color:#2d3748;font-size:0.9rem;font-weight:500;">
+                    💡 <strong>팁:</strong> 토큰은 세금계산서 변환 작업에 사용됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+<!-- (이전 위치에서 이동됨) 골드 고객 선택 모달은 no_tokens 여부와 무관하게 렌더링되어야 함 -->
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        #token-popup button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        #token-popup button:active {
+            transform: translateY(0);
+        }
+    </style>
+    
+    <script>
+        // 팝업 외부 클릭 시 홈으로 이동
+        document.getElementById('token-popup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.location.href = '/';
+            }
+        });
+        
+        // ESC 키로도 홈으로 이동
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.location.href = '/';
+            }
+        });
+    </script>
+    {% endif %}
+    
+    <div class="app" {% if no_tokens %}style="display:none;"{% endif %}>
+        <aside class="sidebar">
+            <div class="brand">{{ t('conversion.sidebar_title','📄 변환앱') }}</div>
+            
+            <!-- 홈으로 버튼 (상단으로 이동) -->
+            <div style="margin-bottom:20px;">
+                <button onclick="window.location.href='/'" style="width:100%;padding:12px;background:#27ae60;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:1rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(39,174,96,0.3);">
+                    🏠 홈으로
+                </button>
+            </div>
+            
+            <!-- 토큰 상태 표시 -->
+            <div id="token-status" style="background:#1f2937;padding:16px;border-radius:12px;margin-bottom:20px;">
+                <div style="color:#9ca3af;font-size:0.9rem;margin-bottom:8px;">토큰 상태</div>
+                <div id="token-info" style="color:#fff;">
+                    <div>지급: <span id="total-granted">-</span></div>
+                    <div>사용: <span id="total-used" style="color:#ef4444">-</span></div>
+                    <div>잔액: <span id="available-tokens" style="color:#10b981;font-weight:700">-</span></div>
+                </div>
+            </div>
+            
+            <!-- VIP 유저정보 가져오기 버튼 (최고급 퀄리티) -->
+            <div style="margin-bottom:20px;">
+                <button id="get-user-info-btn" class="vip-user-info-btn">
+                    <div class="btn-content">
+                        <div class="btn-icon">👤</div>
+                        <div class="btn-text">VIP 정보 가져오기</div>
+                        <div class="btn-subtitle">클릭하여 사용자 정보 확인</div>
+                    </div>
+                    <div class="btn-shine"></div>
+                </button>
+            </div>
+            
+            <style>
+                /* VIP 유저정보 버튼 최고급 스타일 */
+                .vip-user-info-btn {
+                    width: 100%;
+                    padding: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 16px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+                    position: relative;
+                    overflow: hidden;
+                    min-height: 80px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .vip-user-info-btn::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                    transition: left 0.6s ease;
+                }
+                
+                .vip-user-info-btn:hover::before {
+                    left: 100%;
+                }
+                
+                .vip-user-info-btn:hover {
+                    transform: translateY(-4px) scale(1.02);
+                    box-shadow: 0 16px 48px rgba(102, 126, 234, 0.6);
+                    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 50%, #e879f9 100%);
+                }
+                
+                .vip-user-info-btn:active {
+                    transform: translateY(-2px) scale(1.01);
+                    transition: all 0.1s ease;
+                }
+                
+                .vip-user-info-btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 50%, #4b5563 100%);
+                }
+                
+                .btn-content {
+                    position: relative;
+                    z-index: 2;
+                    text-align: center;
+                    padding: 16px;
+                }
+                
+                .btn-icon {
+                    font-size: 2rem;
+                    margin-bottom: 8px;
+                    animation: pulse 2s infinite;
+                }
+                
+                .btn-text {
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    margin-bottom: 4px;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .btn-subtitle {
+                    font-size: 0.8rem;
+                    opacity: 0.9;
+                    font-weight: 500;
+                }
+                
+                .btn-shine {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
+                    transform: translateX(-100%);
+                    transition: transform 0.6s ease;
+                }
+                
+                .vip-user-info-btn:hover .btn-shine {
+                    transform: translateX(100%);
+                }
+                
+                /* 버튼 클릭 시 사라지는 애니메이션 */
+                .vip-user-info-btn.fade-out {
+                    animation: fadeOutScale 0.3s ease-out forwards;
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                }
+                
+                @keyframes fadeOutScale {
+                    0% {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 0.5;
+                        transform: scale(1.05);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(0.8);
+                        height: 0;
+                        margin: 0;
+                        padding: 0;
+                    }
+                }
+                
+                /* 홈으로 버튼 호버 효과 */
+                button[onclick*="window.location.href='/"]:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(39,174,96,0.4);
+                    background: #229954;
+                }
+                
+                button[onclick*="window.location.href='/"]:active {
+                    transform: translateY(0);
+                }
+            </style>
+            
+            <!-- VIP 유저정보 표시 박스 (최고급 퀄리티) -->
+            <div id="user-info-box" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%);padding:20px;border-radius:16px;margin-bottom:20px;display:none;box-shadow:0 16px 48px rgba(102,126,234,0.4);border:2px solid rgba(255,255,255,0.2);position:relative;overflow:hidden;">
+                <!-- 배경 패턴 제거: 텍스트 깨짐 방지 -->
+                
+                <!-- 헤더 -->
+                <div style="position:relative;z-index:2;color:#fff;font-size:1.1rem;margin-bottom:16px;font-weight:700;text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <span style="font-size:1.5rem;">👤</span>
+                    <span>VIP 사용자 정보</span>
+                    <span style="font-size:1.5rem;">✨</span>
+                </div>
+                
+                <!-- 유저정보 내용 -->
+                <div id="user-info-content" style="position:relative;z-index:2;color:#fff;font-size:0.9rem;">
+                    <!-- 유저정보가 여기에 표시됩니다 -->
+                </div>
+                
+                <!-- 하단 장식 -->
+                <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);"></div>
+            </div>
+        </aside>
+        <main class="content">
+            <h2 class="page-title">{{ t('conversion.page_title','변환 작업') }}</h2>
+            <div class="grid">
+                <section class="panel">
+                    <div class="hd">{{ t('conversion.upload_title') }} <span class="hint">{{ t('conversion.upload_hint') }}</span></div>
+                    <div class="bd">
+                               <!-- 파일 업로드 섹션 -->
+                               <div class="form-section">
+                                   <div class="file-upload-header">
+                                       <div class="file-upload-title">📁 {{ t('conversion.input_file') }}</div>
+                                   </div>
+                                   <div class="file-upload-container">
+                                       <input class="file-input" type="file" accept=".xlsx,.xlsm,.xls" id="fileInput">
+                                       <label for="fileInput" class="file-input-label">
+                                           <div class="file-input-icon">📄</div>
+                                           <div class="file-input-text">파일 선택하기</div>
+                                           <div class="file-input-hint">클릭하여 파일을 선택하거나 드래그하여 놓으세요</div>
+                                       </label>
+                                   </div>
+                                   <div class="file-info">
+                                       <div class="file-formats">허용 형식: .xlsx .xlsm .xls</div>
+                                       <div class="file-size">최대 파일 크기: 20MB</div>
+                                   </div>
+                               </div>
+                        
+                        <!-- 양식 프리셋 섹션 -->
+                        <div class="form-section">
+                            <label>{{ t('conversion.preset') }}</label>
+                            <select class="input" id="templateSelect">
+                                <option value="hometax_official">홈텍스 공식 세금계산서</option>
+                            </select>
+                        </div>
+                        
+                               <!-- 전자세금계산서 설정 섹션 -->
+                               <div class="form-section">
+                                   <div class="row two">
+                                       <div class="input-group">
+                                           <label class="input-label">📅 전자세금일자</label>
+                                           <div class="calendar-container">
+                                               <div class="calendar-header" onclick="toggleCalendar()" style="cursor: pointer;">
+                                                   <div class="selected-date-display" id="selectedDateDisplay">날짜를 선택하세요</div>
+                                                   <div class="calendar-toggle-icon" id="calendarToggleIcon">▼</div>
+                                               </div>
+                                               <div class="calendar-wrapper" id="calendarWrapper" style="display: none;">
+                                                   <div class="calendar-month-selector">
+                                                       <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+                                                       <span class="month-year" id="monthYear">2024년 9월</span>
+                                                       <button class="month-btn" onclick="changeMonth(1)">›</button>
+                                                   </div>
+                                                   <div class="calendar-grid" id="calendarGrid">
+                                                       <!-- 달력 그리드가 여기에 동적으로 생성됩니다 -->
+                                                   </div>
+                                               </div>
+                                               <div class="calendar-footer" id="calendarFooter" style="display: none;">
+                                                   <div class="selected-date-text" id="selectedDateText">전자세금계산서 발행일을 선택하세요</div>
+                                               </div>
+                                           </div>
+                                       </div>
+                                       <div class="input-group">
+                                           <label class="input-label">📄 전자세금계산서 파일명</label>
+                                           <div class="input-wrapper">
+                                               <input class="input-field" placeholder="세금계산서_20240920.xlsx" type="text" id="taxFileName">
+                                           </div>
+                                       </div>
+                                   </div>
+                               </div>
+                        
+                        
+                    </div>
+                </section>
+                <section class="panel">
+                    <div class="hd">{{ t('conversion.status') }}
+                        <button id="vipNoticeOpen" type="button" class="vip-info-btn" style="margin-left:auto">로●하 Tax VIP회원님 필수공지사항!!!</button>
+                    </div>
+                    <!-- 골드 회원 공급자 선택 패널 -->
+                    <div id="current-supplier-panel" style="display:none; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px; margin: 12px 0; background: #f9fafb;">
+                        <span style="color: #6b7280; font-size: 0.9rem;">현재 적용 공급자: </span>
+                        <strong id="current-supplier-name" style="color: #1f2937;">[업체명]</strong>
+                        <button id="reset-supplier-btn" style="display:none;margin-left:8px;color:#0891b2;background:#ecfeff;border:1px solid #06b6d4;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.85rem;">내 정보로 전환</button>
+                    </div>
+                    <div class="bd">
+                        <!-- 진행바 -->
+                        <div style="margin-bottom:12px;">
+                            <div id="progress-track" style="width:100%;height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;">
+                                <div id="progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#10b981,#06b6d4);transition:width .25s ease;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 스텝퍼 -->
+                        <div id="stepper" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
+                            <div class="step step-1" style="text-align:center;font-size:.85rem;padding:8px;border:1px solid var(--border);border-radius:8px;">🔐 키 생성</div>
+                            <div class="step step-2" style="text-align:center;font-size:.85rem;padding:8px;border:1px solid var(--border);border-radius:8px;">🧪 데이터 암호화</div>
+                            <div class="step step-3" style="text-align:center;font-size:.85rem;padding:8px;border:1px solid var(--border);border-radius:8px;">📄 안전 변환</div>
+                            <div class="step step-4" style="text-align:center;font-size:.85rem;padding:8px;border:1px solid var(--border);border-radius:8px;">✅ 무결성 검증</div>
+                            <div class="step step-5" style="text-align:center;font-size:.85rem;padding:8px;border:1px solid var(--border);border-radius:8px;">🗑️ 안전 폐기</div>
+                        </div>
+
+                        <!-- 상태 로그 -->
+                        <div class="log" id="status-log">
+                            <span id="status-text">{{ t('conversion.status_wait') }}</span>
+                            <div class="data-stream-visual" aria-hidden="true">
+                                <div class="stream-col" data-text="01010101\n10101010\nA9F3C7\n4D 5A\n110010\n7B9E2A\n01101001\nFE 34\n9C 2D\n0101 1010\nE3 A1\n"></div>
+                                <div class="stream-col blue" data-text="{=+=}<>\n3F:AA\nΣ λ π\nAF 9B\n//\\\\\n01 10\nBEEF\nC0DE\nF00D\n"></div>
+                                <div class="stream-col" data-text="001101\nAES-256\nCRC32\nSHA-256\n010110\n0x7f\n5E 2A\n101100\n"></div>
+                                <div class="stream-col blue" data-text="<XML/>\nUTF-8\nPK\nIHDR\n%PDF\n\n{ }\n"></div>
+                                <div class="stream-col" data-text="0110 0110\n1011 0001\n7E 3C\nTLS1.3\nHMAC\n"></div>
+                                <div class="stream-col blue" data-text="gzip\nbase64\nOAS\nXSD\nSSE\n"></div>
+                                <div class="stream-col" data-text="0101\n1010\n1100\n1001\n0110\n"></div>
+                                <div class="stream-col blue" data-text="A1\nB2\nC3\nD4\nE5\nF6\n"></div>
+                                <div class="center-status">
+                                    <div class="msg m1">변환 중: 데이터 무결성 검증</div>
+                                    <div class="msg m2 green">VIP 엑셀파일 분석중 지금</div>
+                                    <div class="msg m3">홈택스양식변환중</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="links" style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <button class="btn" id="start-conversion-btn">{{ t('conversion.btn_start') }}</button>
+                            <select id="downloadMode" class="input" style="max-width:180px; height:40px; line-height:40px; text-align:center; -webkit-appearance:none; -moz-appearance:none; appearance:none; background-image:none; padding:0 8px; display:flex; align-items:center; justify-content:center;">
+                                <option value="auto">전자세금계산서</option>
+                                <option value="zip">전자세금계산서 압축</option>
+                            </select>
+                            <a class="btn secondary" id="download-link" href="#" aria-disabled="true" style="opacity:.7;pointer-events:none;">전자세금계산서 다운로드</a>
+                            <button id="load-customer-btn" type="button" class="btn" style="display:none;">내 고객 불러오기</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div style="height:16px"></div>
+
+            <div class="grid">
+                <section class="panel">
+                    <div class="hd">{{ t('conversion.history') }}</div>
+                    <div class="bd">
+                        <table class="table">
+                            <thead>
+                                <tr><th>시간</th><th>파일명</th><th>상태</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>—</td><td>—</td><td>{{ t('conversion.history_empty') }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/vip_notice.css') }}">
+ 
+<script type="module">
+  document.addEventListener('DOMContentLoaded', () => {
+    // VIP 팝업은 자동으로 열리지 않고, 버튼 클릭 시에만 열림
+    const openBtn = document.getElementById('vipNoticeOpen');
+    if (openBtn){
+      openBtn.addEventListener('click', () => {
+        // VIP 팝업 직접 열기
+        const popup = document.getElementById('vip-notice');
+        const backdrop = document.getElementById('vip-backdrop');
+        
+        if (popup && backdrop) {
+          // 이미 열려있으면 닫기
+          if (popup.style.display !== 'none') {
+            popup.style.display = 'none';
+            backdrop.style.display = 'none';
+            return;
+          }
+          
+          // 팝업 열기
+          popup.style.display = 'flex';
+          backdrop.style.display = 'block';
+        }
+      });
+    }
+  });
+  // URL 강제 플래그 제거: ?vip=1 사용 중단
+  if (location.search.includes('vip=1')){
+    const u = new URL(location.href); u.searchParams.delete('vip'); history.replaceState(null, '', u.toString());
+  }
+  sessionStorage.removeItem('vipToastSeen');
+  sessionStorage.removeItem('vipNoticeSeen');
+</script>
+<script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
+{% endblock %}
+
+<!-- VIP 팝업 (전체 페이지 중앙 배치) -->
+{% include 'partials/vip_notice.html' %}
+
+<!-- 골드 고객 선택 모달 -->
+<div id="gold-customer-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;padding:2rem;">
+    <div style="background:white;border-radius:12px;max-width:1200px;width:100%;margin:0 auto;max-height:85vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+        <div style="padding:1.5rem;border-bottom:2px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="margin:0;color:#1f2937;">골드 고객 선택</h2>
+            <button id="close-gold-modal" type="button" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">×</button>
+        </div>
+        
+        <!-- 상단 컨트롤: 새로고침만 유지 -->
+        <div style="padding:1rem 1.5rem;border-bottom:2px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px;">
+            <button id="refresh-gold-customers" type="button" class="btn btn-secondary">새로고침</button>
+        </div>
+        
+        <!-- 고객 목록 테이블 -->
+        <div style="padding:1.5rem;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:linear-gradient(135deg,#f9fafb,#f3f4f6);border-bottom:2px solid #e5e7eb;">
+                        <th style="padding:12px;text-align:left;">대표자명</th>
+                        <th style="padding:12px;text-align:left;">업체명</th>
+                        <th style="padding:12px;text-align:left;">사업자등록번호</th>
+                        <th style="padding:12px;text-align:left;">주소</th>
+                        <th style="padding:12px;text-align:left;">이메일</th>
+                        <th style="padding:12px;text-align:left;">업태</th>
+                        <th style="padding:12px;text-align:left;">종목</th>
+                        <th style="padding:12px;text-align:left;">선택</th>
+                    </tr>
+                </thead>
+                <tbody id="gold-customer-tbody">
+                    <tr><td colspan="8" style="text-align:center;padding:2rem;color:#6b7280;">불러오는 중...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+    <script>
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 토큰 상태 로드
+            loadTokenStatus();
+            
+            // 달력 초기화
+            initializeCalendar();
+
+            // 변환 시작 버튼 이벤트 바인딩
+            const startBtn = document.getElementById('start-conversion-btn');
+            if (startBtn) {
+                startBtn.addEventListener('click', startConversion);
+            }
+        });
+        
+        // 토큰 상태 로드
+        async function loadTokenStatus() {
+            try {
+                const response = await fetch('/api/token-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tokenData = data.data;
+                    document.getElementById('total-granted').textContent = tokenData.total_granted;
+                    document.getElementById('total-used').textContent = tokenData.total_used;
+                    document.getElementById('available-tokens').textContent = tokenData.available_tokens;
+                } else {
+                    console.error('토큰 상태 로드 실패:', data.message);
+                    // 기본값 설정
+                    document.getElementById('total-granted').textContent = '0';
+                    document.getElementById('total-used').textContent = '0';
+                    document.getElementById('available-tokens').textContent = '0';
+                }
+            } catch (error) {
+                console.error('토큰 상태 로드 실패:', error);
+                // 기본값 설정
+                document.getElementById('total-granted').textContent = '0';
+                document.getElementById('total-used').textContent = '0';
+                document.getElementById('available-tokens').textContent = '0';
+            }
+        }
+        
+        // 변환 시작: 공급자 정보 스켈레톤 생성 및 토큰 차감
+        async function startConversion() {
+            const startBtn = document.getElementById('start-conversion-btn');
+            const templateSelect = document.getElementById('templateSelect');
+            const fileNameInput = document.getElementById('taxFileName');
+            const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+            const logEl = document.getElementById('status-log');
+            const progress = document.getElementById('progress-bar');
+            const steps = [
+                document.querySelector('.step-1'),
+                document.querySelector('.step-2'),
+                document.querySelector('.step-3'),
+                document.querySelector('.step-4'),
+                document.querySelector('.step-5')
+            ];
+            const downloadLink = document.getElementById('download-link');
+
+            const templateId = templateSelect?.value || 'hometax_official';
+            const fileName = fileNameInput?.value?.trim();
+            const issueText = selectedDateDisplay?.textContent?.trim();
+
+            if (!issueText || issueText.includes('선택')) {
+                alert('전자세금일자를 먼저 선택하세요.');
+                return;
+            }
+            if (!fileName) {
+                alert('전자세금계산서 파일명을 입력하세요.');
+                return;
+            }
+
+            // 초기화
+            function setStep(idx, text, pct) {
+                steps.forEach((s, i) => {
+                    s.style.background = i === idx ? 'linear-gradient(135deg,#ecfeff,#cffafe)' : '#fff';
+                    s.style.borderColor = i <= idx ? '#06b6d4' : 'var(--border)';
+                    s.style.color = i === idx ? '#0e7490' : 'inherit';
+                });
+                if (logEl) {
+                    const statusText = document.getElementById('status-text');
+                    if (statusText) statusText.textContent = text;
+                }
+                if (progress) progress.style.width = pct + '%';
+            }
+
+            // 로딩 상태
+            startBtn.disabled = true;
+            const originalText = startBtn.textContent;
+            startBtn.textContent = '처리 중...';
+            setStep(0, '🔐 보안 키를 준비하는 중입니다', 10);
+            // 데이터 스트림 애니메이션 시작
+            const stream = document.querySelector('#status-log .data-stream-visual');
+            if (stream) { console.log('[stream] start'); stream.classList.add('active'); stream.style.display = 'block'; }
+
+            try {
+                // 1) 키 생성
+                await new Promise(r => setTimeout(r, 150));
+                setStep(1, '🧪 첨부 파일과 공급자 정보를 강력하게 암호화합니다', 35);
+
+                const res = await fetch('/api/convert/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({
+                        template_id: templateId,
+                        issue_date: issueText, // 서버에서 정규화 처리
+                        file_name: fileName,
+                        options: { validate: true }
+                    })
+                });
+
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.message || '변환 시작 실패');
+                    if (stream) { console.log('[stream] end'); stream.classList.remove('active'); stream.style.display = 'none'; }
+                    return;
+                }
+
+                // 2) 안전 변환
+                setStep(2, '📄 암호화 상태로 템플릿에 안전 매핑 중입니다', 60);
+                await new Promise(r => setTimeout(r, 150));
+
+                // 3) 무결성 검증
+                setStep(3, '✅ 변환 산출물 무결성 검증 중입니다', 82);
+                await new Promise(r => setTimeout(r, 120));
+
+                // 토큰 상태 반영
+                loadTokenStatus();
+
+                // 4) 안전 폐기 및 완료
+                setStep(4, '🗑️ VIP님의 고객정보는 안전하게 폐기되었습니다', 100);
+                if (downloadLink) {
+                    downloadLink.style.opacity = '1';
+                    downloadLink.style.pointerEvents = 'auto';
+                    const dlUrl = (data.data.download_url || '/api/convert/download') + '?_=' + Date.now();
+                    const dlName = data.data.download_filename || (data.data.template?.file_name || 'converted.csv');
+                    downloadLink.setAttribute('href', dlUrl);
+                    downloadLink.setAttribute('download', dlName);
+                    downloadLink.setAttribute('title', dlName);
+
+                    // 자동 다운로드 트리거 (비차단, 실패해도 UI 유지)
+                    setTimeout(() => {
+                        fetch(dlUrl, { credentials: 'same-origin' })
+                            .then(resp => resp.ok ? resp.blob() : Promise.reject(resp.status))
+                            .then(blob => {
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = dlName;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                                URL.revokeObjectURL(url);
+                                // 새 창/다운로드 직후 애니메이션 종료 (약간의 지연으로 자연스럽게)
+                                setTimeout(() => {
+                                    const streamEnd = document.querySelector('#status-log .data-stream-visual');
+                                    if (streamEnd) { console.log('[stream] end'); streamEnd.classList.remove('active'); streamEnd.style.display='none'; }
+                                }, 250);
+                            })
+                            .catch(() => {
+                                console.warn('자동 다운로드 실패, 수동 클릭 가능');
+                                const streamFail = document.querySelector('#status-log .data-stream-visual');
+                                if (streamFail) { streamFail.classList.remove('active'); streamFail.style.display = 'none'; }
+                            });
+                    }, 50);
+                }
+
+                // 향후: 실제 파일 생성/다운로드 단계 연결 예정
+            } catch (e) {
+                console.error(e);
+                alert('요청 처리 중 오류가 발생했습니다.');
+                if (stream) { console.log('[stream] end'); stream.classList.remove('active'); stream.style.display = 'none'; }
+            } finally {
+                startBtn.disabled = false;
+                startBtn.textContent = originalText;
+            }
+        }
+
+        // 파일 선택 이벤트 처리
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const label = document.querySelector('.file-input-label');
+            
+            if (file) {
+                // 파일이 선택된 경우
+                label.innerHTML = `
+                    <div class="file-input-icon">✅</div>
+                    <div class="file-input-text">${file.name}</div>
+                    <div class="file-input-hint">파일 크기: ${(file.size / 1024 / 1024).toFixed(2)}MB</div>
+                `;
+                label.style.borderColor = '#10b981';
+                label.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
+            } else {
+                // 파일이 선택되지 않은 경우 원래 상태로 복원
+                label.innerHTML = `
+                    <div class="file-input-icon">📄</div>
+                    <div class="file-input-text">파일 선택하기</div>
+                    <div class="file-input-hint">클릭하여 파일을 선택하거나 드래그하여 놓으세요</div>
+                `;
+                label.style.borderColor = '';
+                label.style.background = '';
+            }
+        });
+        
+        // 드래그 앤 드롭 기능
+        const fileLabel = document.querySelector('.file-input-label');
+        
+        fileLabel.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#5865f2';
+            this.style.background = 'linear-gradient(135deg, #f0f4ff 0%, #e6f0ff 100%)';
+        });
+        
+        fileLabel.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '';
+            this.style.background = '';
+        });
+        
+        fileLabel.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                // 파일 선택 이벤트 트리거
+                document.getElementById('fileInput').dispatchEvent(new Event('change'));
+            }
+        });
+        
+        // 달력 토글 함수
+        function toggleCalendar() {
+            const wrapper = document.getElementById('calendarWrapper');
+            const footer = document.getElementById('calendarFooter');
+            const icon = document.getElementById('calendarToggleIcon');
+            
+            if (wrapper.style.display === 'none') {
+                // 달력 펼치기
+                wrapper.style.display = 'block';
+                footer.style.display = 'block';
+                icon.classList.add('expanded');
+                
+                // 달력이 아직 렌더링되지 않았다면 렌더링
+                if (!window.calendarInitialized) {
+                    initializeCalendar();
+                }
+            } else {
+                // 달력 접기
+                wrapper.style.display = 'none';
+                footer.style.display = 'none';
+                icon.classList.remove('expanded');
+            }
+        }
+        
+        // 달력 초기화
+        function initializeCalendar() {
+            window.calendarInitialized = true;
+            const currentDate = new Date();
+            window.calendarState = {
+                currentYear: currentDate.getFullYear(),
+                currentMonth: currentDate.getMonth(),
+                selectedDate: null
+            };
+            
+            renderCalendar();
+        }
+        
+        // 달력 렌더링
+        function renderCalendar() {
+            const { currentYear, currentMonth } = window.calendarState;
+            const calendarGrid = document.getElementById('calendarGrid');
+            const monthYear = document.getElementById('monthYear');
+            
+            // 월/년 표시 업데이트
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', 
+                              '7월', '8월', '9월', '10월', '11월', '12월'];
+            monthYear.textContent = `${currentYear}년 ${monthNames[currentMonth]}`;
+            
+            // 달력 그리드 생성
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const dayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
+            let calendarHTML = '';
+            
+            // 요일 헤더
+            dayHeaders.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // 날짜 생성 (6주)
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + (week * 7) + day);
+                    
+                    const dayNumber = date.getDate();
+                    const isCurrentMonth = date.getMonth() === currentMonth;
+                    const isToday = isTodayDate(date);
+                    const isSelected = window.calendarState.selectedDate && 
+                                     isSameDate(date, window.calendarState.selectedDate);
+                    
+                    let className = 'calendar-day';
+                    if (!isCurrentMonth) className += ' other-month';
+                    if (isToday) className += ' today';
+                    if (isSelected) className += ' selected';
+                    
+                    calendarHTML += `
+                        <div class="${className}" 
+                             onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dayNumber})"
+                             data-year="${date.getFullYear()}"
+                             data-month="${date.getMonth()}"
+                             data-day="${dayNumber}">
+                            ${dayNumber}
+                        </div>
+                    `;
+                }
+            }
+            
+            calendarGrid.innerHTML = calendarHTML;
+        }
+        
+        // 월 변경
+        function changeMonth(direction) {
+            window.calendarState.currentMonth += direction;
+            
+            if (window.calendarState.currentMonth < 0) {
+                window.calendarState.currentMonth = 11;
+                window.calendarState.currentYear--;
+            } else if (window.calendarState.currentMonth > 11) {
+                window.calendarState.currentMonth = 0;
+                window.calendarState.currentYear++;
+            }
+            
+            renderCalendar();
+        }
+        
+        // 날짜 선택
+        function selectDate(year, month, day) {
+            window.calendarState.selectedDate = new Date(year, month, day);
+            
+            // 선택된 날짜 표시 업데이트 (새로운 형식: 25년10월01일)
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', 
+                              '7월', '8월', '9월', '10월', '11월', '12월'];
+            const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+            const selectedDateText = document.getElementById('selectedDateText');
+            
+            // 년도 2자리로 변환 (2025 -> 25)
+            const shortYear = year.toString().slice(-2);
+            
+            // 표시 형식: 25년10월01일
+            selectedDateDisplay.textContent = `${shortYear}년${monthNames[month]}${String(day).padStart(2, '0')}일`;
+            selectedDateText.textContent = `${shortYear}년 ${monthNames[month]} ${String(day).padStart(2, '0')}일 전자세금계산서 발행일`;
+            
+            // 파일명 자동 업데이트 (기입 형식: 251001)
+            const taxFileName = document.getElementById('taxFileName');
+            const formattedDate = `${shortYear}${String(month + 1).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+            taxFileName.value = `세금계산서_${formattedDate}.xlsx`;
+            
+            // 달력 다시 렌더링
+            renderCalendar();
+            
+            // 날짜 선택 후 달력 자동 접기
+            setTimeout(() => {
+                toggleCalendar();
+            }, 300);
+        }
+        
+        // 오늘 날짜 확인
+        function isTodayDate(date) {
+            const today = new Date();
+            return date.getFullYear() === today.getFullYear() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getDate() === today.getDate();
+        }
+        
+        // 같은 날짜 확인
+        function isSameDate(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+        
+        // 토큰 사용 함수 (변환 작업 시 호출)
+        async function useToken(tokens = 1) {
+            try {
+                const response = await fetch('/api/use-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ tokens: tokens })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 토큰 상태 새로고침
+                    loadTokenStatus();
+                    return true;
+                } else {
+                    alert('토큰 사용 실패: ' + data.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error('토큰 사용 오류:', error);
+                alert('토큰 사용 중 오류가 발생했습니다.');
+                return false;
+            }
+        }
+        
+        // VIP 유저정보 가져오기 함수 (최고급 퀄리티)
+        async function getUserInfo() {
+            const btn = document.getElementById('get-user-info-btn');
+            const userInfoBox = document.getElementById('user-info-box');
+            const userInfoContent = document.getElementById('user-info-content');
+            
+            // 버튼 로딩 상태 (최고급 애니메이션)
+            btn.innerHTML = `
+                <div class="btn-content">
+                    <div class="btn-icon" style="animation: spin 1s linear infinite;">⏳</div>
+                    <div class="btn-text">정보 로딩 중...</div>
+                    <div class="btn-subtitle">최신 정보를 가져오는 중</div>
+                </div>
+            `;
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/user-info', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const user = data.data.user;
+                    
+                    // 성공 애니메이션
+                    btn.innerHTML = `
+                        <div class="btn-content">
+                            <div class="btn-icon" style="animation: bounce 0.6s ease;">✅</div>
+                            <div class="btn-text">정보 로드 완료!</div>
+                            <div class="btn-subtitle">최신 정보 반영됨</div>
+                        </div>
+                    `;
+                    
+                    // 유저정보 HTML 생성 (최고급 스타일 + 실시간 업데이트 표시)
+                    const userInfoHTML = `
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>🏢 회사명:</strong> <span style="color:#fbbf24;font-weight:600;">${user.company_name || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>👤 대표자:</strong> <span style="color:#a78bfa;font-weight:600;">${user.representative_name || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📋 사업자번호:</strong> <span style="color:#34d399;font-weight:600;">${user.business_number || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📧 이메일:</strong> <span style="color:#60a5fa;font-weight:600;">${user.email || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📱 전화번호:</strong> <span style="color:#f472b6;font-weight:600;">${user.phone || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📍 주소:</strong> <span style="color:#84cc16;font-weight:600;">${user.address || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>🏭 업태:</strong> <span style="color:#f59e0b;font-weight:600;">${user.business_type || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📋 종목:</strong> <span style="color:#8b5cf6;font-weight:600;">${user.business_category || '-'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>🎫 권한:</strong> <span style="color:#fbbf24;font-weight:700;text-transform:uppercase;">${user.plan_type || 'free'}</span>
+                        </div>
+                        <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>📅 가입일:</strong> <span style="color:#84cc16;font-weight:600;">${user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '-'}</span>
+                        </div>
+                        <div style="margin-bottom:0;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+                            <strong>✅ 상태:</strong> <span style="color:#10b981;font-weight:700;">${user.is_active ? '활성' : '비활성'}</span>
+                        </div>
+                        <div style="margin-top:12px;padding:8px;background:rgba(16,185,129,0.2);border-radius:8px;border-left:4px solid #10b981;">
+                            <strong>🔄 실시간 업데이트:</strong> <span style="color:#10b981;font-weight:600;">${new Date().toLocaleTimeString('ko-KR')}</span>
+                        </div>
+                    `;
+                    
+                    userInfoContent.innerHTML = userInfoHTML;
+                    userInfoBox.style.display = 'block';
+                    
+                    // 유저정보 박스 등장 애니메이션
+                    userInfoBox.style.opacity = '0';
+                    userInfoBox.style.transform = 'translateY(-20px) scale(0.9)';
+                    setTimeout(() => {
+                        userInfoBox.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                        userInfoBox.style.opacity = '1';
+                        userInfoBox.style.transform = 'translateY(0) scale(1)';
+                    }, 100);
+                    
+                    // 빠른 사라짐 애니메이션 (즉시 트리거, 0.3초)
+                    btn.classList.add('fade-out');
+                    setTimeout(() => {
+                        btn.style.display = 'none';
+                    }, 300);
+                    
+                } else {
+                    // 에러 상태
+                    btn.innerHTML = `
+                        <div class="btn-content">
+                            <div class="btn-icon" style="animation: shake 0.5s ease;">❌</div>
+                            <div class="btn-text">로드 실패</div>
+                            <div class="btn-subtitle">다시 시도해주세요</div>
+                        </div>
+                    `;
+                    btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = `
+                            <div class="btn-content">
+                                <div class="btn-icon">👤</div>
+                                <div class="btn-text">VIP 정보 가져오기</div>
+                                <div class="btn-subtitle">클릭하여 사용자 정보 확인</div>
+                            </div>
+                        `;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('유저정보 가져오기 오류:', error);
+                
+                // 에러 상태
+                btn.innerHTML = `
+                    <div class="btn-content">
+                        <div class="btn-icon" style="animation: shake 0.5s ease;">⚠️</div>
+                        <div class="btn-text">연결 오류</div>
+                        <div class="btn-subtitle">네트워크를 확인해주세요</div>
+                    </div>
+                `;
+                btn.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = `
+                        <div class="btn-content">
+                            <div class="btn-icon">👤</div>
+                            <div class="btn-text">VIP 정보 가져오기</div>
+                            <div class="btn-subtitle">클릭하여 사용자 정보 확인</div>
+                        </div>
+                    `;
+                    btn.style.background = '';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }
+        
+        // 추가 애니메이션 키프레임
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+            }
+            
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            
+            /* 📊 상세 통계 스타일 */
+            .detailed-stats {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                border-radius: 12px;
+                border: 2px solid #10b981;
+            }
+            
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 0.75rem;
+                margin-top: 0.75rem;
+            }
+            
+            .stat-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.5rem;
+                background: white;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+            }
+            
+            .stat-item.highlight-vat {
+                background: #fef3c7;
+                border-color: #f59e0b;
+            }
+            
+            .stat-item.highlight-vat-zero {
+                background: #fee2e2;
+                border-color: #ef4444;
+            }
+            
+            .stat-label {
+                font-weight: 600;
+                color: #374151;
+            }
+            
+            .stat-value {
+                font-weight: 700;
+                color: #10b981;
+            }
+            
+            /* 🎯 자동 수정 강조 스타일 */
+            .auto-fix-highlight {
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border: 2px solid #f59e0b;
+                border-radius: 12px;
+                padding: 1rem;
+                margin: 1rem 0;
+            }
+            
+            .auto-fix-highlight h5 {
+                color: #92400e;
+                font-weight: 700;
+                margin-bottom: 0.75rem;
+            }
+            
+            .fix-item {
+                background: white;
+                padding: 0.5rem;
+                border-radius: 8px;
+                margin: 0.5rem 0;
+                border-left: 4px solid #f59e0b;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>

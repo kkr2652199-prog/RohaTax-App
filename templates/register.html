@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+  header{display:none}
+  body{background:linear-gradient(135deg,var(--color-bg-start,#5f6ee6) 0%,var(--color-bg-end,#6f4fb0) 100%)}
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .auth-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12);width:360px;padding:24px}
+  .auth-card h1{margin:0 0 16px 0;text-align:center}
+  .auth-actions{display:flex;gap:12px;justify-content:center;margin-top:12px}
+  .auth-actions a{text-decoration:none;color:#5865f2;font-weight:700}
+  .btn-primary{display:block;width:100%;padding:12px 16px;border:none;border-radius:10px;background:#5865f2;color:#fff;font-weight:700;margin-top:8px}
+  form{display:grid;gap:12px}
+  input{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px}
+  input:focus{outline:none;border-color:#5865f2;box-shadow:0 0 0 3px rgba(88,101,242,0.1)}
+  .error{color:#e53e3e;font-size:12px;margin-top:4px}
+  .success{color:#10b981;font-size:12px;margin-top:4px}
+</style>
+{% endblock %}
+{% block content %}
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>👑 {{ t('auth.register_title','VIP 회원가입') }}</h1>
+      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center;">
+        <strong style="color: #92400e;">🎉 VIP 회원 특별 혜택</strong><br>
+        <span style="color: #92400e; font-size: 14px;">신규 가입시 1개월 무료 + 무제한 변환 서비스</span>
+      </div>
+      <form method="post" id="registerForm">
+          <!-- 사용자 아이디 -->
+          <input type="text" name="username" id="username" placeholder="아이디 (영문/숫자/언더스코어 3~20자)" required>
+          <!-- 사업자등록번호 -->
+          <input type="text" name="business_number" id="businessNumber" placeholder="사업자등록번호 (10자리)" maxlength="10" required>
+          
+          <!-- 대표자명 -->
+          <input type="text" name="representative_name" placeholder="대표자명" required>
+          
+          <!-- 사업자명 -->
+          <input type="text" name="company_name" placeholder="사업자명" required>
+          
+          <!-- 휴대폰번호 -->
+          <input type="tel" name="phone" id="phoneNumber" placeholder="휴대폰번호 (010-0000-0000)" required>
+          
+          <!-- 이메일 -->
+          <input type="email" name="email" placeholder="이메일" required>
+          
+          <!-- 비밀번호 -->
+          <input type="password" name="password" id="password" placeholder="비밀번호 (영문, 숫자, 특수문자 조합)" required>
+          
+          <!-- 비밀번호 확인 -->
+          <input type="password" name="confirm_password" id="confirmPassword" placeholder="비밀번호 확인" required>
+          
+          <!-- 사업자 주소 (선택사항) -->
+          <input type="text" name="address" placeholder="사업자 주소 (선택사항)">
+          
+          <!-- 업태 -->
+          <input type="text" name="business_type" placeholder="업태 (예: 도소매업, 제조업, 서비스업)" required>
+          
+          <!-- 종목 -->
+          <input type="text" name="business_category" placeholder="종목 (예: 컴퓨터 및 주변장치 도소매업)" required>
+          
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-primary">{{ t('auth.register_button','회원가입') }}</button>
+      </form>
+      <div class="auth-actions">
+          <a href="/login">{{ t('home.nav.login','로그인') }}</a>
+          <a href="/">홈으로</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('registerForm');
+          const username = document.getElementById('username');
+      const businessNumber = document.getElementById('businessNumber');
+      const phoneNumber = document.getElementById('phoneNumber');
+      const email = document.querySelector('input[name="email"]');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirmPassword');
+      const businessType = document.querySelector('input[name="business_type"]');
+      const businessCategory = document.querySelector('input[name="business_category"]');
+      // 간단 디바운스
+      function debounce(fn, wait){
+        let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), wait); };
+      }
+      async function check(url, paramKey, value){
+        try{
+          const u = `${url}?${paramKey}=${encodeURIComponent(value)}`;
+          const res = await fetch(u, { headers: { 'X-Requested-With':'fetch' } });
+          if(!res.ok) return null;
+          return await res.json();
+        }catch{ return null; }
+      }
+      // 아이디 기본 유효성 검사 (클라이언트 측)
+      username.addEventListener('input', debounce(function(e){
+        const value = e.target.value.trim();
+        const ok = /^[a-zA-Z0-9_]{3,20}$/.test(value);
+        if(value.length === 0){
+          clearValidation(username);
+          return;
+        }
+        if(ok){
+          // 형식 OK → 실시간 중복 확인
+          check('/api/check-username','username', value).then(r=>{
+            if(!r){ showValidation(username,'⚠️ 확인 실패(네트워크)','error'); return; }
+            if(r.available){
+              showValidation(username, '✅ 사용 가능한 아이디입니다', 'success');
+            }else{
+              showValidation(username, '❌ 이미 사용 중인 아이디입니다', 'error');
+            }
+          });
+        } else {
+          showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
+        }
+      }, 300));
+
+
+      // 사업자등록번호 자동 포맷팅 (숫자만 입력)
+      businessNumber.addEventListener('input', debounce(function(e) {
+        let value = e.target.value.replace(/\D/g, ''); // 숫자만 남기기
+        if (value.length > 10) value = value.substring(0, 10);
+        e.target.value = value;
+        
+        // 유효성 검사
+        if (value.length === 10) {
+          // 형식 OK → 실시간 중복 확인
+          check('/api/check-business-number','business_number', value).then(r=>{
+            if(!r){ showValidation(businessNumber,'⚠️ 확인 실패(네트워크)','error'); return; }
+            if(r.available){
+              showValidation(businessNumber, '✅ 사용 가능한 사업자등록번호입니다', 'success');
+            }else{
+              showValidation(businessNumber, '❌ 이미 등록된 사업자등록번호입니다', 'error');
+            }
+          });
+        } else if (value.length > 0) {
+          showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
+        } else {
+          clearValidation(businessNumber);
+        }
+      }, 300));
+
+      // 이메일 실시간 중복 확인
+      email.addEventListener('input', debounce(function(e){
+        const value = e.target.value.trim();
+        if(value.length === 0){ clearValidation(email); return; }
+        // 간단 이메일 형식 체크
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        if(!ok){ showValidation(email,'❌ 유효한 이메일 형식이 아닙니다','error'); return; }
+        check('/api/check-email','email', value).then(r=>{
+          if(!r){ showValidation(email,'⚠️ 확인 실패(네트워크)','error'); return; }
+          if(r.available){
+            showValidation(email,'✅ 사용 가능한 이메일입니다','success');
+          }else{
+            showValidation(email,'❌ 이미 등록된 이메일입니다','error');
+          }
+        });
+      }, 300));
+
+      // 휴대폰번호 자동 포맷팅
+      phoneNumber.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, ''); // 숫자만 남기기
+        if (value.length > 11) value = value.substring(0, 11);
+        
+        // 010-0000-0000 형식으로 포맷팅
+        if (value.length >= 3) {
+          value = value.substring(0, 3) + '-' + value.substring(3);
+        }
+        if (value.length >= 8) {
+          value = value.substring(0, 8) + '-' + value.substring(8);
+        }
+        
+        e.target.value = value;
+        
+        // 유효성 검사
+        if (value.length === 13 && value.match(/^010-\d{4}-\d{4}$/)) {
+          showValidation(phoneNumber, '✅ 올바른 휴대폰번호 형식입니다', 'success');
+        } else if (value.length > 0) {
+          showValidation(phoneNumber, '❌ 올바른 휴대폰번호 형식이 아닙니다 (010-0000-0000)', 'error');
+        } else {
+          clearValidation(phoneNumber);
+        }
+      });
+
+      // 비밀번호 유효성 검사
+      password.addEventListener('input', function(e) {
+        const value = e.target.value;
+        const hasUpper = /[A-Z]/.test(value);
+        const hasLower = /[a-z]/.test(value);
+        const hasNumber = /\d/.test(value);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+        const isLongEnough = value.length >= 8;
+
+        if (value.length === 0) {
+          clearValidation(password);
+          return;
+        }
+
+        let message = '';
+        let isValid = true;
+
+        if (!isLongEnough) {
+          message += '❌ 8자리 이상 ';
+          isValid = false;
+        }
+        if (!hasUpper) {
+          message += '❌ 대문자 포함 ';
+          isValid = false;
+        }
+        if (!hasLower) {
+          message += '❌ 소문자 포함 ';
+          isValid = false;
+        }
+        if (!hasNumber) {
+          message += '❌ 숫자 포함 ';
+          isValid = false;
+        }
+        if (!hasSpecial) {
+          message += '❌ 특수문자 포함 ';
+          isValid = false;
+        }
+
+        if (isValid) {
+          message = '✅ 안전한 비밀번호입니다';
+          showValidation(password, message, 'success');
+        } else {
+          showValidation(password, message, 'error');
+        }
+      });
+
+      // 비밀번호 확인
+      confirmPassword.addEventListener('input', function(e) {
+        const passwordValue = password.value;
+        const confirmValue = e.target.value;
+
+        if (confirmValue.length === 0) {
+          clearValidation(confirmPassword);
+          return;
+        }
+
+        if (passwordValue === confirmValue) {
+          showValidation(confirmPassword, '✅ 비밀번호가 일치합니다', 'success');
+        } else {
+          showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
+        }
+      });
+
+      // 업태 유효성 검사
+      businessType.addEventListener('input', function(e) {
+        const value = e.target.value.trim();
+        
+        if (value.length === 0) {
+          clearValidation(businessType);
+          return;
+        }
+        
+        if (value.length >= 2) {
+          showValidation(businessType, '✅ 올바른 업태입니다', 'success');
+        } else {
+          showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
+        }
+      });
+
+      // 종목 유효성 검사
+      businessCategory.addEventListener('input', function(e) {
+        const value = e.target.value.trim();
+        
+        if (value.length === 0) {
+          clearValidation(businessCategory);
+          return;
+        }
+        
+        if (value.length >= 3) {
+          showValidation(businessCategory, '✅ 올바른 종목입니다', 'success');
+        } else {
+          showValidation(businessCategory, '❌ 종목은 3자 이상 입력해주세요', 'error');
+        }
+      });
+
+      // 폼 제출 시 최종 검증
+      form.addEventListener('submit', function(e) {
+        let isValid = true;
+
+          // 아이디 검증
+          if(!/^[a-zA-Z0-9_]{3,20}$/.test(username.value.trim())){
+            showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
+            isValid = false;
+          }
+
+        // 사업자등록번호 검증
+        if (businessNumber.value.length !== 10) {
+          showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
+          isValid = false;
+        }
+
+        // 휴대폰번호 검증
+        if (!phoneNumber.value.match(/^010-\d{4}-\d{4}$/)) {
+          showValidation(phoneNumber, '❌ 올바른 휴대폰번호 형식이 아닙니다', 'error');
+          isValid = false;
+        }
+
+        // 비밀번호 검증
+        if (password.value !== confirmPassword.value) {
+          showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
+          isValid = false;
+        }
+
+        // 업태 검증
+        if (businessType.value.trim().length < 2) {
+          showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
+          isValid = false;
+        }
+
+        // 종목 검증
+        if (businessCategory.value.trim().length < 3) {
+          showValidation(businessCategory, '❌ 종목은 3자 이상 입력해주세요', 'error');
+          isValid = false;
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+          alert('입력 정보를 다시 확인해주세요.');
+        }
+      });
+
+      // 유효성 메시지: 해당 입력칸 바로 아래에 표시
+      function showValidation(input, message, type) {
+        clearValidation(input);
+        const div = document.createElement('div');
+        div.className = type;
+        div.textContent = message;
+        // 입력 요소 바로 뒤에 삽입
+        if (input.nextSibling) {
+          input.parentNode.insertBefore(div, input.nextSibling);
+        } else {
+          input.parentNode.appendChild(div);
+        }
+      }
+
+      function clearValidation(input) {
+        const next = input.nextSibling;
+        if (next && next.classList && (next.classList.contains('error') || next.classList.contains('success'))) {
+          next.remove();
+        }
+      }
+    });
+  </script>
+{% endblock %}

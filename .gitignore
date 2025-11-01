@@ -1,0 +1,59 @@
+## Environment files
+.env
+.env.local
+.env.production
+
+## Databases (global)
+*.sqlite
+*.sqlite3
+
+## Project DB artifacts
+node_modules/
+database/*.db
+database/*.db-wal
+database/*.db-shm
+database/backups/
+conversion_stats.db
+
+## Logs and outputs
+logs/
+*.log
+output/
+temp/
+uploads/
+tmp/
+
+## Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+pip-wheel-metadata/
+
+## IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+## Cursor/editor metadata
+.cursor/
+.cursorrules
+
+## Build/Test artifacts
+dist/
+build/
+coverage/
+*.coverage
+htmlcov/
+
+## OS junk
+.DS_Store
+Thumbs.db
+
+# Git worktrees (local only)
+/worktrees/
+static/videos/roha_conversion_demo.mp4.mp4

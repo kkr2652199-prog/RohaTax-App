@@ -1,0 +1,1749 @@
+{% extends 'base.html' %}
+{% block head_extra %}
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+        :root{--panel:#ffffff;--border:#e5e7eb;--muted:#6b7280;--strong:#111827;--primary:#10B981;--header:#059669}
+        body{margin:0;background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--strong)}
+        .admin-wrap{max-width:1400px;margin:24px auto;padding:0 20px}
+        .admin-header{background:var(--header);color:#fff;padding:24px;border-radius:12px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+        .admin-header h1{margin:0;font-size:1.9rem}
+        .admin-header p{margin:6px 0 0 0;opacity:.85}
+        .btn{padding:8px 12px;border-radius:6px;border:0;font-weight:600;cursor:pointer;font-size:0.85rem;margin:2px}
+        .btn.danger{background:#e74c3c;color:#fff}
+        .tabs{display:flex;gap:10px;margin:14px 0 20px 0}
+        .tabs button{padding:10px 14px;border-radius:8px;border:0;font-weight:700;cursor:pointer}
+        .tabs .active{background:var(--primary);color:#fff}
+        .tabs .inactive{background:#ecf0f1;color:#2c3e50}
+        .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+        .panel .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:800}
+        .panel .bd{padding:16px}
+        .hidden{display:none}
+        .table{width:100%;border-collapse:collapse;font-size:0.9rem}
+        
+        /* 아코디언 스타일 */
+        .user-accordion {
+            margin-bottom: 1rem;
+        }
+        
+        .accordion-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: var(--panel);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .accordion-header {
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+            padding: 0;
+        }
+        
+        .accordion-button {
+            background: transparent;
+            border: none;
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            color: var(--strong);
+            box-shadow: none;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background: #e8f5e8;
+            color: var(--primary);
+        }
+        
+        .accordion-button:focus {
+            box-shadow: none;
+            border-color: var(--primary);
+        }
+        
+        .accordion-body {
+            padding: 1.25rem;
+            background: var(--panel);
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .user-summary {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .user-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .user-summary-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .user-summary-value {
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        .user-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .detail-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .detail-section h6 {
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: var(--muted);
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        .conversion-history {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.5rem;
+            background: white;
+        }
+        
+        .conversion-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+        }
+        
+        .conversion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .conversion-time {
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+        
+        .conversion-file {
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        /* 변환 이력 테이블 스타일 */
+        .conversion-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .conversion-history .table {
+            margin-bottom: 0;
+        }
+        
+        .conversion-history .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+        }
+        
+        .conversion-history .table td {
+            font-size: 0.875rem;
+            vertical-align: middle;
+        }
+        
+        /* 관리자 대시보드 요약 카드 스타일 */
+        .admin-dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        
+        .summary-icon {
+            font-size: 2.5rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--header) 100%);
+            border-radius: 12px;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .summary-content {
+            flex: 1;
+        }
+        
+        .summary-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--strong);
+            margin: 0 0 0.25rem 0;
+            line-height: 1;
+        }
+        
+        .summary-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0;
+        }
+        
+        /* 관리자 계정 목록 스타일 */
+        .admin-user-item {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .admin-user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .admin-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--header) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .admin-user-details h5 {
+            margin: 0 0 0.25rem 0;
+            color: var(--strong);
+            font-size: 1rem;
+        }
+        
+        .admin-user-details p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        
+        .admin-user-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .admin-status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .admin-status-active {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .admin-status-inactive {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .table th,.table td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+        .table th{background:#f8f9fa;font-weight:800;font-size:0.85rem;white-space:nowrap}
+        .badge{padding:3px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;color:#fff;display:inline-block}
+        .free{background:#e74c3c}.paid{background:#27ae60}.unlimited{background:#3498db}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .muted{color:var(--muted)}
+        
+        /* 승인 상태 스타일 개선 */
+        .approval-status{
+            padding:4px 8px;
+            border-radius:12px;
+            font-size:0.75rem;
+            font-weight:700;
+            color:#fff;
+            display:inline-block;
+            white-space:nowrap;
+            min-width:60px;
+            text-align:center;
+        }
+        .approval-approved{background:#27ae60}
+        .approval-rejected{background:#e74c3c}
+        .approval-pending{background:#f39c12}
+        
+        /* 사용자 정보 컴팩트 스타일 */
+        .user-info{font-size:0.85rem;line-height:1.3}
+        .user-info .primary{font-weight:600;color:var(--strong)}
+        .user-info .secondary{color:var(--muted);font-size:0.8rem}
+        
+        /* 토큰 정보 스타일 */
+        .token-info{font-size:0.8rem;line-height:1.2}
+        .token-info .label{color:var(--muted)}
+        .token-info .value{font-weight:600}
+        .token-info .positive{color:#27ae60}
+        .token-info .negative{color:#e74c3c}
+        
+        /* 액션 버튼 그룹 */
+        .action-group{display:flex;flex-wrap:wrap;gap:4px}
+        .action-group .btn{font-size:0.75rem;padding:4px 8px}
+        
+        /* 테이블 반응형 */
+        .table-container{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+        .table-container::-webkit-scrollbar{height:8px}
+        .table-container::-webkit-scrollbar-track{background:#f1f1f1;border-radius:4px}
+        .table-container::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:4px}
+        .table-container::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
+        
+        /* 컬럼 너비 최적화 */
+        .col-id{width:50px}
+        .col-user{width:180px}
+        .col-contact{width:160px}
+        .col-business{width:160px}
+        .col-plan{width:80px}
+        .col-tokens{width:120px}
+        .col-usage{width:100px}
+        .col-date{width:100px}
+        .col-status{width:80px}
+        .col-approval{width:80px}
+        .col-actions{width:200px}
+
+        /* 설정 페이지 스타일 */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .setting-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .setting-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .setting-header h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        .setting-description {
+            color: var(--muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .setting-content {
+            margin-top: 1rem;
+        }
+        
+        /* 이메일 인증 설정 스타일 */
+        .email-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .email-stat-item {
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #E5E7EB;
+        }
+        
+        .email-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .email-stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .email-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #D1D5DB;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(30px);
+        }
+        
+        .email-settings-form {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .setting-group {
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .setting-group h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        .setting-group p {
+            margin: 0 0 1rem 0;
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .number-input {
+            width: 80px;
+            padding: 0.5rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+        
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .save-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--header) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge.enabled {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-badge.disabled {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .status-badge::before {
+            content: "●";
+            margin-right: 0.5rem;
+        }
+        
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #10B981;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            justify-content: center;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-indicator:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+        
+        .refresh-icon {
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="adminDashboard" class="admin-wrap">
+        <div class="admin-header">
+            <div>
+                <h1>👑 관리자 대시보드</h1>
+                <p>실시간 시스템 현황 및 사용자 관리</p>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn" style="background:#27ae60;color:#fff;" onclick="window.location.href='/'">홈으로</button>
+                <button class="btn danger" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="refresh-indicator" onclick="toggleAutoRefresh()">
+            <span class="refresh-icon">🔄</span>
+            <span class="refresh-text">실시간 업데이트</span>
+                </div>
+
+        <div class="tabs">
+            <button class="active admin-tab" data-target="users">일반 사용자 관리</button>
+            <button class="inactive admin-tab" data-target="admin-management">시스템 관리자 관리</button>
+            <button class="inactive admin-tab" data-target="token-history">토큰 이력</button>
+            <button class="inactive admin-tab" data-target="stats">통계</button>
+            <button class="inactive admin-tab" data-target="settings">설정</button>
+            </div>
+
+        <section class="panel" id="users" >
+            <div class="hd">일반 사용자 관리</div>
+            <div class="bd" id="usersTable">
+                <p class="muted">일반 사용자 목록을 불러오는 중...</p>
+                </div>
+            <div class="bd" style="padding-top:0">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" id="btnRefresh" style="background:#3498db;color:#fff">새로고침</button>
+            </div>
+                </div>
+        </section>
+
+        <!-- 시스템 관리자 관리 섹션 -->
+        <section class="panel hidden" id="admin-management">
+            <div class="hd">시스템 관리자 관리</div>
+            
+            <!-- 관리자 전용 대시보드 요약 카드 -->
+            <div class="bd">
+                <div class="admin-dashboard-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon">💰</div>
+                        <div class="summary-content">
+                            <h3 class="summary-title">총 발급 토큰</h3>
+                            <p class="summary-value" id="totalIssuedTokens">-</p>
+                            <p class="summary-subtitle">전체 시스템</p>
+            </div>
+                </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">👥</div>
+                        <div class="summary-content">
+                            <h3 class="summary-title">현재 활성 사용자</h3>
+                            <p class="summary-value" id="activeUsersCount">-</p>
+                            <p class="summary-subtitle">일반 사용자</p>
+            </div>
+        </div>
+
+                    <div class="summary-card">
+                        <div class="summary-icon">⚠️</div>
+                        <div class="summary-content">
+                            <h3 class="summary-title">시스템 에러율</h3>
+                            <p class="summary-value" id="systemErrorRate">-</p>
+                            <p class="summary-subtitle">최근 24시간</p>
+                        </div>
+        </div>
+
+                    <div class="summary-card">
+                        <div class="summary-icon">🔄</div>
+                        <div class="summary-content">
+                            <h3 class="summary-title">시스템 가동률</h3>
+                            <p class="summary-value" id="systemUptime">-</p>
+                            <p class="summary-subtitle">최근 7일</p>
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+            <!-- 관리자 계정 목록 -->
+            <div class="bd">
+                <h4 style="margin-bottom: 1rem; color: var(--strong);">관리자 계정 목록</h4>
+                <div id="adminUsersTable">
+                    <p class="muted">관리자 계정 목록을 불러오는 중...</p>
+            </div>
+            </div>
+            
+            <div class="bd" style="padding-top:0">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" id="btnRefreshAdmins" style="background:#3498db;color:#fff">관리자 목록 새로고침</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel hidden" id="token-history">
+            <div class="hd">토큰 변경 이력</div>
+            <div class="bd" id="tokenHistoryTable">
+                <p class="muted">토큰 이력을 불러오는 중...</p>
+            </div>
+        </section>
+
+        <div class="grid" style="margin-top:16px">
+            <section class="panel hidden" id="stats">
+                <div class="hd">상세 통계</div>
+                <div class="bd" id="statsContent">
+                    <p class="muted">통계를 불러오는 중...</p>
+                </div>
+            </section>
+            <section class="panel hidden" id="settings">
+                <div class="hd">시스템 설정</div>
+                <div class="bd">
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>📧 이메일 인증 설정</h3>
+                                <p class="setting-description">회원가입 시 이메일 인증 시스템 관리</p>
+                            </div>
+                            <div class="setting-content" id="emailVerificationSettings">
+                                <p class="muted">이메일 인증 설정을 불러오는 중...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>⚙️ 기타 설정</h3>
+                                <p class="setting-description">추가 시스템 설정</p>
+                            </div>
+                            <div class="setting-content">
+                                <p class="muted">추가 설정 기능 준비 중...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = null;
+        const dashboard = document.getElementById('adminDashboard');
+        const tabs = document.querySelectorAll('.admin-tab');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 세션 체크 후 관리자 대시보드 표시
+            checkAdminSession();
+            
+            // 자동 새로고침 시작 (30초마다)
+            startAutoRefresh();
+        });
+
+        async function checkAdminSession() {
+            try {
+                // 세션 상태 확인
+                const res = await fetch('/admin/api/users');
+                if (res.status === 403) {
+                    // 관리자 권한 없음 - 로그인 페이지로 리다이렉트
+                    window.location.href = '/login';
+                    return;
+                }
+                if (res.ok) {
+                    // 관리자 권한 있음 - 대시보드 표시
+                    showDashboard();
+                    loadUsers();
+                    loadTokenHistory();
+                    loadStats();
+                    updateLastRefreshTime();
+                }
+            } catch (error) {
+                console.error('세션 체크 실패:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        tabs.forEach(btn => btn.addEventListener('click', (e) => {
+            tabs.forEach(b => { b.classList.remove('active'); b.classList.add('inactive'); });
+            e.target.classList.add('active');
+            e.target.classList.remove('inactive');
+            document.querySelectorAll('#users, #token-history, #stats, #settings').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(e.target.dataset.target).classList.remove('hidden');
+            
+            // 설정 탭 클릭 시 이메일 인증 설정 로드
+            if (e.target.dataset.target === 'settings') {
+                loadEmailVerificationSettings();
+            }
+        }));
+
+        function showDashboard(){ dashboard.classList.remove('hidden'); }
+        
+        
+        // 대시보드 새로고침
+        function refreshDashboard() {
+            loadUsers();
+            loadTokenHistory();
+            loadStats();
+            updateLastRefreshTime();
+        }
+        
+        // 마지막 업데이트 시간 표시
+        function updateLastRefreshTime() {
+                const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR');
+            console.log(`🔄 대시보드 업데이트: ${timeString}`);
+        }
+        
+        // 자동 새로고침 기능
+        let autoRefreshInterval = null;
+        
+        function startAutoRefresh() {
+            // 기존 인터벌이 있다면 제거
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // 30초마다 자동 새로고침
+            autoRefreshInterval = setInterval(() => {
+                console.log('🔄 자동 새로고침 실행...');
+                refreshDashboard();
+            }, 30000); // 30초
+            
+            console.log('✅ 자동 새로고침 시작 (30초 간격)');
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('⏹️ 자동 새로고침 중지');
+            }
+        }
+        
+        // 페이지 가시성 변경 시 업데이트
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('👁️ 페이지가 다시 보임 - 대시보드 새로고침');
+                refreshDashboard();
+            }
+        });
+        
+        // 자동 새로고침 토글 함수
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                stopAutoRefresh();
+                updateRefreshButtonText('자동 새로고침 시작');
+            } else {
+                startAutoRefresh();
+                updateRefreshButtonText('자동 새로고침 중지');
+            }
+        }
+        
+        // 새로고침 버튼 텍스트 업데이트
+        function updateRefreshButtonText(text) {
+            const refreshText = document.querySelector('.refresh-text');
+            if (refreshText) {
+                refreshText.textContent = text;
+            }
+        }
+        
+        async function loadTokenHistory(){
+            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
+            try{
+                const res = await fetch('/admin/api/token-history', {
+                    headers: { 'X-CSRF-Token': csrf }
+                });
+                const body = await res.json();
+                const history = body?.data?.history || [];
+                
+                if(history.length === 0){
+                    document.getElementById('tokenHistoryTable').innerHTML = '<p class="muted">토큰 변경 이력이 없습니다.</p>';
+                    return;
+                }
+                
+                const rows = history.map(h => {
+                    const localTime = h.timestamp_utc ? new Date(h.timestamp_utc).toLocaleString('ko-KR', { hour12: false }) : '-';
+                    return `
+                    <tr>
+                        <td><input type="checkbox" class="th-select" value="${h.id}"> ${localTime}</td>
+                        <td>${h.admin_username}</td>
+                        <td>${h.target_username}</td>
+                        <td><span class="badge ${h.action === 'grant' ? 'paid' : 'free'}">${h.action === 'grant' ? '지급' : '초기화'}</span></td>
+                        <td>${h.amount}</td>
+                    </tr>
+                `;}).join('');
+                
+                const table = `
+                    <div class="table-container">
+                    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0 8px 0">
+                        <div>
+                            <label style="font-weight:700;color:#374151">
+                                <input type="checkbox" id="th-select-all" style="margin-right:6px"> 전체 선택
+                            </label>
+                        </div>
+                        <div>
+                            <button class="btn danger" id="th-delete-selected">선택 삭제</button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>관리자</th>
+                                <th>대상 사용자</th>
+                                <th>액션</th>
+                                <th>금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    </div>
+                `;
+                
+                document.getElementById('tokenHistoryTable').innerHTML = table;
+
+                // 이벤트 바인딩: 전체 선택 및 선택 삭제
+                const selectAll = document.getElementById('th-select-all');
+                const checkboxes = Array.from(document.querySelectorAll('.th-select'));
+                if(selectAll){
+                    selectAll.addEventListener('change', (e)=>{
+                        checkboxes.forEach(cb=> cb.checked = e.target.checked);
+                    });
+                }
+                const delBtn = document.getElementById('th-delete-selected');
+                if(delBtn){
+                    delBtn.addEventListener('click', async ()=>{
+                        const ids = checkboxes.filter(cb=>cb.checked).map(cb=> parseInt(cb.value));
+                        if(ids.length === 0){ alert('삭제할 항목을 선택하세요'); return; }
+                        if(!confirm(`선택한 ${ids.length}건을 삭제하시겠습니까?`)) return;
+                        try{
+                            const res = await fetch('/admin/api/token-history/delete',{
+                                method:'POST',
+                                headers:{
+                                    'Content-Type':'application/json',
+                                    'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                                },
+                                body: JSON.stringify({ ids })
+                            });
+                            const result = await res.json();
+                            if(result.success){
+                                alert('삭제되었습니다');
+                                loadTokenHistory();
+                            }else{
+                                alert('삭제 실패: ' + (result.error||'알 수 없는 오류'));
+                            }
+                        }catch(err){
+                            alert('삭제 중 오류가 발생했습니다');
+                        }
+                    });
+                }
+            }catch(err){
+                document.getElementById('tokenHistoryTable').innerHTML = '<p class="muted">토큰 이력 로드 실패</p>';
+            }
+        }
+        
+        function logout(){ 
+            localStorage.removeItem('admin_token'); 
+            adminToken=null; 
+            // 새 창에서 홈페이지 열기 (관리자 버튼이 사라진 상태)
+            window.open('/', '_blank');
+        }
+
+        async function loadUsers(){
+            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
+            try{
+                const res = await fetch('/admin/api/users');
+                const body = await res.json();
+                const users = body?.data?.users || [];
+                
+                if(users.length === 0){
+                    document.getElementById('usersTable').innerHTML = '<p class="muted">등록된 사용자가 없습니다.</p>';
+                    return;
+                }
+                
+                const accordionItems = users.map((u, index) => `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-${u.id}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse-${u.id}" aria-expanded="false" aria-controls="collapse-${u.id}">
+                                <div class="user-summary">
+                                    <div class="user-summary-item">
+                                        <span class="user-summary-label">순번:</span>
+                                        <span class="user-summary-value">${index + 1}</span>
+                            </div>
+                                    <div class="user-summary-item">
+                                        <span class="user-summary-label">사용자:</span>
+                                        <span class="user-summary-value">${u.username}</span>
+                            </div>
+                                    <div class="user-summary-item">
+                                        <span class="user-summary-label">상호:</span>
+                                        <span class="user-summary-value">${u.company_name || '회사명 없음'}</span>
+                            </div>
+                                    <div class="user-summary-item">
+                                        <span class="user-summary-label">상태:</span>
+                                        <span class="badge ${u.approval_status === 'approved' ? 'bg-success' : u.approval_status === 'pending' ? 'bg-warning' : 'bg-secondary'}">${u.approval_status || 'approved'}</span>
+                            </div>
+                            </div>
+                            </button>
+                        </h2>
+                        <div id="collapse-${u.id}" class="accordion-collapse collapse" aria-labelledby="heading-${u.id}" data-bs-parent="#usersAccordion">
+                            <div class="accordion-body">
+                                <div class="user-details">
+                                    <!-- 기본 정보 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-person"></i> 기본 정보</h6>
+                                        <div class="detail-row">
+                                            <span class="detail-label">순번:</span>
+                                            <span class="detail-value">${index + 1}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">사용자 ID:</span>
+                                            <span class="detail-value">${u.id}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">사용자명:</span>
+                                            <span class="detail-value">${u.username}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">이메일:</span>
+                                            <span class="detail-value">${u.email || '이메일 없음'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">대표자명:</span>
+                                            <span class="detail-value">${u.representative_name || '대표자명 없음'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">전화번호:</span>
+                                            <span class="detail-value">${u.phone || '전화번호 없음'}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 사업자 정보 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-building"></i> 사업자 정보</h6>
+                                        <div class="detail-row">
+                                            <span class="detail-label">회사명:</span>
+                                            <span class="detail-value">${u.company_name || '회사명 없음'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">사업자번호:</span>
+                                            <span class="detail-value">${u.business_number || '사업자번호 없음'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">업태:</span>
+                                            <span class="detail-value">${u.business_type || '업태 없음'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">종목:</span>
+                                            <span class="detail-value">${u.business_category || '종목 없음'}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 플랜 및 토큰 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-credit-card"></i> 플랜 및 토큰</h6>
+                                        <div class="detail-row">
+                                            <span class="detail-label">플랜:</span>
+                                            <span class="badge ${u.plan_type === 'free' ? 'bg-danger' : u.plan_type === 'vip' ? 'bg-success' : u.plan_type === 'premium-vip' ? 'bg-info' : u.plan_type === 'gold-vip' ? 'bg-warning' : 'bg-secondary'}">${u.plan_type || 'free'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">VIP 등급:</span>
+                                            <select class="form-control form-control-sm vip-plan-select" data-user-id="${u.id}" onchange="changeUserPlan(${u.id}, this.value)">
+                                                <option value="free" ${u.plan_type === 'free' ? 'selected' : ''}>무료</option>
+                                                <option value="vip" ${u.plan_type === 'vip' ? 'selected' : ''}>VIP</option>
+                                                <option value="premium-vip" ${u.plan_type === 'premium-vip' ? 'selected' : ''}>Premium VIP</option>
+                                                <option value="gold-vip" ${u.plan_type === 'gold-vip' ? 'selected' : ''}>Gold VIP</option>
+                                            </select>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">보유 토큰:</span>
+                                            <span class="detail-value text-success">${u.token_balance || 0}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">사용 토큰:</span>
+                                            <span class="detail-value text-danger">${u.tokens_used || 0}</span>
+                                        </div>
+                               <div class="detail-row">
+                                   <span class="detail-label">사용량:</span>
+                                   <div class="usage-progress">
+                                       <div class="d-flex justify-content-between align-items-center mb-1">
+                                           <small class="text-muted">${u.used_count || 0}/${u.monthly_limit || 50}</small>
+                                           <small class="text-muted">${Math.round(((u.used_count || 0) / (u.monthly_limit || 50)) * 100)}%</small>
+                                       </div>
+                                       <div class="progress" style="height: 8px;">
+                                           <div class="progress-bar ${(u.used_count || 0) >= (u.monthly_limit || 50) ? 'bg-danger' : (u.used_count || 0) >= (u.monthly_limit || 50) * 0.8 ? 'bg-warning' : 'bg-success'}" 
+                                                role="progressbar" 
+                                                style="width: ${Math.min(((u.used_count || 0) / (u.monthly_limit || 50)) * 100, 100)}%"
+                                                aria-valuenow="${u.used_count || 0}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="${u.monthly_limit || 50}">
+                                           </div>
+                                       </div>
+                                   </div>
+                               </div>
+                                    </div>
+                                    
+                                    <!-- 계정 정보 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-calendar"></i> 계정 정보</h6>
+                                        <div class="detail-row">
+                                            <span class="detail-label">가입일:</span>
+                                            <span class="detail-value">${u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : '-'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">계정 상태:</span>
+                                            <span class="badge ${u.approval_status === 'approved' ? 'bg-success' : u.approval_status === 'pending' ? 'bg-warning' : 'bg-secondary'}">${u.approval_status === 'approved' ? '승인됨' : u.approval_status === 'pending' ? '대기중' : '미승인'}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">계정 활성화:</span>
+                                            <span class="badge ${u.is_active ? 'bg-success' : 'bg-danger'}">${u.is_active ? '활성' : '비활성'}</span>
+                                        </div>
+                                    </div>
+                                    
+                           <!-- 토큰 사용 및 변환 상세 내역 -->
+                           <div class="detail-section">
+                               <h6><i class="bi bi-clock-history"></i> 토큰 사용 및 변환 상세 내역</h6>
+                               <div class="conversion-history" id="conversion-history-${u.id}">
+                                   <div class="table-responsive">
+                                       <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                                   <th>변환 시간</th>
+                                                   <th>사용 토큰</th>
+                                                   <th>변환 파일명</th>
+                            </tr>
+                        </thead>
+                                           <tbody id="conversion-table-${u.id}">
+                                               <tr>
+                                                   <td colspan="3" class="text-center text-muted">변환 이력을 불러오는 중...</td>
+                                               </tr>
+                                           </tbody>
+                    </table>
+                                   </div>
+                               </div>
+                           </div>
+                                    
+                                    <!-- 액션 버튼 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-gear"></i> 관리 액션</h6>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <button class="btn btn-success btn-sm" onclick="grantTokens(${u.id}, '${u.username}')">
+                                                <i class="bi bi-plus-circle"></i> 토큰 지급
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" onclick="resetTokens(${u.id}, '${u.username}')">
+                                                <i class="bi bi-arrow-clockwise"></i> 초기화
+                                            </button>
+                                            ${u.approval_status === 'pending' ? `
+                                                <button class="btn btn-warning btn-sm" onclick="approveUser(${u.id}, '${u.username}')">
+                                                    <i class="bi bi-check-circle"></i> 승인
+                                                </button>
+                                            ` : ''}
+                                            <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id}, '${u.username}')">
+                                                <i class="bi bi-trash"></i> 삭제
+                                            </button>
+                                            <button class="btn btn-secondary btn-sm" onclick="restoreUser(${u.id}, '${u.username}')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> 복구
+                                            </button>
+                                            <button class="btn danger btn-sm" onclick="purgeUser(${u.id}, '${u.username}')">
+                                                <i class="bi bi-skull"></i> 완전삭제
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const accordion = `
+                    <div class="accordion" id="usersAccordion">
+                        ${accordionItems}
+                    </div>
+                `;
+                
+                document.getElementById('usersTable').innerHTML = accordion;
+                
+                // 각 사용자의 변환 이력 로드
+                users.forEach(user => {
+                    loadUserConversionHistory(user.id);
+                });
+            }catch(err){
+                document.getElementById('usersTable').innerHTML = '<p class="muted">사용자 목록 로드 실패</p>';
+            }
+        }
+        
+        // 사용자별 변환 이력 로드 함수
+        async function loadUserConversionHistory(userId) {
+            try {
+                const res = await fetch(`/admin/api/user-conversions/${userId}`);
+                const data = await res.json();
+                const conversions = data?.data?.conversions || [];
+                
+                const tableBody = document.getElementById(`conversion-table-${userId}`);
+                if (!tableBody) return;
+                
+                if (conversions.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">변환 이력이 없습니다.</td></tr>';
+                    return;
+                }
+                
+                const tableRows = conversions.map(conv => `
+                    <tr>
+                        <td>${new Date(conv.created_at).toLocaleString('ko-KR')}</td>
+                        <td>
+                            <span class="badge bg-primary">${conv.tokens_used || 0}</span>
+                        </td>
+                        <td>
+                            <a href="#" class="text-primary text-decoration-none" onclick="downloadFile('${conv.original_filename}')">
+                                ${conv.original_filename || '파일명 없음'}
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                tableBody.innerHTML = tableRows;
+            } catch (err) {
+                const tableBody = document.getElementById(`conversion-table-${userId}`);
+                if (tableBody) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">이력 로드 실패</td></tr>';
+                }
+            }
+        }
+        
+        function downloadFile(filename) {
+            // 파일 다운로드 로직 (추후 구현)
+            console.log('파일 다운로드:', filename);
+        }
+        
+        // 상세 통계 로드
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/dashboard');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatsContent(data.data);
+                } else {
+                    document.getElementById('statsContent').innerHTML = '<p class="muted">통계 로드 실패</p>';
+                }
+            } catch (error) {
+                document.getElementById('statsContent').innerHTML = '<p class="muted">통계 요청 실패</p>';
+            }
+        }
+        
+        function updateStatsContent(data) {
+            const statsHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;">${data.user_stats.active_users || 0}</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">활성 사용자</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;">${data.user_stats.vip_users || 0}</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">VIP 사용자</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;">${data.token_stats.total_used || 0}</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">사용된 토큰</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;">${data.conversion_stats.avg_time || 0}초</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">평균 처리시간</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('statsContent').innerHTML = statsHtml;
+        }
+        
+        // 관리자 액션 함수들
+        async function grantTokens(userId, username) {
+            const amount = prompt(`${username}에게 지급할 토큰 수량을 입력하세요:`, '100');
+            if (!amount || isNaN(amount) || amount <= 0) return;
+            
+            try {
+                const response = await fetch('/admin/api/grant-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ user_id: userId, amount: parseInt(amount) })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('토큰이 성공적으로 지급되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('토큰 지급 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('토큰 지급 중 오류가 발생했습니다.');
+            }
+        }
+        
+        async function resetTokens(userId, username) {
+            if (!confirm(`${username}의 토큰 사용량을 초기화하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch('/admin/api/reset-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('토큰 사용량이 초기화되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('토큰 초기화 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('토큰 초기화 중 오류가 발생했습니다.');
+            }
+        }
+        
+        async function approveUser(userId, username) {
+            if (!confirm(`${username}을(를) 승인하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch('/admin/api/approve-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('사용자가 승인되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('사용자 승인 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('사용자 승인 중 오류가 발생했습니다.');
+            }
+        }
+        
+        async function deleteUser(userId, username) {
+            if (!confirm(`${username}을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+            
+            try {
+                const response = await fetch('/admin/api/delete-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('사용자가 삭제되었습니다.');
+                    loadUsers();
+                } else {
+                    alert('사용자 삭제 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('사용자 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function restoreUser(userId, username){
+            if(!confirm(`${username} 계정을 복구하시겠습니까?`)) return;
+            try{
+                const res = await fetch(`/admin/api/users/${userId}/restore`,{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    }
+                });
+                const result = await res.json();
+                if(result.success){
+                    alert('복구되었습니다.');
+                    loadUsers();
+                }else{
+                    alert('복구 실패: ' + (result.error || '알 수 없는 오류'));
+                }
+            }catch(err){
+                alert('복구 처리 중 오류가 발생했습니다');
+            }
+        }
+
+        async function purgeUser(userId, username){
+            if(!confirm(`${username}을(를) 완전삭제 하시겠습니까? 이 작업은 DB와 파일에서 모두 제거되며 되돌릴 수 없습니다.`)) return;
+            try{
+                const res = await fetch(`/admin/api/users/${userId}/purge`,{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    }
+                });
+                const result = await res.json();
+                if(result.success){
+                    alert('완전삭제가 완료되었습니다.');
+                    loadUsers();
+                }else{
+                    alert('완전삭제 실패: ' + (result.error || '알 수 없는 오류'));
+                }
+            }catch(err){
+                alert('완전삭제 처리 중 오류가 발생했습니다');
+            }
+        }
+        
+        async function changeUserPlan(userId, newPlanType){
+            const planNames = {
+                'free': '무료',
+                'vip': 'VIP',
+                'premium-vip': 'Premium VIP',
+                'gold-vip': 'Gold VIP'
+            };
+            
+            if(!confirm(`사용자의 VIP 등급을 "${planNames[newPlanType]}"로 변경하시겠습니까?`)) {
+                // 취소 시 select 박스를 원래 상태로 되돌림
+                loadUsers();
+                return;
+            }
+            
+            try{
+                const res = await fetch(`/admin/api/users/${userId}/change-plan`, {
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ plan_type: newPlanType })
+                });
+                
+                const result = await res.json();
+                if(result.success){
+                    alert(`VIP 등급이 "${planNames[newPlanType]}"로 변경되었습니다.`);
+                    loadUsers();
+                }else{
+                    alert('VIP 등급 변경 실패: ' + (result.error || '알 수 없는 오류'));
+                    loadUsers(); // 실패 시 select 박스를 원래 상태로 되돌림
+                }
+            }catch(err){
+                alert('VIP 등급 변경 중 오류가 발생했습니다');
+                loadUsers(); // 오류 시 select 박스를 원래 상태로 되돌림
+            }
+        }
+        
+        // 새로고침 버튼 이벤트
+        document.getElementById('btnRefresh').addEventListener('click', () => {
+            refreshDashboard();
+        });
+        
+        // 이메일 인증 설정 로드
+        async function loadEmailVerificationSettings() {
+            console.log('🔧 이메일 인증 설정 로드 시작...');
+            
+            try {
+                const response = await fetch('/admin/api/email-settings');
+                console.log('📡 API 응답 상태:', response.status);
+                console.log('📡 API 응답 헤더:', response.headers);
+                
+                const data = await response.json();
+                console.log('📊 API 응답 데이터:', data);
+                
+                if (data.success) {
+                    console.log('✅ API 호출 성공, UI 렌더링 시작...');
+                    renderEmailVerificationSettings(data.data);
+                } else {
+                    console.error('❌ API 호출 실패:', data.message);
+                    document.getElementById('emailVerificationSettings').innerHTML = 
+                        `<p class="muted">이메일 인증 설정을 불러올 수 없습니다: ${data.message}</p>`;
+                }
+            } catch (error) {
+                console.error('❌ 이메일 인증 설정 로드 실패:', error);
+                document.getElementById('emailVerificationSettings').innerHTML = 
+                    `<p class="muted">이메일 인증 설정을 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+            }
+        }
+        
+        function renderEmailVerificationSettings(data) {
+            const { stats, settings } = data;
+            
+            const html = `
+                <div class="status-badge ${settings.email_verification_enabled === '1' ? 'enabled' : 'disabled'}">
+                    ${settings.email_verification_enabled === '1' ? '활성화됨' : '비활성화됨'}
+                </div>
+                
+                <div class="email-stats">
+                    <div class="email-stat-item">
+                        <div class="email-stat-value">${stats.total_users || 0}</div>
+                        <div class="email-stat-label">전체 사용자</div>
+                    </div>
+                    <div class="email-stat-item">
+                        <div class="email-stat-value">${stats.verified_users || 0}</div>
+                        <div class="email-stat-label">인증 완료</div>
+                    </div>
+                    <div class="email-stat-item">
+                        <div class="email-stat-value">${stats.pending_users || 0}</div>
+                        <div class="email-stat-label">인증 대기</div>
+                    </div>
+                    <div class="email-stat-item">
+                        <div class="email-stat-value">${(stats.verification_rate || 0).toFixed(1)}%</div>
+                        <div class="email-stat-label">인증률</div>
+                    </div>
+                </div>
+                
+                <form id="emailSettingsForm" class="email-settings-form">
+                    <div class="email-toggle">
+                        <div class="toggle-switch ${settings.email_verification_enabled === '1' ? 'active' : ''}" 
+                             onclick="toggleEmailVerification(this)">
+                            <input type="checkbox" name="email_verification_enabled" value="1" 
+                                   ${settings.email_verification_enabled === '1' ? 'checked' : ''}>
+                        </div>
+                        <span>이메일 인증 ${settings.email_verification_enabled === '1' ? '활성화' : '비활성화'}</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h4>토큰 만료 시간</h4>
+                        <p>인증 토큰이 유효한 시간을 설정합니다. (시간 단위)</p>
+                        <div class="setting-control">
+                            <input type="number" name="email_verification_expiry_hours" 
+                                   value="${settings.email_verification_expiry_hours || '24'}" 
+                                   min="1" max="168" class="number-input">
+                            <span>시간</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h4>최대 시도 횟수</h4>
+                        <p>사용자가 인증 이메일을 재발송할 수 있는 최대 횟수입니다.</p>
+                        <div class="setting-control">
+                            <input type="number" name="email_verification_max_attempts" 
+                                   value="${settings.email_verification_max_attempts || '3'}" 
+                                   min="1" max="10" class="number-input">
+                            <span>회</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h4>잠금 시간</h4>
+                        <p>최대 시도 횟수를 초과했을 때 재발송이 제한되는 시간입니다.</p>
+                        <div class="setting-control">
+                            <input type="number" name="email_verification_lockout_hours" 
+                                   value="${settings.email_verification_lockout_hours || '24'}" 
+                                   min="1" max="168" class="number-input">
+                            <span>시간</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="save-button">설정 저장</button>
+                </form>
+            `;
+            
+            document.getElementById('emailVerificationSettings').innerHTML = html;
+            
+            // 폼 제출 이벤트 추가
+            document.getElementById('emailSettingsForm').addEventListener('submit', saveEmailSettings);
+        }
+        
+        function toggleEmailVerification(element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                element.classList.add('active');
+                element.nextElementSibling.textContent = '이메일 인증 활성화';
+            } else {
+                element.classList.remove('active');
+                element.nextElementSibling.textContent = '이메일 인증 비활성화';
+            }
+        }
+        
+        async function saveEmailSettings(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const settings = {};
+            
+            for (let [key, value] of formData.entries()) {
+                settings[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/admin/api/email-settings/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('이메일 인증 설정이 저장되었습니다.');
+                    loadEmailVerificationSettings(); // 설정 다시 로드
+                } else {
+                    alert('설정 저장 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('설정 저장 오류:', error);
+                alert('설정 저장 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 탭 클릭 이벤트 처리
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetId = tab.getAttribute('data-target');
+                
+                // 모든 탭 비활성화
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.classList.add('inactive');
+                });
+                
+                // 모든 섹션 숨기기
+                document.querySelectorAll('.panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                
+                // 선택된 탭 활성화
+                tab.classList.add('active');
+                tab.classList.remove('inactive');
+                
+                // 해당 섹션 표시
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    
+                    // 각 탭별 데이터 로드
+                    switch(targetId) {
+                        case 'users':
+                            loadUsers();
+                            break;
+                        case 'admin-management':
+                            loadAdminUsers();
+                            loadAdminDashboardStats();
+                            break;
+                        case 'token-history':
+                            loadTokenHistory();
+                            break;
+                        case 'stats':
+                            loadStats();
+                            break;
+                        case 'settings':
+                            loadEmailVerificationSettings();
+                            break;
+                    }
+                }
+            });
+        });
+        
+        // 관리자 사용자 목록 로드
+        async function loadAdminUsers() {
+            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
+            try {
+                const res = await fetch('/admin/api/admin-users');
+                const body = await res.json();
+                const adminUsers = body?.data?.admin_users || [];
+                
+                if (adminUsers.length === 0) {
+                    document.getElementById('adminUsersTable').innerHTML = '<p class="muted">등록된 관리자가 없습니다.</p>';
+                    return;
+                }
+                
+                const adminItems = adminUsers.map(admin => `
+                    <div class="admin-user-item">
+                        <div class="admin-user-info">
+                            <div class="admin-user-avatar">${admin.username.charAt(0).toUpperCase()}</div>
+                            <div class="admin-user-details">
+                                <h5>${admin.username}</h5>
+                                <p>${admin.email || '이메일 없음'} • 가입일: ${admin.created_at ? new Date(admin.created_at).toLocaleDateString('ko-KR') : '-'}</p>
+                            </div>
+                        </div>
+                        <div class="admin-user-status">
+                            <span class="admin-status-badge ${admin.is_active ? 'admin-status-active' : 'admin-status-inactive'}">
+                                ${admin.is_active ? '활성' : '비활성'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('adminUsersTable').innerHTML = adminItems;
+            } catch (err) {
+                document.getElementById('adminUsersTable').innerHTML = '<p class="muted">관리자 목록 로드 실패</p>';
+            }
+        }
+        
+        // 관리자 대시보드 통계 로드
+        async function loadAdminDashboardStats() {
+            try {
+                const response = await fetch('/admin/api/admin-dashboard-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateAdminDashboardStats(data.data);
+                } else {
+                    console.error('관리자 대시보드 통계 로드 실패:', data.message);
+                }
+            } catch (error) {
+                console.error('관리자 대시보드 통계 요청 실패:', error);
+            }
+        }
+        
+        function updateAdminDashboardStats(data) {
+            // 총 발급 토큰
+            document.getElementById('totalIssuedTokens').textContent = data.total_issued_tokens || 0;
+            
+            // 현재 활성 사용자
+            document.getElementById('activeUsersCount').textContent = data.active_users_count || 0;
+            
+            // 시스템 에러율
+            document.getElementById('systemErrorRate').textContent = `${data.system_error_rate || 0}%`;
+            
+            // 시스템 가동률
+            document.getElementById('systemUptime').textContent = `${data.system_uptime || 99.9}%`;
+        }
+        
+        // 관리자 목록 새로고침 버튼 이벤트
+        document.getElementById('btnRefreshAdmins').addEventListener('click', () => {
+            loadAdminUsers();
+            loadAdminDashboardStats();
+        });
+        
+        // 30초마다 자동 새로고침
+        setInterval(() => {
+            loadUsers();
+            loadTokenHistory();
+        }, 30000);
+    </script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

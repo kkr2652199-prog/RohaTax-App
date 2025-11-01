@@ -1,0 +1,12 @@
+{
+  "last_cleanup": "2025-10-31T20:00:14.738326",
+  "auto_delete_enabled": true,
+  "folder_management_enabled": false,
+  "cleanup_interval_hours": 24,
+  "report_only": false,
+  "output_keep_last_n": 5,
+  "output_patterns": [
+    "output/*.xlsx",
+    "output/*.csv"
+  ]
+}

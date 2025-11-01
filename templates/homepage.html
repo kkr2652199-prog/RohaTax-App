@@ -1,0 +1,842 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로●하 Tax - AI 전자세금계산서 변환</title>
+    <!-- 성능 최적화: 폰트 로딩 개선 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/homepage.css">
+    <link rel="stylesheet" href="/static/css/components/youtube_demo.css">
+</head>
+<body>
+    <!-- 네비게이션 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">로●하 Tax</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#features" class="nav-link">기능</a>
+                <a href="#pricing" class="nav-link">요금</a>
+                <a href="#features" class="nav-link">체험</a>
+                {% if session.user_id %}
+                    <a href="/conversion" class="nav-link">변환하기</a>
+                    <a href="/profile/edit" class="nav-link">마이홈</a>
+                    <a href="/logout" class="nav-link login-btn">로그아웃</a>
+                    <span class="nav-user">{{ session.username }}님</span>
+                {% else %}
+                    <a href="/login" class="nav-link login-btn">로그인</a>
+                    <a href="/register" class="nav-link signup-btn">회원가입</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero-section">
+        <div class="hero-background">
+            <div class="floating-elements">
+                <div class="float-item">📊</div>
+                <div class="float-item">🤖</div>
+                <div class="float-item">⚡</div>
+                <div class="float-item">🔒</div>
+            </div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-icon">🎉</span>
+                <span class="badge-text">신규 가입시 1개월 무료</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="title-highlight">로●하 Tax로</span> 전자세금계산서를 쉽게 변환하세요
+            </h1>
+            <div class="hero-notice">
+                <div class="notice-badge">📢 필수공지!!</div>
+                <p class="notice-text">
+                    <strong>로하는 단순합니다!</strong><br>
+                    📁 엑셀 첨부 → 🤖 AI 자동변환 → 📥 즉시 다운로드<br>
+                    <span class="highlight-text">⏰ 30초 ⚡ 99.9%</span>
+                </p>
+            </div>
+            <div class="hero-actions">
+            <button class="cta-primary" onclick="window.location.href='/conversion'">
+                <span class="btn-icon">🚀</span>
+                <span class="btn-text">로●하 Tax 시작하기</span>
+            </button>
+                <button class="cta-secondary" onclick="document.querySelector('.video-demo-section').scrollIntoView({behavior: 'smooth'})">
+                    <span class="btn-icon">▶️</span>
+                    <span class="btn-text">데모 보기</span>
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number">10,000+</div>
+                    <div class="stat-label">성공 변환</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">정확도</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">30초</div>
+                    <div class="stat-label">평균 시간</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 변환 과정 시각화 -->
+    <section class="process-section">
+        <div class="container">
+            <h2 class="section-title">3단계로 끝나는 스마트 변환</h2>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-visual">
+                        <div class="step-icon">📁</div>
+                        <div class="step-animation upload-animation"></div>
+                    </div>
+                    <h3 class="step-title">파일 업로드</h3>
+                    <p class="step-description">VIP회원전용페이지 이동 회원님 매월 정산Excel 파일 첨부하세요</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-visual">
+                        <div class="step-icon">🤖</div>
+                        <div class="step-animation process-animation"></div>
+                    </div>
+                    <h3 class="step-title">AI 자동 변환</h3>
+                    <p class="step-description">VIP 회원님 첨부파일을 AI시스템이 자동필터링 후 홈택스 공식일괄 50개 파일로 자동변환합니다</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-visual">
+                        <div class="step-icon">📥</div>
+                        <div class="step-animation download-animation"></div>
+                    </div>
+                    <h3 class="step-title">즉시 다운로드</h3>
+                    <p class="step-description">VIP회원님 첨부한 파일은 자동으로 폐기 하며 (고객정보유출)을 방지하며 홈택스공식엑셀파일 다운로드 후 사용하시면 됨니다</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 동영상 데모 섹션 -->
+    <section class="video-demo-section">
+        <div class="container">
+            <!-- 섹션 헤더 -->
+            <div class="video-section-header">
+                <h2 class="video-section-title">3단계로 끝나는 스마트 변환</h2>
+                <div class="video-section-subtitles">
+                    <div class="subtitle-item">
+                        <span class="subtitle-icon">📁</span>
+                        <span class="subtitle-text">초간편 파일 업로드</span>
+                    </div>
+                    <div class="subtitle-item">
+                        <span class="subtitle-icon">🔍</span>
+                        <span class="subtitle-text">완벽 검증 및 자동 정제</span>
+                    </div>
+                    <div class="subtitle-item">
+                        <span class="subtitle-icon">📥</span>
+                        <span class="subtitle-text">즉시 다운로드 및 완료</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 동영상 플레이어 -->
+            {% include 'components/video_player.html' %}
+        </div>
+    </section>
+
+    <!-- 홈택스 가이드 슬라이더 섹션 -->
+    <section class="hometax-guide-slider-container">
+        <div class="container">
+            <!-- PPT 스타일 가이드 컨테이너 -->
+            <div class="ppt-container">
+                <!-- 헤더 섹션 -->
+                <div class="ppt-header">
+                    <div class="main-title">
+                        <span class="tax-highlight">로.하 TAX</span>로 일괄 발행을 10분에 완성
+                    </div>
+                    <div class="subtitle">
+                        고객 정보 자동 폐기로 신뢰 100%, 원본 보존으로 안전 100%
+                    </div>
+                </div>
+
+                <!-- 2열 비교 섹션 (핵심) -->
+                <div class="comparison-section">
+                    <!-- 왼쪽: 건별 발행 (빨간 테마) -->
+                    <div class="comparison-card individual">
+                        <div class="card-header">
+                            <div class="card-icon">🏢</div>
+                            <h3>건별 전자세금계산서 발행</h3>
+                            <p class="card-subtitle">수작업의 번거로움</p>
+                        </div>
+                        
+                        <div class="steps-container">
+                            <div class="step-box">
+                                <div class="step-content">로그인·사업자전환 → 전자세금계산서 메뉴</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">건별 입력(공급자/공급받는자/작성일자/금액)</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">내용 확인 → 전자서명 → 발행</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">다음 건 반복(건수만큼 반복)</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                        </div>
+                        
+                        <div class="cta-button individual">수작업으로 발행하기</div>
+                    </div>
+
+                    <!-- 오른쪽: 일괄 발행 (초록 테마) -->
+                    <div class="comparison-card batch">
+                        <div class="card-header">
+                            <div class="card-icon">⚡</div>
+                            <h3>일괄 전자세금계산서 발행</h3>
+                            <p class="card-subtitle">로.하 TAX의 편리함</p>
+                        </div>
+                        
+                        <div class="steps-container">
+                            <div class="step-box">
+                                <div class="step-content">로그인·사업자전환 → 일괄발급 메뉴</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">로.하 TAX 변환 파일 업로드</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">엑셀파일 변환하기 → 결과 확인</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="step-box">
+                                <div class="step-content">일괄발급 진행 → 발행 완료</div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                        </div>
+                        
+                        <div class="cta-button batch">로.하 TAX로 발행하기</div>
+                    </div>
+                </div>
+
+                <!-- 요약 섹션 -->
+                <div class="summary-section">
+                    <h3>로.하 TAX 활용전략 (한눈에 보기)</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-text">30건→1장 · 100건→2장 · 500건→10장</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⏱️</div>
+                            <div class="feature-text">50건 10분 미만</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🗓️</div>
+                            <div class="feature-text">작성일자 1회 입력</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✅</div>
+                            <div class="feature-text">매월 변동 세액 자동 처리</div>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+            </div>
+            
+            <!-- 진행 막대 -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="progress-steps">
+                    <span class="step-indicator active" data-step="1">1</span>
+                    <span class="step-indicator" data-step="2">2</span>
+                    <span class="step-indicator" data-step="3">3</span>
+                    <span class="step-indicator" data-step="4">4</span>
+                    <span class="step-indicator" data-step="5">5</span>
+                    <span class="step-indicator" data-step="6">6</span>
+                    <span class="step-indicator" data-step="7">7</span>
+                    <span class="step-indicator" data-step="8">8</span>
+                </div>
+            </div>
+            
+            <!-- 슬라이드 컨테이너 -->
+            <div class="slide-container">
+                <!-- 전체 화면 버튼 -->
+                <!-- 슬라이드 이미지들 -->
+                <div class="slide-wrapper">
+                    <div class="slide active" data-step="1">
+                        <img src="/static/images/hometax_guide/step1.png.jpg" alt="홈택스 가이드 1단계" class="guide-image">
+                        <div class="slide-highlight" data-step="1"></div>
+                        
+                        <!-- 마우스 클릭 효과 영역 -->
+                        <div class="mouse-click-effect" data-step="1">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-ripple"></div>
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="2">
+                        <img src="/static/images/hometax_guide/step2.png.jpg" alt="홈택스 가이드 2단계" class="guide-image">
+                        <div class="slide-highlight" data-step="2"></div>
+                        <!-- 2번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="2">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="3">
+                        <img src="/static/images/hometax_guide/step3.png.jpg" alt="홈택스 가이드 3단계" class="guide-image">
+                        <div class="slide-highlight" data-step="3"></div>
+                        <!-- 3번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="3">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="4">
+                        <img src="/static/images/hometax_guide/step4.png.jpg" alt="홈택스 가이드 4단계" class="guide-image">
+                        <div class="slide-highlight" data-step="4"></div>
+                        <!-- 4번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="4">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="5">
+                        <img src="/static/images/hometax_guide/step5.png.jpg" alt="홈택스 가이드 5단계" class="guide-image">
+                        <div class="slide-highlight" data-step="5"></div>
+                        <!-- 5번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="5">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="6">
+                        <img src="/static/images/hometax_guide/step6.png.jpg" alt="홈택스 가이드 6단계" class="guide-image">
+                        <div class="slide-highlight" data-step="6"></div>
+                        <!-- 6번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="6">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="7">
+                        <img src="/static/images/hometax_guide/step7.png.jpg" alt="홈택스 가이드 7단계" class="guide-image">
+                        <div class="slide-highlight" data-step="7"></div>
+                        <!-- 7번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="7">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide" data-step="8">
+                        <img src="/static/images/hometax_guide/step8.png.jpg" alt="홈택스 가이드 8단계" class="guide-image">
+                        <div class="slide-highlight" data-step="8"></div>
+                        <!-- 8번 슬라이드 마우스 클릭 효과 -->
+                        <div class="mouse-click-effect" data-step="8">
+                            <div class="mouse-cursor">
+                                <div class="cursor-pointer"></div>
+                            </div>
+                            <div class="click-target login-target">
+                                <div class="click-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 자막 영역 -->
+                <div class="subtitle-container">
+                    <div class="subtitle-text" id="subtitleText"></div>
+                </div>
+                
+                <!-- 네온사인 효과 영역 (삭제됨) -->
+                <!-- <div class="neon-sign-container" id="neonSignContainer">
+                    <div class="neon-sign-text">✅ 저희 앱에서 정제 완료! 홈택스 완벽 규격!</div>
+                </div> -->
+                
+                <!-- 슬라이드 컨트롤 버튼 -->
+                <div class="slide-controls">
+                    <button class="slide-btn prev-btn" id="prevBtn" title="이전 단계">
+                        <span class="btn-icon">←</span>
+                    </button>
+                    <button class="slide-btn play-pause-btn" id="playPauseBtn" title="재생">
+                        <span class="btn-icon">▶</span>
+                    </button>
+                    <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
+                        <span class="btn-icon">→</span>
+                    </button>
+                    <button class="slide-btn close-btn" id="closeBtn" title="닫기">
+                        <span class="btn-text">닫기</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 신뢰 구축 최종 메시지 -->
+    <div class="trust-message-container">
+        <div class="container">
+            <div class="trust-message">
+                <div class="trust-icon">🎯</div>
+                <div class="trust-text">
+                    <span class="trust-highlight">이 영상을 보셨다면, 50건 일괄 발급은 이미 90% 성공입니다.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 기능 소개 -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <h2 class="section-title">왜 로●하 Tax를 선택해야 할까요?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI 기반 스마트 분석</h3>
+                    <p class="feature-description">머신러닝으로 데이터 패턴을 학습하여 정확도 99.9%의 변환을 제공합니다</p>
+                    <div class="feature-highlight">정확도 99.9%</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">초고속 처리</h3>
+                    <p class="feature-description">대용량 파일도 30초 내에 변환 완료. 더 이상 기다리지 마세요</p>
+                    <div class="feature-highlight">30초 완료</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">완벽한 보안</h3>
+                    <p class="feature-description">데이터 암호화 및 안전한 처리로 고객 정보를 완벽하게 보호합니다</p>
+                    <div class="feature-highlight">SSL 암호화</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">어디서나 접근</h3>
+                    <p class="feature-description">PC, 태블릿, 모바일 어디서나 웹 브라우저로 접근 가능합니다</p>
+                    <div class="feature-highlight">반응형 지원</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">맞춤형 템플릿</h3>
+                    <p class="feature-description">업종별 특화된 템플릿으로 더욱 정확한 변환을 제공합니다</p>
+                    <div class="feature-highlight">업종별 최적화</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3 class="feature-title">실시간 지원</h3>
+                    <p class="feature-description">24시간 실시간 채팅 지원으로 언제든 도움을 받으세요</p>
+                    <div class="feature-highlight">24시간 지원</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 회사 소개 섹션 -->
+    <section class="company-section">
+        <div class="container">
+            <div class="company-content">
+                <div class="company-header">
+                    <h2 class="section-title">신뢰할 수 있는 파트너, 로●하 Tax</h2>
+                    <p class="section-subtitle">전문성과 안정성으로 고객의 세무 업무를 지원합니다</p>
+                </div>
+                
+                <div class="company-info">
+                    <div class="company-card">
+                        <div class="card-icon">🏢</div>
+                        <h3 class="card-title">회사 개요</h3>
+                        <div class="card-content">
+                            <p><strong>회사명:</strong> 로●하 Tax</p>
+                            <p><strong>설립연도:</strong> 2024년</p>
+                            <p><strong>사업분야:</strong> AI 기반 세무 자동화 솔루션</p>
+                            <p><strong>본사:</strong> 서울시 강남구</p>
+                        </div>
+                    </div>
+                    
+                    <div class="company-card">
+                        <div class="card-icon">🎯</div>
+                        <h3 class="card-title">핵심 가치</h3>
+                        <div class="card-content">
+                            <p>• <strong>정확성:</strong> 99.9% 변환 정확도</p>
+                            <p>• <strong>신속성:</strong> 30초 평균 처리 시간</p>
+                            <p>• <strong>보안성:</strong> 최고 수준 데이터 보호</p>
+                            <p>• <strong>편의성:</strong> 직관적인 사용자 경험</p>
+                        </div>
+                    </div>
+                    
+                    <div class="company-card">
+                        <div class="card-icon">🔒</div>
+                        <h3 class="card-title">보안 인증</h3>
+                        <div class="card-content">
+                            <p>• <strong>데이터 암호화:</strong> AES-256 암호화</p>
+                            <p>• <strong>보안 인증:</strong> ISO 27001 준수</p>
+                            <p>• <strong>개인정보보호:</strong> 개인정보보호법 준수</p>
+                            <p>• <strong>SSL 인증:</strong> 256bit SSL 보안</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="achievements">
+                    <div class="achievement-item">
+                        <div class="achievement-number">10,000+</div>
+                        <div class="achievement-label">성공 변환 건수</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-number">500+</div>
+                        <div class="achievement-label">만족한 고객</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-number">99.9%</div>
+                        <div class="achievement-label">고객 만족도</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-number">24/7</div>
+                        <div class="achievement-label">고객 지원</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 고객 후기 섹션 강화 -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="testimonials-header">
+                <h2 class="section-title">고객들의 생생한 후기</h2>
+                <p class="section-subtitle">실제 사용자들이 경험한 로●하 Tax의 장점</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card featured">
+                    <div class="testimonial-content">
+                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                        <p class="testimonial-text">"매월 정산서 변환 작업이 정말 번거로웠는데, 로●하 Tax 덕분에 30초만에 끝납니다. 정확도도 정말 높고, 사용법도 간단해요!"</p>
+                        <div class="testimonial-highlight">
+                            <span class="highlight-icon">⚡</span>
+                            <span class="highlight-text">30초 변환 완료</span>
+                        </div>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">👩‍💼</div>
+                        <div class="author-info">
+                            <div class="author-name">김영희</div>
+                            <div class="author-title">카페 사장</div>
+                            <div class="author-company">스타벅스 강남점</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                        <p class="testimonial-text">"회계팀에서 매번 수작업으로 하던 일이 이제는 자동으로 처리됩니다. 실수도 없고 시간도 절약되고 정말 만족해요."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">👨‍💻</div>
+                        <div class="author-info">
+                            <div class="author-name">박민수</div>
+                            <div class="author-title">회계팀장</div>
+                            <div class="author-company">ABC 물류</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                        <p class="testimonial-text">"처음에는 반신반의했는데, 실제로 사용해보니 정말 놀라워요. 복잡한 세무 업무가 이렇게 간단해질 줄 몰랐습니다."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">👩‍💼</div>
+                        <div class="author-info">
+                            <div class="author-name">이수진</div>
+                            <div class="author-title">사업자</div>
+                            <div class="author-company">온라인 쇼핑몰</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                        <p class="testimonial-text">"고객 지원도 정말 친절하고, 문제가 생기면 바로 해결해주세요. 이런 서비스가 있으니 정말 다행입니다."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">👨‍💼</div>
+                        <div class="author-info">
+                            <div class="author-name">정호영</div>
+                            <div class="author-title">대표이사</div>
+                            <div class="author-company">IT 스타트업</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonials-stats">
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">고객 만족도</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">4.9/5</div>
+                    <div class="stat-label">평균 평점</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">후기 수</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 가격 정책 섹션 -->
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <div class="pricing-header">
+                <h2 class="section-title">투명한 가격 정책</h2>
+                <p class="section-subtitle">규모에 맞는 최적의 플랜을 선택하세요</p>
+            </div>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-header-card">
+                        <h3 class="plan-name">스타터</h3>
+                        <div class="plan-price">
+                            <span class="currency">₩</span>
+                            <span class="amount">30,000</span>
+                            <span class="period">/월</span>
+                        </div>
+                        <p class="plan-description">소규모 업체를 위한 기본 플랜</p>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">월 100건 변환</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">기본 템플릿 제공</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">이메일 지원</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">99.9% 정확도</span>
+                        </div>
+                    </div>
+                    <button class="plan-button" onclick="window.location.href='/register'">
+                        시작하기
+                    </button>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="popular-badge">인기</div>
+                    <div class="pricing-header-card">
+                        <h3 class="plan-name">비즈니스</h3>
+                        <div class="plan-price">
+                            <span class="currency">₩</span>
+                            <span class="amount">80,000</span>
+                            <span class="period">/월</span>
+                        </div>
+                        <p class="plan-description">중소기업을 위한 완벽한 솔루션</p>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">월 500건 변환</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">모든 템플릿 제공</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">우선 지원</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">API 연동</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">데이터 백업</span>
+                        </div>
+                    </div>
+                    <button class="plan-button featured" onclick="window.location.href='/register'">
+                        추천 플랜
+                    </button>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="pricing-header-card">
+                        <h3 class="plan-name">엔터프라이즈</h3>
+                        <div class="plan-price">
+                            <span class="currency">₩</span>
+                            <span class="amount">150,000</span>
+                            <span class="period">/월</span>
+                        </div>
+                        <p class="plan-description">대기업을 위한 맞춤형 솔루션</p>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">무제한 변환</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">맞춤형 템플릿</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">전담 매니저</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">온프레미스 설치</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✅</span>
+                            <span class="feature-text">SLA 보장</span>
+                        </div>
+                    </div>
+                    <button class="plan-button" onclick="window.location.href='/register'">
+                        문의하기
+                    </button>
+                </div>
+            </div>
+            
+            <div class="pricing-guarantee">
+                <div class="guarantee-item">
+                    <span class="guarantee-icon">🛡️</span>
+                    <span class="guarantee-text">30일 무조건 환불 보장</span>
+                </div>
+                <div class="guarantee-item">
+                    <span class="guarantee-icon">🔒</span>
+                    <span class="guarantee-text">데이터 보안 100% 보장</span>
+                </div>
+                <div class="guarantee-item">
+                    <span class="guarantee-icon">⚡</span>
+                    <span class="guarantee-text">99.9% 가동률 보장</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA 섹션 -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">지금 바로 시작하세요!</h2>
+                <p class="cta-subtitle">1개월 무료 체험으로 로●하 Tax의 강력함을 경험해보세요</p>
+                <div class="cta-actions">
+                    <button class="cta-button primary" onclick="window.location.href='/register'">
+                        <span class="btn-icon">🚀</span>
+                        <span class="btn-text">무료로 시작하기</span>
+                    </button>
+                    <button class="cta-button secondary" onclick="window.location.href='/conversion'">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">바로 체험하기</span>
+                    </button>
+                    <button class="cta-button tertiary" onclick="document.querySelector('.company-section').scrollIntoView({behavior: 'smooth'})">
+                        <span class="btn-icon">📞</span>
+                        <span class="btn-text">상담 문의</span>
+                    </button>
+                </div>
+                <div class="cta-guarantee">
+                    <span class="guarantee-icon">🛡️</span>
+                    <span class="guarantee-text">30일 무조건 환불 보장</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-icon">⚡</span>
+                        <span class="logo-text">로●하 Tax</span>
+                    </div>
+                    <p class="footer-description">로●하 Tax - 로.하로 쉽게! AI 기반 자동 전자세금계산서 변환 서비스</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4 class="link-title">서비스</h4>
+                        <a href="#" class="link-item">기능 소개</a>
+                        <a href="#" class="link-item">요금제</a>
+                        <a href="#" class="link-item">API 문서</a>
+                    </div>
+                    <div class="link-group">
+                        <h4 class="link-title">지원</h4>
+                        <a href="#" class="link-item">고객센터</a>
+                        <a href="#" class="link-item">FAQ</a>
+                        <a href="#" class="link-item">문의하기</a>
+                    </div>
+                    <div class="link-group">
+                        <h4 class="link-title">회사</h4>
+                        <a href="#" class="link-item">회사 소개</a>
+                        <a href="#" class="link-item">채용</a>
+                        <a href="#" class="link-item">개인정보처리방침</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-info">
+                    <span>사업자번호: 213-12-99908</span>
+                    <span>주소: 인천광역시 연수구 옥련동308-1 1층 2호</span>
+                    <span>고객센터: 032-833-4309</span>
+                    <span>이메일: kweon4309@naver.com</span>
+                </div>
+                <div class="footer-copyright">
+                    <span>© 2025 로●하 Tax. All rights reserved.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/homepage.js"></script>
+    <script src="/static/js/components/video_player.js"></script>
+</body>
+</html>

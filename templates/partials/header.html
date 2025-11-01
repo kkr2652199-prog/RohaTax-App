@@ -1,0 +1,23 @@
+<header style="backdrop-filter:saturate(120%) blur(6px);background:var(--color-surface-elev);padding:14px 0;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+  <div style="max-width:1200px;margin:0 auto;padding:0 var(--spacing-md);">
+    <nav>
+      <ul style="list-style:none;display:flex;gap:30px;justify-content:center;margin:0;padding:0;">
+        <li><a href="#home">{{ t('home.nav.home','홈') }}</a></li>
+        <li><a href="#features">{{ t('home.nav.features','기능') }}</a></li>
+        <li><a href="#pricing">{{ t('home.nav.pricing','요금') }}</a></li>
+        <li><a href="#contact">{{ t('home.nav.contact','문의') }}</a></li>
+        {% if session.get('user_id') %}
+        <li><a href="/logout">로그아웃</a></li>
+        <li><a href="/profile/edit" style="background:var(--color-accent);color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:600;">고객정보 수정</a></li>
+        {% else %}
+        <li><a href="/login">{{ t('home.nav.login','로그인') }}</a></li>
+        <li><a href="/register">{{ t('home.nav.register','회원가입') }}</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% if session.get('is_admin') %}
+  <a href="/admin" style="position:fixed;top:12px;right:12px;background:#2c3e50;color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;text-decoration:none;z-index:9999;">관리자 대시보드</a>
+  {% endif %}
+</header>
+
