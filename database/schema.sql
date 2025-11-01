@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   representative_name TEXT, -- 대표자명
   phone TEXT, -- 휴대폰번호
   address TEXT, -- 사업자 주소
+  business_type TEXT, -- 업태
+  business_category TEXT, -- 종목
   plan_type TEXT NOT NULL DEFAULT 'free',
   used_count INTEGER NOT NULL DEFAULT 0,
   monthly_limit INTEGER NOT NULL DEFAULT 50,
