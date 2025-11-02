@@ -5,7 +5,6 @@
 
 import os
 import pandas as pd
-import time
 from typing import Dict, List, Any, Optional
 import logging
 
@@ -23,6 +22,10 @@ from .engine_processor import (
     RecipientPipeline,
     RecipientPipelineError,
     RecipientPipelineResult,
+    StatsCollector,
+    create_error_response,
+    create_success_response,
+    get_conversion_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,24 +99,7 @@ class ConversionEngine:
             }
         """
         conversion_log = []
-        
-        # 📊 상세 통계 수집을 위한 변수 초기화
-        start_time = time.time()
-        detailed_stats = {
-            'total_count': 0,
-            'success_rate': 0,
-            'rows_processed': 0,
-            'files_generated': 0,
-            'vat_included_count': 0,
-            'vat_zero_count': 0,
-            'total_supply_amount': 0,
-            'total_tax_amount': 0,
-            'email_auto_fixed_count': 0,
-            'business_number_auto_fixed_count': 0,
-            'perfect_info_count': 0,
-            'processing_time': 0,
-            'per_second': 0
-        }
+        stats_collector = StatsCollector()
         
         try:
             conversion_log.append("변환 프로세스 시작")
@@ -128,7 +114,7 @@ class ConversionEngine:
             if user_info:
                 conversion_log.append("기본 사용자 정보 검증")
                 if not user_info.get('business_number') or not user_info.get('company_name'):
-                    return self._create_error_response("필수 사용자 정보가 누락되었습니다", conversion_log)
+                    return create_error_response("필수 사용자 정보가 누락되었습니다", conversion_log)
                 conversion_log.append("기본 사용자 정보 검증 완료")
             
             # ===== 명확한 데이터 전달 구조 =====
@@ -141,9 +127,9 @@ class ConversionEngine:
             
             if parsed_data['parsing_status'] != 'success':
                 self.logger.error(f"[CONVERSION] 파일 파싱 실패: {parsed_data.get('error_message', '알 수 없는 오류')}")
-                return self._create_error_response(
+                return create_error_response(
                     f"파일 파싱 실패: {parsed_data.get('error_message', '알 수 없는 오류')}",
-                    conversion_log
+                    conversion_log,
                 )
             
             conversion_log.append(f"파일 파싱 완료: {parsed_data['total_rows']}행")
@@ -159,11 +145,11 @@ class ConversionEngine:
                 )
             except RecipientPipelineError as exc:
                 self.logger.error("[CONVERSION] 수신자 파이프라인 오류: %s", exc)
-                return self._create_error_response(str(exc), conversion_log)
+                return create_error_response(str(exc), conversion_log)
 
             recipients = pipeline_result.recipients
             conversion_log.extend(pipeline_result.log_entries)
-            detailed_stats.update(pipeline_result.detailed_stats)
+            stats_collector.merge(pipeline_result.detailed_stats)
             extraction_summary = pipeline_result.extraction_summary
             
             conversion_log.append(f"업종별 절대지침 적용 완료: {len(recipients)}건")
@@ -181,6 +167,7 @@ class ConversionEngine:
                 issue_date=issue_date,
                 file_name=file_name,
             )
+            stats_collector.mark_files_generated(len(result_files))
             
             conversion_log.append(f"홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
             self.logger.info(f"✅ [CONVERSION] 홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
@@ -193,8 +180,8 @@ class ConversionEngine:
             self.logger.info("🎉 [CONVERSION] 변환 프로세스 완료")
             
             # 📊 최종 통계 완성
-            end_time = time.time()
-            execution_time = round(end_time - start_time, 2)
+            final_stats = stats_collector.finalize(total_count=len(recipients))
+            execution_time = final_stats.get('processing_time', 0)
             
             # 데이터베이스에 변환 결과 로깅
             db_manager.log_conversion({
@@ -202,17 +189,13 @@ class ConversionEngine:
                 'file_size': os.path.getsize(uploaded_file_path) if os.path.exists(uploaded_file_path) else 0,
                 'recipient_count': len(recipients),
                 'success': True,
-                'execution_time': execution_time,  # 실행 시간 기록
+                'execution_time': execution_time,
                 'user_id': user_info.get('user_id') if user_info else None
             })
-            detailed_stats['processing_time'] = round(end_time - start_time, 2)
-            detailed_stats['files_generated'] = len(result_files)
-            if detailed_stats['processing_time'] > 0:
-                detailed_stats['per_second'] = round(detailed_stats['total_count'] / detailed_stats['processing_time'], 1)
             
             # 📊 상세 통계 계산
-            processing_time = time.time() - start_time
-            per_second = len(recipients) / processing_time if processing_time > 0 else 0
+            processing_time = final_stats.get('processing_time', 0)
+            per_second = final_stats.get('per_second', 0)
             
             self.logger.info(f"📊 [CONVERSION] 상세 통계 계산 완료:")
             self.logger.info(f"   - 처리 시간: {processing_time:.2f}초")
@@ -220,15 +203,13 @@ class ConversionEngine:
             self.logger.info(f"   - 추출된 공급받는자: {len(recipients)}건")
             self.logger.info(f"   - 생성된 파일: {len(result_files)}개")
             
-            return {
-                'success': True,
-                'files': result_files,
-                'total_recipients': len(recipients),
-                'extraction_summary': extraction_summary,
-                'conversion_log': conversion_log,
-                'recipients_preview': recipients[:5],  # 처음 5건 미리보기
-                'detailed_stats': detailed_stats  # 📊 상세 통계 추가
-            }
+            return create_success_response(
+                result_files=result_files,
+                recipients=recipients,
+                extraction_summary=extraction_summary,
+                conversion_log=conversion_log,
+                detailed_stats=final_stats,
+            )
             
         except Exception as e:
             self.logger.error(f"❌ [CONVERSION] 변환 프로세스 오류: {str(e)}")
@@ -245,9 +226,9 @@ class ConversionEngine:
                 'user_id': user_info.get('user_id') if user_info else None
             })
             
-            return self._create_error_response(
+            return create_error_response(
                 f"변환 프로세스 중 오류 발생: {str(e)}",
-                conversion_log
+                conversion_log,
             )
     
     def _fill_hometax_template_simple(self, recipients: List[Dict[str, Any]], 
@@ -266,21 +247,21 @@ class ConversionEngine:
         )
     
     def _fill_hometax_template(self, valid_data: List[Dict[str, Any]], 
-                              supplier_info: Dict[str, str], 
-                              template_id: str,
-                              issue_date: str = None,
-                              file_name: str = None) -> List[str]:
-         """이전 내부 메서드 호환성을 위해 템플릿 작성기 호출을 위임."""
- 
-         return self.template_writer.fill_templates(
-             valid_data,
-                    supplier_info=supplier_info, 
-                    template_id=template_id,
-                    issue_date=issue_date,
-             file_name=file_name,
-         )
- 
-     # 나머지 세부 구현은 HometaxTemplateWriter에 위임된다.
+                               supplier_info: Dict[str, str], 
+                               template_id: str,
+                               issue_date: str = None,
+                               file_name: str = None) -> List[str]:
+        """이전 내부 메서드 호환성을 위해 템플릿 작성기 호출을 위임."""
+
+        return self.template_writer.fill_templates(
+            valid_data,
+            supplier_info=supplier_info,
+            template_id=template_id,
+            issue_date=issue_date,
+            file_name=file_name,
+        )
+
+    # 나머지 세부 구현은 HometaxTemplateWriter에 위임된다.
 
     def convert_to_hometax_template(
         self,
@@ -335,37 +316,7 @@ class ConversionEngine:
             "supplier_business_type": raw_supplier_info.get("supplier_business_type", ""),
             "supplier_business_category": raw_supplier_info.get("supplier_business_category", ""),
         }
-    
-    def _create_error_response(self, error_message: str, conversion_log: List[str]) -> Dict[str, Any]:
-        """오류 응답 생성"""
-        return {
-            'success': False,
-            'error_message': error_message,
-            'files': [],
-            'total_recipients': 0,
-            'extraction_summary': {},
-            'amount_summary': {},
-            'conversion_log': conversion_log
-        }
-    
-    def get_conversion_status(self, conversion_result: Dict[str, Any]) -> Dict[str, Any]:
-        """변환 결과 상태 요약"""
-        if not conversion_result['success']:
-            return {
-                'status': 'failed',
-                'message': conversion_result.get('error_message', '변환 실패'),
-                'files_count': 0,
-                'recipients_count': 0
-            }
-        
-        return {
-            'status': 'success',
-            'message': '변환 완료',
-            'files_count': len(conversion_result.get('files', [])),
-            'recipients_count': conversion_result.get('total_recipients', 0),
-            'extraction_rate': conversion_result.get('extraction_summary', {}).get('extraction_rate', 0),
-            'total_amount': conversion_result.get('amount_summary', {}).get('total_amount', 0)
-        }
+
 
 # 테스트용 함수
 def test_conversion_engine():
@@ -410,7 +361,7 @@ def test_conversion_engine():
         print(f"{i}. {data}")
     
     # 변환 상태 확인
-    status = engine.get_conversion_status({'success': True, 'files': ['test.xlsx'], 'total_recipients': len(matched_data)})
+    status = get_conversion_status({'success': True, 'files': ['test.xlsx'], 'total_recipients': len(matched_data)})
     print(f"\n변환 상태: {status}")
 
 if __name__ == "__main__":
