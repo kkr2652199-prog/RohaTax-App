@@ -1236,6 +1236,7 @@ class RecipientExtractor:
             self.logger.info("🎯 특별대우: 1순위 결과를 2순위 방식으로 재처리 시작 (5형제 우선 검열)")
             
             enhanced_recipients = []
+            column_names = [str(col).strip() for col in df.columns]
             
             for recipient in first_priority_recipients:
                 # 1순위 결과를 기반으로 2순위 검열 방식 적용
@@ -1348,14 +1349,25 @@ class RecipientExtractor:
                     for idx, row in df.iterrows():
                         if enhanced_recipient.get('상호') and str(row.get('가맹점', '')).strip():
                             if enhanced_recipient['상호'] in str(row.get('가맹점', '')):
-                                # 2순위 방식으로 대표자명 추출
+                                # 2순위 방식으로 대표자명 추출 (우선순위 키워드 활용)
+                                representative_candidate = extract_representative_simple(row, column_names)
+                                if representative_candidate and self.second_priority_handler._is_valid_representative_name(representative_candidate):
+                                    enhanced_recipient['대표명'] = representative_candidate
+                                    self.logger.info(
+                                        "✅ 특별대우 대표자명 우선순위 추출: '%s'",
+                                        representative_candidate,
+                                    )
+                                    found_match = True
+                                    break  # ← 무한 루프 방지
+
+                                # 최후의 수단: 등록자명 컬럼 활용 (유효성 검증 후 적용)
                                 representative_raw = str(row.get('등록자명', '')).strip()
-                                if representative_raw and representative_raw != 'nan':
+                                if representative_raw and representative_raw.lower() not in {'nan', 'none', 'null', ''}:
                                     if self.second_priority_handler._is_valid_representative_name(representative_raw):
                                         representative = field_extractors.extract_representative(representative_raw, row)
                                         if representative:
                                             enhanced_recipient['대표명'] = representative
-                                            self.logger.info(f"✅ 특별대우 대표자명 추출: '{representative_raw}' → '{representative}'")
+                                            self.logger.info(f"✅ 특별대우 대표자명(등록자명 활용) 추출: '{representative_raw}' → '{representative}'")
                                             found_match = True
                                             break  # ← 무한 루프 방지
                     
