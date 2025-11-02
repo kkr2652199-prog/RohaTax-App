@@ -26,6 +26,8 @@ from .engine_processor import (
     create_error_response,
     create_success_response,
     get_conversion_status,
+    ConversionContextManager,
+    ContextValidationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,7 @@ class ConversionEngine:
             extractor_factory=RecipientExtractor,
             logger=self.logger,
         )
+        self.context_manager = ConversionContextManager(logger=self.logger)
         
         # 지능앱 핵심 기술: 절대지침 시스템 초기화
         self.absolute_guideline_loader = get_absolute_guideline_loader()
@@ -81,52 +84,50 @@ class ConversionEngine:
                     user_info: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         전체 변환 프로세스 실행
-        
-        Args:
-            uploaded_file_path: 업로드된 파일 경로
-            supplier_info: 공급자 정보 (유저 정보)
-            template_id: 템플릿 ID
-            
-        Returns:
-            Dict: 변환 결과
-            {
-                'success': bool,
-                'files': List[str],  # 생성된 파일 경로들
-                'total_recipients': int,
-                'extraction_summary': Dict,
-                'amount_summary': Dict,
-                'conversion_log': List[str]
-            }
         """
-        conversion_log = []
+        conversion_log: List[str] = []
         stats_collector = StatsCollector()
-        
+        conversion_log.append("변환 프로세스 시작")
+
+        sanitized_user_info = user_info
+
         try:
-            conversion_log.append("변환 프로세스 시작")
-            
-            # ===== 단순화된 변환 프로세스 =====
+            context = self.context_manager.prepare(
+                uploaded_file_path=uploaded_file_path,
+                supplier_info=supplier_info,
+                template_id=template_id,
+                industry_type=industry_type,
+                issue_date=issue_date,
+                file_name=file_name,
+                user_info=user_info,
+                conversion_log=conversion_log,
+            )
+
+            supplier_info = context.supplier_info
+            template_id = context.template_id
+            issue_date = context.issue_date
+            file_name = context.file_name
+            sanitized_user_info = context.user_info
+            industry = context.industry
+
             self.logger.info("[CONVERSION] 변환 프로세스 시작")
             self.logger.info(f"[CONVERSION] 파일 경로: {uploaded_file_path}")
-            self.logger.info(f"[CONVERSION] 사용자 ID: {user_info.get('user_id') if user_info else 'None'}")
-            self.logger.info(f"[CONVERSION] 업종 타입: {industry_type or 'delivery'}")
-            
-            # 기본 사용자 정보 검증만 수행
-            if user_info:
-                conversion_log.append("기본 사용자 정보 검증")
-                if not user_info.get('business_number') or not user_info.get('company_name'):
-                    return create_error_response("필수 사용자 정보가 누락되었습니다", conversion_log)
-                conversion_log.append("기본 사용자 정보 검증 완료")
-            
-            # ===== 명확한 데이터 전달 구조 =====
+            self.logger.info(
+                f"[CONVERSION] 사용자 ID: {sanitized_user_info.get('user_id') if sanitized_user_info else 'None'}"
+            )
+            self.logger.info(f"[CONVERSION] 업종 타입: {industry}")
+
             self.logger.info("명확한 데이터 전달 구조 적용 시작")
             
-            # 1단계: 파일 파싱
             conversion_log.append("1단계: 파일 파싱 시작")
             self.logger.info("[CONVERSION] 1단계: 파일 파싱 시작")
             parsed_data = self.file_parser.parse_file(uploaded_file_path)
             
             if parsed_data['parsing_status'] != 'success':
-                self.logger.error(f"[CONVERSION] 파일 파싱 실패: {parsed_data.get('error_message', '알 수 없는 오류')}")
+                self.logger.error(
+                    "[CONVERSION] 파일 파싱 실패: %s",
+                    parsed_data.get('error_message', '알 수 없는 오류'),
+                )
                 return create_error_response(
                     f"파일 파싱 실패: {parsed_data.get('error_message', '알 수 없는 오류')}",
                     conversion_log,
@@ -135,13 +136,12 @@ class ConversionEngine:
             conversion_log.append(f"파일 파싱 완료: {parsed_data['total_rows']}행")
             self.logger.info(f"[CONVERSION] 파일 파싱 완료: {parsed_data['total_rows']}행")
             
-            # 2단계: 업종별 절대지침 적용 (5가지 컬럼 찾기, 6번 7번 컬럼 추출)
             conversion_log.append("2단계: 업종별 절대지침 적용 시작")
             self.logger.info("[CONVERSION] 2단계: 업종별 절대지침 적용 시작")
             try:
                 pipeline_result: RecipientPipelineResult = self.recipient_pipeline.run(
                     parsed_data=parsed_data,
-                    industry_type=industry_type,
+                    industry_type=industry,
                 )
             except RecipientPipelineError as exc:
                 self.logger.error("[CONVERSION] 수신자 파이프라인 오류: %s", exc)
@@ -154,12 +154,12 @@ class ConversionEngine:
             
             conversion_log.append(f"업종별 절대지침 적용 완료: {len(recipients)}건")
             
-            # 3단계: 공급받는자 통합지침 적용 (템플릿 기입 전용)
             conversion_log.append("3단계: 공급받는자 통합지침 적용 시작")
             self.logger.info("👥 [CONVERSION] 3단계: 공급받는자 통합지침 적용 시작")
-            self.logger.info(f"📊 [CONVERSION] 추출 대상 데이터: {len(parsed_data.get('data', []))}행")
-            
-            # 추출된 데이터를 공급받는자 통합지침에 전달하여 템플릿 기입
+            self.logger.info(
+                f"📊 [CONVERSION] 추출 대상 데이터: {len(parsed_data.get('data', []))}행"
+            )
+
             result_files = self.template_writer.fill_templates_simple(
                 recipients=recipients,
                 supplier_info=supplier_info,
@@ -170,34 +170,32 @@ class ConversionEngine:
             stats_collector.mark_files_generated(len(result_files))
             
             conversion_log.append(f"홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
-            self.logger.info(f"✅ [CONVERSION] 홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
+            self.logger.info(
+                f"✅ [CONVERSION] 홈텍스 템플릿 기입 완료: {len(result_files)}개 파일"
+            )
             
-            # 4단계: 결과 요약
             conversion_log.append("4단계: 결과 요약 시작")
             self.logger.info("📋 [CONVERSION] 4단계: 결과 요약 시작")
             
             conversion_log.append("변환 프로세스 완료")
             self.logger.info("🎉 [CONVERSION] 변환 프로세스 완료")
             
-            # 📊 최종 통계 완성
             final_stats = stats_collector.finalize(total_count=len(recipients))
             execution_time = final_stats.get('processing_time', 0)
             
-            # 데이터베이스에 변환 결과 로깅
             db_manager.log_conversion({
                 'filename': os.path.basename(uploaded_file_path),
                 'file_size': os.path.getsize(uploaded_file_path) if os.path.exists(uploaded_file_path) else 0,
                 'recipient_count': len(recipients),
                 'success': True,
                 'execution_time': execution_time,
-                'user_id': user_info.get('user_id') if user_info else None
+                'user_id': sanitized_user_info.get('user_id') if sanitized_user_info else None,
             })
             
-            # 📊 상세 통계 계산
             processing_time = final_stats.get('processing_time', 0)
             per_second = final_stats.get('per_second', 0)
             
-            self.logger.info(f"📊 [CONVERSION] 상세 통계 계산 완료:")
+            self.logger.info("📊 [CONVERSION] 상세 통계 계산 완료:")
             self.logger.info(f"   - 처리 시간: {processing_time:.2f}초")
             self.logger.info(f"   - 초당 처리 건수: {per_second:.2f}건/초")
             self.logger.info(f"   - 추출된 공급받는자: {len(recipients)}건")
@@ -210,27 +208,29 @@ class ConversionEngine:
                 conversion_log=conversion_log,
                 detailed_stats=final_stats,
             )
-            
+
+        except ContextValidationError as exc:
+            return create_error_response(str(exc), conversion_log)
         except Exception as e:
-            self.logger.error(f"❌ [CONVERSION] 변환 프로세스 오류: {str(e)}")
+            self.logger.error("❌ [CONVERSION] 변환 프로세스 오류: %s", e)
             conversion_log.append(f"❌ 변환 프로세스 오류: {str(e)}")
             
-            # 에러를 데이터베이스에 로깅
             import traceback
+
             db_manager.log_error({
                 'filename': os.path.basename(uploaded_file_path) if uploaded_file_path else 'unknown',
                 'error_type': 'ConversionEngineError',
                 'error_message': str(e),
                 'stack_trace': traceback.format_exc(),
                 'severity': 'ERROR',
-                'user_id': user_info.get('user_id') if user_info else None
+                'user_id': sanitized_user_info.get('user_id') if sanitized_user_info else None,
             })
             
             return create_error_response(
                 f"변환 프로세스 중 오류 발생: {str(e)}",
                 conversion_log,
             )
-    
+
     def _fill_hometax_template_simple(self, recipients: List[Dict[str, Any]], 
                                      supplier_info: Dict[str, str], 
                                      template_id: str,
@@ -247,17 +247,17 @@ class ConversionEngine:
         )
     
     def _fill_hometax_template(self, valid_data: List[Dict[str, Any]], 
-                               supplier_info: Dict[str, str], 
-                               template_id: str,
-                               issue_date: str = None,
-                               file_name: str = None) -> List[str]:
+                              supplier_info: Dict[str, str], 
+                              template_id: str,
+                              issue_date: str = None,
+                              file_name: str = None) -> List[str]:
         """이전 내부 메서드 호환성을 위해 템플릿 작성기 호출을 위임."""
 
         return self.template_writer.fill_templates(
             valid_data,
-            supplier_info=supplier_info,
-            template_id=template_id,
-            issue_date=issue_date,
+                    supplier_info=supplier_info, 
+                    template_id=template_id,
+                    issue_date=issue_date,
             file_name=file_name,
         )
 
