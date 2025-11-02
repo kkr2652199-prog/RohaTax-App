@@ -209,6 +209,11 @@ if 'api' not in app.blueprints:
 if 'gold_customers' not in app.blueprints:
     app.register_blueprint(gold_customers_bp)
 
+
+@app.route('/')
+def homepage():
+    return render_template('homepage.html')
+
 # API 엔드포인트
 @app.route('/api/test')
 def api_test():

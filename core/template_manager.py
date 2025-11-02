@@ -3,7 +3,8 @@
 """
 import os
 import json
-from typing import Dict, List, Optional
+import logging
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 
 class TemplateManager:
@@ -139,7 +140,52 @@ class TemplateManager:
         except Exception as e:
             print(f"템플릿 제거 실패: {e}")
             return False
-    
+
+    def fill_template(
+        self,
+        recipients: List[Dict[str, Any]],
+        supplier_info: Optional[Dict[str, Any]] = None,
+        template_id: str = "hometax_official",
+        issue_date: Optional[str] = None,
+        file_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """레거시 테스트 스크립트 호환을 위한 템플릿 작성 헬퍼."""
+
+        from .conversion_core import ConversionCore  # 지연 import로 순환 참조 방지
+        from .engine_processor import HometaxTemplateWriter
+
+        writer = HometaxTemplateWriter(
+            template_manager=self,
+            conversion_core=ConversionCore(),
+            logger=logging.getLogger(__name__),
+        )
+
+        try:
+            result_files = writer.fill_templates_simple(
+                recipients=recipients,
+                supplier_info=supplier_info or {},
+                template_id=template_id,
+                issue_date=issue_date,
+                file_name=file_name,
+            )
+
+            return {
+                "success": True,
+                "files": result_files,
+                "total_recipients": len(recipients),
+                "conversion_log": [f"Generated {len(result_files)} files."],
+            }
+
+        except Exception as exc:  # pragma: no cover - 레거시 경로 보호
+            logging.getLogger(__name__).error("fill_template 실패: %s", exc)
+            return {
+                "success": False,
+                "error_message": str(exc),
+                "files": [],
+                "total_recipients": 0,
+                "conversion_log": [f"Error: {exc}"],
+            }
+ 
     def _get_current_timestamp(self) -> str:
         """현재 시간 반환"""
         from datetime import datetime
