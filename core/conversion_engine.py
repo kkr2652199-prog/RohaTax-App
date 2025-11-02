@@ -5,11 +5,9 @@
 
 import os
 import pandas as pd
-import openpyxl
 import time
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 import logging
-from pathlib import Path
 
 # 부품들 import
 from .file_parser import FileParser
@@ -20,6 +18,7 @@ from .template_manager import TemplateManager
 from .conversion_core import ConversionCore
 from .guideline_manager import GuidelineManager
 from .absolute_guideline_loader import get_absolute_guideline_loader
+from .engine_processor import HometaxTemplateWriter
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +36,11 @@ class ConversionEngine:
         self.template_manager = TemplateManager()
         self.conversion_core = ConversionCore()
         self.guideline_manager = GuidelineManager()
+        self.template_writer = HometaxTemplateWriter(
+            template_manager=self.template_manager,
+            conversion_core=self.conversion_core,
+            logger=self.logger,
+        )
         
         # 지능앱 핵심 기술: 절대지침 시스템 초기화
         self.absolute_guideline_loader = get_absolute_guideline_loader()
@@ -192,7 +196,13 @@ class ConversionEngine:
             self.logger.info(f"📊 [CONVERSION] 추출 대상 데이터: {len(parsed_data.get('data', []))}행")
             
             # 추출된 데이터를 공급받는자 통합지침에 전달하여 템플릿 기입
-            result_files = self._fill_hometax_template_simple(recipients, supplier_info, template_id, issue_date, file_name)
+            result_files = self.template_writer.fill_templates_simple(
+                recipients=recipients,
+                supplier_info=supplier_info,
+                template_id=template_id,
+                issue_date=issue_date,
+                file_name=file_name,
+            )
             
             conversion_log.append(f"홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
             self.logger.info(f"✅ [CONVERSION] 홈텍스 템플릿 기입 완료: {len(result_files)}개 파일")
@@ -297,404 +307,86 @@ class ConversionEngine:
                                      template_id: str,
                                      issue_date: str = None,
                                      file_name: str = None) -> List[str]:
-        """
-        단순한 홈텍스 템플릿 기입 (공급받는자 통합지침 적용)
-        """
-        try:
-            # 파일 분할 (50개씩)
-            file_count = self.conversion_core.calculate_file_count(len(recipients))
-            result_files = []
-            
-            for file_index in range(file_count):
-                # 해당 파일의 데이터 범위 계산
-                start_idx, end_idx = self.conversion_core.get_supplier_range(file_index)
-                file_data = recipients[start_idx:end_idx]
-                
-                # 홈텍스 템플릿 생성
-                template_path = self._create_hometax_file_simple(
-                    data=file_data, 
+        """이전 내부 메서드 호환성을 위해 템플릿 작성기 호출을 위임."""
+
+        return self.template_writer.fill_templates_simple(
+            recipients=recipients,
                     supplier_info=supplier_info, 
-                    file_index=file_index,
                     template_id=template_id,
                     issue_date=issue_date,
-                    file_name=file_name
-                )
-                result_files.append(template_path)
-            
-            return result_files
-            
-        except Exception as e:
-            self.logger.error(f"단순 홈텍스 템플릿 기입 오류: {str(e)}")
-            raise
-    
-    def _create_hometax_file_simple(self, data: List[Dict[str, Any]], 
-                                   supplier_info: Dict[str, str], 
-                                   file_index: int,
-                                   template_id: str,
-                                   issue_date: str = None,
-                                   file_name: str = None) -> str:
-        """단순한 홈텍스 파일 생성 (공급받는자 통합지침 적용)"""
-        try:
-            wb = None
-            ws = None
-            # 공식 템플릿 로드
-            template_path = self.template_manager.get_template_path(template_id)
-            if not template_path:
-                raise RuntimeError(f"공식 템플릿을 찾을 수 없습니다: template_id={template_id}")
-            wb = openpyxl.load_workbook(template_path)
-            template_info = self.template_manager.get_template_info(template_id) or {}
-            sheet_name = '엑셀업로드양식'
-            if sheet_name not in wb.sheetnames:
-                fallback_sheet = template_info.get('sheet_name') or wb.active.title
-                if fallback_sheet in wb.sheetnames:
-                    sheet_name = fallback_sheet
-                else:
-                    raise RuntimeError(f"템플릿 시트를 찾을 수 없습니다: 요구='엑셀업로드양식', 보유={wb.sheetnames}")
-            ws = wb[sheet_name]
-            
-            # 실제 추출 건수만큼 공급자/절대값/데이터를 기입
-            data_len = len(data)
-            self.logger.info(f"단순 템플릿 기입 시작 - 추출 건수: {data_len}")
-            if data_len == 0:
-                self.logger.warning("유효한 공급받는자 데이터가 0건입니다.")
-            
-            # 공급자 정보: 최소 1행은 기입하여 템플릿 유효성을 보장
-            supplier_rows = max(1, data_len)
-            self._set_supplier_info(ws, supplier_info, num_rows=supplier_rows, issue_date=issue_date)
-            
-            # 공급받는자 데이터 기입 (7행부터)
-            self._fill_recipient_data_simple(ws, data)
-            
-            # 절대값 규칙 적용 (공급자 기입 범위와 동일)
-            self._apply_absolute_values(ws, num_rows=supplier_rows)
-            
-            # 파일 저장
-            output_dir = Path("output")
-            output_dir.mkdir(exist_ok=True)
-            
-            # 파일명 생성: 사용자 입력 파일명 사용하거나 기본값 사용
-            if file_name:
-                # 사용자 입력 파일명에서 확장자 제거 후 인덱스 추가
-                base_name = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
-                filename = f"{base_name}_{file_index + 1:02d}.xlsx"
-            else:
-                # 기본 파일명 사용
-                filename = f"hometax_bulk_{file_index + 1:02d}.xlsx"
-            
-            file_path = output_dir / filename
-            
-            wb.save(file_path)
-            self.logger.info(f"단순 홈텍스 파일 생성 완료: {file_path}")
-            
-            return str(file_path)
-            
-        except Exception as e:
-            self.logger.error(f"단순 홈텍스 파일 생성 오류: {str(e)}")
-            raise
-    
-    def _fill_recipient_data_simple(self, ws, data: List[Dict[str, Any]]):
-        """단순한 공급받는자 데이터 기입 (공급받는자 통합지침 적용)"""
-        start_row = 7
-        
-        for i, recipient in enumerate(data):
-            current_row = start_row + i
-            
-            # 공급받는자 통합지침: 표준화된 필드명 사용
-            biz_no = recipient.get('사업자등록번호', '')
-            store_name = recipient.get('상호', '')
-            rep_name = recipient.get('대표명', '')
-            address = recipient.get('사업장주소', '')
-            email = recipient.get('사업자이메일', '')
-            supply_amount = recipient.get('공급가액', 0) or 0
-            vat_amount = recipient.get('부가세', 0) or 0
-            
-            # 셀 기입 (홈텍스 템플릿 표준)
-            ws[f'K{current_row}'] = biz_no
-            ws[f'M{current_row}'] = store_name
-            ws[f'N{current_row}'] = rep_name
-            ws[f'O{current_row}'] = address
-            ws[f'R{current_row}'] = email
-            
-            ws[f'T{current_row}'] = supply_amount
-            ws[f'U{current_row}'] = vat_amount
-            ws[f'AB{current_row}'] = supply_amount
-            ws[f'AC{current_row}'] = vat_amount
-            
-            # 순서 보장 로깅 (처음 5건과 특정 순서)
-            if i < 5 or i in [49, 99, 149]:  # 1-5번째, 50번째, 100번째, 150번째
-                self.logger.info(f"고객 {i+1}번째 기입: {store_name} → {current_row}행 (공식: {start_row} + {i})")
-            
-            self.logger.debug(f"공급받는자 데이터 기입: 행 {current_row}, 상호: {store_name}, 금액: {supply_amount}/{vat_amount}")
+            file_name=file_name,
+        )
     
     def _fill_hometax_template(self, valid_data: List[Dict[str, Any]], 
                               supplier_info: Dict[str, str], 
                               template_id: str,
                               issue_date: str = None,
                               file_name: str = None) -> List[str]:
-        """
-        홈텍스 템플릿에 데이터 기입
-        공급받는자 핵심기술 절대지침에 따라 컬럼 매핑
-        """
-        try:
-            # 파일 분할 (50개씩)
-            file_count = self.conversion_core.calculate_file_count(len(valid_data))
-            result_files = []
-            
-            for file_index in range(file_count):
-                # 해당 파일의 데이터 범위 계산
-                start_idx, end_idx = self.conversion_core.get_supplier_range(file_index)
-                file_data = valid_data[start_idx:end_idx]
-                
-                # 홈텍스 템플릿 생성
-                template_path = self._create_hometax_file(
-                    data=file_data, 
+         """이전 내부 메서드 호환성을 위해 템플릿 작성기 호출을 위임."""
+ 
+         return self.template_writer.fill_templates(
+             valid_data,
                     supplier_info=supplier_info, 
-                    file_index=file_index,
                     template_id=template_id,
                     issue_date=issue_date,
-                    file_name=file_name
-                )
-                result_files.append(template_path)
-            
-            return result_files
-            
-        except Exception as e:
-            self.logger.error(f"홈텍스 템플릿 기입 오류: {str(e)}")
-            raise
-    
-    def _create_hometax_file(self, data: List[Dict[str, Any]], 
-                            supplier_info: Dict[str, str], 
-                            file_index: int,
-                            template_id: str,
-                            issue_date: str = None,
-                            file_name: str = None) -> str:
-        """개별 홈텍스 파일 생성
-        - 가능하면 공식 홈텍스 템플릿을 로드하여 그 안에 7행부터 기입
-        - 템플릿을 찾지 못하면 최소 스켈레톤을 생성
-        """
+             file_name=file_name,
+         )
+ 
+     # 나머지 세부 구현은 HometaxTemplateWriter에 위임된다.
+
+    def convert_to_hometax_template(
+        self,
+        parsed_data: Dict[str, Any],
+        recipients: List[Dict[str, Any]],
+        template_id: str = "hometax_official",
+        supplier_info: Optional[Dict[str, Any]] = None,
+        issue_date: Optional[str] = None,
+        file_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """레거시 테스트 스크립트 호환을 위한 간편 변환 헬퍼."""
+
+        normalized_supplier = self._normalize_supplier_info(
+            supplier_info or parsed_data.get("supplier_info") or {}
+        )
+
         try:
-            wb = None
-            ws = None
-            # 1) 공식 템플릿 로드 (강제)
-            template_path = self.template_manager.get_template_path(template_id)
-            if not template_path:
-                raise RuntimeError(f"공식 템플릿을 찾을 수 없습니다: template_id={template_id}")
-            wb = openpyxl.load_workbook(template_path)
-            template_info = self.template_manager.get_template_info(template_id) or {}
-            sheet_name = '엑셀업로드양식'
-            if sheet_name not in wb.sheetnames:
-                # 설정에 지정된 시트명 시도
-                fallback_sheet = template_info.get('sheet_name') or wb.active.title
-                if fallback_sheet in wb.sheetnames:
-                    sheet_name = fallback_sheet
-                else:
-                    raise RuntimeError(f"템플릿 시트를 찾을 수 없습니다: 요구='엑셀업로드양식', 보유={wb.sheetnames}")
-            ws = wb[sheet_name]
-            
-            # 실제 추출 건수만큼 공급자/절대값/데이터를 기입
-            data_len = len(data)
-            self.logger.info(f"템플릿 기입 시작 - 추출 건수: {data_len}")
-            if data_len == 0:
-                self.logger.warning("유효한 공급받는자 데이터가 0건입니다. 지침/매핑을 확인하세요.")
+            result_files = self.template_writer.fill_templates_simple(
+                recipients=recipients,
+                supplier_info=normalized_supplier,
+                template_id=template_id,
+                issue_date=issue_date,
+                file_name=file_name,
+            )
 
-            # 공급자 정보: 최소 1행은 기입하여 템플릿 유효성을 보장
-            supplier_rows = max(1, data_len)
-            self._set_supplier_info(ws, supplier_info, num_rows=supplier_rows, issue_date=issue_date)
-            
-            # 공급받는자 데이터 기입 (7행부터)
-            self._fill_recipient_data(ws, data)
-            
-            # 절대값 규칙 적용 (공급자 기입 범위와 동일)
-            self._apply_absolute_values(ws, num_rows=supplier_rows)
-            
-            # 파일 저장
-            output_dir = Path("output")
-            output_dir.mkdir(exist_ok=True)
-            
-            # 파일명 생성: 사용자 입력 파일명 사용하거나 기본값 사용
-            if file_name:
-                # 사용자 입력 파일명에서 확장자 제거 후 인덱스 추가
-                base_name = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
-                filename = f"{base_name}_{file_index + 1:02d}.xlsx"
-            else:
-                # 기본 파일명 사용
-                filename = f"hometax_bulk_{file_index + 1:02d}.xlsx"
-            
-            file_path = output_dir / filename
-            
-            wb.save(file_path)
-            self.logger.info(f"홈텍스 파일 생성 완료: {file_path}")
-            
-            return str(file_path)
-            
-        except Exception as e:
-            self.logger.error(f"홈텍스 파일 생성 오류: {str(e)}")
-            raise
-    
-    def _set_hometax_headers(self, ws):
-        """홈텍스 헤더 설정 (6행)"""
-        headers = {
-            'K': '사업자등록번호',
-            'M': '상호명', 
-            'N': '대표자명',
-            'O': '사업장주소',
-            'R': '이메일',
-            'T': '공급가액',
-            'U': '부가세',
-            'AB': '공급가액',
-            'AC': '부가세'
-        }
-        
-        for col, header in headers.items():
-            ws[f'{col}6'] = header
-    
-    def _set_supplier_info(self, ws, supplier_info: Dict[str, str], num_rows: int = 1, issue_date: str = None):
-        """공급자 정보 설정 (7행부터 num_rows만큼 반복 기입)
-        - 요구사항: 공급자 정보는 추출 건수만큼 동일하게 기입
-        - BG 열 절대값 '01'도 함께 기록
-        """
-        start_row = 7
-        end_row = start_row + max(0, num_rows - 1)
-
-        for row_num in range(start_row, end_row + 1):
-            # 세금일자 포맷 변환 (YYYY-MM-DD → YYYYMMDD)
-            tax_date = '20251001'  # 기본값
-            if issue_date:
-                try:
-                    # ISO 형식 (YYYY-MM-DD)을 YYYYMMDD로 변환
-                    from datetime import datetime
-                    date_obj = datetime.fromisoformat(issue_date)
-                    tax_date = date_obj.strftime('%Y%m%d')
-                except:
-                    # 변환 실패 시 기본값 사용
-                    tax_date = '20251001'
-            
-            supplier_mapping = {
-                'A': '01',  # 전자세금계산서 종류 (절대값)
-                'B': tax_date,  # 작성일자 (유저 지정)
-                'C': supplier_info.get('supplier_business_number', ''),
-                'D': '',  # 공급자 종사업장번호
-                'E': supplier_info.get('supplier_name', ''),
-                'F': supplier_info.get('supplier_representative', ''),
-                'G': supplier_info.get('supplier_address', ''),
-                'H': supplier_info.get('supplier_business_type', ''),
-                'I': supplier_info.get('supplier_business_category', ''),
-                'J': supplier_info.get('supplier_email', ''),
-                'W': '30',  # 일자1 (절대값)
-                'BG': '01'  # 절대값 (요구 반영)
+            return {
+                "success": True,
+                "files": result_files,
+                "total_recipients": len(recipients),
+                "conversion_log": [f"Generated {len(result_files)} files."],
             }
 
-            for col, value in supplier_mapping.items():
-                ws[f'{col}{row_num}'] = value
-                self.logger.debug(f"공급자 정보 기입: {col}{row_num} = {value}")
-    
-    def _fill_recipient_data(self, ws, data: List[Dict[str, Any]]):
-        """공급받는자 데이터 기입 (7행부터) - 다양한 키(지침별 별칭) 지원"""
-        def get_value(record: Dict[str, Any], aliases: List[str], default: Any = ""):
-            for key in aliases:
-                if key in record and record.get(key) not in [None, ""]:
-                    return record.get(key)
-            return default
+        except Exception as exc:  # pragma: no cover - 레거시 경로 보호
+            self.logger.error("convert_to_hometax_template 실패: %s", exc)
+            return {
+                "success": False,
+                "error_message": str(exc),
+                "files": [],
+                "total_recipients": 0,
+                "conversion_log": [f"Error: {exc}"],
+            }
 
-        # 1) 템플릿 전용 집계층: 부가세>0인 행만 사업자번호별 합산
-        grouped: Dict[str, Dict[str, Any]] = {}
-        for rec in data:
-            biz_no = get_value(rec, ['사업자등록번호', '등록번호', 'buyer_biz_no', 'business_number']).strip()
-            # 부가세가 0/없음이면 제외 (2순위 정책)
-            try:
-                vat_val = float(get_value(rec, ['부가세', '세액', 'vat', 'tax_amount'], 0) or 0)
-            except Exception:
-                vat_val = 0.0
-            if vat_val <= 0:
-                continue
+    def _normalize_supplier_info(self, raw_supplier_info: Dict[str, Any]) -> Dict[str, str]:
+        """템플릿 작성기에 전달하기 위해 공급자 정보를 정규화."""
 
-            try:
-                supply_val = float(get_value(rec, ['공급가액', '공급가액(1차)', 'supply_amount'], 0) or 0)
-            except Exception:
-                supply_val = 0.0
-
-            if biz_no not in grouped:
-                grouped[biz_no] = {
-                    '사업자등록번호': biz_no,
-                    '상호': get_value(rec, ['상호', '상호명', '업체명', '가맹점명', 'store_name', 'buyer_name']),
-                    '대표명': get_value(rec, ['대표명', '대표자', '대표자명', 'owner', 'representative']),
-                    '사업장주소': get_value(rec, ['사업장주소', '주소', '사업장 주소', 'address']),
-                    '사업자이메일': get_value(rec, ['사업자이메일', '이메일', 'email', 'email1']),
-                    '공급가액': 0.0,
-                    '부가세': 0.0,
-                }
-            grouped[biz_no]['공급가액'] = float(grouped[biz_no]['공급가액']) + supply_val
-            grouped[biz_no]['부가세'] = float(grouped[biz_no]['부가세']) + vat_val
-
-        # 집계 결과 리스트 (기존 순서 무관)
-        aggregated_data = []
-        for g in grouped.values():
-            g['요금합계'] = float(g['공급가액']) + float(g['부가세'])
-            aggregated_data.append(g)
-
-        start_row = 7
-
-        # 2) 집계된 데이터만 템플릿에 기입
-        for i, recipient in enumerate(aggregated_data):
-            current_row = start_row + i
-
-            # 필드 별칭 정의 (여러 지침/추출기 결과 호환)
-            biz_no = get_value(recipient, ['사업자등록번호', '등록번호', 'buyer_biz_no', 'business_number'])
-            store_name = get_value(recipient, ['상호', '상호명', '업체명', '가맹점명', 'store_name', 'buyer_name'])
-            rep_name = get_value(recipient, ['대표명', '대표자', '대표자명', 'owner', 'representative'])
-            address = get_value(recipient, ['사업장주소', '주소', '사업장 주소', 'address'])
-            email = get_value(recipient, ['사업자이메일', '이메일', 'email', 'email1'])
-
-            # 금액 필드 별칭 및 계산
-            supply_amount = get_value(recipient, ['공급가액', '공급가액(1차)', 'supply_amount'], 0) or 0
-            vat_amount = get_value(recipient, ['부가세', '세액', 'vat', 'tax_amount'], 0) or 0
-            total_fee = get_value(recipient, ['요금합계', '총액', '합계', 'total_amount'], 0) or 0
-
-            if not supply_amount and total_fee and vat_amount is not None:
-                try:
-                    supply_amount = float(total_fee) - float(vat_amount)
-                except Exception:
-                    pass
-
-            # 셀 기입
-            ws[f'K{current_row}'] = biz_no
-            ws[f'M{current_row}'] = store_name
-            ws[f'N{current_row}'] = rep_name
-            ws[f'O{current_row}'] = address
-            ws[f'R{current_row}'] = email
-
-            ws[f'T{current_row}'] = supply_amount
-            ws[f'U{current_row}'] = vat_amount
-            ws[f'AB{current_row}'] = supply_amount
-            ws[f'AC{current_row}'] = vat_amount
-
-            # 순서 보장 로깅 (처음 5건과 특정 순서)
-            if i < 5 or i in [49, 99, 149]:  # 1-5번째, 50번째, 100번째, 150번째
-                self.logger.info(f"고객 {i+1}번째 기입: {store_name} → {current_row}행 (공식: {start_row} + {i})")
-
-            self.logger.debug(f"공급받는자 데이터 기입: 행 {current_row}, 상호: {store_name}, 금액: {supply_amount}/{vat_amount}")
-    
-    def _apply_absolute_values(self, ws, num_rows: int = None):
-        """절대값 규칙 적용 (데이터 건수만큼만)
-        - A열: '01'
-        - W열: '30'
-        - BG열: '01' (요구 반영)
-        """
-        try:
-            start_row = 7
-            if num_rows is None:
-                end_row = ws.max_row
-            else:
-                end_row = start_row + max(0, num_rows - 1)
-
-            for row in range(start_row, end_row + 1):
-                ws[f'A{row}'] = '01'
-                ws[f'W{row}'] = '30'
-                ws[f'BG{row}'] = '01'
-
-            self.logger.debug(f"절대값 규칙 적용 완료: rows {start_row}-{end_row}")
-        except Exception as e:
-            self.logger.warning(f"절대값 규칙 적용 오류: {str(e)}")
+        return {
+            "supplier_name": raw_supplier_info.get("supplier_name", ""),
+            "supplier_representative": raw_supplier_info.get("supplier_representative", ""),
+            "supplier_business_number": raw_supplier_info.get("supplier_business_number", ""),
+            "supplier_address": raw_supplier_info.get("supplier_address", ""),
+            "supplier_email": raw_supplier_info.get("supplier_email", ""),
+            "supplier_business_type": raw_supplier_info.get("supplier_business_type", ""),
+            "supplier_business_category": raw_supplier_info.get("supplier_business_category", ""),
+        }
     
     def _create_error_response(self, error_message: str, conversion_log: List[str]) -> Dict[str, Any]:
         """오류 응답 생성"""
