@@ -18,7 +18,12 @@ from .template_manager import TemplateManager
 from .conversion_core import ConversionCore
 from .guideline_manager import GuidelineManager
 from .absolute_guideline_loader import get_absolute_guideline_loader
-from .engine_processor import HometaxTemplateWriter
+from .engine_processor import (
+    HometaxTemplateWriter,
+    RecipientPipeline,
+    RecipientPipelineError,
+    RecipientPipelineResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +44,11 @@ class ConversionEngine:
         self.template_writer = HometaxTemplateWriter(
             template_manager=self.template_manager,
             conversion_core=self.conversion_core,
+            logger=self.logger,
+        )
+        self.recipient_pipeline = RecipientPipeline(
+            guideline_manager=self.guideline_manager,
+            extractor_factory=RecipientExtractor,
             logger=self.logger,
         )
         
@@ -142,51 +152,19 @@ class ConversionEngine:
             # 2단계: 업종별 절대지침 적용 (5가지 컬럼 찾기, 6번 7번 컬럼 추출)
             conversion_log.append("2단계: 업종별 절대지침 적용 시작")
             self.logger.info("[CONVERSION] 2단계: 업종별 절대지침 적용 시작")
-            selected = self.guideline_manager.select_guideline(industry_type or 'delivery')
-            if not self.guideline_manager.is_guideline_ready():
-                self.logger.warning(f"[CONVERSION] 지침 미구현 상태로 진행: {selected.get('name') if selected else 'Unknown'} (industry={industry_type})")
-            
-            # 안전성 검증: selected가 None인 경우 처리
-            if selected is None:
-                self.logger.error("업종별 지침을 찾을 수 없습니다.")
-                return self._create_error_response("업종별 지침을 찾을 수 없습니다.", conversion_log)
-            
-            # 안전성 검증: selected가 딕셔너리가 아닌 경우 처리
-            if not isinstance(selected, dict):
-                self.logger.error(f"업종별 지침이 딕셔너리가 아닙니다: {type(selected)}")
-                return self._create_error_response("업종별 지침 형식이 올바르지 않습니다.", conversion_log)
-            
-            # 핵심 수정: 매번 새로운 RecipientExtractor 인스턴스 생성 (상태 초기화)
-            recipient_extractor = RecipientExtractor()
-            recipient_extractor.set_industry_guideline(industry_type or 'delivery', selected)
-            recipients = recipient_extractor.extract_recipients_simple(parsed_data, industry_type or 'delivery')
-            
-            if not recipients:
-                return self._create_error_response(
-                    "공급받는자 정보를 추출할 수 없습니다.",
-                    conversion_log
+            try:
+                pipeline_result: RecipientPipelineResult = self.recipient_pipeline.run(
+                    parsed_data=parsed_data,
+                    industry_type=industry_type,
                 )
-            
-            # 📊 통계 수집 (recipients에서 _stats 추출)
-            if recipients and '_stats' in recipients[0]:
-                stats = recipients[0]['_stats']
-                detailed_stats.update({
-                    'total_count': len(recipients),
-                    'success_rate': 100,  # 성공적으로 추출된 경우
-                    'rows_processed': stats.get('rows_processed', 0),
-                    'vat_included_count': stats.get('vat_included_count', 0),
-                    'vat_zero_count': stats.get('vat_zero_count', 0),
-                    'total_supply_amount': stats.get('total_supply_amount', 0),
-                    'total_tax_amount': stats.get('total_tax_amount', 0),
-                    'email_auto_fixed_count': stats.get('email_auto_fixed_count', 0),
-                    'business_number_auto_fixed_count': stats.get('business_number_auto_fixed_count', 0),
-                    'perfect_info_count': stats.get('perfect_info_count', 0),
-                    # 샘플 예시 전달 (있을 때만)
-                    'email_auto_fixed_sample_from': stats.get('email_auto_fixed_sample_from'),
-                    'email_auto_fixed_sample_to': stats.get('email_auto_fixed_sample_to'),
-                    'business_auto_fixed_sample_from': stats.get('business_auto_fixed_sample_from'),
-                    'business_auto_fixed_sample_to': stats.get('business_auto_fixed_sample_to')
-                })
+            except RecipientPipelineError as exc:
+                self.logger.error("[CONVERSION] 수신자 파이프라인 오류: %s", exc)
+                return self._create_error_response(str(exc), conversion_log)
+
+            recipients = pipeline_result.recipients
+            conversion_log.extend(pipeline_result.log_entries)
+            detailed_stats.update(pipeline_result.detailed_stats)
+            extraction_summary = pipeline_result.extraction_summary
             
             conversion_log.append(f"업종별 절대지침 적용 완료: {len(recipients)}건")
             
@@ -210,7 +188,6 @@ class ConversionEngine:
             # 4단계: 결과 요약
             conversion_log.append("4단계: 결과 요약 시작")
             self.logger.info("📋 [CONVERSION] 4단계: 결과 요약 시작")
-            extraction_summary = recipient_extractor.get_extraction_summary(recipients)
             
             conversion_log.append("변환 프로세스 완료")
             self.logger.info("🎉 [CONVERSION] 변환 프로세스 완료")
@@ -272,35 +249,6 @@ class ConversionEngine:
                 f"변환 프로세스 중 오류 발생: {str(e)}",
                 conversion_log
             )
-    
-    def _filter_valid_data(self, matched_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """업종별 지침에 따른 유효한 데이터 필터링"""
-        valid_data = []
-        
-        # 현재 적용된 업종별 지침 가져오기
-        current_guideline = self.recipient_extractor.get_current_guideline()
-        min_valid_fields = current_guideline.get('min_valid_fields', 3)
-        confidence_threshold = current_guideline.get('confidence_threshold', 0.3)
-        
-        for data in matched_data:
-            # 업종별 필수 항목 확인
-            required_fields = ['사업자등록번호', '상호', '대표명', '사업장주소', '사업자이메일']
-            
-            valid_fields = sum(1 for field in required_fields 
-                              if data.get(field, '').strip())
-            
-            # 업종별 최소 필드 수 확인
-            if valid_fields >= min_valid_fields:
-                # 신뢰도 확인 (있는 경우)
-                if 'confidence' in data:
-                    if data['confidence'] >= confidence_threshold:
-                        valid_data.append(data)
-                else:
-                    # 신뢰도가 없으면 그대로 통과
-                    valid_data.append(data)
-        
-        self.logger.info(f"유효 데이터 필터링: {len(matched_data)}건 → {len(valid_data)}건 (업종: {current_guideline.get('industry', 'unknown')}, 최소필드: {min_valid_fields}, 신뢰도: {confidence_threshold})")
-        return valid_data
     
     def _fill_hometax_template_simple(self, recipients: List[Dict[str, Any]], 
                                      supplier_info: Dict[str, str], 

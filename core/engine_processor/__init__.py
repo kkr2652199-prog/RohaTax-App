@@ -2,6 +2,13 @@
 
 from .base import EngineProcessor
 from .hometax_template_writer import HometaxTemplateWriter
+from .recipient_pipeline import RecipientPipeline, RecipientPipelineError, RecipientPipelineResult
 
-__all__ = ["EngineProcessor", "HometaxTemplateWriter"]
+__all__ = [
+    "EngineProcessor",
+    "HometaxTemplateWriter",
+    "RecipientPipeline",
+    "RecipientPipelineError",
+    "RecipientPipelineResult",
+]
 
