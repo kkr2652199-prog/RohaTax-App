@@ -548,7 +548,7 @@ class RecipientExtractionPipeline:
 
                 recipients.append(recipient_info)
 
-            self._log_stats(stats, parsed_data)
+            self._log_stats(stats, parsed_data, len(recipients))
             return recipients
 
         # 업종별 지침 설정
@@ -569,7 +569,58 @@ class RecipientExtractionPipeline:
         )
 
         # 통계 로그 출력
-        self._log_stats(stats, parsed_data)
+        self._log_stats(stats, parsed_data, len(enriched_recipients))
         return enriched_recipients
+
+
+    def _log_stats(
+        self, stats: Dict[str, Any], parsed_data: Dict[str, Any], recipient_count: int
+    ) -> None:
+        """공통 통계 로깅 헬퍼.
+
+        기존 `RecipientExtractor`가 수행하던 통계 출력 로직을 유지하면서,
+        파이프라인이 결과 요약을 기록하도록 한다.
+        """
+
+        rows_processed = stats.get("rows_processed", 0)
+        vat_included = stats.get("vat_included_count", 0)
+        vat_zero = stats.get("vat_zero_count", 0)
+        email_fixed = stats.get("email_auto_fixed_count", 0)
+        business_fixed = stats.get("business_number_auto_fixed_count", 0)
+
+        self.logger.info(
+            "📊 추출 통계: rows=%d, vat>0=%d, vat=0=%d, email_fix=%d, business_fix=%d",
+            rows_processed,
+            vat_included,
+            vat_zero,
+            email_fixed,
+            business_fixed,
+        )
+
+        supply_total = stats.get("total_supply_amount")
+        tax_total = stats.get("total_tax_amount")
+        if supply_total or tax_total:
+            self.logger.info(
+                "💰 금액 합계: 공급가액=%.2f, 부가세=%.2f",
+                supply_total or 0,
+                tax_total or 0,
+            )
+
+        perfect_info = stats.get("perfect_info_count", 0)
+        if perfect_info:
+            self.logger.info("✨ 완벽한 정보 행: %d", perfect_info)
+
+        guideline_name = self.get_current_guideline().get("name", "알 수 없는 지침")
+        selected_sheet = parsed_data.get("selected_sheet")
+        if not selected_sheet:
+            optimal = parsed_data.get("optimal_sheet") or {}
+            selected_sheet = optimal.get("sheet_name", "Unknown")
+
+        self.logger.info(
+            "지능앱 추출 완료: %d건 (지침: %s, 시트: %s)",
+            recipient_count,
+            guideline_name,
+            selected_sheet,
+        )
 
 
