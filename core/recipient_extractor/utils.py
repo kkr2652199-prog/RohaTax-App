@@ -178,22 +178,89 @@ def extract_store_name_simple(row: pd.Series, column_names: List[str]) -> str:
 def extract_representative_simple(row: pd.Series, column_names: List[str]) -> str:
     """대표자명 추출 (단순)"""
     import logging
+
     logger = logging.getLogger(__name__)
-    
-    # 디버깅: 체크 중인 컬럼명들 출력
+
     logger.info(f"🔍 대표자명 추출시도: 찾은 컬럼명들 {column_names}")
-    
-    for col_idx, col_name in enumerate(column_names):
-        # 더 많은 키워드 패턴 추가 (홈텍스 템플릿 고려)
-        representative_keywords = ['대표자', '대표자명', '대표', '성명', '이름', '공급받는자 대표자', '공급받는자 대표자명', '대표담당자', '대표 담당자', '담당자', '담당자명', '등록자명', '등록자']
-        
-        # 디버깅: 매칭 테스트
-        if any(keyword in col_name for keyword in representative_keywords):
-            logger.info(f"✅ 대표자명 키워드 매칭: '{col_name}' -> 키워드: {[k for k in representative_keywords if k in col_name]}")
-            value = str(row.iloc[col_idx]).strip()
-            if value and value != 'nan':
-                logger.info(f"✅ 대표자명 추출 성공: '{value}' (컬럼: '{col_name}')")
-                return value
+
+    # 다단계 우선순위 시스템: 필요 시 각 그룹에 키워드를 자유롭게 추가 가능
+    priority_groups = [
+        # 1순위: 가장 명확한 키워드 (완전 일치 수준)
+        [
+            '대표자명', '대표자 성명', '대표이사', '대표자 이름',
+            '대표자(한글)', '대표자(영문)', '대표자_한글', '대표자_영문',
+            '대표자 국문', '대표자 영문', '대표자명(국문)', '대표자명(영문)',
+            '공급받는자성함', '공급받는자이름', '공급받는자 대표명', '공급받는자대표',
+            '사장님성함', '사장님이름', '업체대표님', '업체성함', '업체대표이름'
+        ],
+        # 2순위: 사람 이름일 확률이 높은 일반 표현
+        [
+            '대표', '성명', '이름', '대표님', '사장', '사장님', '사장명',
+            '사업주', '사업주명', '대표자(대표)', '대표자(국문)', '대표자(영문)',
+            '대표자명 대표', '대표자명 국문', '대표자명 영문', '대표자명(대표)',
+            'CEO', 'ceo', 'owner', '대표성명', '대표명'
+        ],
+        # 3순위: 담당자/점장 등 역할 기반 표현
+        [
+            '담당자', '담당자명', '담당자 성명', '담당자 이름', '담당부서',
+            '점장', '점장명', '매니저', '관리자', '관리책임자', '지배인',
+            'Contact Person', 'contact person', 'contact_person', 'contact',
+            '대표2', '부대표', '관리 담당자', '현장 관리자', '업주'
+        ],
+        # 4순위: 작성자/등록자 등 가장 낮은 확률의 표현
+        [
+            '등록자', '등록자명', '작성자', '작성자명', '입력자', '기재자',
+            '수정자', '변경자', '오너', '오너명'
+        ],
+    ]
+
+    def _find_value_by_keywords(keywords: List[str]) -> Optional[str]:
+        import re
+
+        invalid_markers = {
+            '', 'nan', 'none', 'null', '-', '없음', '미상', 'n/a', 'na', '해당없음', '해당 없음'
+        }
+
+        matched_columns = []
+        for col_idx, col_name in enumerate(column_names):
+            col_name_str = str(col_name).replace('\n', ' ').strip()
+            matched = [keyword for keyword in keywords if keyword.lower() in col_name_str.lower()]
+            if matched:
+                value = str(row.iloc[col_idx]).strip()
+                if not value or value.lower() in invalid_markers:
+                    continue
+
+                # 대괄호로 둘러싸인 플레이스홀더([상점직접], [푸드테크] 등) 제외
+                if re.match(r'^\[[^\]]+\]$', value):
+                    logger.debug("⚠️ 대표자명 플레이스홀더 제외: %s", value)
+                    continue
+
+                # 최소 2글자 이상, 한글/영문 포함 여부 확인
+                if len(value) < 2 or not re.search(r'[가-힣a-zA-Z]', value):
+                    logger.debug("⚠️ 대표자명 유효성 미달: %s", value)
+                    continue
+
+                matched_columns.append((col_name_str, value, matched))
+        if matched_columns:
+            # 가장 먼저 나온 컬럼을 사용 (엑셀 좌→우 우선)
+            col_name, value, matched = matched_columns[0]
+            logger.info(
+                "✅ 대표자명 키워드 매칭: '%s' -> 키워드: %s (값: '%s')",
+                col_name,
+                matched,
+                value,
+            )
+            return value
+        return None
+
+    # 우선순위를 순차적으로 적용하며 대표자명 탐색
+    for order, keywords in enumerate(priority_groups, start=1):
+        logger.debug("대표자명 추출 %d순위 검사: %s", order, keywords)
+        extracted = _find_value_by_keywords(keywords)
+        if extracted:
+            logger.info("🎯 대표자명 %d순위에서 확정: %s", order, extracted)
+            return extracted
+
     logger.warning(f"❌ 대표자명을 찾을 수 없습니다. 컬럼: {len(column_names)}개 확인됨")
     return ""
 
