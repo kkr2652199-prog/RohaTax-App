@@ -15,6 +15,8 @@ from .parallel_processor import ParallelFileProcessor, ProcessingMode, process_f
 from .file_parser_utils.data_processor import DataProcessor
 from .file_parser_utils.header_analyzer import HeaderAnalyzer
 from .file_parser_utils.header_locator import HeaderLocator
+from .file_parser_utils.industry_rules import IndustryRules
+from .file_parser_utils.reporting import ReportingUtils
 from .file_parser_utils.validators import FileUploadValidator
 
 logger = logging.getLogger(__name__)
@@ -32,6 +34,8 @@ class FileParser:
         self.header_analyzer = HeaderAnalyzer()
         self.header_locator = HeaderLocator(logger=self.logger)
         self.file_upload_validator = FileUploadValidator(self.supported_formats, max_size_mb=100, logger=self.logger)
+        self.industry_rules = IndustryRules(logger=self.logger, number_parser=self._to_number)
+        self.reporting_utils = ReportingUtils(logger=self.logger)
         
         # 필수 5개 컬럼 키워드 (지능앱 기술 - 강화된 키워드)
         self.required_keywords = {
@@ -263,12 +267,17 @@ class FileParser:
             max_rows = actual_max_row
             
             for row_num in range(header_row + 1, max_rows + 1):
-                family_data = self._extract_family_from_row(sheet, row_num, column_mapping, actual_max_col)
-                if family_data and self._is_valid_family(family_data):
+                family_data = self.industry_rules.extract_family_from_row(
+                    sheet,
+                    row_num,
+                    column_mapping,
+                    actual_max_col,
+                )
+                if family_data:
                     raw_families.append(family_data)
             
             # 가족 통합 로직 적용
-            families = self._merge_family_data(raw_families)
+            families = self.industry_rules.merge_family_data(raw_families)
                     
         except Exception as e:
             self.logger.warning(f"가족 검색 중 오류: {str(e)}")
@@ -622,194 +631,26 @@ class FileParser:
             self.logger.error(f"부가세 앞칸 규칙 검증 오류: {str(e)}")
             return None
     
-    def _extract_family_from_row(self, sheet, row_num: int, column_mapping: Dict, actual_max_col: int) -> Optional[Dict]:
-        """행에서 가족 정보 추출 (5형제 정보 포함)"""
-        try:
-            family_data = {}
-            
-            # 아빠 금액 추출
-            if 'dad_amount' in column_mapping:
-                dad_cell = sheet.cell(row_num, column_mapping['dad_amount'])
-                dad_value = dad_cell.value
-                dad_number = self._to_number(dad_value)
-                if dad_number is not None and dad_number > 0:
-                    family_data['dad_amount'] = dad_number
-            
-            # 엄마 금액 추출
-            if 'mom_amount' in column_mapping:
-                mom_cell = sheet.cell(row_num, column_mapping['mom_amount'])
-                mom_value = mom_cell.value
-                mom_number = self._to_number(mom_value)
-                if mom_number is not None and mom_number > 0:
-                    family_data['mom_amount'] = mom_number
-            
-            # 5형제 정보 추출 (컬럼 매핑 기반)
-            # 1. 사업자번호 추출
-            if 'business_number' in column_mapping:
-                business_cell = sheet.cell(row_num, column_mapping['business_number'])
-                business_value = str(business_cell.value).strip()
-                if business_value and business_value != 'None' and self._is_business_number(business_value):
-                    family_data['business_number'] = business_value
-            
-            # 2. 상호명 추출
-            if 'store_name' in column_mapping:
-                store_cell = sheet.cell(row_num, column_mapping['store_name'])
-                store_value = str(store_cell.value).strip()
-                if store_value and store_value != 'None' and len(store_value) > 1:
-                    family_data['store_name'] = store_value
-            
-            # 3. 대표자명 추출
-            if 'representative' in column_mapping:
-                rep_cell = sheet.cell(row_num, column_mapping['representative'])
-                rep_value = str(rep_cell.value).strip()
-                if rep_value and rep_value != 'None' and self._is_representative_name(rep_value):
-                    family_data['representative'] = rep_value
-            
-            # 4. 주소 추출
-            if 'address' in column_mapping:
-                addr_cell = sheet.cell(row_num, column_mapping['address'])
-                addr_value = str(addr_cell.value).strip()
-                if addr_value and addr_value != 'None' and self._is_address(addr_value):
-                    family_data['address'] = addr_value
-            
-            # 5. 이메일 추출
-            if 'email' in column_mapping:
-                email_cell = sheet.cell(row_num, column_mapping['email'])
-                email_value = str(email_cell.value).strip()
-                if email_value and email_value != 'None' and '@' in email_value and '.' in email_value:
-                    family_data['email'] = email_value
-            
-            return family_data if family_data else None
-            
-        except Exception as e:
-            return None
-    
-    def _is_business_number(self, value: str) -> bool:
-        """사업자번호 패턴 확인"""
-        # 숫자 10자리 또는 하이픈 포함
-        import re
-        pattern = r'^\d{3}-?\d{2}-?\d{5}$|^\d{10}$'
-        return bool(re.match(pattern, value))
-    
-    def _is_representative_name(self, value: str) -> bool:
-        """대표자명 패턴 확인 (한글 이름)"""
-        import re
-        # 한글 2-4자 이름 패턴
-        pattern = r'^[가-힣]{2,4}$'
-        return bool(re.match(pattern, value)) and not value.isdigit()
-    
-    def _is_address(self, value: str) -> bool:
-        """주소 패턴 확인"""
-        address_keywords = ['시', '구', '동', '로', '길', '번지', '아파트', '빌딩']
-        return any(keyword in value for keyword in address_keywords) and len(value) > 5
-    
-    def _is_store_name(self, value: str) -> bool:
-        """가맹점명 패턴 확인"""
-        store_keywords = ['점', '식당', '카페', '마트', '상점', '센터', '플라자']
-        return any(keyword in value for keyword in store_keywords) and len(value) > 2
-    
-    def _is_valid_family(self, family_data: Dict) -> bool:
-        """유효한 가족 정보인지 검증"""
-        # 아빠 금액이 있어야 유효한 가족
-        return family_data.get('dad_amount', 0) > 0
+    def _extract_family_from_row(
+        self,
+        sheet,
+        row_num: int,
+        column_mapping: Dict,
+        actual_max_col: int,
+    ) -> Optional[Dict]:
+        """산업 규칙 모듈에 위임된 가족 추출 래퍼."""
+
+        return self.industry_rules.extract_family_from_row(
+            sheet,
+            row_num,
+            column_mapping,
+            actual_max_col,
+        )
     
     def _merge_family_data(self, families: List[Dict]) -> List[Dict]:
-        """
-        가족 통합 로직: 중복 가족 정보를 하나로 통합
-        
-        Args:
-            families: 가족 정보 리스트
-            
-        Returns:
-            List[Dict]: 통합된 가족 정보 리스트
-        """
-        if not families:
-            return []
-        
-        self.logger.info(f"가족 통합 시작: {len(families)}개 가족 정보")
-        
-        # 가족별로 그룹화 (사업자번호, 대표자명 기준)
-        family_groups = {}
-        
-        for family in families:
-            # 가족 식별 키 생성 (사업자번호만 사용 - 핵심 수정!)
-            business_number = family.get('business_number', '')
-            family_key = business_number.strip()
-            
-            if not family_key:
-                # 사업자번호가 없으면 대표자명으로 구분
-                representative = family.get('representative', '')
-                family_key = f"rep_{representative}".strip()
-            
-            if not family_key or family_key == 'rep_':
-                # 식별 정보가 없으면 아빠 금액으로만 구분
-                family_key = f"amount_{family.get('dad_amount', 0)}"
-            
-            if family_key not in family_groups:
-                family_groups[family_key] = []
-            
-            family_groups[family_key].append(family)
-        
-        # 각 그룹을 통합
-        merged_families = []
-        
-        for family_key, group in family_groups.items():
-            if len(group) == 1:
-                # 단일 가족은 그대로 유지
-                merged_families.append(group[0])
-                self.logger.info(f"단일 가족 유지: {family_key}")
-            else:
-                # 중복 가족 통합
-                merged_family = self._integrate_family_group(group)
-                merged_families.append(merged_family)
-                self.logger.info(f"가족 통합 완료: {family_key} ({len(group)}개 → 1개)")
-        
-        self.logger.info(f"가족 통합 완료: {len(families)}개 → {len(merged_families)}개")
-        return merged_families
-    
-    def _integrate_family_group(self, family_group: List[Dict]) -> Dict:
-        """
-        가족 그룹을 하나로 통합
-        
-        Args:
-            family_group: 같은 가족의 여러 정보
-            
-        Returns:
-            Dict: 통합된 가족 정보
-        """
-        integrated = {
-            'dad_amount': 0,
-            'mom_amount': 0,
-            'business_number': '',
-            'representative': '',
-            'address': '',
-            'email': '',
-            'store_name': '',
-            'integration_count': len(family_group)
-        }
-        
-        # 각 필드에서 가장 좋은 값 선택 또는 합산
-        for family in family_group:
-            # 아빠 금액 합산
-            dad_amount = family.get('dad_amount', 0)
-            if isinstance(dad_amount, (int, float)):
-                integrated['dad_amount'] += dad_amount
-            
-            # 엄마 금액 합산
-            mom_amount = family.get('mom_amount', 0)
-            if isinstance(mom_amount, (int, float)):
-                integrated['mom_amount'] += mom_amount
-            
-            # 텍스트 필드는 가장 긴 값 선택 (더 완전한 정보)
-            for field in ['business_number', 'representative', 'address', 'email', 'store_name']:
-                current_value = family.get(field, '')
-                if isinstance(current_value, str) and len(current_value) > len(integrated[field]):
-                    integrated[field] = current_value
-        
-        # 통합 정보 로깅
-        self.logger.info(f"  통합 결과: 아빠 {integrated['dad_amount']:,.0f}원, 엄마 {integrated['mom_amount']:,.0f}원")
-        
-        return integrated
+        """산업 규칙 모듈에 위임된 가족 통합 래퍼."""
+
+        return self.industry_rules.merge_family_data(families)
     
     def _evaluate_sheet(
         self,
@@ -1227,34 +1068,9 @@ class FileParser:
             return self._create_error_response(f"CSV 파일 처리 중 오류가 발생했습니다. 관리자에게 문의해주세요. (오류 코드: {hash(str(e)) % 10000})")
     
     def _analyze_data_sections(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """
-        데이터 섹션 자동 감지 - 이미 파싱된 DataFrame 사용
-        배달대행사 정산서의 특성을 고려한 섹션 분석
-        """
-        sections = {
-            'header_section': None,      # 헤더 정보
-            'data_section': None,       # 실제 데이터 (전체)
-            'summary_section': None,    # 요약 정보
-            'total_rows': len(df)
-        }
-        
-        try:
-            # 이미 FileParser에서 헤더 행을 감지하고 데이터를 추출했으므로
-            # 전체 DataFrame이 실제 데이터임
-            sections['data_section'] = df.to_dict('records')
-            
-            # 요약 섹션 감지 (하위 3행)
-            if len(df) > 3:
-                summary_candidates = df.tail(3)
-                sections['summary_section'] = summary_candidates.to_dict('records')
-            
-            self.logger.info(f"데이터 섹션 분석 완료: 총 {len(df)}행")
-            
-            return sections
-            
-        except Exception as e:
-            self.logger.error(f"데이터 섹션 분석 오류: {str(e)}")
-            return sections
+        """데이터 섹션 분석을 리포팅 유틸로 위임."""
+
+        return self.reporting_utils.analyze_data_sections(df)
     
     def _create_error_response(self, error_message: str) -> Dict[str, Any]:
         """오류 응답 생성"""
@@ -1269,237 +1085,27 @@ class FileParser:
         }
     
     def get_data_preview(self, parsed_data: Dict[str, Any], max_rows: int = 10) -> Dict[str, Any]:
-        """
-        파싱된 데이터 미리보기
-        
-        Args:
-            parsed_data: parse_file() 결과
-            max_rows: 미리보기 행 수
-            
-        Returns:
-            Dict: 미리보기 데이터
-        """
-        if parsed_data['parsing_status'] != 'success':
-            return {'error': '파싱 실패'}
-        
-        try:
-            df = parsed_data['raw_data']
-            preview = df.head(max_rows)
-            
-            return {
-                'headers': list(df.columns),
-                'preview_data': preview.to_dict('records'),
-                'total_rows': len(df),
-                'file_type': parsed_data['file_type']
-            }
-            
-        except Exception as e:
-            self.logger.error(f"데이터 미리보기 오류: {str(e)}")
-            return {'error': f'미리보기 생성 오류: {str(e)}'}
+        """리포팅 유틸리티를 통한 미리보기 데이터 생성."""
+
+        return self.reporting_utils.build_preview(parsed_data, max_rows)
     
     def extract_text_content(self, parsed_data: Dict[str, Any]) -> str:
-        """
-        파싱된 데이터에서 텍스트 내용 추출
-        키워드 매칭을 위한 텍스트 추출
-        """
-        if parsed_data['parsing_status'] != 'success':
-            return ""
-        
-        try:
-            df = parsed_data['raw_data']
-            text_content = []
-            
-            # 모든 셀의 텍스트 추출
-            for _, row in df.iterrows():
-                for value in row.values:
-                    if pd.notna(value) and str(value).strip():
-                        text_content.append(str(value).strip())
-            
-            return " ".join(text_content)
-            
-        except Exception as e:
-            self.logger.error(f"텍스트 추출 오류: {str(e)}")
-            return ""
+        """리포팅 유틸리티에 텍스트 추출을 위임."""
 
-    def _merge_families_by_business_number(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        🎯 사업자번호 기반 가족 통합 서브지침
-        
-        Args:
-            families: 추출된 가족 데이터 리스트
-            
-        Returns:
-            List[Dict]: 통합된 가족 데이터 리스트
-        """
-        if not families:
-            return []
-        
-        merged_families = {}
-        
-        # [AGG-START] 고정 태그
-        self.logger.info(f"[AGG-START] 가족 통합 시작: 총 {len(families)}건")
-        
-        def _to_number(value):
-            try:
-                if value is None:
-                    return 0.0
-                if isinstance(value, (int, float)):
-                    return float(value)
-                s = str(value).strip().replace(',', '')
-                return float(s) if s not in ['', 'None', 'nan'] else 0.0
-            except Exception:
-                return 0.0
+        return self.reporting_utils.extract_text_content(parsed_data)
 
-        # 합계/소계/총계/집계 키워드 (요약행 제외)
-        summary_keywords = ("합계", "소계", "총계", "집계")
+    def _merge_families_by_business_number(
+        self,
+        families: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """산업 규칙 모듈에 위임된 사업자번호 통합."""
 
-        # 블록 개념이 상위 단계에서 처리되지 않은 경우에도 추적 가능하도록 기본 블록 로그
-        self.logger.info("[AGG-BLOCK] default-block 시작")
-
-        for family in families:
-            # 사업자번호 정규화: 숫자만 10자리로 맞춤 (공백/하이픈/지수표기 제거)
-            raw_biz = family.get('사업자등록번호', '')
-            try:
-                import re
-                digits = re.sub(r'[^0-9]', '', str(raw_biz))
-                if len(digits) > 10:
-                    # 뒤쪽 10자리 우선 (앞쪽에 0이 포함되거나 서식 흔적 방지)
-                    digits = digits[-10:]
-                business_number = digits
-            except Exception:
-                business_number = str(raw_biz).strip()
-            self.logger.info(f"처리 중인 가족: 사업자번호={business_number}, 상호={family.get('상호', '')}, 공급가액={family.get('공급가액', 0)}, 부가세={family.get('부가세', 0)}")
-
-            # 요약/합계 행 제외 로직
-            try:
-                text_fields = [
-                    str(family.get('상호', '')),
-                    str(family.get('store_name', '')),
-                    str(family.get('비고', '')),
-                    str(family.get('메모', '')),
-                ]
-                if any(any(k in t for k in summary_keywords) for t in text_fields if t and t != 'None'):
-                    self.logger.info(f"[SKIP-SUMROW] 요약/합계 행 제외: 사업자번호={business_number}, 상호={family.get('상호', '')}")
-                    continue
-            except Exception:
-                pass
-            
-            if not business_number:
-                # 사업자번호가 없으면 그대로 추가
-                merged_families[f"no_business_number_{len(merged_families)}"] = family.copy()
-                continue
-            
-            # 부가세 0은 집계 제외 (합산은 사후 템플릿 레이어에서만 사용)
-            new_supply = self._to_number(family.get('공급가액', 0))
-            new_vat = self._to_number(family.get('부가세', 0))
-            if new_vat <= 0:
-                self.logger.info(f"[SKIP-VAT0] 부가세 0 행 제외: 사업자번호={business_number}, 공급가액={new_supply}, 부가세={new_vat}")
-                continue
-
-            if business_number in merged_families:
-                # 기존 가족과 통합
-                existing = merged_families[business_number]
-                
-                # 금액 합산 (아빠 + 엄마) - 문자열/콤마 포함값 정규화 후 합산
-                old_supply = self._to_number(existing.get('공급가액', 0))
-                old_vat = self._to_number(existing.get('부가세', 0))
-                
-                existing['공급가액'] = old_supply + new_supply
-                existing['부가세'] = old_vat + new_vat
-                existing['요금합계'] = existing['공급가액'] + existing['부가세']
-                
-                self.logger.info(f"[AGG-SUM] {business_number} 기존({old_supply}+{old_vat}) + 새({new_supply}+{new_vat}) = 합계({existing['공급가액']}+{existing['부가세']})")
-                
-                # 텍스트 필드는 가장 완전한 것 선택
-                if len(family.get('상호', '')) > len(existing.get('상호', '')):
-                    existing['상호'] = family.get('상호', '')
-                if len(family.get('대표자명', '')) > len(existing.get('대표자명', '')):
-                    existing['대표자명'] = family.get('대표자명', '')
-                if len(family.get('사업장주소', '')) > len(existing.get('사업장주소', '')):
-                    existing['사업장주소'] = family.get('사업장주소', '')
-                if len(family.get('사업자이메일', '')) > len(existing.get('사업자이메일', '')):
-                    existing['사업자이메일'] = family.get('사업자이메일', '')
-                
-                self.logger.info(f"가족 통합: {business_number} - 상호: {existing['상호']}, 금액: {existing['요금합계']}")
-            else:
-                # 새로운 가족 추가
-                # 최초 입력도 숫자 정규화 적용
-                nf = family.copy()
-                nf['공급가액'] = self._to_number(nf.get('공급가액', 0))
-                nf['부가세'] = self._to_number(nf.get('부가세', 0))
-                nf['요금합계'] = nf['공급가액'] + nf['부가세']
-                merged_families[business_number] = nf
-        
-        result = list(merged_families.values())
-        
-        # 아빠 값 계산 서브지침 적용
-        result = self._apply_dad_fallback_logic(result)
-        
-        # 최종 합계 로그 (사업자번호별)
-        try:
-            for r in result:
-                biz = r.get('사업자등록번호', '')
-                self.logger.info(f"통합 결과: {biz} 공급가액={r.get('공급가액', 0)}, 부가세={r.get('부가세', 0)}, 요금합계={r.get('요금합계', 0)}")
-        except Exception:
-            pass
-
-        # [AGG-END] 고정 태그
-        self.logger.info(f"[AGG-END] 사업자번호 기반 가족 통합 완료: {len(families)} → {len(result)}건")
-        
-        return result
+        return self.industry_rules.merge_families_by_business_number(families)
     
     def _apply_dad_fallback_logic(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        아빠 값 찾기 힘들 때 엄마 값을 기준으로 아빠 값을 계산하는 서브지침
-        
-        대한민국 부가세법에 따른 절대 규칙:
-        - 부가세는 공급가액의 10%
-        - 엄마(부가세)가 100이면 → 아빠(공급가액)는 1000
-        - 엄마(부가세)가 0이면 → 아빠(공급가액)도 0 (그 시트는 우리가 찾는 시트가 아님)
-        
-        분산된 가족 통합 예외 지침:
-        - 아빠가 술이 취해서 엄마가 도와준다: 엄마 값이 진실, 아빠 값을 보정
-        
-        Args:
-            families: 가족 데이터 리스트
-            
-        Returns:
-            List[Dict]: 아빠 값이 보정된 가족 데이터 리스트
-        """
-        for family in families:
-            supply_amount = family.get('공급가액', 0)
-            vat_amount = family.get('부가세', 0)
-            
-            # 중요: 엄마 값이 0이면 아빠 값도 0으로 설정 (그 시트는 우리가 찾는 시트가 아님)
-            if vat_amount == 0:
-                # 엄마 값이 0이면 아빠 값도 0으로 설정
-                family['공급가액'] = 0
-                family['요금합계'] = 0
-                
-                self.logger.info(f"엄마 값이 0이므로 아빠 값도 0으로 설정 (해당 시트는 우리가 찾는 시트가 아님)")
-            
-            # 아빠 값이 0이거나 없을 때 엄마 값을 기준으로 계산
-            elif supply_amount == 0 and vat_amount > 0:
-                # 엄마 값 × 10 = 아빠 값 (부가세법 10% 규칙)
-                calculated_supply = vat_amount * 10
-                family['공급가액'] = calculated_supply
-                family['요금합계'] = calculated_supply + vat_amount
-                
-                self.logger.info(f"아빠 값 계산: 엄마 {vat_amount:,.0f}원 → 아빠 {calculated_supply:,.0f}원 (부가세법 10% 규칙)")
-            
-            # 분산된 가족 통합 예외 지침: 아빠가 술이 취해서 엄마가 도와준다
-            elif supply_amount > 0 and vat_amount > 0:
-                # 세법 10% 규칙 검증
-                expected_vat = supply_amount * 0.1
-                if abs(vat_amount - expected_vat) > 1:  # 1원 오차 허용
-                    # 엄마 값이 진실이므로 아빠 값을 보정
-                    corrected_supply = vat_amount * 10
-                    family['공급가액'] = corrected_supply
-                    family['요금합계'] = corrected_supply + vat_amount
-                    
-                    self.logger.info(f"아빠가 술이 취해서 엄마가 도와준다: 엄마 {vat_amount:,.0f}원 → 아빠 {corrected_supply:,.0f}원 (세법 10% 규칙 보정)")
-        
-        return families
+        """산업 규칙 모듈에 위임된 금액 보정."""
+
+        return self.industry_rules.apply_dad_fallback_logic(families)
 
 # 테스트용 함수
 def test_file_parser():
