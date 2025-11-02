@@ -14,6 +14,7 @@ import time  # 병렬 처리 시간 측정용
 from .parallel_processor import ParallelFileProcessor, ProcessingMode, process_files_parallel
 from .file_parser_utils.data_processor import DataProcessor
 from .file_parser_utils.header_analyzer import HeaderAnalyzer
+from .file_parser_utils.validators import FileUploadValidator
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class FileParser:
         # 연동 모듈 초기화
         self.data_processor = DataProcessor()
         self.header_analyzer = HeaderAnalyzer()
+        self.file_upload_validator = FileUploadValidator(self.supported_formats, max_size_mb=100, logger=self.logger)
         
         # 필수 5개 컬럼 키워드 (지능앱 기술 - 강화된 키워드)
         self.required_keywords = {
@@ -116,9 +118,11 @@ class FileParser:
         try:
             file_path = Path(file_path)
             
-            # 파일 형식 검증
-            if not self._validate_file_format(file_path):
-                return self._create_error_response("지원하지 않는 파일 형식입니다.")
+            # 파일 업로드 기본 검증
+            validation_result = self.file_upload_validator.validate(file_path)
+            if not validation_result.is_valid:
+                error_message = validation_result.message or "지원하지 않는 파일 형식입니다."
+                return self._create_error_response(error_message)
             
             # 파일 파싱
             if file_path.suffix.lower() == '.csv':
@@ -331,23 +335,6 @@ class FileParser:
         header_score = text_ratio * 2 + number_ratio * 0.5 + empty_ratio * 0.1
         
         return header_score
-    
-    def _validate_file_format(self, file_path: Path) -> bool:
-        """
-        파일 형식 검증
-        지원되는 형식: .xlsx, .xls, .csv
-        
-        Args:
-            file_path: 파일 경로
-            
-        Returns:
-            bool: 지원되는 형식이면 True
-        """
-        if not file_path.exists():
-            return False
-        
-        file_extension = file_path.suffix.lower()
-        return file_extension in self.supported_formats
     
     def _detect_csv_header_row(self, df: pd.DataFrame) -> int:
         """
@@ -2411,18 +2398,20 @@ def test_file_parser():
         # 병렬로 파일 유효성 검사
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_to_file = {
-                executor.submit(self._validate_single_file, file_path): file_path 
+                executor.submit(self.file_upload_validator.validate, file_path): file_path
                 for file_path in file_paths
             }
             
             for future in concurrent.futures.as_completed(future_to_file):
                 file_path = future_to_file[future]
                 try:
-                    is_valid = future.result()
-                    if is_valid:
+                    validation_result = future.result()
+                    if validation_result.is_valid:
                         validation_results['valid_files'].append(str(file_path))
                     else:
                         validation_results['invalid_files'].append(str(file_path))
+                        if validation_result.message:
+                            self.logger.warning("파일 검증 실패(%s): %s", file_path, validation_result.message)
                 except Exception as e:
                     validation_results['invalid_files'].append(str(file_path))
                     self.logger.error(f"파일 검증 실패: {file_path} - {e}")
