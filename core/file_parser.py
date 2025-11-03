@@ -9,14 +9,11 @@ import zipfile
 from typing import Dict, List, Any, Optional, Callable
 import logging
 from pathlib import Path
-import concurrent.futures  # Python 3.14 Free-Threaded Python 활용
-import threading  # Python 3.14에서 GIL 제거로 성능 향상
-import time  # 병렬 처리 시간 측정용
-from .parallel_processor import ParallelFileProcessor, ProcessingMode, process_files_parallel
 from .file_parser_utils.data_processor import DataProcessor
 from .file_parser_utils.header_analyzer import HeaderAnalyzer
 from .file_parser_utils.header_locator import HeaderLocator
 from .file_parser_utils.industry_rules import IndustryRules
+from .file_parser_utils.parallel_runner import ParallelRunner
 from .file_parser_utils.reporting import ReportingUtils
 from .file_parser_utils.validators import FileUploadValidator
 
@@ -37,6 +34,7 @@ class FileParser:
         self.file_upload_validator = FileUploadValidator(self.supported_formats, max_size_mb=100, logger=self.logger)
         self.industry_rules = IndustryRules(logger=self.logger, number_parser=self._to_number)
         self.reporting_utils = ReportingUtils(logger=self.logger)
+        self.parallel_runner = ParallelRunner(self, logger=self.logger)
         
         # 필수 5개 컬럼 키워드 (지능앱 기술 - 강화된 키워드)
         self.required_keywords = {
@@ -1107,6 +1105,50 @@ class FileParser:
 
         return self.reporting_utils.extract_text_content(parsed_data)
 
+    # ------------------------------------------------------------------
+    # 병렬/배치 처리 래퍼
+    # ------------------------------------------------------------------
+    def parse_multiple_files_parallel(
+        self,
+        file_paths: List[Path],
+        max_workers: int = 4,
+    ) -> List[Dict[str, Any]]:
+        """ThreadPoolExecutor 기반 병렬 파싱."""
+
+        return self.parallel_runner.parse_multiple_files_parallel(file_paths, max_workers)
+
+    def batch_validate_files(
+        self,
+        file_paths: List[Path],
+        max_workers: int = 4,
+    ) -> Dict[str, Any]:
+        """파일 업로드 유효성 배치 검증."""
+
+        return self.parallel_runner.batch_validate_files(file_paths, max_workers)
+
+    def parse_multiple_files_optimized(
+        self,
+        file_paths: List[Path],
+        max_workers: int = 4,
+    ) -> List[Dict[str, Any]]:
+        """ParallelFileProcessor 기반 고성능 병렬 파싱."""
+
+        return self.parallel_runner.parse_multiple_files_optimized(file_paths, max_workers)
+
+    def process_files_with_progress(
+        self,
+        file_paths: List[Path],
+        progress_callback: Optional[Callable[[float, int, int], None]] = None,
+    ) -> List[Dict[str, Any]]:
+        """진행률 콜백을 포함한 파일 처리."""
+
+        return self.parallel_runner.process_files_with_progress(file_paths, progress_callback)
+
+    def validate_single_file(self, file_path: Path) -> bool:
+        """단일 파일 유효성 검증."""
+
+        return self.parallel_runner.validate_single_file(file_path)
+
     def _merge_families_by_business_number(
         self,
         families: List[Dict[str, Any]],
@@ -1119,247 +1161,4 @@ class FileParser:
         """산업 규칙 모듈에 위임된 금액 보정."""
 
         return self.industry_rules.apply_dad_fallback_logic(families)
-
-# 테스트용 함수
-def test_file_parser():
-    """FileParser 테스트"""
-    parser = FileParser()
-    
-    # 테스트 데이터 생성
-    test_data = {
-        '가맹점명': ['신전떡볶이', '맘스터치', '피자헛'],
-        '사업자번호': ['123-45-67890', '234-56-78901', '345-67-89012'],
-        '대표자명': ['홍길동', '김철수', '이영희'],
-        '주소': ['서울시 강남구', '부산시 해운대구', '대구시 수성구'],
-        '이메일': ['hong@shinjeon.com', 'kim@moms.com', 'lee@pizza.com'],
-        '배달요금': [50000, 75000, 60000],
-        '부가세': [5000, 7500, 6000]
-    }
-    
-    df = pd.DataFrame(test_data)
-    print("테스트 데이터:")
-    print(df)
-    
-    # 파싱 결과 시뮬레이션
-    parsed_result = {
-        'file_type': 'excel',
-        'raw_data': df,
-        'headers': list(df.columns),
-        'data_sections': parser._analyze_data_sections(df),
-        'total_rows': len(df),
-        'parsing_status': 'success'
-    }
-    
-    print("\n파싱 결과:")
-    print(f"파일 타입: {parsed_result['file_type']}")
-    print(f"총 행 수: {parsed_result['total_rows']}")
-    print(f"헤더: {parsed_result['headers']}")
-    
-    # 텍스트 추출 테스트
-    text_content = parser.extract_text_content(parsed_result)
-    print(f"\n추출된 텍스트: {text_content[:100]}...")
-
-    def parse_multiple_files_parallel(self, file_paths: List[Path], max_workers: int = 4) -> List[Dict[str, Any]]:
-        """
-        Python 3.14 Free-Threaded Python을 활용한 병렬 파일 처리
-        GIL 제거로 인한 성능 향상을 활용하여 여러 파일을 동시에 처리
-        """
-        results = []
-        
-        # Python 3.14의 향상된 ThreadPoolExecutor 성능 활용
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # 각 파일에 대해 파싱 작업을 병렬로 실행
-            future_to_file = {
-                executor.submit(self.parse_file, file_path): file_path 
-                for file_path in file_paths
-            }
-            
-            # 결과 수집
-            for future in concurrent.futures.as_completed(future_to_file):
-                file_path = future_to_file[future]
-                try:
-                    result = future.result()
-                    result['file_path'] = str(file_path)  # 파일 경로 추가
-                    results.append(result)
-                    self.logger.info(f"병렬 처리 완료: {file_path}")
-                except Exception as e:
-                    error_result = self._create_error_response(f"병렬 처리 중 오류: {e}")
-                    error_result['file_path'] = str(file_path)
-                    results.append(error_result)
-                    self.logger.error(f"병렬 처리 실패: {file_path} - {e}")
-        
-        return results
-    
-    def batch_validate_files(self, file_paths: List[Path]) -> Dict[str, Any]:
-        """
-        Python 3.14 Free-Threaded Python을 활용한 배치 파일 검증
-        여러 파일의 유효성을 동시에 검사
-        """
-        validation_results = {
-            'valid_files': [],
-            'invalid_files': [],
-            'total_files': len(file_paths),
-            'processing_time': 0
-        }
-        
-        start_time = time.time()
-        
-        # 병렬로 파일 유효성 검사
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_file = {
-                executor.submit(self.file_upload_validator.validate, file_path): file_path
-                for file_path in file_paths
-            }
-            
-            for future in concurrent.futures.as_completed(future_to_file):
-                file_path = future_to_file[future]
-                try:
-                    validation_result = future.result()
-                    if validation_result.is_valid:
-                        validation_results['valid_files'].append(str(file_path))
-                    else:
-                        validation_results['invalid_files'].append(str(file_path))
-                        if validation_result.message:
-                            self.logger.warning("파일 검증 실패(%s): %s", file_path, validation_result.message)
-                except Exception as e:
-                    validation_results['invalid_files'].append(str(file_path))
-                    self.logger.error(f"파일 검증 실패: {file_path} - {e}")
-        
-        validation_results['processing_time'] = time.time() - start_time
-        return validation_results
-    
-    def parse_multiple_files_optimized(self, file_paths: List[Path], max_workers: int = 4) -> List[Dict[str, Any]]:
-        """
-        Python 3.14 Free-Threaded Python을 활용한 최적화된 병렬 파일 처리
-        새로운 ParallelFileProcessor를 사용하여 고성능 처리
-        """
-        if not file_paths:
-            return []
-        
-        self.logger.info(f"최적화된 병렬 파일 처리 시작: {len(file_paths)}개 파일")
-        
-        # ParallelFileProcessor 사용
-        processor = ParallelFileProcessor(
-            max_workers=max_workers,
-            processing_mode=ProcessingMode.HYBRID,
-            chunk_size=50
-        )
-        
-        # 파일 경로를 문자열로 변환
-        file_path_strs = [str(path) for path in file_paths]
-        
-        # 병렬 처리 실행
-        results = processor.process_files_parallel(
-            file_path_strs,
-            self._parse_single_file_optimized
-        )
-        
-        # 결과 변환
-        parsed_results = []
-        for result in results:
-            if result.success:
-                parsed_results.append(result.data)
-            else:
-                error_result = self._create_error_response(f"파일 처리 실패: {result.error}")
-                error_result['file_path'] = result.file_path
-                parsed_results.append(error_result)
-        
-        # 성능 리포트 로깅
-        performance_report = processor.get_performance_report()
-        self.logger.info(f"최적화된 병렬 처리 완료: {performance_report['successful_files']}/{performance_report['total_files']} 성공 "
-                        f"({performance_report['total_time']:.2f}초, {performance_report['throughput']:.2f} 파일/초)")
-        
-        return parsed_results
-    
-    def _parse_single_file_optimized(self, file_path: str) -> Dict[str, Any]:
-        """
-        단일 파일 파싱 (최적화된 병렬 처리용)
-        """
-        try:
-            path_obj = Path(file_path)
-            return self.parse_file(path_obj)
-        except Exception as e:
-            self.logger.error(f"최적화된 파일 파싱 실패: {file_path} - {e}")
-            raise
-    
-    def process_files_with_progress(self, file_paths: List[Path], 
-                                   progress_callback: Optional[Callable] = None) -> List[Dict[str, Any]]:
-        """
-        진행률 콜백을 포함한 파일 처리
-        """
-        if not file_paths:
-            return []
-        
-        self.logger.info(f"진행률 추적 파일 처리 시작: {len(file_paths)}개 파일")
-        
-        results = []
-        total_files = len(file_paths)
-        
-        # 병렬 처리 실행
-        processor = ParallelFileProcessor(
-            max_workers=4,
-            processing_mode=ProcessingMode.THREAD,
-            chunk_size=10
-        )
-        
-        file_path_strs = [str(path) for path in file_paths]
-        
-        # 진행률 추적을 위한 콜백 함수
-        def progress_tracker(result):
-            results.append(result)
-            if progress_callback:
-                progress = len(results) / total_files * 100
-                progress_callback(progress, len(results), total_files)
-        
-        # 병렬 처리 실행
-        parallel_results = processor.process_files_parallel(
-            file_path_strs,
-            self._parse_single_file_optimized
-        )
-        
-        # 결과 변환
-        parsed_results = []
-        for result in parallel_results:
-            if result.success:
-                parsed_results.append(result.data)
-            else:
-                error_result = self._create_error_response(f"파일 처리 실패: {result.error}")
-                error_result['file_path'] = result.file_path
-                parsed_results.append(error_result)
-        
-        # 최종 진행률 콜백
-        if progress_callback:
-            progress_callback(100.0, total_files, total_files)
-        
-        return parsed_results
-    
-    def _validate_single_file(self, file_path: Path) -> bool:
-        """
-        단일 파일 유효성 검사 (병렬 처리용)
-        """
-        try:
-            if not file_path.exists():
-                return False
-            
-            if file_path.suffix.lower() not in self.supported_formats:
-                return False
-            
-            # 파일 크기 검사 (100MB 제한)
-            if file_path.stat().st_size > 100 * 1024 * 1024:
-                return False
-            
-            return True
-        except Exception:
-            return False
-
-
-if __name__ == "__main__":
-    test_file_parser()
-
-
-
-
-
-
-
 
