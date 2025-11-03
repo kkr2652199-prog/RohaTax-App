@@ -1,14 +1,79 @@
-import os
-import shutil
-import sqlite3
-
 from flask import request
 
-from core.db import get_conn
 from core.responses import success, error
+from core.admin_services import user_service
+from core.admin_services.user_service import UserServiceError, VALID_PLAN_TYPES
 
 from . import admin_bp
 from ..utils.auth import current_user_id, ensure_admin_for_json
+
+
+@admin_bp.route('/admin/api/users', methods=['GET'])
+def list_general_users():
+    """일반 사용자 목록을 조회한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    general_users = user_service.fetch_general_users()
+    return success('ok', data={'users': general_users})
+
+
+@admin_bp.route('/admin/api/admin-users', methods=['GET'])
+def list_admin_users():
+    """시스템 관리자 계정 목록을 조회한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    admin_users = user_service.fetch_admin_users()
+    return success('ok', data={'admin_users': admin_users})
+
+
+@admin_bp.route('/admin/api/admin-dashboard-stats', methods=['GET'])
+def fetch_dashboard_stats():
+    """관리자 대시보드에서 사용하는 요약 통계를 반환한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    stats = user_service.fetch_dashboard_stats()
+    return success('ok', data=stats)
+
+
+@admin_bp.route('/admin/api/users/<int:user_id>', methods=['PUT'])
+def update_user_email(user_id: int):
+    """특정 사용자의 이메일 정보를 수정한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
+    if not email:
+        return error('email required', status=400)
+
+    try:
+        user_service.update_user_email(user_id, email)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
+
+    return success('updated')
+
+
+@admin_bp.route('/admin/api/user-conversions/<int:user_id>', methods=['GET'])
+def list_user_conversions(user_id: int):
+    """특정 사용자의 최근 변환 이력을 조회한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    try:
+        conversions = user_service.fetch_user_conversions(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
+
+    return success(data={'conversions': conversions})
 
 
 @admin_bp.route('/admin/api/users/<int:user_id>/approve', methods=['POST'])
@@ -18,12 +83,10 @@ def approve_user_by_id(user_id: int):
     if guard_response is not None:
         return guard_response
 
-    with get_conn() as conn:
-        conn.execute(
-            "UPDATE users SET approval_status = 'approved', is_active = 1 WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.approve_user(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User approved successfully')
 
@@ -35,12 +98,10 @@ def reject_user_by_id(user_id: int):
     if guard_response is not None:
         return guard_response
 
-    with get_conn() as conn:
-        conn.execute(
-            "UPDATE users SET approval_status = 'rejected' WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.reject_user(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User rejected successfully')
 
@@ -52,12 +113,10 @@ def soft_delete_user(user_id: int):
     if guard_response is not None:
         return guard_response
 
-    with get_conn() as conn:
-        conn.execute(
-            "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.soft_delete_user(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User status updated')
 
@@ -69,15 +128,10 @@ def restore_user(user_id: int):
     if guard_response is not None:
         return guard_response
 
-    with get_conn() as conn:
-        row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not row:
-            return error('user not found', status=404)
-        conn.execute(
-            "UPDATE users SET is_deleted = 0, is_active = 1, approval_status = 'approved' WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.restore_user(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User restored successfully')
 
@@ -89,31 +143,12 @@ def purge_user(user_id: int):
     if guard_response is not None:
         return guard_response
 
-    base_users_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_data')
-    user_dir = os.path.join(base_users_dir, str(user_id))
-
-    with get_conn() as conn:
-        user_row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not user_row:
-            return error('user not found', status=404)
-
-        try:
-            conn.execute("DELETE FROM token_history WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM usage_logs WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM conversion_logs WHERE user_id = ?", (user_id,))
-        except Exception:
-            pass
-
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        conn.commit()
-
     try:
-        if os.path.isdir(user_dir):
-            shutil.rmtree(user_dir)
-    except Exception as exc:
-        return success(f'User deleted (file cleanup issues: {str(exc)})')
+        message = user_service.purge_user(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
-    return success('User and related files purged')
+    return success(message)
 
 
 @admin_bp.route('/admin/api/users/purge-all', methods=['POST'])
@@ -126,41 +161,12 @@ def purge_all_users():
     data = request.get_json(silent=True) or {}
     keep_username = data.get('keep_username') or 'kweon4309'
 
-    base_users_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_data')
-
-    with get_conn() as conn:
-        conn.row_factory = sqlite3.Row
-        keeper = conn.execute(
-            "SELECT id FROM users WHERE username = ? AND COALESCE(is_deleted,0)=0",
-            (keep_username,),
-        ).fetchone()
-        if not keeper:
-            return error('keeper not found', status=404)
-
-        keep_id = keeper['id']
-        rows = conn.execute("SELECT id FROM users WHERE id != ?", (keep_id,)).fetchall()
-        target_ids = [row['id'] for row in rows]
-
-        for target_id in target_ids:
-            try:
-                conn.execute("DELETE FROM token_history WHERE user_id = ?", (target_id,))
-                conn.execute("DELETE FROM usage_logs WHERE user_id = ?", (target_id,))
-                conn.execute("DELETE FROM conversion_logs WHERE user_id = ?", (target_id,))
-            except Exception:
-                pass
-
-        conn.execute("DELETE FROM users WHERE id != ?", (keep_id,))
-        conn.commit()
-
     try:
-        if os.path.isdir(base_users_dir):
-            for name in os.listdir(base_users_dir):
-                if name.isdigit() and int(name) != keep_id:
-                    shutil.rmtree(os.path.join(base_users_dir, name), ignore_errors=True)
-    except Exception:
-        pass
+        message = user_service.purge_all_users(keep_username)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
-    return success('All users and files purged except keeper')
+    return success(message)
 
 
 @admin_bp.route('/admin/api/approve-user', methods=['POST'])
@@ -175,16 +181,10 @@ def approve_user_from_payload():
     if not user_id:
         return error('User ID is required', status=400)
 
-    with get_conn() as conn:
-        target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not target_user:
-            return error('User not found', status=404)
-
-        conn.execute(
-            "UPDATE users SET approval_status = 'approved', is_active = 1 WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.approve_user_from_payload(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User approved successfully')
 
@@ -201,16 +201,10 @@ def delete_user_from_payload():
     if not user_id:
         return error('User ID is required', status=400)
 
-    with get_conn() as conn:
-        target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not target_user:
-            return error('User not found', status=404)
-
-        conn.execute(
-            "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
-            (user_id,),
-        )
-        conn.commit()
+    try:
+        user_service.delete_user_from_payload(user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
     return success('User soft-deleted successfully')
 
@@ -226,37 +220,24 @@ def change_user_plan(user_id: int):
     data = request.get_json(silent=True) or {}
     plan_type = data.get('plan_type')
 
-    valid_plan_types = ['free', 'vip', 'premium-vip', 'gold-vip']
-    if not plan_type or plan_type not in valid_plan_types:
-        return error(f'유효하지 않은 플랜 유형입니다. 가능한 값: {", ".join(valid_plan_types)}', status=400)
+    if not plan_type or plan_type not in VALID_PLAN_TYPES:
+        return error(f'유효하지 않은 플랜 유형입니다. 가능한 값: {", ".join(VALID_PLAN_TYPES)}', status=400)
 
     admin_user_id = current_user_id()
-    conn = get_conn()
     try:
-        conn.row_factory = sqlite3.Row
+        message = user_service.change_user_plan(user_id, plan_type, admin_user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
 
-        admin_user = conn.execute(
-            "SELECT username FROM users WHERE id = ? AND is_admin = 1",
-            (admin_user_id,),
-        ).fetchone()
-        if not admin_user:
-            return error('Administrator privileges required', status=403)
+    return success(message)
 
-        target_user = conn.execute(
-            "SELECT username, plan_type FROM users WHERE id = ?",
-            (user_id,),
-        ).fetchone()
-        if not target_user:
-            return error('User not found', status=404)
 
-        previous_plan = target_user['plan_type']
-        conn.execute("UPDATE users SET plan_type = ? WHERE id = ?", (plan_type, user_id))
-        conn.execute(
-            "INSERT INTO token_history (user_id, changed_by, amount, change_type, meta, created_at) VALUES (?, ?, 0, 'plan_change', ?, datetime('now'))",
-            (user_id, admin_user_id, f'plan:{previous_plan}->{plan_type}'),
-        )
-        conn.commit()
-
-        return success(f'사용자 플랜이 {plan_type}으로 변경되었습니다 (이전: {previous_plan})')
-    finally:
-        conn.close()
+def _handle_service_error(exc: UserServiceError):
+    message = str(exc)
+    lowered = message.lower()
+    status = 400
+    if 'not found' in lowered:
+        status = 404
+    elif 'administrator privileges' in lowered:
+        status = 403
+    return error(message, status=status)
