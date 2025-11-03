@@ -16,6 +16,8 @@ import sqlite3
 from flask import session
 from flask import jsonify
 
+from .utils.auth import current_user_id, ensure_admin_view, ensure_logged_in_view
+
 home_bp = Blueprint('home', __name__)
 
 
@@ -116,7 +118,7 @@ def login_post():
     session.permanent = True  # 세션 영구화
     flash('로그인 성공', 'success')
     if session['is_admin']:
-        return redirect(url_for('admin.admin'))
+        return redirect(url_for('admin.admin_dashboard'))
     return redirect(url_for('home.home'))
 
 
@@ -488,9 +490,9 @@ def check_verification_status(user_id):
 @home_bp.route('/admin/email-settings')
 def admin_email_settings():
     """관리자 이메일 인증 설정 페이지 (리다이렉트)"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        flash('관리자 권한이 필요합니다', 'error')
-        return redirect(url_for('home.home'))
+    response = ensure_admin_view()
+    if response:
+        return response
     
     # 관리자 대시보드의 설정 탭으로 리다이렉트
     return redirect(url_for('admin.admin_dashboard') + '#settings')
@@ -499,9 +501,9 @@ def admin_email_settings():
 @home_bp.route('/admin/email-settings/update', methods=['POST'])
 def admin_email_settings_update():
     """관리자 이메일 인증 설정 업데이트 (리다이렉트)"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        flash('관리자 권한이 필요합니다', 'error')
-        return redirect(url_for('home.home'))
+    response = ensure_admin_view()
+    if response:
+        return response
     
     # 관리자 대시보드의 설정 탭으로 리다이렉트
     return redirect(url_for('admin.admin_dashboard') + '#settings')
@@ -510,9 +512,10 @@ def admin_email_settings_update():
 @home_bp.route('/profile/edit')
 def profile_edit():
     """고객정보 수정 페이지"""
-    if not session.get('user_id'):
-        flash('로그인이 필요합니다', 'error')
-        return redirect(url_for('home.login'))
+    response = ensure_logged_in_view()
+    if response:
+        return response
+    user_id = current_user_id()
     
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
@@ -523,7 +526,7 @@ def profile_edit():
                    COALESCE(plan_type, 'free') AS plan_type
             FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0
             """,
-            (session['user_id'],)
+            (user_id,)
         ).fetchone()
         
         if not user:
@@ -538,9 +541,10 @@ def profile_edit():
 @home_bp.route('/profile/update', methods=['POST'])
 def profile_update():
     """고객정보 수정 처리"""
-    if not session.get('user_id'):
-        flash('로그인이 필요합니다', 'error')
-        return redirect(url_for('home.login'))
+    response = ensure_logged_in_view()
+    if response:
+        return response
+    user_id = current_user_id()
     
     # CSRF 토큰 검증 (간단히 처리)
     csrf_token = request.form.get('csrf_token')
@@ -605,7 +609,7 @@ def profile_update():
             # 🔍 테스트 1: 이메일 중복 검사 (본인 제외)
             existing_email = conn.execute(
                 "SELECT id FROM users WHERE email = ? AND id != ?", 
-                (email, session['user_id'])
+                (email, user_id)
             ).fetchone()
             if existing_email:
                 flash('이미 사용 중인 이메일입니다', 'error')
@@ -614,7 +618,7 @@ def profile_update():
             # 🔍 테스트 2: 전화번호 중복 검사 (본인 제외)
             existing_phone = conn.execute(
                 "SELECT id FROM users WHERE phone = ? AND id != ?", 
-                (phone, session['user_id'])
+                (phone, user_id)
             ).fetchone()
             if existing_phone:
                 flash('이미 사용 중인 전화번호입니다', 'error')
@@ -623,7 +627,7 @@ def profile_update():
             # 🔍 테스트 3: 기존 데이터 백업 (변경 이력 저장)
             old_user = conn.execute(
                 "SELECT company_name, representative_name, phone, email, address, business_type, business_category FROM users WHERE id = ?",
-                (session['user_id'],)
+                (user_id,)
             ).fetchone()
             
             # 🔍 테스트 4: 사용자 정보 업데이트 (사업자번호는 제외)
@@ -635,13 +639,13 @@ def profile_update():
                 WHERE id = ?
                 """,
                 (company_name, representative_name, phone, email, address, 
-                 business_type, business_category, session['user_id'])
+                 business_type, business_category, user_id)
             )
             
             # 🔍 테스트 5: 업데이트 확인
             updated_user = conn.execute(
                 "SELECT company_name, representative_name, phone, email, address, business_type, business_category FROM users WHERE id = ?",
-                (session['user_id'],)
+                (user_id,)
             ).fetchone()
             
             # 🔍 테스트 6: 변경사항 검증
@@ -670,11 +674,11 @@ def profile_update():
                 flash('고객정보가 성공적으로 수정되었습니다. (변경사항 없음)', 'success')
             
             # 🔍 테스트 8: 관리자 대시보드 연동 확인을 위한 로그
-            print(f"✅ 사용자 정보 업데이트 완료 - 사용자 ID: {session['user_id']}, 변경사항: {len(changes)}개")
+            print(f"✅ 사용자 정보 업데이트 완료 - 사용자 ID: {user_id}, 변경사항: {len(changes)}개")
             
         except Exception as e:
             flash(f'정보 수정 중 오류가 발생했습니다: {str(e)}', 'error')
-            print(f"❌ 사용자 정보 업데이트 실패 - 사용자 ID: {session['user_id']}, 오류: {str(e)}")
+            print(f"❌ 사용자 정보 업데이트 실패 - 사용자 ID: {user_id}, 오류: {str(e)}")
             return redirect(url_for('home.profile_edit'))
     
     return redirect(url_for('home.profile_edit'))

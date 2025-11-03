@@ -5,6 +5,7 @@ import os
 load_dotenv()
 
 from flask import Flask, request, jsonify, render_template, session
+from werkzeug.exceptions import HTTPException
 from core.content_loader import CONTENT_CACHE, get_text
 from config.settings import settings
 from core.logging_setup import init_logging
@@ -111,31 +112,49 @@ def _log_request():
     try:
         # Python 3.14 Template Strings 사용
         app.logger.info(f"REQ {request.method} {request.path}")
-    except Exception:
-        pass
+        adapter = app.url_map.bind_to_environ(request.environ)
+        try:
+            endpoint, params = adapter.match()
+            url_rule = getattr(request, "url_rule", None)
+            app.logger.info(
+                "MATCH endpoint=%s params=%s rule=%s",
+                endpoint,
+                params,
+                getattr(url_rule, "rule", None),
+            )
+        except HTTPException as http_exc:
+            app.logger.info("MATCH miss: %s", http_exc)
+        except Exception as exc:
+            app.logger.info("MATCH error: %s", exc)
+    except Exception as exc:
+        app.logger.warning(f"Request logging failed: {exc}")
 
-    # 간단한 CSRF 가드 (POST만 검사, 로그인/회원가입은 예외)
-    try:
-        if request.method == 'POST':
-            if request.path in ('/login', '/register'):
-                return None
-            token = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
-        # CSRF 검증 활성화 (상용화 보안 강화) - 개발 환경에서는 관대하게 설정
-        if token and not validate_csrf_token(token):
-            app.logger.warning(f"CSRF token validation failed: {token}")
-            # 개발 환경에서는 경고만 로그하고 계속 진행
-            # return jsonify({'success': False, 'message': 'Invalid CSRF token'}), 403
-    except Exception as e:
-        # CSRF 검증 오류 로깅 - 개발 환경에서는 경고만 로그
-        app.logger.warning(f"CSRF validation error: {e}")
-        # 개발 환경에서는 오류를 반환하지 않고 계속 진행
-        # return jsonify({'success': False, 'message': 'CSRF validation failed'}), 403
+    # 간단한 CSRF 가드 (상태 변경 메서드만 검사, 로그인/회원가입은 예외)
+    token = None
+    if request.method not in ('GET', 'HEAD', 'OPTIONS'):
+        if request.path not in ('/login', '/register'):
+            token = (
+                request.headers.get('X-CSRF-Token')
+                or request.form.get('csrf_token')
+                or request.args.get('csrf_token')
+            )
+
+    if token:
+        try:
+            if not validate_csrf_token(token):
+                app.logger.warning("CSRF token validation failed: %s", token)
+                # 개발 환경에서는 경고만 로그하고 계속 진행
+                # return jsonify({'success': False, 'message': 'Invalid CSRF token'}), 403
+        except Exception as exc:
+            app.logger.warning("CSRF validation error: %s", exc, exc_info=True)
+            # 개발 환경에서는 오류를 반환하지 않고 계속 진행
+            # return jsonify({'success': False, 'message': 'CSRF validation failed'}), 403
 
 @app.after_request
 def _log_response(resp):
     try:
         # Python 3.14 Template Strings 사용
-        app.logger.info(f"RES {resp.status_code} {request.path}")
+        app.logger.info(f"RES {resp.status_code} {request.path} endpoint={getattr(request, 'endpoint', None)}")
     except Exception:
         pass
     return resp
