@@ -18,6 +18,13 @@ import time
 import logging
 import sqlite3
 
+from .utils.auth import (
+    current_user_id,
+    ensure_admin_for_json,
+    ensure_login_for_json,
+    is_authenticated,
+)
+
 conversion_bp = Blueprint('conversion', __name__)
 
 logger = logging.getLogger(__name__)
@@ -116,7 +123,7 @@ def _calculate_template_count_precisely(uploaded_file, industry_type: str = 'del
 @conversion_bp.route('/conversion')
 def conversion():
     # 로그인 확인
-    if not session.get('user_id'):
+    if not is_authenticated():
         return render_template(
             'conversion.html',
             guest_mode=True,
@@ -133,8 +140,9 @@ def conversion():
 @conversion_bp.route('/api/use-token', methods=['POST'])
 def use_token():
     """변환 작업 시 토큰 사용 API"""
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    user_id, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     data = request.get_json(silent=True) or {}
     tokens_to_use = int(data.get('tokens', 1))  # 기본 1토큰
@@ -146,7 +154,7 @@ def use_token():
         # 현재 사용자 정보 조회
         user = conn.execute(
             "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (session['user_id'],)
+            (user_id,)
         ).fetchone()
         
         if not user:
@@ -162,7 +170,7 @@ def use_token():
         new_tokens_used = (user['tokens_used'] or 0) + tokens_to_use
         conn.execute(
             "UPDATE users SET tokens_used = ? WHERE id = ?", 
-            (new_tokens_used, session['user_id'])
+            (new_tokens_used, user_id)
         )
         conn.commit()
         
@@ -180,23 +188,24 @@ def use_token():
 @conversion_bp.route('/api/token-status', methods=['GET'])
 def token_status():
     """현재 토큰 상태 조회 API (캐싱 적용)"""
-    logger.info(f"토큰상태 요청 - 세션 ID: {session.get('user_id')}")
+    user_id, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        logger.warning("로그인되지 않은 사용자")
+        return guard_response
+
+    logger.info(f"토큰상태 요청 - 세션 ID: {user_id}")
     logger.info(f"세션 전체: {dict(session)}")
     logger.info(f"요청 헤더: {dict(request.headers)}")
-    
-    if not session.get('user_id'):
-        logger.warning("로그인되지 않은 사용자")
-        return error('로그인이 필요합니다', status=401)
-    
+
     # 토큰 잔액 조회 (기존 방식으로 복원)
     with get_conn() as conn:
         user = conn.execute(
             "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (session['user_id'],)
+            (user_id,)
         ).fetchone()
         
         if not user:
-            logger.warning(f"사용자 ID {session['user_id']}를 찾을 수 없음")
+            logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
             return error('사용자를 찾을 수 없습니다', status=404)
         
         available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
@@ -215,11 +224,12 @@ def token_status():
 @conversion_bp.route('/api/user-info', methods=['GET'])
 def user_info():
     """현재 로그인한 사용자 정보 조회 API"""
-    logger.info(f"유저정보 요청 - 세션 ID: {session.get('user_id')}")
-    
-    if not session.get('user_id'):
+    user_id, guard_response = ensure_login_for_json()
+    if guard_response is not None:
         logger.warning("로그인되지 않은 사용자")
-        return error('로그인이 필요합니다', status=401)
+        return guard_response
+
+    logger.info(f"유저정보 요청 - 세션 ID: {user_id}")
     
     # 사용자 정보 조회 (기존 방식으로 복원)
     with get_conn() as conn:
@@ -229,11 +239,11 @@ def user_info():
                       plan_type, monthly_limit, used_count, is_active, is_admin,
                       token_balance, tokens_used, created_at
                FROM users WHERE id = ?""",
-            (session['user_id'],)
+            (user_id,)
         ).fetchone()
         
         if not user:
-            logger.warning(f"사용자 ID {session['user_id']}를 찾을 수 없음")
+            logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
             return error('사용자를 찾을 수 없습니다', status=404)
         
         logger.info(f"사용자 정보 조회 성공: {user['username']}")
@@ -266,8 +276,9 @@ def user_info():
 @conversion_bp.route('/api/templates', methods=['GET'])
 def get_templates():
     """사용 가능한 템플릿 목록 조회 API"""
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    _, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         templates = template_manager.get_available_templates()
@@ -279,8 +290,9 @@ def get_templates():
 @conversion_bp.route('/api/templates/<template_id>', methods=['GET'])
 def get_template_info(template_id):
     """특정 템플릿 정보 조회 API"""
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    _, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         template_info = template_manager.get_template_info(template_id)
@@ -295,8 +307,9 @@ def get_template_info(template_id):
 @conversion_bp.route('/api/templates/<template_id>/validate', methods=['GET'])
 def validate_template(template_id):
     """템플릿 파일 유효성 검사 API"""
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    _, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         is_valid = template_manager.validate_template_file(template_id)
@@ -314,8 +327,9 @@ def validate_template(template_id):
 @conversion_bp.route('/api/templates/upload', methods=['POST'])
 def upload_template():
     """템플릿 파일 업로드 API (관리자 전용)"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        return error('관리자 권한이 필요합니다', status=403)
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         # 업로드된 파일 확인
@@ -376,8 +390,9 @@ def upload_template():
 @conversion_bp.route('/api/validate-template-data', methods=['POST'])
 def validate_template_data():
     """템플릿 데이터 절대지침 검증 API"""
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    user_id, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         data = request.get_json(silent=True) or {}
@@ -387,7 +402,7 @@ def validate_template_data():
         
         # 검증 결과 로그 기록
         absolute_guidelines.log_validation_result(
-            data, success_result, errors, session['user_id']
+            data, success_result, errors, user_id
         )
         
         if success_result:
@@ -424,8 +439,9 @@ def get_guidelines_version():
 @conversion_bp.route('/api/security/status', methods=['GET'])
 def get_security_status():
     """보안 시스템 상태 조회 API"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        return error('관리자 권한이 필요합니다', status=403)
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         # 파일 검증 시스템 상태
@@ -451,8 +467,9 @@ def get_security_status():
 @conversion_bp.route('/api/security/notifications', methods=['GET'])
 def get_notifications():
     """알림 목록 조회 API"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        return error('관리자 권한이 필요합니다', status=403)
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         category = request.args.get('category')
@@ -479,8 +496,9 @@ def get_notifications():
 @conversion_bp.route('/api/security/notifications/<int:notification_id>/read', methods=['POST'])
 def mark_notification_read(notification_id):
     """알림을 읽음으로 표시 API"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        return error('관리자 권한이 필요합니다', status=403)
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         notification_system.mark_as_read(notification_id)
@@ -507,8 +525,9 @@ def start_conversion():
       - 금액 정보 추출 (요금합계, 부가세)
       - 홈텍스 템플릿에 공급자 + 공급받는자 정보 기입
     """
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    user_id, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
     
     # CSRF 토큰 검증 (간단히 처리)
     csrf_token = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
@@ -580,7 +599,7 @@ def start_conversion():
                    token_balance, COALESCE(tokens_used, 0) AS tokens_used, plan_type
             FROM users WHERE id = ?
             """,
-            (session['user_id'],)
+            (user_id,)
         ).fetchone()
 
         if not user:
@@ -610,11 +629,11 @@ def start_conversion():
     # 핵심 변경 2: VIP/GoldVIP 무제한 처리
     # ============================================
     # Gold VIP 회원은 무제한 사용 가능
-    logger.info(f"사용자 플랜 확인 시작: user_id={session['user_id']}")
-    subscription_info = get_user_subscription(session['user_id'])
+    logger.info(f"사용자 플랜 확인 시작: user_id={user_id}")
+    subscription_info = get_user_subscription(user_id)
     logger.info(f"구독 정보: {subscription_info}")
     
-    is_unlimited = is_unlimited_user(session['user_id'])
+    is_unlimited = is_unlimited_user(user_id)
     logger.info(f"is_unlimited_user 결과: {is_unlimited}")
     
     if is_unlimited:
@@ -665,7 +684,7 @@ def start_conversion():
     # 변환 시작 시간 기록
     import time
     conversion_start_time = time.time()
-    logger.info(f"변환 시작: {time.strftime('%Y-%m-%d %H:%M:%S')} - 사용자 {session['user_id']}")
+    logger.info(f"변환 시작: {time.strftime('%Y-%m-%d %H:%M:%S')} - 사용자 {user_id}")
 
     # ============================================
     # 골드 회원 공급자 선택 분기
@@ -683,7 +702,7 @@ def start_conversion():
         with get_conn() as conn:
             customer = conn.execute(
                 "SELECT * FROM gold_customers WHERE id = ? AND user_id = ? AND is_deleted = 0",
-                (int(selected_customer_id), session['user_id'])
+                (int(selected_customer_id), user_id)
             ).fetchone()
             
             if customer:
@@ -720,7 +739,7 @@ def start_conversion():
     
     # 사용자 정보를 절대지침 시스템에 전달
     user_info = {
-        'user_id': session['user_id'],  # 사용자 ID 추가
+        'user_id': user_id,  # 사용자 ID 추가
         'company_name': user['company_name'] or user['username'],
         'business_number': user['business_number'] or '',
         'representative': user['representative_name'] or '',
@@ -763,7 +782,7 @@ def start_conversion():
         # ============================================
         token_processor = TokenDeductionProcessor()
         token_result = token_processor.process_token_deduction(
-            user_id=session['user_id'],
+            user_id=user_id,
             is_unlimited=is_unlimited,
             conversion_result=conversion_result
         )
@@ -773,14 +792,14 @@ def start_conversion():
         # 변환 완료 시간 기록 및 실행 시간 계산
         conversion_end_time = time.time()
         execution_time = round(conversion_end_time - conversion_start_time, 2)
-        logger.info(f"변환 완료: {time.strftime('%Y-%m-%d %H:%M:%S')} - 실행시간: {execution_time}초 - 사용자 {session['user_id']}")
+        logger.info(f"변환 완료: {time.strftime('%Y-%m-%d %H:%M:%S')} - 실행시간: {execution_time}초 - 사용자 {user_id}")
         
         # 세션에 변환 결과 저장
         session['last_conversion_result'] = conversion_result
         session['last_file_name'] = file_name  # 다운로드 파일명 저장
         
         # 최종 토큰 상태 조회
-        final_tokens_used = token_processor.get_initial_tokens_used(session['user_id'])
+        final_tokens_used = token_processor.get_initial_tokens_used(user_id)
         if token_result.get('tokens_deducted'):
             final_tokens_used += token_result['tokens_deducted']
         
@@ -816,8 +835,9 @@ def download_converted():
     - 변환 결과 파일이 1개인 경우: XLSX 파일을 직접 다운로드로 반환
     - 변환 결과 파일이 2개 이상인 경우: ZIP으로 묶어 반환 (기존 동작 유지)
     """
-    if not session.get('user_id'):
-        return error('로그인이 필요합니다', status=401)
+    _, guard_response = ensure_login_for_json()
+    if guard_response is not None:
+        return guard_response
 
     conversion_result = session.get('last_conversion_result')
     if not conversion_result or not conversion_result.get('success'):
@@ -1107,8 +1127,9 @@ def download_converted():
 @conversion_bp.route('/api/security/validation/test', methods=['POST'])
 def test_file_validation():
     """파일 검증 테스트 API"""
-    if not session.get('user_id') or not session.get('is_admin'):
-        return error('관리자 권한이 필요합니다', status=403)
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
     
     try:
         data = request.get_json(silent=True) or {}

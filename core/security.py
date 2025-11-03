@@ -27,6 +27,12 @@ def validate_csrf_token(token: str | None) -> bool:
     expected = session.get('_csrf_token')
     if not expected:
         return False
+    try:
+        return hmac.compare_digest(str(expected), str(token))
+    except Exception:
+        return False
+
+
 def generate_secure_id() -> str:
     """
     Python 3.14의 향상된 UUID 성능을 활용한 보안 ID 생성
