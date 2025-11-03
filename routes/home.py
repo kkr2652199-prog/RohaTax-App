@@ -118,7 +118,7 @@ def login_post():
     session.permanent = True  # 세션 영구화
     flash('로그인 성공', 'success')
     if session['is_admin']:
-        return redirect(url_for('admin.admin'))
+        return redirect(url_for('admin.admin_dashboard'))
     return redirect(url_for('home.home'))
 
 
