@@ -23,7 +23,10 @@ class PriorityStageTwoRule(BasePriorityRule):
         parsed_data = context.parsed_data
         extras = context.extras
 
-        df = extras.get("dataframe") or parsed_data.get("raw_data")
+        # DataFrame 안전하게 가져오기 (or 연산자 대신 명시적 체크)
+        df = extras.get("dataframe")
+        if df is None:
+            df = parsed_data.get("raw_data")
         if df is None:
             self.logger.warning("[Stage2] DataFrame이 없어 후속 처리를 생략합니다.")
             return recipients
@@ -36,7 +39,7 @@ class PriorityStageTwoRule(BasePriorityRule):
 
         unique_recipients = list(recipients)
 
-        is_second_priority_sheet = self._detect_second_priority_sheet(unique_recipients)
+        is_second_priority_sheet = self.pipeline._detect_second_priority_sheet(unique_recipients)
         missing_business_numbers = [
             r
             for r in unique_recipients
@@ -81,7 +84,7 @@ class PriorityStageTwoRule(BasePriorityRule):
                         "⚠️ 2순위 검열 실패 - 1순위 결과를 2순위 방식으로 재처리"
                     )
                     enhanced_recipients = (
-                        self._enhance_first_priority_with_second_priority_logic(
+                        self.pipeline._enhance_first_priority_with_second_priority_logic(
                             unique_recipients,
                             df,
                             column_mapping_second,

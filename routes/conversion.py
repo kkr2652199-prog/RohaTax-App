@@ -117,26 +117,17 @@ def _calculate_template_count_precisely(uploaded_file, industry_type: str = 'del
 def conversion():
     # 로그인 확인
     if not session.get('user_id'):
-        return redirect(url_for('home.login'))
-    
-    # 토큰 잔액 확인 (지급된 토큰 - 사용한 토큰)
-    with get_conn() as conn:
-        user = conn.execute(
-            "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (session['user_id'],)
-        ).fetchone()
-        
-        if not user:
-            return redirect(url_for('home.login'))
-        
-        # 사용 가능한 토큰 = 지급된 토큰 - 사용한 토큰
-        available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-        
-        if available_tokens <= 0:
-            # 토큰이 없는 경우 고품질 팝업과 함께 변환앱 페이지 표시
-            return render_template('conversion.html', no_tokens=True, available_tokens=available_tokens, csrf_token=generate_csrf_token())
-    
-    return render_template('conversion.html', no_tokens=False, csrf_token=generate_csrf_token())
+        return render_template(
+            'conversion.html',
+            guest_mode=True,
+            csrf_token=generate_csrf_token(),
+        )
+
+    return render_template(
+        'conversion.html',
+        guest_mode=False,
+        csrf_token=generate_csrf_token(),
+    )
 
 
 @conversion_bp.route('/api/use-token', methods=['POST'])

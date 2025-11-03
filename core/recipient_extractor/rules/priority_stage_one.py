@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from ..exceptions import StageExecutionError
 from ..utils import (
     extract_address_simple,
     extract_amount,
@@ -79,7 +80,7 @@ class PriorityStageOneRule(BasePriorityRule):
             df = parsed_data.get("raw_data")
             if df is None:
                 self.logger.error("❌ 1순위 시트 데이터가 없습니다. 변환을 중단합니다.")
-                raise ValueError("1순위 시트 데이터가 없어 변환을 중단합니다.")
+                raise StageExecutionError("1순위 시트 데이터가 없어 변환을 중단합니다.")
             self.logger.info(
                 "✅ 1순위 시트 데이터 사용: '%s', fast_path=%s - 중복 검열 완전 방지",
                 parsed_data.get("selected_sheet", "Unknown"),
@@ -87,7 +88,7 @@ class PriorityStageOneRule(BasePriorityRule):
             )
         else:
             self.logger.info("🔍 1순위 시트 없음 - 시트 선택 로직 실행")
-            sheet_priority_result = self._select_optimal_sheet_by_family_rule(
+            sheet_priority_result = self.pipeline._select_optimal_sheet_by_family_rule(
                 parsed_data
             )
             if sheet_priority_result:
@@ -105,7 +106,7 @@ class PriorityStageOneRule(BasePriorityRule):
         sheet_inspection_result = parsed_data.get("sheet_inspection_result")
         selected_sheet = parsed_data.get("selected_sheet", "Unknown")
 
-        if sheet_inspection_result:
+        if sheet_inspection_result and isinstance(sheet_inspection_result, dict):
             score = sheet_inspection_result.get("score", 0.0)
             matched_fields = sheet_inspection_result.get("matched_fields", 0)
             data_quality = sheet_inspection_result.get("data_quality", 0.0)
@@ -175,13 +176,13 @@ class PriorityStageOneRule(BasePriorityRule):
             self.logger.error("찾은 컬럼 매핑: %s", column_mapping)
             return []
 
-        if self._check_and_apply_sub_guideline(context.industry, parsed_data):
+        if self.pipeline._check_and_apply_sub_guideline(context.industry, parsed_data):
             self.logger.info("🚀 서브지침 시스템 활성화 - 고급 추출 모드")
-            extracted_data = self._extract_with_sub_guidelines(
+            extracted_data = self.pipeline._extract_with_sub_guidelines(
                 df, column_mapping, column_names
             )
         else:
-            extracted_data = self._extract_with_basic_mode(
+            extracted_data = self.pipeline._extract_with_basic_mode(
                 df, column_mapping, column_names
             )
 

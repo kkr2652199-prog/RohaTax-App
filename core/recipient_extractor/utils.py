@@ -7,6 +7,13 @@
 from typing import List, Any, Optional
 import pandas as pd
 
+from .normalizers import (
+    normalize_address,
+    normalize_amount,
+    normalize_email,
+    normalize_whitespace,
+)
+
 def get_synonyms(column_name: str) -> List[str]:
     """컬럼명 동의어 반환 - 다양한 파일 형식 지원"""
     synonyms = {
@@ -68,14 +75,16 @@ def find_header_row(df: pd.DataFrame) -> Optional[int]:
             return row_idx
     return None
 
-def extract_total_amount_simple(row: pd.Series, column_names: List[str], default_total: int) -> int:
+def extract_total_amount_simple(
+    row: pd.Series, column_names: List[str], default_total: int
+) -> int:
     """총금액(합계) 단순 추출: 첨부 파일의 총금액 열이 있으면 사용, 없으면 기본값(공급가액+부가세)."""
     try:
         total_keywords = ['총금액', '합계금액', '총액', '합계', '요금합계']
         for col_idx, col_name in enumerate(column_names):
             name = str(col_name)
             if any(k in name for k in total_keywords):
-                val = extract_amount(row.iloc[col_idx])
+                val = normalize_amount(row.iloc[col_idx])
                 if val > 0:
                     return val
     except Exception:
@@ -84,40 +93,7 @@ def extract_total_amount_simple(row: pd.Series, column_names: List[str], default
 
 def extract_amount(value) -> int:
     """금액 추출 (정수만 반환하여 과학표기법 방지)"""
-    try:
-        import pandas as pd
-        if pd.isna(value):
-            return 0
-        value_str = str(value)
-        
-        # 회계표기와 공백/단위 제거
-        value_str = value_str.replace(',', '').replace('원', '').replace(' ', '')
-        
-        # 과학표기 방지: 과학표기가 포함된 경우 직접 정수 변환
-        if 'e' in value_str.lower() or 'E' in value_str:
-            try:
-                num_float = float(value_str)
-                return int(round(num_float))
-            except Exception:
-                pass
-        
-        # 숫자만 추출
-        import re
-        numbers = re.findall(r'\d+\.?\d*', value_str)
-        if numbers:
-            try:
-                # 정량이 큰 수의 경우 과학표기법 방지를 위해 문자열로 처리
-                num_str = numbers[0]
-                if '.' in num_str:
-                    return int(float(num_str))
-                else:
-                    # 큰 정수의 경우 직접 정수 변환
-                    return int(num_str)
-            except Exception:
-                return 0
-        return 0
-    except:
-        return 0
+    return normalize_amount(value)
 
 def extract_business_number_simple(row: pd.Series, column_names: List[str]) -> str:
     """사업자번호 추출 (단순)"""
@@ -151,7 +127,7 @@ def extract_store_name_simple(row: pd.Series, column_names: List[str]) -> str:
         # 디버깅: 매칭 테스트
         if any(keyword in col_name for keyword in store_keywords):
             logger.info(f"✅ 상호명 키워드 매칭: '{col_name}' -> 키워드: {[k for k in store_keywords if k in col_name]}")
-            value = str(row.iloc[col_idx]).strip()
+            value = normalize_whitespace(row.iloc[col_idx])
             if value and value != 'nan':
                 # 🚨 숫자만으로 구성된 값은 상호명이 아님
                 if value.isdigit():
@@ -170,8 +146,11 @@ def extract_store_name_simple(row: pd.Series, column_names: List[str]) -> str:
                     continue
 
                 # ✅ 유효한 상호명으로 간주
-                logger.info(f"✅ 상호명 추출 성공: '{value}' (컬럼: '{col_name}')")
-                return value
+                normalized = normalize_whitespace(value)
+                logger.info(
+                    f"✅ 상호명 추출 성공: '{normalized}' (컬럼: '{col_name}')"
+                )
+                return normalized
     logger.warning(f"❌ 상호명을 찾을 수 없습니다. 컬럼: {len(column_names)}개 확인됨")
     return ""
 
@@ -226,7 +205,7 @@ def extract_representative_simple(row: pd.Series, column_names: List[str]) -> st
             col_name_str = str(col_name).replace('\n', ' ').strip()
             matched = [keyword for keyword in keywords if keyword.lower() in col_name_str.lower()]
             if matched:
-                value = str(row.iloc[col_idx]).strip()
+                value = normalize_whitespace(row.iloc[col_idx])
                 if not value or value.lower() in invalid_markers:
                     continue
 
@@ -240,7 +219,7 @@ def extract_representative_simple(row: pd.Series, column_names: List[str]) -> st
                     logger.debug("⚠️ 대표자명 유효성 미달: %s", value)
                     continue
 
-                matched_columns.append((col_name_str, value, matched))
+                matched_columns.append((col_name_str, normalize_whitespace(value), matched))
         if matched_columns:
             # 가장 먼저 나온 컬럼을 사용 (엑셀 좌→우 우선)
             col_name, value, matched = matched_columns[0]
@@ -272,8 +251,8 @@ def extract_address_simple(row: pd.Series, column_names: List[str]) -> str:
         address_keywords = ['공급받는자 사업장주소', '사업장주소', '공급받는자 주소', '주소', '소재지', '사업장', '주소지']
         
         if any(keyword in clean_col_name for keyword in address_keywords):
-            value = str(row.iloc[col_idx]).strip()
-            if value and value != 'nan' and value.lower() != 'none':
+            value = normalize_address(row.iloc[col_idx])
+            if value:
                 return value
     return ""
 
@@ -281,11 +260,11 @@ def extract_email_simple(row: pd.Series, column_names: List[str]) -> str:
     """이메일 추출 (단순) + 자동 수정"""
     for col_idx, col_name in enumerate(column_names):
         if any(keyword in col_name for keyword in ['이메일', 'email', '메일']):
-            value = str(row.iloc[col_idx]).strip()
-            if value and value != 'nan':
+            value = normalize_whitespace(row.iloc[col_idx])
+            if value and value.lower() != 'nan':
                 # 간단한 이메일 검증
                 import re
                 email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
                 if re.match(email_pattern, value):
-                    return value
+                    return normalize_email(value)
     return ""

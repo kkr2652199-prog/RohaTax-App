@@ -2,84 +2,122 @@
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/conversion.css') }}">
 <script src="{{ url_for('static', filename='js/components/token_alert_modal.js') }}"></script>
+<style>
+    .guest-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+
+    .guest-overlay__modal {
+        width: min(420px, 90vw);
+        padding: 32px 28px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+        text-align: center;
+    }
+
+    .guest-overlay__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        color: #ffffff;
+        font-size: 2rem;
+        box-shadow: 0 15px 35px rgba(99, 102, 241, 0.35);
+    }
+
+    .guest-overlay__title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #1f2937;
+        margin-bottom: 12px;
+    }
+
+    .guest-overlay__description {
+        color: #4b5563;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+
+    .guest-overlay__actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .guest-overlay__button {
+        min-width: 140px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        color: #ffffff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+    }
+
+    .guest-overlay__button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 40px rgba(99, 102, 241, 0.4);
+    }
+
+    .guest-overlay__button--login {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    .guest-overlay__button--signup {
+        background: linear-gradient(135deg, #f97316, #ef4444);
+    }
+
+    .app--guest-disabled {
+        filter: blur(3px) saturate(0.6);
+        pointer-events: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+</style>
 {% endblock %}
 {% block content %}
-    <!-- 고품질 토큰 부족 팝업 -->
-    {% if no_tokens %}
-    <div id="token-popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease-out;">
-        <div style="background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);padding:40px;border-radius:20px;max-width:500px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.1);transform:scale(1);animation:popIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);">
-            <!-- 아이콘 -->
-            <div style="width:80px;height:80px;background:linear-gradient(135deg,#ff6b6b,#ee5a52);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 10px 25px rgba(255,107,107,0.3);">
-                <span style="font-size:2.5rem;color:white;">🔒</span>
-            </div>
-            
-            <!-- 제목 -->
-            <h2 style="margin:0 0 16px 0;color:#1a202c;font-size:1.75rem;font-weight:700;letter-spacing:-0.025em;">토큰이 부족합니다</h2>
-            
-            <!-- 설명 -->
-            <p style="margin:0 0 32px 0;color:#4a5568;font-size:1.1rem;line-height:1.6;font-weight:400;">변환앱을 사용하려면 충분한 토큰이 필요합니다.<br><span style="color:#e53e3e;font-weight:600;">관리자에게 토큰 구매를 요청하세요.</span></p>
-            
-            <!-- 버튼들 -->
-            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-                <button onclick="window.location.href='/'" style="padding:14px 28px;background:linear-gradient(135deg,#4299e1,#3182ce);color:white;border:none;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;box-shadow:0 4px 15px rgba(66,153,225,0.3);transition:all 0.2s ease;min-width:120px;">
-                    🏠 홈으로
-                </button>
-                <button onclick="window.location.href='/admin'" style="padding:14px 28px;background:linear-gradient(135deg,#e53e3e,#c53030);color:white;border:none;border-radius:12px;cursor:pointer;font-size:1rem;font-weight:600;box-shadow:0 4px 15px rgba(229,62,62,0.3);transition:all 0.2s ease;min-width:120px;">
-                    👨‍💼 관리자 문의
-                </button>
-            </div>
-            
-            <!-- 추가 정보 -->
-            <div style="margin-top:24px;padding:16px;background:rgba(66,153,225,0.1);border-radius:12px;border-left:4px solid #4299e1;">
-                <p style="margin:0;color:#2d3748;font-size:0.9rem;font-weight:500;">
-                    💡 <strong>팁:</strong> 토큰은 세금계산서 변환 작업에 사용됩니다.
-                </p>
+    {% set guest_mode = guest_mode if guest_mode is not none else False %}
+    <script>
+        window.__guestMode = "{{ 'true' if guest_mode else 'false' }}" === 'true';
+    </script>
+    {% if guest_mode %}
+    <div class="guest-overlay" role="dialog" aria-modal="true" aria-labelledby="guest-overlay-title">
+        <div class="guest-overlay__modal">
+            <div class="guest-overlay__icon">🔑</div>
+            <h2 id="guest-overlay-title" class="guest-overlay__title">회원 전용 서비스입니다</h2>
+            <p class="guest-overlay__description">
+                전자세금계산서 변환 기능은 로그인 후 이용하실 수 있습니다.<br>
+                이미 계정이 있다면 로그인하고, 없다면 지금 바로 회원가입을 진행해 주세요.
+            </p>
+            <div class="guest-overlay__actions">
+                <a href="{{ url_for('home.login') }}" class="guest-overlay__button guest-overlay__button--login">🔐 로그인 하기</a>
+                <a href="{{ url_for('home.register') }}" class="guest-overlay__button guest-overlay__button--signup">✨ 무료 회원가입</a>
             </div>
         </div>
     </div>
-    
-<!-- (이전 위치에서 이동됨) 골드 고객 선택 모달은 no_tokens 여부와 무관하게 렌더링되어야 함 -->
-
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        #token-popup button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        #token-popup button:active {
-            transform: translateY(0);
-        }
-    </style>
-    
-    <script>
-        // 팝업 외부 클릭 시 홈으로 이동
-        document.getElementById('token-popup').addEventListener('click', function(e) {
-            if (e.target === this) {
-                window.location.href = '/';
-            }
-        });
-        
-        // ESC 키로도 홈으로 이동
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                window.location.href = '/';
-            }
-        });
-    </script>
     {% endif %}
-    
-    <div class="app" {% if no_tokens %}style="display:none;"{% endif %}>
+    <div class="app{% if guest_mode %} app--guest-disabled{% endif %}"{% if guest_mode %} aria-hidden="true"{% endif %}>
         <aside class="sidebar">
             <div class="brand">{{ t('conversion.sidebar_title','📄 변환앱') }}</div>
             
