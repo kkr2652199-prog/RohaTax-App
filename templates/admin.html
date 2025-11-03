@@ -745,7 +745,10 @@
         </div>
     </div>
 
+    <script id="admin-initial-data" type="application/json">{{ admin_initial_data | tojson | safe }}</script>
     <script>
+        const adminInitialData = JSON.parse(document.getElementById('admin-initial-data')?.textContent || '{}');
+        const csrfToken = () => document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
         let adminToken = null;
         const dashboard = document.getElementById('adminDashboard');
         const tabs = document.querySelectorAll('.admin-tab');
@@ -759,9 +762,17 @@
         });
 
         async function checkAdminSession() {
-            try {
+            try{
+                if(adminInitialData?.general_users){
+                    renderUsers(adminInitialData.general_users);
+                    showDashboard();
+                }
                 // 세션 상태 확인
-                const res = await fetch('/admin/api/users');
+                const res = await fetch('/admin/api/users', {
+                    headers: {
+                        'X-CSRF-Token': csrfToken(),
+                    },
+                });
                 if (res.status === 403) {
                     // 관리자 권한 없음 - 로그인 페이지로 리다이렉트
                     window.location.href = '/login';
@@ -939,7 +950,7 @@
                                 method:'POST',
                                 headers:{
                                     'Content-Type':'application/json',
-                                    'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                                    'X-CSRF-Token': csrfToken()
                                 },
                                 body: JSON.stringify({ ids })
                             });
@@ -967,19 +978,13 @@
             window.open('/', '_blank');
         }
 
-        async function loadUsers(){
-            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
-            try{
-                const res = await fetch('/admin/api/users');
-                const body = await res.json();
-                const users = body?.data?.users || [];
-                
-                if(users.length === 0){
-                    document.getElementById('usersTable').innerHTML = '<p class="muted">등록된 사용자가 없습니다.</p>';
-                    return;
-                }
-                
-                const accordionItems = users.map((u, index) => `
+        function renderUsers(users){
+            if (!Array.isArray(users) || users.length === 0) {
+                document.getElementById('usersTable').innerHTML = '<p class="muted">등록된 사용자가 없습니다.</p>';
+                return;
+            }
+
+            const accordionItems = users.map((u, index) => `
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading-${u.id}">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
@@ -988,26 +993,25 @@
                                     <div class="user-summary-item">
                                         <span class="user-summary-label">순번:</span>
                                         <span class="user-summary-value">${index + 1}</span>
-                            </div>
+                                    </div>
                                     <div class="user-summary-item">
                                         <span class="user-summary-label">사용자:</span>
                                         <span class="user-summary-value">${u.username}</span>
-                            </div>
+                                    </div>
                                     <div class="user-summary-item">
                                         <span class="user-summary-label">상호:</span>
                                         <span class="user-summary-value">${u.company_name || '회사명 없음'}</span>
-                            </div>
+                                    </div>
                                     <div class="user-summary-item">
                                         <span class="user-summary-label">상태:</span>
                                         <span class="badge ${u.approval_status === 'approved' ? 'bg-success' : u.approval_status === 'pending' ? 'bg-warning' : 'bg-secondary'}">${u.approval_status || 'approved'}</span>
-                            </div>
-                            </div>
+                                    </div>
+                                </div>
                             </button>
                         </h2>
                         <div id="collapse-${u.id}" class="accordion-collapse collapse" aria-labelledby="heading-${u.id}" data-bs-parent="#usersAccordion">
                             <div class="accordion-body">
                                 <div class="user-details">
-                                    <!-- 기본 정보 -->
                                     <div class="detail-section">
                                         <h6><i class="bi bi-person"></i> 기본 정보</h6>
                                         <div class="detail-row">
@@ -1035,8 +1039,6 @@
                                             <span class="detail-value">${u.phone || '전화번호 없음'}</span>
                                         </div>
                                     </div>
-                                    
-                                    <!-- 사업자 정보 -->
                                     <div class="detail-section">
                                         <h6><i class="bi bi-building"></i> 사업자 정보</h6>
                                         <div class="detail-row">
@@ -1056,8 +1058,6 @@
                                             <span class="detail-value">${u.business_category || '종목 없음'}</span>
                                         </div>
                                     </div>
-                                    
-                                    <!-- 플랜 및 토큰 -->
                                     <div class="detail-section">
                                         <h6><i class="bi bi-credit-card"></i> 플랜 및 토큰</h6>
                                         <div class="detail-row">
@@ -1081,27 +1081,25 @@
                                             <span class="detail-label">사용 토큰:</span>
                                             <span class="detail-value text-danger">${u.tokens_used || 0}</span>
                                         </div>
-                               <div class="detail-row">
-                                   <span class="detail-label">사용량:</span>
-                                   <div class="usage-progress">
-                                       <div class="d-flex justify-content-between align-items-center mb-1">
-                                           <small class="text-muted">${u.used_count || 0}/${u.monthly_limit || 50}</small>
-                                           <small class="text-muted">${Math.round(((u.used_count || 0) / (u.monthly_limit || 50)) * 100)}%</small>
-                                       </div>
-                                       <div class="progress" style="height: 8px;">
-                                           <div class="progress-bar ${(u.used_count || 0) >= (u.monthly_limit || 50) ? 'bg-danger' : (u.used_count || 0) >= (u.monthly_limit || 50) * 0.8 ? 'bg-warning' : 'bg-success'}" 
-                                                role="progressbar" 
-                                                style="width: ${Math.min(((u.used_count || 0) / (u.monthly_limit || 50)) * 100, 100)}%"
-                                                aria-valuenow="${u.used_count || 0}" 
-                                                aria-valuemin="0" 
-                                                aria-valuemax="${u.monthly_limit || 50}">
-                                           </div>
-                                       </div>
-                                   </div>
-                               </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">사용량:</span>
+                                            <div class="usage-progress">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <small class="text-muted">${u.used_count || 0}/${u.monthly_limit || 50}</small>
+                                                    <small class="text-muted">${Math.round(((u.used_count || 0) / (u.monthly_limit || 50)) * 100)}%</small>
+                                                </div>
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar ${(u.used_count || 0) >= (u.monthly_limit || 50) ? 'bg-danger' : (u.used_count || 0) >= (u.monthly_limit || 50) * 0.8 ? 'bg-warning' : 'bg-success'}" 
+                                                         role="progressbar" 
+                                                         style="width: ${Math.min(((u.used_count || 0) / (u.monthly_limit || 50)) * 100, 100)}%"
+                                                         aria-valuenow="${u.used_count || 0}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="${u.monthly_limit || 50}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    
-                                    <!-- 계정 정보 -->
                                     <div class="detail-section">
                                         <h6><i class="bi bi-calendar"></i> 계정 정보</h6>
                                         <div class="detail-row">
@@ -1117,31 +1115,27 @@
                                             <span class="badge ${u.is_active ? 'bg-success' : 'bg-danger'}">${u.is_active ? '활성' : '비활성'}</span>
                                         </div>
                                     </div>
-                                    
-                           <!-- 토큰 사용 및 변환 상세 내역 -->
-                           <div class="detail-section">
-                               <h6><i class="bi bi-clock-history"></i> 토큰 사용 및 변환 상세 내역</h6>
-                               <div class="conversion-history" id="conversion-history-${u.id}">
-                                   <div class="table-responsive">
-                                       <table class="table table-hover table-sm">
-                        <thead>
-                            <tr>
-                                                   <th>변환 시간</th>
-                                                   <th>사용 토큰</th>
-                                                   <th>변환 파일명</th>
-                            </tr>
-                        </thead>
-                                           <tbody id="conversion-table-${u.id}">
-                                               <tr>
-                                                   <td colspan="3" class="text-center text-muted">변환 이력을 불러오는 중...</td>
-                                               </tr>
-                                           </tbody>
-                    </table>
-                                   </div>
-                               </div>
-                           </div>
-                                    
-                                    <!-- 액션 버튼 -->
+                                    <div class="detail-section">
+                                        <h6><i class="bi bi-clock-history"></i> 토큰 사용 및 변환 상세 내역</h6>
+                                        <div class="conversion-history" id="conversion-history-${u.id}">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>변환 시간</th>
+                                                            <th>사용 토큰</th>
+                                                            <th>변환 파일명</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="conversion-table-${u.id}">
+                                                        <tr>
+                                                            <td colspan="3" class="text-center text-muted">변환 이력을 불러오는 중...</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="detail-section">
                                         <h6><i class="bi bi-gear"></i> 관리 액션</h6>
                                         <div class="d-flex gap-2 flex-wrap">
@@ -1172,22 +1166,16 @@
                         </div>
                     </div>
                 `).join('');
-                
-                const accordion = `
-                    <div class="accordion" id="usersAccordion">
-                        ${accordionItems}
-                    </div>
-                `;
-                
-                document.getElementById('usersTable').innerHTML = accordion;
-                
-                // 각 사용자의 변환 이력 로드
-                users.forEach(user => {
-                    loadUserConversionHistory(user.id);
-                });
-            }catch(err){
-                document.getElementById('usersTable').innerHTML = '<p class="muted">사용자 목록 로드 실패</p>';
-            }
+
+            document.getElementById('usersTable').innerHTML = `
+                <div class="accordion" id="usersAccordion">
+                    ${accordionItems}
+                </div>
+            `;
+
+            users.forEach(user => {
+                loadUserConversionHistory(user.id);
+            });
         }
         
         // 사용자별 변환 이력 로드 함수
@@ -1284,7 +1272,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify({ user_id: userId, amount: parseInt(amount) })
                 });
@@ -1309,7 +1297,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify({ user_id: userId })
                 });
@@ -1334,7 +1322,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify({ user_id: userId })
                 });
@@ -1359,7 +1347,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify({ user_id: userId })
                 });
@@ -1383,7 +1371,7 @@
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     }
                 });
                 const result = await res.json();
@@ -1405,7 +1393,7 @@
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     }
                 });
                 const result = await res.json();
@@ -1439,7 +1427,7 @@
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify({ plan_type: newPlanType })
                 });
@@ -1468,7 +1456,11 @@
             console.log('🔧 이메일 인증 설정 로드 시작...');
             
             try {
-                const response = await fetch('/admin/api/email-settings');
+                const response = await fetch('/admin/api/email-settings', {
+                    headers: {
+                        'X-CSRF-Token': csrfToken()
+                    },
+                });
                 console.log('📡 API 응답 상태:', response.status);
                 console.log('📡 API 응답 헤더:', response.headers);
                 
@@ -1598,7 +1590,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        'X-CSRF-Token': csrfToken()
                     },
                     body: JSON.stringify(settings)
                 });
@@ -1667,9 +1659,12 @@
         
         // 관리자 사용자 목록 로드
         async function loadAdminUsers() {
-            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
             try {
-                const res = await fetch('/admin/api/admin-users');
+                const res = await fetch('/admin/api/admin-users', {
+                    headers: {
+                        'X-CSRF-Token': csrfToken()
+                    },
+                });
                 const body = await res.json();
                 const adminUsers = body?.data?.admin_users || [];
                 
@@ -1704,7 +1699,11 @@
         // 관리자 대시보드 통계 로드
         async function loadAdminDashboardStats() {
             try {
-                const response = await fetch('/admin/api/admin-dashboard-stats');
+                const response = await fetch('/admin/api/admin-dashboard-stats', {
+                    headers: {
+                        'X-CSRF-Token': csrfToken()
+                    },
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -1742,6 +1741,21 @@
             loadUsers();
             loadTokenHistory();
         }, 30000);
+
+        async function loadUsers(){
+            try{
+                const res = await fetch('/admin/api/users', {
+                    headers: {
+                        'X-CSRF-Token': csrfToken()
+                    },
+                });
+                const body = await res.json();
+                renderUsers(body?.data?.users || []);
+            }catch(err){
+                console.error('사용자 목록 로드 실패:', err);
+                document.getElementById('usersTable').innerHTML = '<p class="muted">사용자 목록 로드 실패</p>';
+            }
+        }
     </script>
     
     <!-- Bootstrap JS -->
