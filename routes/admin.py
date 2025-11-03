@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from flask import request, jsonify, redirect, url_for, session
 from core.responses import success, error
 from core.db import get_conn
 from core.user_profile_service import user_profile_service
@@ -6,32 +6,14 @@ import os
 import shutil
 import sqlite3
 
-from .utils.auth import current_user_id, ensure_admin_for_json, ensure_admin_view
-
-admin_bp = Blueprint('admin', __name__)
-
-
-@admin_bp.route('/admin')
-def admin():
-    # 강화??관리자 권한 ?�인
-    response = ensure_admin_view()
-    if response:
-        return response
-
-    # 관리자 본인?��? ?�인
-    admin_user_id = current_user_id()
-    with get_conn() as conn:
-        admin_user = conn.execute("SELECT username, is_admin FROM users WHERE id = ?", (admin_user_id,)).fetchone()
-        if not admin_user or not admin_user['is_admin']:
-            return redirect(url_for('home.login'))
-
-    return render_template('admin.html')
+from .admin import admin_bp
+from .utils.auth import current_user_id, ensure_admin_for_json
 
 
 # ---- Admin APIs (simple skeleton) ----
 @admin_bp.route('/admin/api/users', methods=['GET'])
 def users_list():
-    # ?�버�? ?�션 ?�보 출력
+    # ?버? ?션 ?보 출력
     print(f"DEBUG: Session data - user_id: {current_user_id()}, is_admin: {session.get('is_admin')}")
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
@@ -236,7 +218,7 @@ def users_approve(user_id: int):
         )
         conn.commit()
     
-    return success('?�용?��? ?�인?�었?�니??)
+    return success('User approved successfully')
 
 @admin_bp.route('/admin/api/users/<int:user_id>/reject', methods=['POST'])
 def users_reject(user_id: int):
@@ -251,7 +233,7 @@ def users_reject(user_id: int):
         )
         conn.commit()
     
-    return success('?�용?��? 거�??�었?�니??)
+    return success('User rejected successfully')
 
 @admin_bp.route('/admin/api/users/<int:user_id>', methods=['DELETE'])
 def users_delete(user_id: int):
@@ -260,14 +242,14 @@ def users_delete(user_id: int):
         return guard_response
     
     with get_conn() as conn:
-        # ?�프????���?변�?
+        # 소프트 삭제로 변경
         conn.execute(
             "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
             (user_id,)
         )
         conn.commit()
     
-    return success('?�용???�태가 변경되?�습?�다')
+    return success('User status updated')
 
 @admin_bp.route('/admin/api/users/<int:user_id>/restore', methods=['POST'])
 def users_restore(user_id: int):
@@ -285,27 +267,27 @@ def users_restore(user_id: int):
             (user_id,)
         )
         conn.commit()
-    return success('?�용?��? 복구?�었?�니??)
+    return success('User restored successfully')
 
 
-# 즉시 ?�전??��: DB 물리??�� + user_data ?�더 ?�거
+# 즉시 ?전??: DB 물리?? + user_data ?더 ?거
 @admin_bp.route('/admin/api/users/<int:user_id>/purge', methods=['POST'])
 def users_purge(user_id: int):
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
 
-    # ?�일 경로
+    # ?일 경로
     base_users_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_data')
     user_dir = os.path.join(base_users_dir, str(user_id))
 
     with get_conn() as conn:
-        # 존재 ?�인
+        # 존재 ?인
         u = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
         if not u:
             return error('user not found', status=404)
 
-        # ?��? ?�이???�거 (존재 ??
+        # ?? ?이???거 (존재 ??
         try:
             conn.execute("DELETE FROM token_history WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM usage_logs WHERE user_id = ?", (user_id,))
@@ -313,22 +295,22 @@ def users_purge(user_id: int):
         except Exception:
             pass
 
-        # ?�용???�코??물리 ??��
+        # ?용???코??물리 ??
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
 
-    # ?�일 ?�스???�리
+    # ?일 ?스???리
     try:
         if os.path.isdir(user_dir):
             shutil.rmtree(user_dir)
     except Exception as e:
-        # ?�일 ?�리 ?�패?�도 DB ??��???�료?�었?��?�?경고�?반환
-        return success(f'?�용????�� ?�료(?�일 ?��? ?�리 ?�패: {str(e)})')
+        # 파일 정리 실패해도 DB 삭제는 완료되었으므로 경고만 반환
+        return success(f'User deleted (file cleanup issues: {str(e)})')
+ 
+    return success('User and related files purged')
 
-    return success('?�용?��? 관???�일???�전 ??��?�었?�니??)
 
-
-# ?�괄 ?�전??��: ?�정 관리자(keep_username) ?�외?�고 모두 ??��
+# ?괄 ?전??: ?정 관리자(keep_username) ?외?고 모두 ??
 @admin_bp.route('/admin/api/users/purge-all', methods=['POST'])
 def users_purge_all():
     admin_user_id, guard_response = ensure_admin_for_json()
@@ -342,17 +324,17 @@ def users_purge_all():
 
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
-        # 보존 ?�???�인
+        # 보존 ????인
         keeper = conn.execute("SELECT id FROM users WHERE username = ? AND COALESCE(is_deleted,0)=0", (keep_username,)).fetchone()
         if not keeper:
             return error('keeper not found', status=404)
         keep_id = keeper['id']
 
-        # ??�� ?�??ID 목록 ?�집 (관리자 ?�함 ?��? 무�?, ??보존???�외)
+        # ?? ???ID 목록 ?집 (관리자 ?함 ?? 무?, ??보존???외)
         rows = conn.execute("SELECT id FROM users WHERE id != ?", (keep_id,)).fetchall()
         target_ids = [r['id'] for r in rows]
 
-        # ?��? ?�이????��
+        # ?? ?이????
         for uid in target_ids:
             try:
                 conn.execute("DELETE FROM token_history WHERE user_id = ?", (uid,))
@@ -360,38 +342,38 @@ def users_purge_all():
                 conn.execute("DELETE FROM conversion_logs WHERE user_id = ?", (uid,))
             except Exception:
                 pass
-        # ?�용????��
+        # ?용????
         conn.execute("DELETE FROM users WHERE id != ?", (keep_id,))
         conn.commit()
 
-    # ?�일 ?�스???�리
+    # ?일 ?스???리
     try:
         if os.path.isdir(base_users_dir):
             for name in os.listdir(base_users_dir):
-                # ?�더명이 ?�용??id?�고 가??
+                # 폴더명이 사용자 id라고 가정
                 if name.isdigit() and int(name) != keep_id:
                     shutil.rmtree(os.path.join(base_users_dir, name), ignore_errors=True)
     except Exception:
         pass
-
-    return success('보존 ?�???�외 모든 ?�용???�일 ?�전 ??�� ?�료')
+ 
+    return success('All users and files purged except keeper')
 
 
 @admin_bp.route('/admin/api/token-history', methods=['GET'])
 def token_history():
-    # 강화??관리자 권한 ?�인
+    # 강화??관리자 권한 ?인
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
     
-    # 관리자 본인?��? ?�인
+    # 관리자 본인?? ?인
     admin_user_id = current_user_id()
     with get_conn() as conn:
         admin_user = conn.execute("SELECT username, is_admin FROM users WHERE id = ?", (admin_user_id,)).fetchone()
         if not admin_user or not admin_user['is_admin']:
             return error('invalid admin', status=403)
         
-        # ?�큰 ?�력 조회
+        # ?큰 ?력 조회
         rows = conn.execute("""
             SELECT th.id,
                    th.change_type AS action,
@@ -411,10 +393,10 @@ def token_history():
         return success('ok', data={'history': history})
 
 
-# ?�큰 ?�력 ?�택 ??�� API
+# ?큰 ?력 ?택 ?? API
 @admin_bp.route('/admin/api/token-history/delete', methods=['POST'])
 def delete_token_history():
-    # 관리자 권한 ?�인
+    # 관리자 권한 ?인
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -422,15 +404,15 @@ def delete_token_history():
     data = request.get_json(silent=True) or {}
     ids = data.get('ids') or []
 
-    # ?�력 검�?
+    # 입력 검증
     if not isinstance(ids, list) or len(ids) == 0:
-        return error('??��????��???�습?�다', status=400)
+        return error('No token history selected', status=400)
 
-    # ?�수 캐스??�??�효??검??
+    # 정수 캐스팅 및 유효성 검사
     try:
         id_list = [int(i) for i in ids]
     except Exception:
-        return error('?�효?��? ?��? ID 목록?�니??, status=400)
+        return error('Invalid token history ID list', status=400)
 
     admin_user_id = current_user_id()
     with get_conn() as conn:
@@ -438,18 +420,18 @@ def delete_token_history():
         if not admin_user or not admin_user['is_admin']:
             return error('invalid admin', status=403)
 
-        # ??�� (?�전?�게 ?�레?�스?�??구성)
+        # ?? (?전?게 ?레?스???구성)
         placeholders = ','.join(['?'] * len(id_list))
         conn.execute(f"DELETE FROM token_history WHERE id IN ({placeholders})", id_list)
         conn.commit()
 
-    return success('?�택???�큰 ?�력????��?�었?�니??)
+    return success('Selected token history entries deleted')
 
 
-# ?�메???�증 ?�정 API
+# ?메???증 ?정 API
 @admin_bp.route('/admin/api/email-settings', methods=['GET'])
 def get_email_settings():
-    """?�메???�증 ?�정 조회 API"""
+    """?메???증 ?정 조회 API"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -460,7 +442,7 @@ def get_email_settings():
         email_manager = EmailVerificationManager()
         stats = email_manager.get_verification_stats()
         
-        # ?�재 ?�정 조회
+        # ?재 ?정 조회
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
             settings = conn.execute(
@@ -479,12 +461,12 @@ def get_email_settings():
         })
         
     except Exception as e:
-        return error(f'?�정 조회 �??�류가 발생?�습?�다: {str(e)}', status=500)
+        return error(f'?정 조회??류가 발생?습?다: {str(e)}', status=500)
 
 
 @admin_bp.route('/admin/api/email-settings/update', methods=['POST'])
 def update_email_settings():
-    """?�메???�증 ?�정 ?�데?�트 API"""
+    """?메???증 ?정 ?데?트 API"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -492,7 +474,7 @@ def update_email_settings():
     try:
         data = request.get_json(silent=True) or {}
         
-        # ?�정�??�데?�트
+        # ?정??데?트
         settings_to_update = [
             'email_verification_enabled',
             'email_verification_expiry_hours',
@@ -511,16 +493,16 @@ def update_email_settings():
             
             conn.commit()
         
-        return success('?�메???�증 ?�정???�데?�트?�었?�니??)
+        return success('Email verification settings updated successfully')
         
     except Exception as e:
-        return error(f'?�정 ?�데?�트 �??�류가 발생?�습?�다: {str(e)}', status=500)
+        return error(f'Error updating email verification settings: {str(e)}', status=500)
 
 
-# ?�로??API ?�드?�인?�들 (?�합???�?�보?�용)
+# ?로??API ?드?인?들 (?합????보?용)
 @admin_bp.route('/admin/api/grant-tokens', methods=['POST'])
 def grant_tokens():
-    """?�큰 지�?API (?�로???�드?�인??"""
+    """?큰 지?API (?로???드?인??"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -530,31 +512,31 @@ def grant_tokens():
     amount = data.get('amount')
     
     if not user_id or not amount:
-        return error('?�용??ID?� ?�큰 ?�량???�요?�니??, status=400)
+        return error('User ID and token amount are required', status=400)
     
     try:
         amount = int(amount)
         if amount <= 0:
-            return error('?�큰 ?�량?� 0보다 커야 ?�니??, status=400)
+            return error('Token amount must be greater than zero', status=400)
     except ValueError:
-        return error('?�효?��? ?��? ?�큰 ?�량?�니??, status=400)
+        return error('Invalid token amount', status=400)
     
     admin_user_id = current_user_id()
     with get_conn() as conn:
-        # 관리자 ?�인
+        # 관리자 확인
         admin_user = conn.execute("SELECT username FROM users WHERE id = ? AND is_admin = 1", (admin_user_id,)).fetchone()
         if not admin_user:
-            return error('관리자 권한???�습?�다', status=403)
+            return error('Administrator privileges required', status=403)
         
-        # ?�???�용???�인
+        # 대상 사용자 확인
         target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
         if not target_user:
-            return error('?�용?��? 찾을 ???�습?�다', status=404)
+            return error('User not found', status=404)
         
-        # ?�큰 지�?
+        # ?큰 지?
         conn.execute("UPDATE users SET token_balance = COALESCE(token_balance, 0) + ? WHERE id = ?", (amount, user_id))
         
-        # ?�력 기록
+        # ?력 기록
         conn.execute(
             "INSERT INTO token_history (user_id, changed_by, amount, change_type, created_at) VALUES (?, ?, ?, 'grant', datetime('now'))",
             (user_id, admin_user_id, amount)
@@ -562,12 +544,12 @@ def grant_tokens():
         
         conn.commit()
         
-        return success('?�큰???�공?�으�?지급되?�습?�다')
+        return success('Tokens granted successfully')
 
 
 @admin_bp.route('/admin/api/reset-tokens', methods=['POST'])
 def reset_tokens():
-    """?�큰 초기??API (?�로???�드?�인??"""
+    """?큰 초기??API (?로???드?인??"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -576,24 +558,24 @@ def reset_tokens():
     user_id = data.get('user_id')
     
     if not user_id:
-        return error('?�용??ID가 ?�요?�니??, status=400)
+        return error('User ID is required', status=400)
     
     admin_user_id = current_user_id()
     with get_conn() as conn:
-        # 관리자 ?�인
+        # 관리자 확인
         admin_user = conn.execute("SELECT username FROM users WHERE id = ? AND is_admin = 1", (admin_user_id,)).fetchone()
         if not admin_user:
-            return error('관리자 권한???�습?�다', status=403)
+            return error('Administrator privileges required', status=403)
         
-        # ?�???�용???�인
+        # 대상 사용자 확인
         target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
         if not target_user:
-            return error('?�용?��? 찾을 ???�습?�다', status=404)
+            return error('User not found', status=404)
         
-        # ?�큰 초기??(보유 ?�큰�??�용 ?�큰 모두 초기??
+        # 토큰 초기화
         conn.execute("UPDATE users SET token_balance = 0, tokens_used = 0 WHERE id = ?", (user_id,))
         
-        # ?�력 기록
+        # 로그 기록
         conn.execute(
             "INSERT INTO token_history (user_id, changed_by, amount, change_type, created_at) VALUES (?, ?, 0, 'reset', datetime('now'))",
             (user_id, admin_user_id)
@@ -601,12 +583,12 @@ def reset_tokens():
         
         conn.commit()
         
-        return success('?�큰???�전??초기?�되?�습?�다 (보유 ?�큰: 0, ?�용 ?�큰: 0)')
+        return success('Tokens fully reset (balance 0, used 0)')
 
 
 @admin_bp.route('/admin/api/approve-user', methods=['POST'])
 def approve_user():
-    """?�용???�인 API (?�로???�드?�인??"""
+    """?용???인 API (?로???드?인??"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -615,15 +597,15 @@ def approve_user():
     user_id = data.get('user_id')
     
     if not user_id:
-        return error('?�용??ID가 ?�요?�니??, status=400)
-    
+        return error('User ID is required', status=400)
+ 
     with get_conn() as conn:
-        # ?�???�용???�인
+        # 대상 사용자 확인
         target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
         if not target_user:
-            return error('?�용?��? 찾을 ???�습?�다', status=404)
+            return error('User not found', status=404)
         
-        # ?�용???�인
+        # 사용자 승인
         conn.execute(
             "UPDATE users SET approval_status = 'approved', is_active = 1 WHERE id = ?",
             (user_id,)
@@ -631,12 +613,12 @@ def approve_user():
         
         conn.commit()
         
-        return success('?�용?��? ?�인?�었?�니??)
+        return success('User approved successfully')
 
 
 @admin_bp.route('/admin/api/delete-user', methods=['POST'])
 def delete_user():
-    """?�용????�� API (?�로???�드?�인??"""
+    """?용???? API (?로???드?인??"""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
@@ -645,15 +627,15 @@ def delete_user():
     user_id = data.get('user_id')
     
     if not user_id:
-        return error('?�용??ID가 ?�요?�니??, status=400)
-    
+        return error('User ID is required', status=400)
+ 
     with get_conn() as conn:
-        # ?�???�용???�인
+        # 대상 사용자 확인
         target_user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
         if not target_user:
-            return error('?�용?��? 찾을 ???�습?�다', status=404)
+            return error('User not found', status=404)
         
-        # ?�프????��
+        # 소프트 삭제
         conn.execute(
             "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
             (user_id,)
@@ -661,12 +643,12 @@ def delete_user():
         
         conn.commit()
         
-        return success('?�용?��? ??��?�었?�니??)
+        return success('User soft-deleted successfully')
 
 
 @admin_bp.route('/admin/api/user-conversions/<int:user_id>', methods=['GET'])
 def user_conversions(user_id):
-    """?�정 ?�용?�의 변???�력 조회"""
+    """?정 ?용?의 변???력 조회"""
     # 관리자 권한 ?�인
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
@@ -724,15 +706,15 @@ def update_user_plan(user_id):
     try:
         conn.row_factory = sqlite3.Row
         
-        # 관리자 ?�인
+        # 관리자 확인
         admin_user = conn.execute("SELECT username FROM users WHERE id = ? AND is_admin = 1", (admin_user_id,)).fetchone()
         if not admin_user:
-            return error('관리자 권한???�습?�다', status=403)
+            return error('Administrator privileges required', status=403)
         
-        # ?�???�용???�인
+        # 대상 사용자 확인
         target_user = conn.execute("SELECT username, plan_type FROM users WHERE id = ?", (user_id,)).fetchone()
         if not target_user:
-            return error('?�용?��? 찾을 ???�습?�다', status=404)
+            return error('User not found', status=404)
         
         old_plan = target_user['plan_type']
         
