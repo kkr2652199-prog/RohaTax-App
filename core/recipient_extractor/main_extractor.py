@@ -13,20 +13,30 @@ from pathlib import Path
 from .field_extractors import FieldExtractors
 from .column_mapping import ColumnMapper
 from .intelligent_features import IntelligentFeatures
+from .normalizers import normalize_colname
 from .validation import Validator
 from .second_priority_handler import SecondPriorityHandler
 from .pipeline import RecipientExtractionPipeline
-from .utils import get_synonyms, extract_business_number_simple, extract_store_name_simple, extract_representative_simple, extract_address_simple, extract_email_simple, extract_amount, extract_total_amount_simple
+from .utils import (
+    get_synonyms,
+    extract_business_number_simple,
+    extract_store_name_simple,
+    extract_representative_simple,
+    extract_address_simple,
+    extract_email_simple,
+    extract_amount,
+    extract_total_amount_simple,
+)
 from ..industry_config_loader import industry_config_loader
 
 logger = logging.getLogger(__name__)
 
-# 컬럼명 정규화 함수 추가
+# 컬럼명 정규화 함수
 
-def normalize_colname(col):
-    return str(col).replace('\n', '').replace(' ', '').replace('\t', '').strip().lower()
-
-FORBIDDEN_COLUMN_NAMES = [normalize_colname("콜수수료 공급가"), normalize_colname("콜수수료부가세")]
+FORBIDDEN_COLUMN_NAMES = [
+    normalize_colname("콜수수료 공급가"),
+    normalize_colname("콜수수료부가세"),
+]
 
 class RecipientExtractor:
     """업종별 공급받는자 정보 추출기 (지능앱 기술 통합)"""
@@ -460,7 +470,11 @@ class RecipientExtractor:
                 headers = sheet_info.get('headers', [])
                 data = sheet_info.get('data', [])
                 
-                if headers and data:
+                # DataFrame 체크: data가 DataFrame인 경우 처리
+                if isinstance(data, pd.DataFrame):
+                    data = data.values.tolist()
+                
+                if headers and len(headers) > 0 and (isinstance(data, list) and len(data) > 0):
                     # 첫 번째 행을 헤더로 사용
                     header_row = headers[0] if headers else []
                     # DataFrame 생성
@@ -498,7 +512,11 @@ class RecipientExtractor:
             headers = sheet_info.get('headers', [])
             data = sheet_info.get('data', [])
             
-            if not headers or not data:
+            # DataFrame 체크: data가 DataFrame인 경우 처리
+            if isinstance(data, pd.DataFrame):
+                data = data.values.tolist()
+            
+            if not headers or (isinstance(data, list) and len(data) == 0):
                 return None
             
             # 첫 번째 행을 헤더로 사용

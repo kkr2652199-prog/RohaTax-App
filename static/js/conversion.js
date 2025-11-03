@@ -2,6 +2,40 @@
 // Refactored from conversion.html
 
 document.addEventListener('DOMContentLoaded', function() {
+        const tokenElements = {
+            granted: document.getElementById('total-granted'),
+            used: document.getElementById('total-used'),
+            available: document.getElementById('available-tokens')
+        };
+
+        function setTokenDisplay(granted = '-', used = '-', available = '-') {
+            if (tokenElements.granted) tokenElements.granted.textContent = granted;
+            if (tokenElements.used) tokenElements.used.textContent = used;
+            if (tokenElements.available) tokenElements.available.textContent = available;
+        }
+
+        const isGuestMode = Boolean(window.__guestMode);
+
+        if (isGuestMode) {
+            setTokenDisplay('-', '-', '-');
+            const startBtn = document.getElementById('start-conversion-btn');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.title = '로그인 후 이용 가능합니다';
+            }
+
+            const vipBtn = document.getElementById('get-user-info-btn');
+            if (vipBtn) {
+                vipBtn.addEventListener('click', function () {
+                    window.location.href = '/login';
+                });
+            }
+
+            return;
+        }
+
+        let currentUserPlanType = null;
+
         // 버튼 상태 제어 컴포넌트
         function setButtonState(btn, {disabled, text, opacity = '1', title = ''}) {
             if (!btn) return;
@@ -24,109 +58,139 @@ document.addEventListener('DOMContentLoaded', function() {
             const vipBtn = document.getElementById('get-user-info-btn');
             setButtonState(vipBtn, { disabled: false, opacity: '1' });
         }
-        
-        // 페이지 로드 시 초기화
-        // 토큰 상태 로드
-            loadTokenStatus();
-            
-            // 달력 초기화
-            initializeCalendar();
-            
-            // 변환 시작 버튼 상태 업데이트
-            updateConversionButton();
 
-            // 변환 시작 버튼 이벤트 바인딩
-            const startBtn = document.getElementById('start-conversion-btn');
-            if (startBtn) {
-                startBtn.addEventListener('click', startConversion);
-            }
-            
-            // VIP 정보 가져오기 버튼 이벤트 바인딩
-            const vipBtn = document.getElementById('get-user-info-btn');
-            if (vipBtn) {
-                // 여러 이벤트 타입으로 바인딩
-                vipBtn.addEventListener('click', function(e) {
-                    console.log('🎯 VIP 버튼 클릭 이벤트 발생!', e);
-                    getUserInfo();
-                });
-                
-                vipBtn.addEventListener('mousedown', function(e) {
-                    console.log('🎯 VIP 버튼 마우스다운 이벤트 발생!', e);
-                });
-                
-                vipBtn.addEventListener('mouseup', function(e) {
-                    console.log('🎯 VIP 버튼 마우스업 이벤트 발생!', e);
-                });
-                
-                // 버튼 상태 확인
-                console.log('✅ VIP 버튼 이벤트 리스너 바인딩 완료');
-                console.log('🔍 VIP 버튼 상태:', {
-                    disabled: vipBtn.disabled,
-                    style: vipBtn.style.cssText,
-                    computedStyle: window.getComputedStyle(vipBtn).pointerEvents
-                });
-            } else {
-                console.error('❌ VIP 버튼을 찾을 수 없습니다');
+        async function loadUserContext(force = false) {
+            if (!force && currentUserPlanType !== null) {
+                return currentUserPlanType;
             }
 
-            // VIP 안내 토스트 표시 로직
-            initVipToast();
+            try {
+                const response = await fetch('/api/user-info', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            // 토큰 상태 로드
-            async function loadTokenStatus() {
-            console.log('🔍 토큰 상태 로드 시작...');
-            console.log('🔍 현재 쿠키:', document.cookie);
-            
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.success && data.data && data.data.user) {
+                    const user = data.data.user;
+                    currentUserPlanType = (user.plan_type || '').toLowerCase();
+
+                    if (currentUserPlanType.includes('gold')) {
+                        setTokenDisplay('무제한', '-', '무제한');
+                    } else {
+                        const granted = Number(user.token_balance ?? 0);
+                        const used = Number(user.tokens_used ?? 0);
+                        const available = granted - used;
+                        setTokenDisplay(granted, used, available);
+                    }
+
+                    return currentUserPlanType;
+                }
+            } catch (error) {
+                console.error('사용자 정보 로드 오류:', error);
+            }
+
+            return currentUserPlanType;
+        }
+
+        async function fetchTokenStatusAndUpdateDisplay() {
             try {
                 const response = await fetch('/api/token-status', {
                     method: 'GET',
-                    credentials: 'same-origin',  // 쿠키 포함하여 요청
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log('🔍 토큰 상태 응답:', response.status, response.statusText);
 
-                // 비로그인 상태 처리: VIP 버튼에 로그인 유도 및 리다이렉트 바인딩
                 if (response.status === 401) {
-                    const vipBtn = document.getElementById('get-user-info-btn');
-                    if (vipBtn) {
-                        vipBtn.innerHTML = '로그인이 필요합니다';
-                        vipBtn.title = '클릭하면 로그인 페이지로 이동합니다';
-                        vipBtn.disabled = false;
-                        vipBtn.onclick = () => { window.location.href = '/login'; };
-                    }
-                    // 기본값 표시
-                    document.getElementById('total-granted').textContent = '0';
-                    document.getElementById('total-used').textContent = '0';
-                    document.getElementById('available-tokens').textContent = '0';
-                    return; // JSON 파싱 없이 종료
+                    window.location.href = '/login';
+                    return null;
                 }
-                
+
                 const data = await response.json();
-                console.log('🔍 토큰 상태 데이터:', data);
-                
-                if (data.success) {
-                    const tokenData = data.data;
-                    console.log('✅ 토큰 상태 로드 성공:', tokenData);
-                    document.getElementById('total-granted').textContent = tokenData.total_granted;
-                    document.getElementById('total-used').textContent = tokenData.total_used;
-                    document.getElementById('available-tokens').textContent = tokenData.available_tokens;
-                } else {
-                    console.error('❌ 토큰 상태 로드 실패:', data.message);
-                    // 기본값 설정
-                    document.getElementById('total-granted').textContent = '0';
-                    document.getElementById('total-used').textContent = '0';
-                    document.getElementById('available-tokens').textContent = '0';
+                if (data.success && data.data) {
+                    if (currentUserPlanType && currentUserPlanType.includes('gold')) {
+                        setTokenDisplay('무제한', '-', '무제한');
+                    } else {
+                        const tokenData = data.data;
+                        setTokenDisplay(
+                            tokenData.total_granted ?? 0,
+                            tokenData.total_used ?? 0,
+                            tokenData.available_tokens ?? 0
+                        );
+                    }
+                    return data.data;
                 }
+
+                console.error('토큰 상태 조회 실패:', data.message);
             } catch (error) {
-                console.error('❌ 토큰 상태 로드 오류:', error);
-                // 기본값 설정
-                document.getElementById('total-granted').textContent = '0';
-                document.getElementById('total-used').textContent = '0';
-                document.getElementById('available-tokens').textContent = '0';
+                console.error('토큰 상태 조회 오류:', error);
             }
+
+            return null;
         }
+
+        // 페이지 로드 시 초기화
+        initializeCalendar();
+        updateConversionButton();
+
+        (async () => {
+            const planType = await loadUserContext();
+            if (planType && !planType.includes('gold')) {
+                await fetchTokenStatusAndUpdateDisplay();
+            }
+        })();
+
+        // 변환 시작 버튼 이벤트 바인딩
+        const startBtn = document.getElementById('start-conversion-btn');
+        if (startBtn) {
+            startBtn.addEventListener('click', startConversion);
+        }
+        
+        // VIP 정보 가져오기 버튼 이벤트 바인딩
+        const vipBtn = document.getElementById('get-user-info-btn');
+        if (vipBtn) {
+            // 여러 이벤트 타입으로 바인딩
+            vipBtn.addEventListener('click', function(e) {
+                console.log('🎯 VIP 버튼 클릭 이벤트 발생!', e);
+                getUserInfo();
+            });
+            
+            vipBtn.addEventListener('mousedown', function(e) {
+                console.log('🎯 VIP 버튼 마우스다운 이벤트 발생!', e);
+            });
+            
+            vipBtn.addEventListener('mouseup', function(e) {
+                console.log('🎯 VIP 버튼 마우스업 이벤트 발생!', e);
+            });
+            
+            // 버튼 상태 확인
+            console.log('✅ VIP 버튼 이벤트 리스너 바인딩 완료');
+            console.log('🔍 VIP 버튼 상태:', {
+                disabled: vipBtn.disabled,
+                style: vipBtn.style.cssText,
+                computedStyle: window.getComputedStyle(vipBtn).pointerEvents
+            });
+        } else {
+            console.error('❌ VIP 버튼을 찾을 수 없습니다');
+        }
+
+        // VIP 안내 토스트 표시 로직
+        initVipToast();
         
         // 변환 시작: 파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입
         async function startConversion() {
@@ -163,6 +227,29 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                 alert('로하VIP 회원님 첨부파일을 업로드해주세요.');
                 return;
+            }
+
+            const planType = await loadUserContext();
+            if (!planType) {
+                alert('사용자 정보를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+
+            const isGoldMember = planType.includes('gold');
+            if (!isGoldMember) {
+                const tokenData = await fetchTokenStatusAndUpdateDisplay();
+                if (!tokenData) {
+                    alert('토큰 상태를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.');
+                    return;
+                }
+
+                const availableTokens = Number(tokenData.available_tokens ?? 0);
+                if (!Number.isFinite(availableTokens) || availableTokens <= 0) {
+                    alert('토큰이 부족합니다. 관리자에게 문의해주세요.');
+                    return;
+                }
+            } else {
+                setTokenDisplay('무제한', '-', '무제한');
             }
 
             // 초기화
@@ -283,7 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 await new Promise(r => setTimeout(r, 120));
 
                 // 토큰 상태 반영
-                loadTokenStatus();
+                if (!isGoldMember) {
+                    await fetchTokenStatusAndUpdateDisplay();
+                }
 
                 // 4) 완료
                 setStep(4, '✅ 변환 완료! 다운로드 준비되었습니다', 100);
@@ -808,7 +897,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (data.success) {
                     // 토큰 상태 새로고침
-                    loadTokenStatus();
+                    await fetchTokenStatusAndUpdateDisplay();
                     return true;
                 } else {
                     alert('토큰 사용 실패: ' + data.message);

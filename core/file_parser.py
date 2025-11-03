@@ -5,6 +5,7 @@
 
 import pandas as pd
 import openpyxl
+import zipfile
 from typing import Dict, List, Any, Optional, Callable
 import logging
 from pathlib import Path
@@ -866,6 +867,13 @@ class FileParser:
     def _parse_excel(self, file_path: Path) -> Dict[str, Any]:
         """Excel 파일 파싱 - 지능앱 시트 검열 알고리즘 적용"""
         try:
+            if file_path.suffix.lower() == '.xlsx' and not zipfile.is_zipfile(file_path):
+                self.logger.error(
+                    "손상된 Excel 형식 감지: %s", file_path
+                )
+                return self._create_error_response(
+                    "업로드하신 Excel 파일이 손상되었거나 지원하지 않는 형식입니다. 엑셀에서 '다른 이름으로 저장' 후 다시 시도해주세요."
+                )
             workbook = openpyxl.load_workbook(file_path, data_only=True)
             best_sheet_result = self.header_locator.inspect_all_sheets(
                 workbook,
@@ -999,6 +1007,11 @@ class FileParser:
                 'families': best_sheet_result.get('families', [])  # 가족 데이터 추가
             }
             
+        except zipfile.BadZipFile as e:
+            self.logger.error(f"손상된 Excel 압축 구조: {file_path} - {str(e)}")
+            return self._create_error_response(
+                "Excel 파일 구조를 읽을 수 없습니다. 원본 파일을 열어 '다른 이름으로 저장' 한 뒤 다시 업로드해주세요."
+            )
         except openpyxl.utils.exceptions.InvalidFileException as e:
             self.logger.error(f"Excel 파일 형식 오류: {file_path} - {str(e)}")
             return self._create_error_response("Excel 파일이 손상되었거나 지원하지 않는 형식입니다.")
