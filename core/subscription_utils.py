@@ -8,7 +8,7 @@ from typing import Dict, Optional, List, Any
 import sqlite3
 import json
 
-from core.db import get_conn_optimized
+from core.db import get_conn_optimized as get_conn
 
 logger = logging.getLogger(__name__)
 

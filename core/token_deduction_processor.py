@@ -7,7 +7,7 @@ import logging
 import sqlite3
 from typing import Dict, Any, Optional
 
-from core.db import get_conn_optimized
+from core.db import get_conn_optimized as get_conn
 
 logger = logging.getLogger(__name__)
 

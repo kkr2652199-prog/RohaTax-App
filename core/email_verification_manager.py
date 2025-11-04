@@ -8,7 +8,7 @@ import hashlib
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 import sqlite3
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 logger = logging.getLogger(__name__)
 
