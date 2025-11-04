@@ -30,7 +30,7 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
             'status': 'active'
         }
     """
-    with get_conn_optimized() as conn:
+    with get_conn() as conn:
         # row_factory는 이미 get_conn_optimized()에서 설정됨
         row = conn.execute(
             """
