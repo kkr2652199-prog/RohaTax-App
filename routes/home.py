@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import logging
 from core.responses import success, error
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.validation_utils import RegistrationValidator
 from core.email_verification_manager import EmailVerificationManager
 from core.password_utils import hash_password, verify_password

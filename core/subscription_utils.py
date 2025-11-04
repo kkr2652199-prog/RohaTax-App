@@ -8,7 +8,7 @@ from typing import Dict, Optional, List, Any
 import sqlite3
 import json
 
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,8 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
             'status': 'active'
         }
     """
-    conn = get_conn()
-    try:
-        conn.row_factory = sqlite3.Row
+    with get_conn_optimized() as conn:
+        # row_factory는 이미 get_conn_optimized()에서 설정됨
         row = conn.execute(
             """
             SELECT id, plan_type, token_balance, tokens_used, is_active
@@ -69,12 +68,6 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
         
         logger.info(f"사용자 플랜 조회 - ID: {user_id}, 플랜: {plan_type}, 무제한: {plan_info['is_unlimited']}")
         return subscription
-        
-    except Exception as e:
-        logger.error(f"구독 정보 조회 중 오류: {str(e)}")
-        return None
-    finally:
-        conn.close()
 
 
 def is_unlimited_user(user_id: int) -> bool:

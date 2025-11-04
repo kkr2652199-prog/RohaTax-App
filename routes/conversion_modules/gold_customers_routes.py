@@ -13,7 +13,7 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from typing import Dict, Any
 
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.validation_utils import validate_business_number, validate_email, validate_phone
 
 logger = logging.getLogger(__name__)

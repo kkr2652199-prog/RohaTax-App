@@ -5,7 +5,7 @@
 
 from flask import Blueprint, render_template, session, redirect, url_for, request
 import os
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 
 main_bp = Blueprint('main', __name__)

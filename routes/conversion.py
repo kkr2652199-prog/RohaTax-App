@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, jsonify, request
 from urllib.parse import quote
 import os
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 # from core.template_manager import template_manager
 from core.data_bus import validate_convert_start, normalize_convert_start, SCHEMA_VERSION
@@ -590,8 +590,7 @@ def start_conversion():
         return error('전자세금일자 형식이 올바르지 않습니다', status=400)
 
     # 사용자 정보 로드 → 공급자 정보 자동 매핑
-    conn = get_conn()
-    try:
+    with get_conn_optimized() as conn:
         user = conn.execute(
             """
             SELECT username, email, company_name, business_number,
@@ -604,8 +603,6 @@ def start_conversion():
 
         if not user:
             return error('사용자를 찾을 수 없습니다', status=404)
-    finally:
-        conn.close()
     
     # ============================================
     # 핵심 변경 1: 파일을 먼저 저장

@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Dict
 
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 
 class SettingsServiceError(Exception):
