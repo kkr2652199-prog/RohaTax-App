@@ -7,7 +7,7 @@ import logging
 import sqlite3
 from typing import Dict, Any, Optional
 
-from core.db import get_conn
+from core.db import get_conn_optimized
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +62,8 @@ class TokenDeductionProcessor:
             int: 변환 전 토큰 사용량
         """
         try:
-            conn = get_conn()
-            try:
-                conn.row_factory = sqlite3.Row
+            with get_conn_optimized() as conn:
+                # row_factory는 이미 get_conn_optimized()에서 설정됨
                 user = conn.execute(
                     "SELECT COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?",
                     (user_id,)
@@ -78,8 +77,6 @@ class TokenDeductionProcessor:
                 self.logger.info(f"초기 토큰 사용량: {initial_tokens_used}")
                 
                 return initial_tokens_used
-            finally:
-                conn.close()
                 
         except Exception as e:
             self.logger.error(f"초기 토큰 사용량 조회 중 오류: {str(e)}")
@@ -101,18 +98,15 @@ class TokenDeductionProcessor:
             # 최종 토큰 사용량 계산
             final_tokens_used = initial_tokens_used + actual_recipient_count
             
-            conn = get_conn()
-            try:
+            with get_conn_optimized() as conn:
                 conn.execute(
                     "UPDATE users SET tokens_used = ? WHERE id = ?",
                     (final_tokens_used, user_id)
                 )
-                conn.commit()
+                # commit은 get_conn_optimized()가 자동 처리
                 
                 self.logger.info(f"토큰 차감 완료: 템플릿 {actual_recipient_count}개, 총 사용량 {final_tokens_used}개")
                 return True
-            finally:
-                conn.close()
                 
         except Exception as e:
             self.logger.error(f"토큰 차감 중 오류 발생: {str(e)}")
