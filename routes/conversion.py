@@ -590,7 +590,7 @@ def start_conversion():
         return error('전자세금일자 형식이 올바르지 않습니다', status=400)
 
     # 사용자 정보 로드 → 공급자 정보 자동 매핑
-    with get_conn_optimized() as conn:
+    with get_conn() as conn:
         user = conn.execute(
             """
             SELECT username, email, company_name, business_number,
