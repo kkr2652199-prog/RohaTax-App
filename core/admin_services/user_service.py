@@ -7,7 +7,7 @@ import shutil
 import sqlite3
 from typing import Dict, List
 
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.user_profile_service import user_profile_service
 
 
