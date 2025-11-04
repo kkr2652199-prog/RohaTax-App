@@ -4,7 +4,7 @@ import sqlite3
 
 from . import admin_bp
 from ..utils.auth import current_user_id, ensure_admin_view
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 try:
     from core.email_verification_manager import EmailVerificationManager

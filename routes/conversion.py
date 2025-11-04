@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, jsonify, request
 from urllib.parse import quote
 import os
-from core.db import get_conn_optimized
+from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 # from core.template_manager import template_manager
 from core.data_bus import validate_convert_start, normalize_convert_start, SCHEMA_VERSION

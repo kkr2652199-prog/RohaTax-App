@@ -4,7 +4,7 @@
 """
 
 from flask import Blueprint, session, jsonify
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 
 user_bp = Blueprint('user', __name__)
