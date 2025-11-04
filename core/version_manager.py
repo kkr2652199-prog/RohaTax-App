@@ -4,7 +4,7 @@ import hashlib
 import sqlite3
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
-from core.db import get_conn, DB_PATH
+from core.db import get_conn_optimized as get_conn, DB_PATH
 # from core.backup import backup_manager  # 임시 주석 처리
 
 class VersionManager:

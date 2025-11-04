@@ -6,7 +6,7 @@
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 
 class UserProfileService:

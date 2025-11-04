@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, session
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 import sqlite3
 import json
 
@@ -174,7 +174,7 @@ def myhome_data_delete():
         return jsonify({'success': False, 'error': f'삭제 중 오류: {str(e)}'}), 500
 
 from flask import Blueprint, jsonify, request, session
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 import sqlite3
 from datetime import datetime, timedelta
 import json

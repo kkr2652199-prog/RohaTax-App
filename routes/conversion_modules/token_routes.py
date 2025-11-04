@@ -5,7 +5,7 @@
 
 from flask import Blueprint, session, jsonify, request
 from functools import wraps
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.security import generate_csrf_token
 import time

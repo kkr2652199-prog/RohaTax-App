@@ -41,7 +41,7 @@ def validate_reset_token(token: str) -> Optional[int]:
     비밀번호 재설정 토큰을 검증하고 사용자 ID를 반환합니다.
     만료되었거나 사용된 토큰인 경우 None을 반환합니다.
     """
-    from core.db import get_conn
+    from core.db import get_conn_optimized as get_conn
     import sqlite3
     
     with get_conn() as conn:
@@ -73,7 +73,7 @@ def mark_token_as_used(token: str) -> bool:
     """
     비밀번호 재설정 토큰을 사용된 것으로 표시합니다.
     """
-    from core.db import get_conn
+    from core.db import get_conn_optimized as get_conn
     
     try:
         with get_conn() as conn:
@@ -98,7 +98,7 @@ def create_reset_token(user_id: int) -> str:
     """
     비밀번호 재설정 토큰을 생성하고 데이터베이스에 저장합니다.
     """
-    from core.db import get_conn
+    from core.db import get_conn_optimized as get_conn
     
     token = generate_reset_token()
     expires_at = generate_reset_token_expiry()
@@ -132,7 +132,7 @@ def get_user_email_from_token(token: str) -> Optional[str]:
     """
     비밀번호 재설정 토큰으로부터 사용자 이메일을 조회합니다.
     """
-    from core.db import get_conn
+    from core.db import get_conn_optimized as get_conn
     import sqlite3
     
     with get_conn() as conn:

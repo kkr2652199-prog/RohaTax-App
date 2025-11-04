@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
 import sqlite3
-from core.db import get_conn
+from core.db import get_conn_optimized as get_conn
 
 class AbsoluteGuidelines:
     """절대지침 시스템 메인 클래스"""
