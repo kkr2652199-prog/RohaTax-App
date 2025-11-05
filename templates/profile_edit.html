@@ -1794,31 +1794,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
   listCustomers('', 1);
   
-  // 아코디언 토글 기능 (아이콘 유무와 무관하게 동작)
-  const accordionHeader = document.getElementById('basic-info-header');
-  const accordionContent = document.getElementById('basic-info-content');
-  const accordionIcon = accordionHeader ? accordionHeader.querySelector('.accordion-icon') : null;
-  
-  if (accordionHeader && accordionContent) {
-    accordionHeader.addEventListener('click', function() {
-      const isOpen = getComputedStyle(accordionContent).display === 'block';
-      accordionContent.style.setProperty('display', isOpen ? 'none' : 'block', 'important');
-      if (accordionIcon) accordionIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-    });
-  }
-
-  // 토큰 사용 현황 아코디언 토글
-  (function(){
-    const tHeader = document.getElementById('token-usage-header');
-    const tContent = document.getElementById('token-usage-content');
-    const tArrow = document.getElementById('token-usage-arrow');
-    if (!tHeader || !tContent) return;
-    tHeader.addEventListener('click', function(){
-      const open = getComputedStyle(tContent).display === 'block';
-      tContent.style.setProperty('display', open ? 'none' : 'block', 'important');
-      if (tArrow) tArrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
-    });
-  })();
 });
 
 </script>
@@ -1826,30 +1801,31 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 // 안전 토글 바인딩(에러 격리): 다른 스크립트 오류와 무관하게 항상 동작
 (function(){
-  try{
-    var th = document.getElementById('token-usage-header');
-    var tc = document.getElementById('token-usage-content');
-    var ta = document.getElementById('token-usage-arrow');
-    if (th && tc){
-      th.addEventListener('click', function(){
-        var open = getComputedStyle(tc).display === 'block';
-        tc.style.setProperty('display', open ? 'none' : 'block', 'important');
-        if (ta) ta.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  try {
+    const tokenHeader = document.getElementById('token-usage-header');
+    const tokenContent = document.getElementById('token-usage-content');
+    const tokenArrow = document.getElementById('token-usage-arrow');
+    if (tokenHeader && tokenContent) {
+      tokenHeader.addEventListener('click', function(){
+        const isOpen = getComputedStyle(tokenContent).display === 'block';
+        tokenContent.style.setProperty('display', isOpen ? 'none' : 'block', 'important');
+        if (tokenArrow) tokenArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
       });
     }
-  }catch(_){/* no-op */}
-  try{
-    var bh = document.getElementById('basic-info-header');
-    var bc = document.getElementById('basic-info-content');
-    var ba = bh ? bh.querySelector('.accordion-icon') : null;
-    if (bh && bc){
-      bh.addEventListener('click', function(){
-        var open = getComputedStyle(bc).display === 'block';
-        bc.style.setProperty('display', open ? 'none' : 'block', 'important');
-        if (ba) ba.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  } catch(_) {/* no-op */}
+
+  try {
+    const basicHeader = document.getElementById('basic-info-header');
+    const basicContent = document.getElementById('basic-info-content');
+    const basicArrow = basicHeader ? basicHeader.querySelector('.accordion-icon') : null;
+    if (basicHeader && basicContent) {
+      basicHeader.addEventListener('click', function(){
+        const isOpen = getComputedStyle(basicContent).display === 'block';
+        basicContent.style.setProperty('display', isOpen ? 'none' : 'block', 'important');
+        if (basicArrow) basicArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
       });
     }
-  }catch(_){/* no-op */}
+  } catch(_) {/* no-op */}
 })();
 </script>
 <style>
