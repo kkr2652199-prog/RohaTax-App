@@ -339,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const loaderEl = document.getElementById('token-activity-loader');
   const sentinelEl = document.getElementById('token-activity-sentinel');
   const noteEl = document.getElementById('token-activity-note');
+  const defaultNoteText = noteEl ? noteEl.textContent : '';
 
   if (!listEl || !sentinelEl) {
     console.warn('[token-activity] 필수 요소(token-activity-list 또는 sentinel)를 찾을 수 없습니다.');
@@ -524,6 +525,25 @@ document.addEventListener('DOMContentLoaded', function () {
     loading = false;
   }
 
+  function resetAndReloadTokenActivity() {
+    observer.disconnect();
+    listEl.innerHTML = '';
+    offset = 0;
+    loading = false;
+    finished = false;
+
+    if (noteEl) {
+      noteEl.textContent = defaultNoteText;
+    }
+
+    if (loaderEl) {
+      loaderEl.style.display = 'flex';
+    }
+
+    observer.observe(sentinelEl);
+    loadNextPage();
+  }
+
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -538,7 +558,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   observer.observe(sentinelEl);
 
-  loadNextPage();
+  window.initializeTokenActivity = loadNextPage;
+  window.tokenActivityManager = {
+    reset: resetAndReloadTokenActivity
+  };
 });
 </script>
 

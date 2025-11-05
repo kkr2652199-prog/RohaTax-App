@@ -1805,11 +1805,30 @@ document.addEventListener('DOMContentLoaded', function(){
     const tokenHeader = document.getElementById('token-usage-header');
     const tokenContent = document.getElementById('token-usage-content');
     const tokenArrow = document.getElementById('token-usage-arrow');
+    let tokenActivityLoaded = false;
+
+    async function initializeTokenActivity() {
+      if (typeof window.initializeTokenActivity === 'function') {
+        try {
+          await window.initializeTokenActivity();
+          tokenActivityLoaded = true;
+        } catch (err) {
+          console.error('[token-usage] 초기화 실패:', err);
+        }
+      } else {
+        tokenActivityLoaded = true; // 함수가 없으면 재호출할 필요 없음
+      }
+    }
+
     if (tokenHeader && tokenContent) {
       tokenHeader.addEventListener('click', function(){
         const isOpen = getComputedStyle(tokenContent).display === 'block';
         tokenContent.style.setProperty('display', isOpen ? 'none' : 'block', 'important');
         if (tokenArrow) tokenArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+
+        if (!isOpen && !tokenActivityLoaded) {
+          initializeTokenActivity();
+        }
       });
     }
   } catch(_) {/* no-op */}
