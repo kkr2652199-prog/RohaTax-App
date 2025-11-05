@@ -337,9 +337,11 @@
 document.addEventListener('DOMContentLoaded', function () {
   const listEl = document.getElementById('token-activity-list');
   const loaderEl = document.getElementById('token-activity-loader');
+  const sentinelEl = document.getElementById('token-activity-sentinel');
+  const noteEl = document.getElementById('token-activity-note');
 
-  if (!listEl) {
-    console.warn('[token-activity] 목록 컨테이너를 찾을 수 없습니다.');
+  if (!listEl || !sentinelEl) {
+    console.warn('[token-activity] 필수 요소(token-activity-list 또는 sentinel)를 찾을 수 없습니다.');
     return;
   }
 
@@ -462,11 +464,11 @@ document.addEventListener('DOMContentLoaded', function () {
         credentials: 'same-origin'
       });
       const data = await response.json();
-      console.log('[token-activity][stage2] /api/myhome-data 응답:', data);
+      console.log('[token-activity][stage3] /api/myhome-data 응답:', data);
 
       if (!data || data.success === false) {
-        console.warn('[token-activity][stage2] API 응답이 성공 상태가 아닙니다.');
-        return;
+        console.warn('[token-activity][stage3] API 응답이 성공 상태가 아닙니다.');
+        return 0;
       }
 
       const history = Array.isArray(data.activity_history) ? data.activity_history : [];
@@ -474,16 +476,69 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = createActivityRow(entry);
         listEl.appendChild(row);
       });
-
-      if (loaderEl) {
-        loaderEl.style.display = 'none';
-      }
+      return history.length;
     } catch (error) {
-      console.log('[token-activity][stage2] /api/myhome-data 호출 실패:', error);
+      console.log('[token-activity][stage3] /api/myhome-data 호출 실패:', error);
+      return 0;
     }
   }
 
-  fetchActivityPage({ limit: 5, offset: 0 });
+  const PAGE_SIZE = 5;
+  let offset = 0;
+  let loading = false;
+  let finished = false;
+
+  async function loadNextPage() {
+    if (loading || finished) {
+      return;
+    }
+
+    loading = true;
+    if (loaderEl) {
+      loaderEl.style.display = 'flex';
+    }
+
+    const fetchedCount = await fetchActivityPage({ limit: PAGE_SIZE, offset });
+
+    if (fetchedCount > 0) {
+      offset += fetchedCount;
+    }
+
+    if (fetchedCount < PAGE_SIZE) {
+      finished = true;
+      observer.disconnect();
+      if (loaderEl) {
+        loaderEl.style.display = 'none';
+      }
+      if (noteEl) {
+        noteEl.textContent = fetchedCount === 0 && offset === 0
+          ? '활동 내역이 존재하지 않습니다.'
+          : '모든 활동을 확인했습니다.';
+      }
+    }
+
+    if (!finished && loaderEl) {
+      loaderEl.style.display = 'none';
+    }
+
+    loading = false;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        loadNextPage();
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '200px 0px',
+    threshold: 0.1
+  });
+
+  observer.observe(sentinelEl);
+
+  loadNextPage();
 });
 </script>
 
