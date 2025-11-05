@@ -22,6 +22,18 @@ def myhome_data():
             conn.row_factory = sqlite3.Row
             uid = session['user_id']
 
+            user_row = conn.execute(
+                "SELECT plan_type FROM users WHERE id = ?",
+                (uid,)
+            ).fetchone()
+            base_plan_type = (user_row['plan_type'] or '').upper() if user_row else ''
+
+            user_row = conn.execute(
+                "SELECT plan_type FROM users WHERE id = ?",
+                (uid,)
+            ).fetchone()
+            base_plan_type = (user_row['plan_type'] or '').upper() if user_row else ''
+
             # total count
             total_row = conn.execute(
                 """
@@ -533,6 +545,12 @@ def myhome_data():
             conn.row_factory = sqlite3.Row
             uid = session['user_id']
 
+            user_row = conn.execute(
+                "SELECT plan_type FROM users WHERE id = ?",
+                (uid,)
+            ).fetchone()
+            base_plan_type = (user_row['plan_type'] or '').upper() if user_row else ''
+
             # 토큰 요약 (grant는 양수, use는 음수 가정; 없으면 부호 기준)
             sum_row = conn.execute(
                 """
@@ -579,12 +597,27 @@ def myhome_data():
 
                 balance_after = bal_row['bal'] if bal_row else 0
 
-                # 메타 파싱
-                meta_obj = {}
+                # 메타 파싱 및 기본 정보 추출
                 try:
                     meta_obj = json.loads(r['meta']) if r['meta'] else {}
-                except Exception:
+                except json.JSONDecodeError:
                     meta_obj = {}
+
+                filename = meta_obj.get('file_name') or meta_obj.get('file')
+                customer_name = meta_obj.get('customer_name')
+                meta_plan_type = meta_obj.get('plan_type') or meta_obj.get('planType')
+                effective_plan_type = (meta_plan_type or base_plan_type or '').upper()
+
+                # 금액 분리
+                raw_amount = int(r['amount'] or 0)
+                if raw_amount > 0:
+                    charge_amount = raw_amount
+                    usage_amount = 0
+                elif raw_amount < 0:
+                    charge_amount = 0
+                    usage_amount = abs(raw_amount)
+                else:
+                    charge_amount = usage_amount = 0
 
                 # 표시용 매핑
                 change_type = r['change_type'] or ''
@@ -601,9 +634,12 @@ def myhome_data():
                     'id': int(r['id']),
                     'date': r['created_at'],
                     'log_type': log_type,
-                    'filename': meta_obj.get('file_name') or meta_obj.get('file') or None,
-                    'customer_name': meta_obj.get('customer_name'),
-                    'change_amount': int(r['amount'] or 0),
+                    'plan_type': effective_plan_type,
+                    'filename': filename,
+                    'customer_name': customer_name,
+                    'change_amount': raw_amount,
+                    'charge_amount': charge_amount,
+                    'usage_amount': usage_amount,
                     'balance_after': int(balance_after or 0)
                 })
 
