@@ -57,3 +57,4 @@ Thumbs.db
 # Git worktrees (local only)
 /worktrees/
 static/videos/roha_conversion_demo.mp4.mp4
+file_manager_config.json
