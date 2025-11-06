@@ -316,9 +316,9 @@
     <div class="token-activity-header-cell">회원등급</div>
     <div class="token-activity-header-cell">활동 유형</div>
     <div class="token-activity-header-cell">상세 정보</div>
-    <div class="token-activity-header-cell numeric-header">획득량</div>
-    <div class="token-activity-header-cell numeric-header">차감량</div>
-    <div class="token-activity-header-cell numeric-header">최종 잔액</div>
+    <div class="token-activity-header-cell numeric-header">토큰 총수량</div>
+    <div class="token-activity-header-cell numeric-header">사용량</div>
+    <div class="token-activity-header-cell numeric-header">토큰 총잔량</div>
   </div>
 
   <div class="token-activity-body" id="token-activity-list"></div>
@@ -347,12 +347,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const PLAN_MAP = {
-    'VIP': 'VIP',
-    'VIP-PLUS': '프리미엄',
-    'PREMIUM': '프리미엄',
-    'GOLD-VIP': '골드',
-    'GOLD': '골드',
-    'FREE': 'Free'
+    'VIP': 'VIP (토큰차감)',
+    'VIP-PLUS': 'VIP PLUS (토큰차감)',
+    'PREMIUM': 'PREMIUM (토큰차감)',
+    'PREMIUM-VIP': 'PREMIUM VIP (토큰차감)',
+    'GOLD-VIP': 'GOLD VIP (무제한사용)',
+    'GOLD': 'GOLD (무제한사용)',
+    'FREE': 'FREE'
   };
 
   const LOG_TYPE_MAP = {
@@ -450,9 +451,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const creditText = charge > 0 ? `+${formatNumber(charge)}` : '-';
     const debitText = usage > 0 ? `-${formatNumber(usage)}` : '-';
 
-    row.appendChild(createCell(charge > 0 ? 'numeric credit credit-cell' : 'numeric credit-cell', '획득량', creditText));
-    row.appendChild(createCell(usage > 0 ? 'numeric debit debit-cell' : 'numeric debit-cell', '차감량', debitText));
-    row.appendChild(createCell('numeric balance balance-cell', '최종 잔액', formatNumber(balance)));
+    row.appendChild(createCell(charge > 0 ? 'numeric credit credit-cell' : 'numeric credit-cell', '토큰 총수량', creditText));
+    row.appendChild(createCell(usage > 0 ? 'numeric debit debit-cell' : 'numeric debit-cell', '사용량', debitText));
+    row.appendChild(createCell('numeric balance balance-cell', '토큰 총잔량', formatNumber(balance)));
 
     return row;
   }
