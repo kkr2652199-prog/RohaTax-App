@@ -1,305 +1,568 @@
-<div class="token-table-wrap" style="display:block;">
-  <!-- 관리 바: 선택 삭제 + 필터 + 전체화면 -->
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; justify-content:space-between;">
-    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      <button type="button" id="token-delete-selected" class="btn btn-secondary" style="padding:8px 12px; border-radius:10px;">선택 항목 삭제</button>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <input type="text" placeholder="파일명/고객명 검색" class="input-field" style="padding:10px 12px; border-radius:10px; min-width:220px;">
-        <select class="input-field" style="padding:10px 12px; border-radius:10px;">
-          <option value="">전체 등급</option>
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-          <option value="gold">Gold</option>
-          <option value="vip">VIP</option>
-        </select>
-        <select class="input-field" style="padding:10px 12px; border-radius:10px;">
-          <option value="">전체 구분</option>
-          <option value="conversion">변환</option>
-          <option value="grant">충전</option>
-        </select>
-        <button type="button" class="btn btn-primary" style="padding:8px 12px; border-radius:10px;">필터 적용</button>
-      </div>
+<style>
+  .token-activity-wrapper {
+    background: linear-gradient(180deg, rgba(249, 250, 251, 0.95) 0%, #ffffff 60%);
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  }
+
+  .token-activity-header,
+  .token-activity-row {
+    display: grid;
+    grid-template-columns: 42px minmax(140px, 15%) minmax(110px, 12%) minmax(140px, 13%) minmax(0, 1fr) minmax(110px, 12%) minmax(110px, 12%) minmax(130px, 13%);
+    align-items: stretch;
+  }
+
+  .token-activity-header {
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+    color: #1e293b;
+    font-weight: 600;
+    border: 1px solid #cbd5f5;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .token-activity-header-cell {
+    padding: 14px 16px;
+    border-right: 1px solid #cbd5f5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+  }
+
+  .token-activity-header-cell:last-child {
+    border-right: none;
+  }
+
+  .token-activity-header-cell.checkbox-cell-header {
+    justify-content: center;
+  }
+
+  .token-activity-header-cell.numeric-header {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .token-activity-body {
+    border: 1px solid #E5E7EB;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .token-activity-row {
+    background: #ffffff;
+  }
+
+  .token-activity-row:nth-child(even) .token-activity-cell {
+    background: #F9FAFB;
+  }
+
+  .token-activity-cell {
+    padding: 14px 16px;
+    border-right: 1px solid #E5E7EB;
+    border-bottom: 1px solid #E5E7EB;
+    font-size: 0.95rem;
+    color: #1f2937;
+    position: relative;
+    background: inherit;
+  }
+
+  .token-activity-cell:last-child {
+    border-right: none;
+  }
+
+  .token-activity-row:last-child .token-activity-cell {
+    border-bottom: none;
+  }
+
+  .token-activity-row:hover .token-activity-cell {
+    background: #EEF2FF;
+    transition: background 0.2s ease;
+  }
+
+  .token-activity-cell.checkbox-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .token-activity-cell.numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .token-activity-cell.numeric.credit {
+    color: #047857;
+    font-weight: 600;
+  }
+
+  .token-activity-cell.numeric.debit {
+    color: #DC2626;
+    font-weight: 600;
+  }
+
+  .token-activity-cell.numeric.balance {
+    color: #1f2937;
+    font-weight: 700;
+  }
+
+  .token-activity-cell .activity-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.4;
+  }
+
+  .token-activity-cell .activity-detail strong {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .token-activity-cell .activity-detail span {
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  .token-activity-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+    color: #4b5563;
+    font-weight: 500;
+  }
+
+  .token-activity-loader .spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid #cbd5f5;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: token-spinner 0.9s linear infinite;
+  }
+
+  @keyframes token-spinner {
+    to { transform: rotate(360deg); }
+  }
+
+  .token-activity-note {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-align: right;
+  }
+
+  .token-activity-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .token-activity-cell::before {
+    display: none;
+  }
+
+  .token-activity-sentinel {
+    width: 100%;
+    height: 1px;
+  }
+
+  @media (max-width: 1000px) {
+    .token-activity-wrapper {
+      padding: 1.25rem;
+    }
+
+    .token-activity-header {
+      display: none;
+    }
+
+    .token-activity-body {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .token-activity-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-areas:
+        "type type"
+        "detail detail"
+        "date plan"
+        "credit debit"
+        "balance balance"
+        "checkbox checkbox";
+      gap: 0.75rem 1rem;
+      background: #ffffff;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+      padding: 1.1rem 1.25rem;
+    }
+
+    .token-activity-row:nth-child(even) .token-activity-cell {
+      background: transparent;
+    }
+
+    .token-activity-row:hover .token-activity-cell {
+      background: transparent;
+    }
+
+    .token-activity-cell {
+      border: none;
+      padding: 0;
+      background: transparent !important;
+    }
+
+    .token-activity-cell::before {
+      display: block;
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+
+    .token-activity-cell.checkbox-cell {
+      grid-area: checkbox;
+      justify-content: flex-start;
+    }
+
+    .token-activity-cell.checkbox-cell::before {
+      display: none;
+    }
+
+    .token-activity-cell.type-cell {
+      grid-area: type;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .token-activity-cell.type-cell::before {
+      display: none;
+    }
+
+    .token-activity-cell.detail-cell {
+      grid-area: detail;
+    }
+
+    .token-activity-cell.detail-cell::before {
+      display: none;
+    }
+
+    .token-activity-cell.date-cell {
+      grid-area: date;
+    }
+
+    .token-activity-cell.plan-cell {
+      grid-area: plan;
+      text-align: right;
+    }
+
+    .token-activity-cell.credit-cell {
+      grid-area: credit;
+      text-align: left;
+    }
+
+    .token-activity-cell.debit-cell {
+      grid-area: debit;
+      text-align: right;
+    }
+
+    .token-activity-cell.balance-cell {
+      grid-area: balance;
+      text-align: right;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .token-activity-row {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "type"
+        "detail"
+        "date"
+        "plan"
+        "credit"
+        "debit"
+        "balance"
+        "checkbox";
+    }
+
+    .token-activity-cell.plan-cell,
+    .token-activity-cell.debit-cell,
+    .token-activity-cell.balance-cell {
+      text-align: left;
+    }
+  }
+</style>
+
+<div class="token-activity-wrapper">
+  <div class="token-activity-header">
+    <div class="token-activity-header-cell checkbox-cell-header">
+      <input type="checkbox" aria-label="표시된 활동 전체 선택" disabled>
     </div>
-    <button type="button" id="token-fullscreen-open" class="btn btn-secondary" style="padding:6px 10px; border-radius:10px; min-width:auto;">↗️ 전체 화면으로 보기</button>
+    <div class="token-activity-header-cell">날짜/시간</div>
+    <div class="token-activity-header-cell">회원등급</div>
+    <div class="token-activity-header-cell">활동 유형</div>
+    <div class="token-activity-header-cell">상세 정보</div>
+    <div class="token-activity-header-cell numeric-header">토큰 총수량</div>
+    <div class="token-activity-header-cell numeric-header">사용량</div>
+    <div class="token-activity-header-cell numeric-header">토큰 총잔량</div>
   </div>
 
-  <!-- 상세 내역 테이블 (가짜 데이터) -->
-  <div style="overflow-x:auto;">
-    <table style="width:100%; min-width:1080px; border-collapse:separate; border-spacing:0;">
-      <colgroup>
-        <col style="width:46px;">
-        <col style="width:160px;">
-        <col style="width:120px;">
-        <col style="width:140px;">
-        <col>
-        <col style="width:120px;">
-        <col style="width:120px;">
-        <col style="width:140px;">
-      </colgroup>
-      <thead>
-        <tr style="background:linear-gradient(135deg,#F3F4F6 0%, #E5E7EB 100%); color:#111827;">
-          <th style="padding:12px 10px; border-top-left-radius:10px; text-align:center; border:1px solid #E5E7EB; border-right:none;"> 
-            <input type="checkbox">
-          </th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">날짜/시간</th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">회원등급</th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">변환구분</th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">파일명/고객사명</th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">충전량</th>
-          <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">사용량</th>
-          <th style="padding:12px 10px; border-top-right-radius:10px; border:1px solid #E5E7EB; text-align:right;">최종 잔액</th>
-        </tr>
-      </thead>
-      <tbody id="token-main-tbody"></tbody>
-    </table>
+  <div class="token-activity-body" id="token-activity-list"></div>
+
+  <div class="token-activity-loader" id="token-activity-loader">
+    <div class="spinner" aria-hidden="true"></div>
+    <span class="loader-text">데이터를 불러오는 중...</span>
   </div>
 
-  <!-- 페이지네이션 -->
-  <div id="token-pager" style="display:flex; gap:6px; justify-content:center; margin-top:12px;"></div>
-</div>
+  <div id="token-activity-sentinel" class="token-activity-sentinel"></div>
 
-<!-- 전체 화면 모달 -->
-<div id="token-fullscreen-modal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000;">
-  <div class="modal-content" style="width:95%; max-width:1400px; margin:1.5% auto; max-height:95vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);">
-    <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb;">
-      <h2 style="margin:0; font-size:1.25rem;">토큰 사용 현황 (전체 화면)</h2>
-      <button type="button" id="token-fullscreen-close" class="close" style="font-size:22px; border:none; background:transparent; cursor:pointer;">×</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;">
-      <!-- 동일한 컴포넌트 구조 복제 -->
-      <div class="token-table-wrap" id="token-fullscreen-wrap">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <button type="button" id="token-fullscreen-delete" class="btn btn-secondary" style="padding:8px 12px; border-radius:10px;">선택 항목 삭제</button>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <input type="text" placeholder="파일명/고객명 검색" class="input-field" style="padding:10px 12px; border-radius:10px; min-width:280px;">
-              <select class="input-field" style="padding:10px 12px; border-radius:10px;">
-                <option value="">전체 등급</option>
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-                <option value="gold">Gold</option>
-                <option value="vip">VIP</option>
-              </select>
-              <select class="input-field" style="padding:10px 12px; border-radius:10px;">
-                <option value="">전체 구분</option>
-                <option value="conversion">변환</option>
-                <option value="grant">충전</option>
-              </select>
-              <button type="button" class="btn btn-primary" style="padding:8px 12px; border-radius:10px;">필터 적용</button>
-            </div>
-          </div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table id="token-fullscreen-table" style="width:100%; min-width:1080px; border-collapse:separate; border-spacing:0;">
-            <colgroup>
-              <col style="width:46px;">
-              <col style="width:160px;">
-              <col style="width:120px;">
-              <col style="width:140px;">
-              <col>
-              <col style="width:120px;">
-              <col style="width:120px;">
-              <col style="width:140px;">
-            </colgroup>
-            <thead>
-              <tr style="background:linear-gradient(135deg,#F3F4F6 0%, #E5E7EB 100%); color:#111827;">
-                <th style="padding:12px 10px; border-top-left-radius:10px; text-align:center; border:1px solid #E5E7EB; border-right:none;"><input type="checkbox"></th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">날짜/시간</th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">회원등급</th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">변환구분</th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none;">파일명</th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">충전량</th>
-                <th style="padding:12px 10px; border:1px solid #E5E7EB; border-right:none; text-align:right;">사용량</th>
-                <th style="padding:12px 10px; border-top-right-radius:10px; border:1px solid #E5E7EB; text-align:right;">최종 잔액</th>
-              </tr>
-            </thead>
-            <tbody id="token-fullscreen-tbody"></tbody>
-          </table>
-        </div>
-        <div id="token-fullscreen-pager" style="display:flex; gap:6px; justify-content:center; margin-top:12px;"></div>
-      </div>
-    </div>
-  </div>
-  
+  <div class="token-activity-note" id="token-activity-note">* 무한 스크롤을 통해 최신 활동이 자동으로 이어집니다.</div>
 </div>
 
 <script>
-(function(){
-  // 공통 페이지네이션 버튼 스타일(작고 투명, 얇은 테두리)
-  function pagerButton(page, current){
-    var active = page===current;
-    var base = 'display:inline-block;padding:4px 10px;border:1px solid #D1D5DB;border-radius:999px;background:' + (active?'#10B981':'transparent') + ';color:' + (active?'#fff':'#374151') + ';font-size:12px;cursor:pointer;';
-    return '<button data-page="'+page+'" style="'+base+'">'+page+'</button>';
-  }
-  var pageSize = 50; // 기본 50개
-  var stateMain = { page: 1, total: 0, sortKey: 'date', sortDir: 'desc' };
-  var stateFull = { page: 1, total: 0, sortKey: 'date', sortDir: 'desc' };
+document.addEventListener('DOMContentLoaded', function () {
+  const listEl = document.getElementById('token-activity-list');
+  const loaderEl = document.getElementById('token-activity-loader');
+  const sentinelEl = document.getElementById('token-activity-sentinel');
+  const noteEl = document.getElementById('token-activity-note');
+  const defaultNoteText = noteEl ? noteEl.textContent : '';
 
-  async function fetchPage(page, sortKey, sortDir){
-    try{
-      var params = new URLSearchParams();
-      params.set('limit', String(pageSize));
-      params.set('offset', String((page-1)*pageSize));
-      if (sortKey) params.set('sort', String(sortKey));
-      if (sortDir) params.set('order', String(sortDir));
-      var res = await fetch('/api/myhome-data?'+params.toString(), { credentials:'same-origin' });
-      var d = await res.json();
-      if (!d.success) throw new Error(d.error||'불러오기 실패');
-      var items = Array.isArray(d.activity_history) ? d.activity_history : [];
-      var total = d.total_count || d.total || d.activity_total || d.activity_history_total || items.length;
-      return { items: items, total: Number(total)||items.length };
-    }catch(e){
-      return { items: [], total: 0, error: e.message||String(e) };
+  if (!listEl || !sentinelEl) {
+    console.warn('[token-activity] 필수 요소(token-activity-list 또는 sentinel)를 찾을 수 없습니다.');
+    return;
+  }
+
+  const PLAN_MAP = {
+    'VIP': 'VIP (토큰차감)',
+    'VIP-PLUS': 'VIP PLUS (토큰차감)',
+    'PREMIUM': 'PREMIUM (토큰차감)',
+    'PREMIUM-VIP': 'PREMIUM VIP (토큰차감)',
+    'GOLD-VIP': 'GOLD VIP (무제한사용)',
+    'GOLD': 'GOLD (무제한사용)',
+    'FREE': 'FREE'
+  };
+
+  const LOG_TYPE_MAP = {
+    'CONVERSION': '파일 변환',
+    'GOLD_CONVERSION': '고객사 변환',
+    'GRANT': '토큰 충전',
+    'RESET': '관리자 초기화',
+    'BONUS': '보너스 지급'
+  };
+
+  function formatNumber(value) {
+    const num = Number(value || 0);
+    return num.toLocaleString('ko-KR');
+  }
+
+  function createCell(className, label, content) {
+    const cell = document.createElement('div');
+    cell.className = `token-activity-cell ${className}`.trim();
+    if (label) {
+      cell.setAttribute('data-label', label);
     }
+
+    if (content instanceof Node) {
+      cell.appendChild(content);
+    } else if (content !== undefined && content !== null) {
+      cell.innerHTML = content;
+    }
+
+    return cell;
   }
 
-  function rowHtml(it){
-    return '<tr style="transition:background .2s;" onmouseover="this.style.background=\'#FAFAFB\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:10px; border-left:1px solid #E5E7EB; border-bottom:1px solid #F3F4F6; text-align:center;">'
-      + '<input type="checkbox" class="tk-row-check" data-id="'+(it.id||'')+'">'
-      + '</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.datetime_kst||'')+'</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.plan_type||'')+'</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+(it.log_type||'')+'</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6;">'+( (it.log_type==="GOLD_CONVERSION" && it.customer_name) ? (String(it.customer_name)+ (it.filename? ' ('+String(it.filename)+')' : '')) : (it.filename||'-') )+'</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6; text-align:right; color:#10B981;">'+('+'+(it.charge_amount||0))+'</td>'
-      + '<td style="padding:10px; border-bottom:1px solid #F3F4F6; text-align:right; color:#DC2626;">'+('-'+(it.usage_amount||0))+'</td>'
-      + '<td style="padding:10px; border-right:1px solid #E5E7EB; border-bottom:1px solid #F3F4F6; text-align:right; font-weight:600;">'+(it.balance_after||0)+'</td>'
-      + '</tr>';
-  }
+  function buildDetail(entry, logLabel) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'activity-detail';
 
-  async function renderBody(tbodyId, pagerId, state){
-    var tb = document.getElementById(tbodyId);
-    if (!tb) return;
-    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#6B7280;">불러오는 중...</td></tr>';
-    var r = await fetchPage(state.page, state.sortKey, state.sortDir);
-    state.total = r.total||0;
-    if (r.error){
-      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ef4444;">'+r.error+'</td></tr>';
+    const title = document.createElement('strong');
+    const customer = (entry.customer_name || '').trim();
+    const filename = (entry.filename || '').trim();
+
+    if (customer && filename) {
+      title.textContent = `${customer} (${filename})`;
+    } else if (customer) {
+      title.textContent = customer;
+    } else if (filename) {
+      title.textContent = filename;
     } else {
-      tb.innerHTML = (r.items||[]).map(rowHtml).join('') || '<tr><td colspan="8" style="text-align:center;color:#6B7280;">데이터가 없습니다</td></tr>';
+      title.textContent = '세부 정보 없음';
     }
-    renderPager(pagerId, state);
+
+    const subtitle = document.createElement('span');
+    subtitle.textContent =
+      logLabel === '파일 변환' ? '파일 변환 처리' :
+      logLabel === '고객사 변환' ? '고객사 의뢰 처리' :
+      logLabel === '토큰 충전' ? '결제/충전 완료' :
+      logLabel === '관리자 초기화' ? '관리자 조정' :
+      logLabel === '보너스 지급' ? '프로모션/보너스' : '활동 기록';
+
+    wrapper.appendChild(title);
+    wrapper.appendChild(subtitle);
+    return wrapper;
   }
 
-  function renderPager(containerId, state){
-    var el = document.getElementById(containerId);
-    if (!el) return;
-    var pages = Math.max(1, Math.ceil((state.total||0) / pageSize));
-    var html = '';
-    for (var p=1; p<=pages; p++) html += pagerButton(p, state.page);
-    el.innerHTML = html;
-    el.querySelectorAll('button[data-page]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        state.page = Number(this.getAttribute('data-page'))||1;
-        if (containerId === 'token-pager'){
-          renderBody('token-main-tbody', 'token-pager', stateMain);
-        } else if (containerId === 'token-fullscreen-pager'){
-          renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
-        }
+  function createActivityRow(entry) {
+    const row = document.createElement('div');
+    row.className = 'token-activity-row';
+    if (entry.id !== undefined) {
+      row.dataset.activityId = entry.id;
+    }
+
+    const planRaw = (entry.plan_type || '').toString().toUpperCase();
+    const planLabel = PLAN_MAP[planRaw] || planRaw || '-';
+
+    const logRaw = (entry.log_type || '').toString().toUpperCase();
+    const logLabel = LOG_TYPE_MAP[logRaw] || (entry.log_type || '활동');
+
+    const charge = Number(entry.charge_amount || 0);
+    const usage = Number(entry.usage_amount || 0);
+    const balance = Number(entry.balance_after || 0);
+
+    const checkboxCell = createCell('checkbox-cell', '', '');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.setAttribute('aria-label', `${planLabel} ${logLabel} 활동 선택`);
+    checkboxCell.appendChild(checkbox);
+
+    row.appendChild(checkboxCell);
+    row.appendChild(createCell('date-cell', '날짜/시간', entry.date || entry.datetime_kst || entry.created_at || '-'));
+    row.appendChild(createCell('plan-cell', '회원등급', planLabel));
+    row.appendChild(createCell('type-cell', '활동 유형', logLabel));
+
+    const detailCell = createCell('detail-cell', '상세 정보', '');
+    detailCell.appendChild(buildDetail(entry, logLabel));
+    row.appendChild(detailCell);
+
+    const creditText = charge > 0 ? `+${formatNumber(charge)}` : '-';
+    const debitText = usage > 0 ? `-${formatNumber(usage)}` : '-';
+
+    row.appendChild(createCell(charge > 0 ? 'numeric credit credit-cell' : 'numeric credit-cell', '토큰 총수량', creditText));
+    row.appendChild(createCell(usage > 0 ? 'numeric debit debit-cell' : 'numeric debit-cell', '사용량', debitText));
+    row.appendChild(createCell('numeric balance balance-cell', '토큰 총잔량', formatNumber(balance)));
+
+    return row;
+  }
+
+  async function fetchActivityPage({ limit, offset }) {
+    const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+
+    try {
+      const response = await fetch(`/api/myhome-data?${query.toString()}`, {
+        credentials: 'same-origin'
       });
-    });
+      const data = await response.json();
+      console.log('[token-activity][stage3] /api/myhome-data 응답:', data);
+
+      if (!data || data.success === false) {
+        console.warn('[token-activity][stage3] API 응답이 성공 상태가 아닙니다.');
+        return 0;
+      }
+
+      const history = Array.isArray(data.activity_history) ? data.activity_history : [];
+      history.forEach(entry => {
+        const row = createActivityRow(entry);
+        listEl.appendChild(row);
+      });
+      return history.length;
+    } catch (error) {
+      console.log('[token-activity][stage3] /api/myhome-data 호출 실패:', error);
+      return 0;
+    }
   }
 
-  // 초기 렌더 (요약 보기)
-  renderBody('token-main-tbody', 'token-pager', stateMain);
+  const PAGE_SIZE = 5;
+  let offset = 0;
+  let loading = false;
+  let finished = false;
 
-  // 일괄 삭제: 요약 보기
-  var delMain = document.getElementById('token-delete-selected');
-  if (delMain){
-    delMain.addEventListener('click', async function(){
-      var ids = Array.from(document.querySelectorAll('#token-main-tbody .tk-row-check:checked')).map(function(cb){ return Number(cb.getAttribute('data-id')); }).filter(Boolean);
-      if (!ids.length){ alert('선택된 항목이 없습니다'); return; }
-      if (!confirm('선택 항목을 삭제하시겠습니까?')) return;
-      try{
-        var res = await fetch('/api/myhome-data/delete', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids: ids }) });
-        var r = await res.json();
-        if (!r.success){ alert(r.error||'삭제 실패'); return; }
-        await renderBody('token-main-tbody', 'token-pager', stateMain);
-      }catch(e){ alert('삭제 중 오류가 발생했습니다'); }
-    });
+  async function loadNextPage() {
+    if (loading || finished) {
+      return;
+    }
+
+    loading = true;
+    if (loaderEl) {
+      loaderEl.style.display = 'flex';
+    }
+
+    const fetchedCount = await fetchActivityPage({ limit: PAGE_SIZE, offset });
+
+    if (fetchedCount > 0) {
+      offset += fetchedCount;
+    }
+
+    if (fetchedCount < PAGE_SIZE) {
+      finished = true;
+      observer.disconnect();
+      if (loaderEl) {
+        loaderEl.style.display = 'none';
+      }
+      if (noteEl) {
+        noteEl.textContent = fetchedCount === 0 && offset === 0
+          ? '활동 내역이 존재하지 않습니다.'
+          : '모든 활동을 확인했습니다.';
+      }
+    }
+
+    if (!finished && loaderEl) {
+      loaderEl.style.display = 'none';
+    }
+
+    loading = false;
   }
 
-  // 일괄 삭제: 전체 화면
-  var delFull = document.getElementById('token-fullscreen-delete');
-  if (delFull){
-    delFull.addEventListener('click', async function(){
-      var ids = Array.from(document.querySelectorAll('#token-fullscreen-tbody .tk-row-check:checked')).map(function(cb){ return Number(cb.getAttribute('data-id')); }).filter(Boolean);
-      if (!ids.length){ alert('선택된 항목이 없습니다'); return; }
-      if (!confirm('선택 항목을 삭제하시겠습니까?')) return;
-      try{
-        var res = await fetch('/api/myhome-data/delete', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ids: ids }) });
-        var r = await res.json();
-        if (!r.success){ alert(r.error||'삭제 실패'); return; }
-        await renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
-      }catch(e){ alert('삭제 중 오류가 발생했습니다'); }
-    });
+  function resetAndReloadTokenActivity() {
+    observer.disconnect();
+    listEl.innerHTML = '';
+    offset = 0;
+    loading = false;
+    finished = false;
+
+    if (noteEl) {
+      noteEl.textContent = defaultNoteText;
+    }
+
+    if (loaderEl) {
+      loaderEl.style.display = 'flex';
+    }
+
+    observer.observe(sentinelEl);
+    loadNextPage();
   }
 
-  // 전체화면 모달 열기/닫기
-  var openBtn = document.getElementById('token-fullscreen-open');
-  var modal = document.getElementById('token-fullscreen-modal');
-  var closeBtn = document.getElementById('token-fullscreen-close');
-  if (openBtn && modal){
-    openBtn.addEventListener('click', function(){
-      modal.style.display = 'block';
-      document.body.style.overflow = 'hidden';
-      stateFull.page = 1;
-      stateFull.sortKey = stateMain.sortKey;
-      stateFull.sortDir = stateMain.sortDir;
-      renderBody('token-fullscreen-tbody', 'token-fullscreen-pager', stateFull);
-    });
-  }
-  if (closeBtn && modal){
-    closeBtn.addEventListener('click', function(){
-      modal.style.display = 'none';
-      document.body.style.overflow = '';
-    });
-  }
-  if (modal){
-    modal.addEventListener('click', function(e){
-      if (e.target === modal){
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        loadNextPage();
       }
     });
-  }
+  }, {
+    root: null,
+    rootMargin: '200px 0px',
+    threshold: 0.1
+  });
 
-  // 정렬: 헤더 클릭 핸들러 (요약/전체 공통)
-  function bindSortHandlers(){
-    function setHandlers(tableSelector, state, tbodyId, pagerId){
-      var table = document.querySelector(tableSelector);
-      if (!table) return;
-      var ths = table.querySelectorAll('thead th');
-      if (!ths || ths.length<8) return;
-      var map = {
-        1: 'date',           // 날짜/시간 -> created_at
-        2: 'plan_type',      // 회원등급
-        3: 'log_type',       // 변환구분
-        4: 'customer_name',  // 파일명/고객사명 -> 고객사명 기준 정렬
-        5: 'amount',         // 충전량
-        6: 'amount',         // 사용량(동일 키 사용)
-        7: 'balance_after'   // 잔액 (서버 미지원 시 기본 date 정렬 유지 권장)
-      };
-      ths.forEach(function(th, idx){
-        if (!(idx in map)) return;
-        th.style.cursor = 'pointer';
-        th.addEventListener('click', function(){
-          var key = map[idx];
-          if (state.sortKey === key){
-            state.sortDir = (state.sortDir==='asc'?'desc':'asc');
-          } else {
-            state.sortKey = key; state.sortDir = 'desc';
-          }
-          state.page = 1;
-          renderBody(tbodyId, pagerId, state);
-        });
-      });
-    }
-    setHandlers('table', stateMain, 'token-main-tbody', 'token-pager');
-    setHandlers('#token-fullscreen-table', stateFull, 'token-fullscreen-tbody', 'token-fullscreen-pager');
-  }
-  bindSortHandlers();
-})();
+  observer.observe(sentinelEl);
+
+  window.initializeTokenActivity = loadNextPage;
+  window.tokenActivityManager = {
+    reset: resetAndReloadTokenActivity
+  };
+});
 </script>
 
