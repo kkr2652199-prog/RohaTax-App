@@ -36,6 +36,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let currentUserPlanType = null;
 
+        const PLAN_LABEL_MAP = {
+            'vip': 'VIP (토큰차감)',
+            'vip-plus': 'VIP PLUS (토큰차감)',
+            'premium': 'PREMIUM (토큰차감)',
+            'premium-vip': 'PREMIUM VIP (토큰차감)',
+            'gold': 'GOLD (무제한사용)',
+            'gold-vip': 'GOLD VIP (무제한사용)',
+            'free': 'FREE'
+        };
+
+        function formatPlanLabel(planType) {
+            const key = (planType || '').toString().trim().toLowerCase();
+            if (!key) {
+                return 'FREE';
+            }
+            return PLAN_LABEL_MAP[key] || key.toUpperCase();
+        }
+
         // 버튼 상태 제어 컴포넌트
         function setButtonState(btn, {disabled, text, opacity = '1', title = ''}) {
             if (!btn) return;
@@ -953,6 +971,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (data.success) {
                     const user = data.data.user;
+                    const planLabel = formatPlanLabel(user.plan_type);
                     
                     // 성공 애니메이션
                     btn.innerHTML = `
@@ -987,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <strong>📊 종목:</strong> <span style="color:#000000;font-weight:600;">${user.business_category || '-'}</span>
                         </div>
                         <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
-                            <strong>🎫 권한:</strong> <span style="color:#fbbf24;font-weight:700;text-transform:uppercase;">${user.plan_type || 'free'}</span>
+                            <strong>🎫 권한:</strong> <span style="color:#fbbf24;font-weight:700;text-transform:uppercase;">${planLabel}</span>
                         </div>
                         <div style="margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
                             <strong>📅 가입일:</strong> <span style="color:#84cc16;font-weight:600;">${user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '-'}</span>
