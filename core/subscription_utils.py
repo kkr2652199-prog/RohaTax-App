@@ -13,6 +13,73 @@ from core.db import get_conn_optimized as get_conn
 logger = logging.getLogger(__name__)
 
 
+UNLIMITED_PLAN_TYPES = {'gold', 'gold-vip'}
+TOKEN_DEDUCTION_PLAN_TYPES = {'vip', 'vip-plus', 'premium', 'premium-vip'}
+
+PLAN_DEFINITIONS: Dict[str, Dict[str, Any]] = {
+    'free': {'display_name': '무료', 'is_unlimited': False},
+    'vip': {'display_name': 'VIP', 'is_unlimited': False},
+    'vip-plus': {'display_name': 'VIP Plus', 'is_unlimited': False},
+    'premium': {'display_name': 'Premium', 'is_unlimited': False},
+    'premium-vip': {'display_name': 'Premium VIP', 'is_unlimited': False},
+    'gold': {'display_name': 'Gold', 'is_unlimited': True},
+    'gold-vip': {'display_name': 'Gold VIP', 'is_unlimited': True},
+}
+
+TOKEN_PLAN_SUFFIX = ' (토큰차감)'
+UNLIMITED_PLAN_SUFFIX = ' (무제한사용)'
+
+
+def _normalize_plan_type(plan_type: Optional[str]) -> str:
+    return (plan_type or 'free').strip().lower()
+
+
+def _get_plan_definition(plan_type: Optional[str]) -> Dict[str, Any]:
+    normalized = _normalize_plan_type(plan_type)
+    definition = PLAN_DEFINITIONS.get(normalized)
+    if definition:
+        return definition
+    fallback_name = (plan_type or 'FREE').upper()
+    return {'display_name': fallback_name, 'is_unlimited': False}
+
+
+def get_plan_display_label(plan_type: Optional[str]) -> str:
+    normalized = _normalize_plan_type(plan_type)
+    definition = _get_plan_definition(plan_type)
+    base_label = definition['display_name']
+    if normalized in UNLIMITED_PLAN_TYPES:
+        return f"{base_label}{UNLIMITED_PLAN_SUFFIX}"
+    if normalized in TOKEN_DEDUCTION_PLAN_TYPES:
+        return f"{base_label}{TOKEN_PLAN_SUFFIX}"
+    if normalized == 'free':
+        return base_label
+    return f"{base_label}{TOKEN_PLAN_SUFFIX}"
+
+
+def _build_subscription_payload(plan_type: Optional[str], is_active: int | bool, token_balance: Optional[int] = None, tokens_used: Optional[int] = None) -> Dict[str, Any]:
+    normalized = _normalize_plan_type(plan_type)
+    definition = _get_plan_definition(plan_type)
+    total_granted = token_balance if token_balance is not None else 0
+    used_tokens = tokens_used if tokens_used is not None else 0
+
+    if definition['is_unlimited']:
+        remaining_tokens = -1
+    else:
+        remaining_tokens = max(0, (total_granted or 0) - (used_tokens or 0))
+
+    payload = {
+        'plan_type': plan_type or 'free',
+        'display_name': definition['display_name'],
+        'display_label': get_plan_display_label(plan_type),
+        'is_unlimited': 1 if definition['is_unlimited'] else 0,
+        'remaining_tokens': remaining_tokens,
+        'status': 'active' if is_active else 'inactive',
+        'total_granted': total_granted or 0,
+        'tokens_used': used_tokens or 0,
+    }
+    return payload
+
+
 def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
     """
     사용자의 현재 활성 구독 정보 조회 (users 테이블의 plan_type 기반)
@@ -47,26 +114,17 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
         
         plan_type = row['plan_type'] or 'free'
         is_active = row['is_active'] if row['is_active'] is not None else 1
-        
-        # 플랜별 매핑
-        plan_mapping = {
-            'free': {'display_name': '무료', 'is_unlimited': 0, 'tokens': 50},
-            'vip': {'display_name': 'VIP', 'is_unlimited': 0, 'tokens': 50},
-            'premium-vip': {'display_name': 'Premium VIP', 'is_unlimited': 0, 'tokens': 300},
-            'gold-vip': {'display_name': 'Gold VIP', 'is_unlimited': 1, 'tokens': -1}
-        }
-        
-        plan_info = plan_mapping.get(plan_type, plan_mapping['free'])
-        
-        subscription = {
-            'plan_type': plan_type,
-            'display_name': plan_info['display_name'],
-            'is_unlimited': plan_info['is_unlimited'],
-            'remaining_tokens': plan_info['tokens'],
-            'status': 'active' if is_active else 'inactive'
-        }
-        
-        logger.info(f"사용자 플랜 조회 - ID: {user_id}, 플랜: {plan_type}, 무제한: {plan_info['is_unlimited']}")
+        token_balance = row['token_balance'] if 'token_balance' in row.keys() else None
+        tokens_used = row['tokens_used'] if 'tokens_used' in row.keys() else None
+
+        subscription = _build_subscription_payload(plan_type, is_active, token_balance, tokens_used)
+
+        logger.info(
+            "사용자 플랜 조회 - ID: %s, 플랜: %s, 무제한: %s",
+            user_id,
+            plan_type,
+            bool(subscription['is_unlimited'])
+        )
         return subscription
 
 
@@ -82,12 +140,12 @@ def is_unlimited_user(user_id: int) -> bool:
     """
     try:
         subscription = get_user_subscription(user_id)
-        
+        print(f"[DEBUG | GHOST_HUNT] User ID: {user_id}, Subscription Data from get_user_subscription: {subscription}")
+
         if not subscription:
             return False
         
-        # gold-vip만 무제한 사용 가능
-        return subscription.get('plan_type') == 'gold-vip'
+        return bool(subscription.get('is_unlimited'))
         
     except Exception as e:
         logger.error(f"무제한 사용자 확인 중 오류: {str(e)}")

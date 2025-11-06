@@ -783,7 +783,11 @@ def start_conversion():
             is_unlimited=is_unlimited,
             conversion_result=conversion_result
         )
-        
+
+        if not token_result.get('success'):
+            logger.error(f"토큰 차감 실패: {token_result.get('message')}")
+            return error(token_result.get('message', '토큰 처리 중 오류가 발생했습니다'), status=500)
+
         logger.info(f"토큰 차감 결과: {token_result['message']}")
         
         # 변환 완료 시간 기록 및 실행 시간 계산
@@ -795,22 +799,19 @@ def start_conversion():
         session['last_conversion_result'] = conversion_result
         session['last_file_name'] = file_name  # 다운로드 파일명 저장
         
-        # 최종 토큰 상태 조회
-        final_tokens_used = token_processor.get_initial_tokens_used(user_id)
-        if token_result.get('tokens_deducted'):
-            final_tokens_used += token_result['tokens_deducted']
-        
+        tokens_payload = {
+            'total_granted': token_result.get('total_granted', user['token_balance'] or 0),
+            'total_used': token_result.get('tokens_used_after', user['tokens_used'] or 0),
+            'available_tokens': token_result.get('available_tokens_after', (user['token_balance'] or 0) - (user['tokens_used'] or 0)),
+            'templates_created': token_result.get('recipient_count', 0)
+        }
+
         return success('변환 완료', data={
             'conversion_result': conversion_result,
             'download_url': url_for('conversion.download_converted', _external=False),
             'download_filename': file_name,
             'detailed_stats': conversion_result.get('detailed_stats', {}),
-            'tokens': {
-                'total_granted': user['token_balance'] or 0,
-                'total_used': final_tokens_used,
-                'available_tokens': (user['token_balance'] or 0) - final_tokens_used,
-                'templates_created': token_result.get('recipient_count', 0)
-            }
+            'tokens': tokens_payload
         })
         
     except Exception as e:
