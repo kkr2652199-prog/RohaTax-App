@@ -42,44 +42,22 @@ def reset_tokens_for_user(user_id: int):
 
 @admin_bp.route('/admin/api/token-history', methods=['GET'])
 def get_token_history():
-    """최근 토큰 변경 이력을 조회한다."""
+    """비활성화된 사용자 목록을 조회한다."""
     admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
 
-    admin_user_id = current_user_id()
     try:
-        history = token_service.get_token_history(admin_user_id)
+        history = token_service.get_token_history()
     except TokenServiceError as exc:
         return _handle_token_service_error(exc)
 
     return success('ok', data={'history': history})
 
 
-@admin_bp.route('/admin/api/token-history/delete', methods=['POST'])
-def delete_token_history_entries():
-    """선택된 토큰 이력 항목을 삭제한다."""
-    admin_user_id, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-
-    data = request.get_json(silent=True) or {}
-    ids = data.get('ids') or []
-    if not isinstance(ids, list) or len(ids) == 0:
-        return error('No token history selected', status=400)
-
-    try:
-        id_list = [int(entry) for entry in ids]
-    except Exception:
-        return error('Invalid token history ID list', status=400)
-
-    admin_user_id = current_user_id()
-    try:
-        token_service.delete_token_history_entries(id_list, admin_user_id)
-    except TokenServiceError as exc:
-        return _handle_token_service_error(exc)
-
-    return success('Selected token history entries deleted')
+# --- [제거됨] 토큰 이력 삭제 API ---
+# activity_logs는 감사 추적 목적상 삭제 불가능한 영구 기록으로 관리됩니다.
+# 따라서 토큰 이력 삭제 기능은 제거되었습니다.
 
 
 @admin_bp.route('/admin/api/grant-tokens', methods=['POST'])

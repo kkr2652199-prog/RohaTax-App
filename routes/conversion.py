@@ -13,6 +13,7 @@ from core.conversion_engine import ConversionEngine
 from core.subscription_utils import get_user_subscription, is_unlimited_user, update_plan_price_and_tokens
 from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_template_count
 from core.token_deduction_processor import TokenDeductionProcessor  # 연동 모듈 추가
+from core.activity_service import record_activity  # 기록관 연동 모듈 추가
 from datetime import datetime
 import time
 import logging
@@ -773,6 +774,74 @@ def start_conversion():
         
         # 임시 파일 정리
         cleanup_temp_file(temp_file_path)
+        
+        # ============================================
+        # 핵심 변경: 기록관을 통한 활동 로그 기록 및 토큰 업데이트
+        # ============================================
+        # DB 트랜잭션 내에서 활동 로그 기록 및 토큰 업데이트
+        try:
+            with get_conn() as conn:
+                cursor = conn.cursor()
+                
+                # 사용자 정보 재조회 (최신 토큰 잔액 확인)
+                user_current = cursor.execute(
+                    """
+                    SELECT id, plan_type, token_balance, COALESCE(tokens_used, 0) AS tokens_used
+                    FROM users WHERE id = ?
+                    """,
+                    (user_id,)
+                ).fetchone()
+                
+                if not user_current:
+                    logger.error(f"사용자 정보를 찾을 수 없습니다: user_id={user_id}")
+                    return error('사용자 정보를 찾을 수 없습니다', status=404)
+                
+                # --- [수정] '기록관' 호출 방식을 새로운 범용 함수에 맞게 변경 ---
+                
+                # 1. 정보 추출
+                user_id_for_activity = user_current['id']
+                plan_type = user_current['plan_type'] or 'free'
+                token_balance_before = user_current['token_balance'] or 0
+                total_recipients = conversion_result.get('total_recipients', 0)
+                
+                # 2. '경제 헌법' 적용
+                potential_cost = total_recipients * -1
+                token_change = 0
+                if plan_type not in ['unlimited', 'gold', 'gold-vip']:
+                    token_change = potential_cost
+                token_balance_after = token_balance_before + token_change
+                
+                # 3. 범용 activity_data 생성
+                activity_data = {
+                    'user_id': user_id_for_activity,
+                    'performed_by_id': user_id_for_activity,
+                    'performed_by_type': 'USER',
+                    'activity_type': 'FILE_CONVERT',
+                    'details': {
+                        "filename": file_name,
+                        "extracted_rows": total_recipients,
+                        "cost_policy": "1_token_per_row(temp)"
+                    },
+                    'token_change': token_change,
+                    'potential_cost': potential_cost,
+                    'token_balance_before': token_balance_before,
+                    'token_balance_after': token_balance_after,
+                    'user_plan_snapshot': plan_type
+                }
+                
+                # 4. 새로운 범용 '기록관' 호출
+                record_activity(cursor, activity_data)
+                
+                # 트랜잭션 커밋
+                conn.commit()
+                logger.info(f"활동 로그 기록 완료: user_id={user_id}, file_name={file_name}")
+                
+        except Exception as activity_error:
+            logger.error(f"활동 로그 기록 중 오류 발생: {str(activity_error)}")
+            # 활동 로그 기록 실패는 치명적이지 않으므로 계속 진행
+            # 하지만 경고 로그는 남김
+            import traceback
+            traceback.print_exc()
         
         # ============================================
         # 핵심 변경: 연동 모듈을 통한 토큰 차감
