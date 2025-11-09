@@ -1728,7 +1728,7 @@
         }
         
         // ====================================================================
-        // [수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v3 (UI 번역 적용)
+        // [최종 수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v4 (복식부기 및 정보 요약)
         // ====================================================================
         async function loadActivityLogs(page = 1, limit = 50) {
             const controlDeckSection = document.getElementById('control-deck');
@@ -1775,36 +1775,54 @@
                     const timestamp = new Date(log.timestamp).toLocaleString('ko-KR', { hour12: false });
                     const details = log.details ? JSON.parse(log.details) : {};
 
-                    // --- 데이터 가공 로직 시작 ---
-                    let adminDisplay = log.actor_username || 'SYSTEM';
-                    if (log.performed_by_type === 'ADMIN') {
-                        adminDisplay = `${log.actor_username}`;
-                    } else if (log.performed_by_type === 'SYSTEM') {
-                        adminDisplay = 'system';
-                    } else {
-                        adminDisplay = '-';
+                    // --- [신규] 데이터 가공 로직 v2 시작 ---
+                    
+                    // 1. 관리자 표시 로직
+                    let adminDisplay = (log.performed_by_type === 'ADMIN') ? log.actor_username : 
+                                       (log.performed_by_type === 'SYSTEM') ? 'system' : '-';
+
+                    // 2. '상세 내용' 요약 로직
+                    let detailsSummary = '';
+                    switch (log.activity_type) {
+                        case 'FILE_CONVERT':
+                            detailsSummary = `${details.filename} (${details.extracted_rows}건)`;
+                            break;
+                        case 'GRADE_CHANGE_BY_ADMIN':
+                            detailsSummary = `[${details.from_plan}] → [${details.to_plan}]`;
+                            break;
+                        case 'TOKEN_GRANT_BY_ADMIN':
+                            detailsSummary = `${details.granted_amount} 토큰 지급`;
+                            break;
+                        case 'TOKEN_RESET_BY_ADMIN':
+                            detailsSummary = `잔액 ${details.reset_balance} → 0`;
+                            break;
+                        case 'USER_SOFT_DELETE_BY_ADMIN':
+                        case 'USER_RESTORE_BY_ADMIN':
+                            detailsSummary = details.username || details.reason || '상세 정보 없음';
+                            break;
+                        case 'USER_PURGE_BY_ADMIN':
+                            detailsSummary = details.purged_username || details.reason || '상세 정보 없음';
+                            break;
+                        default:
+                            detailsSummary = '상세 정보 없음';
                     }
 
-                    let usageDisplay;
+                    // 3. '복식부기' 로직 (충전량, 사용량 분리)
+                    let chargeDisplay = '';
+                    let usageDisplay = '';
                     const isUnlimited = ['unlimited', 'gold', 'gold-vip'].includes(log.user_plan_snapshot);
-                    if (isUnlimited && log.activity_type === 'FILE_CONVERT') {
-                        usageDisplay = `무제한사용(${Math.abs(log.potential_cost)})`;
-                    } else {
-                        usageDisplay = log.token_change;
-                    }
-                    
-                    let detailsDisplay = details.filename || details.description || JSON.stringify(details);
-                    if (log.activity_type === 'FILE_CONVERT') {
-                        detailsDisplay = `${details.filename} (${details.extracted_rows}건)`;
-                    } else if (log.activity_type === 'USER_SOFT_DELETE_BY_ADMIN' || log.activity_type === 'USER_RESTORE_BY_ADMIN') {
-                        detailsDisplay = details.username || details.reason || JSON.stringify(details);
-                    } else if (log.activity_type === 'USER_PURGE_BY_ADMIN') {
-                        detailsDisplay = details.purged_username || details.reason || JSON.stringify(details);
-                    }
-                    
-                    // [수정] 번역 사전을 사용하여 한글로 변환
-                    const translatedActivityType = activityTypeKorean[log.activity_type] || log.activity_type;
 
+                    if (log.token_change > 0) {
+                        chargeDisplay = `+${log.token_change}`; // 충전
+                    } else {
+                        if (isUnlimited && log.activity_type === 'FILE_CONVERT') {
+                            usageDisplay = `무제한사용(${Math.abs(log.potential_cost)})`;
+                        } else if (log.token_change < 0) {
+                            usageDisplay = log.token_change; // 사용
+                        }
+                    }
+                    
+                    const translatedActivityType = activityTypeKorean[log.activity_type] || log.activity_type;
                     // --- 데이터 가공 로직 종료 ---
 
                     return `
@@ -1813,10 +1831,11 @@
                             <td>${adminDisplay}</td>
                             <td>${log.target_username}</td>
                             <td>${translatedActivityType}</td>
-                            <td>${detailsDisplay}</td>
+                            <td>${detailsSummary}</td>
                             <td><span class="badge ${isUnlimited ? 'bg-warning text-dark' : 'bg-success'}">${log.user_plan_snapshot}</span></td>
                             <td class="text-muted">${log.token_balance_before !== null ? log.token_balance_before : '-'}</td>
-                            <td class="${isUnlimited ? '' : (log.token_change >= 0 ? 'text-success' : 'text-danger')}">${usageDisplay}</td>
+                            <td class="text-success fw-bold">${chargeDisplay}</td>
+                            <td class="${isUnlimited ? '' : 'text-danger'}">${usageDisplay}</td>
                             <td class="fw-bold">${log.token_balance_after !== null ? log.token_balance_after : '-'}</td>
                         </tr>
                     `;
@@ -1834,6 +1853,7 @@
                                     <th>상세 내용/파일명</th>
                                     <th>유저등급</th>
                                     <th>토큰 총수량</th>
+                                    <th>토큰 충전량</th>
                                     <th>사용량</th>
                                     <th>토큰 총잔량</th>
                                 </tr>
