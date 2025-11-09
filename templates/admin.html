@@ -710,10 +710,50 @@
             </div>
         </section>
 
+        <!-- [최종 수정] 통합 관제실 섹션 구조 재건 -->
         <section class="panel hidden" id="control-deck">
-            <div class="hd">통합 관제실</div>
+            <div class="hd">The Control Deck (통합 관제실)</div>
+            
+            <!-- [수정] 두 개의 .bd를 하나로 통합 -->
             <div class="bd">
-                <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다. 백엔드 API 연동 후 테이블이 구현됩니다.</p>
+                <!-- 1. 관제탑 필터 UI -->
+                <div style="background-color: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;">
+                        <div>
+                            <label for="filter-start-date" class="form-label fw-bold small">시작일</label>
+                            <input type="date" id="filter-start-date" class="form-control form-control-sm">
+                        </div>
+                        <div>
+                            <label for="filter-end-date" class="form-label fw-bold small">종료일</label>
+                            <input type="date" id="filter-end-date" class="form-control form-control-sm">
+                        </div>
+                        <div>
+                            <label for="filter-activity-type" class="form-label fw-bold small">활동 유형</label>
+                            <select id="filter-activity-type" class="form-select form-select-sm">
+                                <option value="">-- 전체 --</option>
+                                <option value="FILE_CONVERT">파일 변환</option>
+                                <option value="GRADE_CHANGE_BY_ADMIN">등급 변경</option>
+                                <option value="TOKEN_GRANT_BY_ADMIN">토큰 지급</option>
+                                <option value="TOKEN_RESET_BY_ADMIN">토큰 초기화</option>
+                                <option value="USER_SOFT_DELETE_BY_ADMIN">계정 비활성화</option>
+                                <option value="USER_RESTORE_BY_ADMIN">계정 복구</option>
+                                <option value="USER_PURGE_BY_ADMIN">계정 영구삭제</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter-user-search" class="form-label fw-bold small">사용자 검색</label>
+                            <input type="text" id="filter-user-search" class="form-control form-control-sm" placeholder="사용자 이름...">
+                        </div>
+                        <div>
+                            <button id="btn-apply-filters" class="btn btn-primary btn-sm">검색</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 데이터 표시 영역 -->
+                <div id="control-deck-content">
+                    <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다.</p>
+                </div>
             </div>
         </section>
 
@@ -1728,20 +1768,30 @@
         }
         
         // ====================================================================
-        // [최종 수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v4 (복식부기 및 정보 요약)
+        // [최종 수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v5 (필터링 기능 연동)
         // ====================================================================
         async function loadActivityLogs(page = 1, limit = 50) {
-            const controlDeckSection = document.getElementById('control-deck');
-            const contentContainer = controlDeckSection.querySelector('.bd');
+            const contentContainer = document.getElementById('control-deck-content');
             if (!contentContainer) {
-                console.error("'control-deck' 섹션 내부에 '.bd' 클래스를 가진 컨테이너를 찾을 수 없습니다.");
-                controlDeckSection.innerHTML = '<p class="text-danger">UI 구조 오류: .bd 컨테이너가 없습니다.</p>';
+                console.error("'control-deck-content' 컨테이너를 찾을 수 없습니다.");
                 return;
             }
             contentContainer.innerHTML = '<p class="muted">활동 로그를 불러오는 중...</p>';
 
+            // [신규] 필터 값들을 읽어 API 요청 URL을 동적으로 생성
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const activityType = document.getElementById('filter-activity-type').value;
+            const userSearch = document.getElementById('filter-user-search').value;
+
+            const params = new URLSearchParams({ page, limit });
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            if (activityType) params.append('activity_type', activityType);
+            if (userSearch) params.append('user_search', userSearch);
+
             try {
-                const response = await fetch(`/admin/api/activity-logs?page=${page}&limit=${limit}`, {
+                const response = await fetch(`/admin/api/activity-logs?${params.toString()}`, {
                     headers: { 'X-CSRF-Token': csrfToken() }
                 });
                 const result = await response.json();
@@ -1913,6 +1963,16 @@
                 document.getElementById('usersTable').innerHTML = '<p class="muted">사용자 목록 로드 실패</p>';
             }
         }
+        
+        // [신규] 검색 버튼에 이벤트 리스너 추가
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnApplyFilters = document.getElementById('btn-apply-filters');
+            if (btnApplyFilters) {
+                btnApplyFilters.addEventListener('click', () => {
+                    loadActivityLogs(); // 첫 페이지부터 검색
+                });
+            }
+        });
     </script>
     
     <!-- Bootstrap JS -->
