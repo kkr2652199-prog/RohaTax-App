@@ -9,6 +9,7 @@ from typing import Dict, List
 
 from core.db import get_conn_optimized as get_conn
 from core.user_profile_service import user_profile_service
+from core.activity_service import record_activity
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -111,37 +112,152 @@ def reject_user(user_id: int) -> None:
     )
 
 
-def soft_delete_user(user_id: int) -> None:
-    _execute_user_update(
-        "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
-        (user_id,),
-    )
-
-
-def restore_user(user_id: int) -> None:
-    _execute_user_update(
-        "UPDATE users SET is_deleted = 0, is_active = 1, approval_status = 'approved' WHERE id = ?",
-        (user_id,),
-    )
-
-
-def purge_user(user_id: int) -> str:
+def soft_delete_user(user_id: int, admin_user_id: int) -> None:
+    """사용자를 소프트 삭제하고 이 활동을 기록합니다."""
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
-        user_row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        cursor = conn.cursor()
+        
+        # 사용자 정보 조회 (기록에 필요)
+        user_row = conn.execute(
+            "SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
+            (user_id,)
+        ).fetchone()
+        
         if not user_row:
-            raise UserServiceError("user not found")
+            raise UserServiceError(f'User not found: {user_id}')
+        
+        token_balance = user_row['token_balance'] or 0
+        plan_type = user_row['plan_type'] or 'free'
+        
+        # 소프트 삭제 실행
+        cursor.execute(
+            "UPDATE users SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?",
+            (user_id,)
+        )
+        
+        # --- [수정] 새로운 'activity_logs'에 기록 ---
+        activity_data = {
+            'user_id': user_id,
+            'performed_by_id': admin_user_id,
+            'performed_by_type': 'ADMIN',
+            'activity_type': 'USER_SOFT_DELETE_BY_ADMIN',
+            'details': {
+                'reason': '관리자에 의한 계정 비활성화',
+                'username': user_row['username']
+            },
+            'token_change': 0,  # 삭제는 토큰 변화 없음
+            'potential_cost': 0,
+            'token_balance_before': token_balance,
+            'token_balance_after': token_balance,  # 변화 없으므로 동일
+            'user_plan_snapshot': plan_type
+        }
+        
+        record_activity(cursor, activity_data)
+        
+        # 트랜잭션 커밋
+        conn.commit()
 
+
+def restore_user(user_id: int, admin_user_id: int) -> None:
+    """소프트 삭제된 사용자를 복구하고 이 활동을 기록합니다."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 삭제된 사용자도 조회 가능하도록 조건 완화
+        user_row = conn.execute(
+            "SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+        
+        if not user_row:
+            raise UserServiceError(f'User not found: {user_id}')
+        
+        token_balance = user_row['token_balance'] or 0
+        plan_type = user_row['plan_type'] or 'free'
+        
+        # 복구 실행
+        cursor.execute(
+            "UPDATE users SET is_deleted = 0, deleted_at = NULL, is_active = 1, approval_status = 'approved' WHERE id = ?",
+            (user_id,)
+        )
+        
+        # --- [수정] 새로운 'activity_logs'에 기록 ---
+        activity_data = {
+            'user_id': user_id,
+            'performed_by_id': admin_user_id,
+            'performed_by_type': 'ADMIN',
+            'activity_type': 'USER_RESTORE_BY_ADMIN',
+            'details': {
+                'reason': '관리자에 의한 계정 복구',
+                'username': user_row['username']
+            },
+            'token_change': 0,  # 복구는 토큰 변화 없음
+            'potential_cost': 0,
+            'token_balance_before': token_balance,
+            'token_balance_after': token_balance,  # 변화 없으므로 동일
+            'user_plan_snapshot': plan_type
+        }
+        
+        record_activity(cursor, activity_data)
+        
+        # 트랜잭션 커밋
+        conn.commit()
+
+
+def purge_user(user_id: int, admin_user_id: int) -> str:
+    """사용자를 영구 삭제하고 이 활동을 기록합니다."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 삭제 전 사용자 정보 조회 (기록에 필요)
+        user_row = conn.execute(
+            "SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+        
+        if not user_row:
+            # 이미 없는 사용자일 수 있으므로 오류 대신 경고만 반환
+            return f"경고: 영구 삭제하려는 사용자 ID {user_id}를 찾을 수 없습니다."
+        
+        username = user_row['username']
+        token_balance = user_row['token_balance'] or 0
+        plan_type = user_row['plan_type'] or 'free'
+        
+        # --- [수정] 새로운 'activity_logs'에 기록 (사용자가 삭제되기 전에) ---
+        activity_data = {
+            'user_id': user_id,
+            'performed_by_id': admin_user_id,
+            'performed_by_type': 'ADMIN',
+            'activity_type': 'USER_PURGE_BY_ADMIN',
+            'details': {
+                'reason': '관리자에 의한 계정 영구 삭제',
+                'purged_username': username
+            },
+            'token_change': 0,  # 삭제는 토큰 변화 없음
+            'potential_cost': 0,
+            'token_balance_before': token_balance,
+            'token_balance_after': None,  # 삭제 후에는 잔액이 없음
+            'user_plan_snapshot': plan_type
+        }
+        
+        record_activity(cursor, activity_data)
+        
+        # 관련 데이터 삭제
         try:
-            conn.execute("DELETE FROM token_history WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM usage_logs WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM conversion_logs WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM token_history WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM usage_logs WHERE user_id = ?", (user_id,))
+            cursor.execute("DELETE FROM conversion_logs WHERE user_id = ?", (user_id,))
         except Exception:
             pass
 
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        # 실제 사용자 삭제 실행
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
 
+    # 파일 시스템 정리
     message = "User and related files purged"
     user_dir = os.path.join(BASE_USERS_DIR, str(user_id))
     try:
@@ -153,7 +269,8 @@ def purge_user(user_id: int) -> str:
     return message
 
 
-def purge_all_users(keep_username: str) -> str:
+def purge_all_users(keep_username: str, admin_user_id: int) -> str:
+    """지정한 관리자 계정을 제외하고 모든 사용자를 삭제합니다. (로깅은 복잡하므로 일단 제외)"""
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
         keeper = conn.execute(
@@ -193,14 +310,17 @@ def approve_user_from_payload(user_id: int) -> None:
     approve_user(user_id)
 
 
-def delete_user_from_payload(user_id: int) -> None:
-    soft_delete_user(user_id)
+def delete_user_from_payload(user_id: int, admin_user_id: int) -> None:
+    """API 레이어에서 호출하는 소프트 삭제 래퍼 함수."""
+    soft_delete_user(user_id, admin_user_id)
 
 
-VALID_PLAN_TYPES = ['free', 'vip', 'premium-vip', 'gold-vip']
+VALID_PLAN_TYPES = ['free', 'vip', 'premium-vip', 'gold-vip', 'unlimited']
 
 
 def change_user_plan(user_id: int, plan_type: str, admin_user_id: int) -> str:
+    """사용자의 플랜 유형을 변경하고, 이 활동을 activity_logs에 기록합니다."""
+    
     if plan_type not in VALID_PLAN_TYPES:
         raise UserServiceError(
             '유효하지 않은 플랜 유형입니다. 가능한 값: ' + ', '.join(VALID_PLAN_TYPES)
@@ -208,30 +328,54 @@ def change_user_plan(user_id: int, plan_type: str, admin_user_id: int) -> str:
 
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-        admin_user = conn.execute(
+        # 관리자 권한 확인
+        admin_user = cursor.execute(
             "SELECT username FROM users WHERE id = ? AND is_admin = 1",
             (admin_user_id,),
         ).fetchone()
         if not admin_user:
             raise UserServiceError('Administrator privileges required')
 
-        target_user = conn.execute(
-            "SELECT username, plan_type FROM users WHERE id = ?",
+        # 사용자 정보 조회 (기록에 필요)
+        target_user = cursor.execute(
+            "SELECT username, plan_type, COALESCE(token_balance, 0) AS token_balance FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
         if not target_user:
             raise UserServiceError('User not found')
 
         previous_plan = target_user['plan_type']
-        conn.execute("UPDATE users SET plan_type = ? WHERE id = ?", (plan_type, user_id))
-        conn.execute(
-            """
-            INSERT INTO token_history (user_id, changed_by, amount, change_type, meta, created_at)
-            VALUES (?, ?, 0, 'plan_change', ?, datetime('now'))
-            """,
-            (user_id, admin_user_id, f'plan:{previous_plan}->{plan_type}')
-        )
+        token_balance = target_user['token_balance']
+
+        # 사용자 플랜 업데이트
+        cursor.execute("UPDATE users SET plan_type = ? WHERE id = ?", (plan_type, user_id))
+
+        # --- [수정] 새로운 'activity_logs'에 기록 ---
+        # 낡은 token_history 기록 로직은 제거하고, 새로운 '기록관'을 사용합니다.
+        
+        activity_data = {
+            'user_id': user_id,
+            'performed_by_id': admin_user_id,
+            'performed_by_type': 'ADMIN',
+            'activity_type': 'GRADE_CHANGE_BY_ADMIN',
+            'details': {
+                'from_plan': previous_plan,
+                'to_plan': plan_type,
+                'reason': '관리자에 의한 변경'
+            },
+            'token_change': 0,  # 등급 변경 자체는 토큰 변화 없음
+            'potential_cost': 0,
+            'token_balance_before': token_balance,
+            'token_balance_after': token_balance,  # 변화 없으므로 동일
+            'user_plan_snapshot': plan_type
+        }
+        
+        # 범용 기록 함수 호출
+        record_activity(cursor, activity_data)
+
+        # 트랜잭션 커밋
         conn.commit()
 
     return f'사용자 플랜이 {plan_type}으로 변경되었습니다 (이전: {previous_plan})'

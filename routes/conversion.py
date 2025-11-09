@@ -13,7 +13,7 @@ from core.conversion_engine import ConversionEngine
 from core.subscription_utils import get_user_subscription, is_unlimited_user, update_plan_price_and_tokens
 from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_template_count
 from core.token_deduction_processor import TokenDeductionProcessor  # 연동 모듈 추가
-from core.activity_service import record_conversion_activity  # 기록관 연동 모듈 추가
+from core.activity_service import record_activity  # 기록관 연동 모듈 추가
 from datetime import datetime
 import time
 import logging
@@ -796,20 +796,41 @@ def start_conversion():
                     logger.error(f"사용자 정보를 찾을 수 없습니다: user_id={user_id}")
                     return error('사용자 정보를 찾을 수 없습니다', status=404)
                 
-                # 기록관에 필요한 user_info 딕셔너리 준비
-                activity_user_info = {
-                    'id': user_current['id'],
-                    'plan_type': user_current['plan_type'] or 'free',
-                    'token_balance': user_current['token_balance'] or 0
+                # --- [수정] '기록관' 호출 방식을 새로운 범용 함수에 맞게 변경 ---
+                
+                # 1. 정보 추출
+                user_id_for_activity = user_current['id']
+                plan_type = user_current['plan_type'] or 'free'
+                token_balance_before = user_current['token_balance'] or 0
+                total_recipients = conversion_result.get('total_recipients', 0)
+                
+                # 2. '경제 헌법' 적용
+                potential_cost = total_recipients * -1
+                token_change = 0
+                if plan_type not in ['unlimited', 'gold', 'gold-vip']:
+                    token_change = potential_cost
+                token_balance_after = token_balance_before + token_change
+                
+                # 3. 범용 activity_data 생성
+                activity_data = {
+                    'user_id': user_id_for_activity,
+                    'performed_by_id': user_id_for_activity,
+                    'performed_by_type': 'USER',
+                    'activity_type': 'FILE_CONVERT',
+                    'details': {
+                        "filename": file_name,
+                        "extracted_rows": total_recipients,
+                        "cost_policy": "1_token_per_row(temp)"
+                    },
+                    'token_change': token_change,
+                    'potential_cost': potential_cost,
+                    'token_balance_before': token_balance_before,
+                    'token_balance_after': token_balance_after,
+                    'user_plan_snapshot': plan_type
                 }
                 
-                # 기록관 호출: 활동 로그 기록 및 토큰 잔액 업데이트
-                record_conversion_activity(
-                    cursor=cursor,
-                    user_info=activity_user_info,
-                    result_data=conversion_result,
-                    file_name=file_name
-                )
+                # 4. 새로운 범용 '기록관' 호출
+                record_activity(cursor, activity_data)
                 
                 # 트랜잭션 커밋
                 conn.commit()
