@@ -1728,11 +1728,16 @@
         }
         
         // ====================================================================
-        // [신규] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수
+        // [수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v3 (UI 번역 적용)
         // ====================================================================
         async function loadActivityLogs(page = 1, limit = 50) {
             const controlDeckSection = document.getElementById('control-deck');
-            const contentContainer = controlDeckSection.querySelector('.bd'); // .bd 클래스 내부를 타겟으로 지정
+            const contentContainer = controlDeckSection.querySelector('.bd');
+            if (!contentContainer) {
+                console.error("'control-deck' 섹션 내부에 '.bd' 클래스를 가진 컨테이너를 찾을 수 없습니다.");
+                controlDeckSection.innerHTML = '<p class="text-danger">UI 구조 오류: .bd 컨테이너가 없습니다.</p>';
+                return;
+            }
             contentContainer.innerHTML = '<p class="muted">활동 로그를 불러오는 중...</p>';
 
             try {
@@ -1753,46 +1758,84 @@
                     return;
                 }
 
+                // [신규] 활동 유형 번역 사전
+                const activityTypeKorean = {
+                    'FILE_CONVERT': '파일 변환',
+                    'TOKEN_PURCHASE': '토큰 구매',
+                    'TOKEN_GRANT_BY_ADMIN': '토큰 지급 (관리자)',
+                    'TOKEN_RESET_BY_ADMIN': '토큰 초기화 (관리자)',
+                    'GRADE_CHANGE_BY_ADMIN': '등급 변경 (관리자)',
+                    'USER_SOFT_DELETE_BY_ADMIN': '계정 비활성화 (관리자)',
+                    'USER_RESTORE_BY_ADMIN': '계정 복구 (관리자)',
+                    'USER_PURGE_BY_ADMIN': '계정 영구 삭제 (관리자)',
+                    // 추후 다른 활동 유형이 추가될 수 있음
+                };
+
                 const tableRows = logs.map(log => {
                     const timestamp = new Date(log.timestamp).toLocaleString('ko-KR', { hour12: false });
-                    let details = {};
-                    try {
-                        details = log.details ? JSON.parse(log.details) : {};
-                    } catch (e) {
-                        details = { raw: log.details || '' };
+                    const details = log.details ? JSON.parse(log.details) : {};
+
+                    // --- 데이터 가공 로직 시작 ---
+                    let adminDisplay = log.actor_username || 'SYSTEM';
+                    if (log.performed_by_type === 'ADMIN') {
+                        adminDisplay = `${log.actor_username}`;
+                    } else if (log.performed_by_type === 'SYSTEM') {
+                        adminDisplay = 'system';
+                    } else {
+                        adminDisplay = '-';
                     }
-                    const detailsHtml = Object.entries(details).map(([key, value]) => `<div><small><strong>${key}:</strong> ${typeof value === 'object' ? JSON.stringify(value) : value}</small></div>`).join('');
-                    const performedByType = log.performed_by_type || 'SYSTEM';
+
+                    let usageDisplay;
+                    const isUnlimited = ['unlimited', 'gold', 'gold-vip'].includes(log.user_plan_snapshot);
+                    if (isUnlimited && log.activity_type === 'FILE_CONVERT') {
+                        usageDisplay = `무제한사용(${Math.abs(log.potential_cost)})`;
+                    } else {
+                        usageDisplay = log.token_change;
+                    }
                     
+                    let detailsDisplay = details.filename || details.description || JSON.stringify(details);
+                    if (log.activity_type === 'FILE_CONVERT') {
+                        detailsDisplay = `${details.filename} (${details.extracted_rows}건)`;
+                    } else if (log.activity_type === 'USER_SOFT_DELETE_BY_ADMIN' || log.activity_type === 'USER_RESTORE_BY_ADMIN') {
+                        detailsDisplay = details.username || details.reason || JSON.stringify(details);
+                    } else if (log.activity_type === 'USER_PURGE_BY_ADMIN') {
+                        detailsDisplay = details.purged_username || details.reason || JSON.stringify(details);
+                    }
+                    
+                    // [수정] 번역 사전을 사용하여 한글로 변환
+                    const translatedActivityType = activityTypeKorean[log.activity_type] || log.activity_type;
+
+                    // --- 데이터 가공 로직 종료 ---
+
                     return `
                         <tr>
-                            <td class="col-date">${timestamp}</td>
-                            <td>${log.actor_username || 'SYSTEM'} (${performedByType})</td>
-                            <td>${log.target_username || '-'}</td>
-                            <td><span class="badge" style="background-color: #7f8c8d;">${log.activity_type || '-'}</span></td>
-                            <td>${detailsHtml || '-'}</td>
-                            <td><span class="badge ${log.user_plan_snapshot === 'free' ? 'bg-danger' : log.user_plan_snapshot === 'vip' ? 'bg-success' : log.user_plan_snapshot === 'premium-vip' ? 'bg-info' : log.user_plan_snapshot === 'gold-vip' ? 'bg-warning' : 'bg-secondary'}">${log.user_plan_snapshot || '-'}</span></td>
-                            <td class="text-info">${log.token_balance_before !== null ? log.token_balance_before : '-'}</td>
-                            <td class="${log.token_change > 0 ? 'text-success' : log.token_change < 0 ? 'text-danger' : ''}">${log.token_change || 0} (${log.potential_cost || 0})</td>
-                            <td class="text-primary fw-bold">${log.token_balance_after !== null ? log.token_balance_after : '-'}</td>
+                            <td class="small">${timestamp}</td>
+                            <td>${adminDisplay}</td>
+                            <td>${log.target_username}</td>
+                            <td>${translatedActivityType}</td>
+                            <td>${detailsDisplay}</td>
+                            <td><span class="badge ${isUnlimited ? 'bg-warning text-dark' : 'bg-success'}">${log.user_plan_snapshot}</span></td>
+                            <td class="text-muted">${log.token_balance_before !== null ? log.token_balance_before : '-'}</td>
+                            <td class="${isUnlimited ? '' : (log.token_change >= 0 ? 'text-success' : 'text-danger')}">${usageDisplay}</td>
+                            <td class="fw-bold">${log.token_balance_after !== null ? log.token_balance_after : '-'}</td>
                         </tr>
                     `;
                 }).join('');
 
                 const tableHtml = `
                     <div class="table-container">
-                        <table class="table table-sm">
+                        <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th>시간</th>
-                                    <th>활동 주체</th>
-                                    <th>대상 유저</th>
-                                    <th>활동 유형</th>
-                                    <th>상세 내용</th>
-                                    <th>당시 등급</th>
-                                    <th>토큰(이전)</th>
-                                    <th>변화량(잠재)</th>
-                                    <th>토큰(이후)</th>
+                                    <th>변환/토큰지급/등급변경</th>
+                                    <th>관리자</th>
+                                    <th>유저</th>
+                                    <th>활동 유형 (Type)</th>
+                                    <th>상세 내용/파일명</th>
+                                    <th>유저등급</th>
+                                    <th>토큰 총수량</th>
+                                    <th>사용량</th>
+                                    <th>토큰 총잔량</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1802,8 +1845,6 @@
                     </div>
                 `;
                 
-                // 페이지네이션 HTML 생성 (생략 가능, 추후 구현)
-
                 contentContainer.innerHTML = tableHtml;
 
             } catch (error) {

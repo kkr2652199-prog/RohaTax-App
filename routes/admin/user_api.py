@@ -109,12 +109,12 @@ def reject_user_by_id(user_id: int):
 @admin_bp.route('/admin/api/users/<int:user_id>', methods=['DELETE'])
 def soft_delete_user(user_id: int):
     """사용자를 소프트 삭제 처리한다."""
-    _, guard_response = ensure_admin_for_json()
+    admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
 
     try:
-        user_service.soft_delete_user(user_id)
+        user_service.soft_delete_user(user_id, admin_user_id)
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
@@ -124,12 +124,12 @@ def soft_delete_user(user_id: int):
 @admin_bp.route('/admin/api/users/<int:user_id>/restore', methods=['POST'])
 def restore_user(user_id: int):
     """삭제/비활성/미승인 상태의 계정을 즉시 복구한다."""
-    _, guard_response = ensure_admin_for_json()
+    admin_user_id, guard_response = ensure_admin_for_json()
     if guard_response is not None:
         return guard_response
 
     try:
-        user_service.restore_user(user_id)
+        user_service.restore_user(user_id, admin_user_id)
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
@@ -144,7 +144,7 @@ def purge_user(user_id: int):
         return guard_response
 
     try:
-        message = user_service.purge_user(user_id)
+        message = user_service.purge_user(user_id, admin_user_id)
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
@@ -162,7 +162,7 @@ def purge_all_users():
     keep_username = data.get('keep_username') or 'kweon4309'
 
     try:
-        message = user_service.purge_all_users(keep_username)
+        message = user_service.purge_all_users(keep_username, admin_user_id)
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
@@ -202,7 +202,7 @@ def delete_user_from_payload():
         return error('User ID is required', status=400)
 
     try:
-        user_service.delete_user_from_payload(user_id)
+        user_service.delete_user_from_payload(user_id, admin_user_id)
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
@@ -223,7 +223,6 @@ def change_user_plan(user_id: int):
     if not plan_type or plan_type not in VALID_PLAN_TYPES:
         return error(f'유효하지 않은 플랜 유형입니다. 가능한 값: {", ".join(VALID_PLAN_TYPES)}', status=400)
 
-    admin_user_id = current_user_id()
     try:
         message = user_service.change_user_plan(user_id, plan_type, admin_user_id)
     except UserServiceError as exc:
