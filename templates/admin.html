@@ -625,7 +625,7 @@
         <div class="tabs">
             <button class="active admin-tab" data-target="users">일반 사용자 관리</button>
             <button class="inactive admin-tab" data-target="admin-management">시스템 관리자 관리</button>
-            <button class="inactive admin-tab" data-target="token-history">토큰 이력</button>
+            <button class="inactive admin-tab" data-target="token-history">비활성 사용자</button>
             <button class="inactive admin-tab" data-target="control-deck">통합 관제실</button>
             <button class="inactive admin-tab" data-target="stats">통계</button>
             <button class="inactive admin-tab" data-target="settings">설정</button>
@@ -704,9 +704,9 @@
         </section>
 
         <section class="panel hidden" id="token-history">
-            <div class="hd">토큰 변경 이력</div>
+            <div class="hd">비활성 사용자 관리</div>
             <div class="bd" id="tokenHistoryTable">
-                <p class="muted">토큰 이력을 불러오는 중...</p>
+                <p class="muted">비활성 사용자 목록을 불러오는 중...</p>
             </div>
         </section>
 
@@ -925,51 +925,48 @@
         }
         
         async function loadTokenHistory(){
-            const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
+            // [최종 수정] 이 함수는 이제 '비활성 사용자'를 로드하고 관리합니다.
+            const contentContainer = document.getElementById('tokenHistoryTable');
+            contentContainer.innerHTML = '<p class="muted">비활성 사용자 목록을 불러오는 중...</p>';
+
             try{
+                const csrf = document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
                 const res = await fetch('/admin/api/token-history', {
                     headers: { 'X-CSRF-Token': csrf }
                 });
                 const body = await res.json();
-                const history = body?.data?.history || [];
+                const inactive_users = body?.data?.history || []; // API 응답 필드명은 호환성을 위해 'history' 유지
                 
-                if(history.length === 0){
-                    document.getElementById('tokenHistoryTable').innerHTML = '<p class="muted">토큰 변경 이력이 없습니다.</p>';
+                if(inactive_users.length === 0){
+                    contentContainer.innerHTML = '<p class="muted">비활성화된 사용자가 없습니다.</p>';
                     return;
                 }
                 
-                const rows = history.map(h => {
-                    const localTime = h.timestamp_utc ? new Date(h.timestamp_utc).toLocaleString('ko-KR', { hour12: false }) : '-';
+                const rows = inactive_users.map(u => {
+                    const deletedTime = u.timestamp_utc ? new Date(u.timestamp_utc).toLocaleString('ko-KR', { hour12: false }) : '-';
                     return `
                     <tr>
-                        <td><input type="checkbox" class="th-select" value="${h.id}"> ${localTime}</td>
-                        <td>${h.admin_username}</td>
-                        <td>${h.target_username}</td>
-                        <td><span class="badge ${h.action === 'grant' ? 'paid' : 'free'}">${h.action === 'grant' ? '지급' : '초기화'}</span></td>
-                        <td>${h.amount}</td>
+                        <td>${u.target_username}</td>
+                        <td>${u.email || '-'}</td>
+                        <td>${deletedTime}</td>
+                        <td>
+                            <div class="action-group">
+                                <button class="btn btn-success btn-sm" onclick="restoreUser(${u.id}, '${u.target_username}')">복구</button>
+                                <button class="btn btn-danger btn-sm" onclick="purgeUser(${u.id}, '${u.target_username}')">완전삭제</button>
+                            </div>
+                        </td>
                     </tr>
                 `;}).join('');
                 
                 const table = `
                     <div class="table-container">
-                    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0 8px 0">
-                        <div>
-                            <label style="font-weight:700;color:#374151">
-                                <input type="checkbox" id="th-select-all" style="margin-right:6px"> 전체 선택
-                            </label>
-                        </div>
-                        <div>
-                            <button class="btn danger" id="th-delete-selected">선택 삭제</button>
-                        </div>
-                    </div>
-                    <table class="table">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>시간</th>
-                                <th>관리자</th>
-                                <th>대상 사용자</th>
-                                <th>액션</th>
-                                <th>금액</th>
+                                <th>사용자명</th>
+                                <th>이메일</th>
+                                <th>비활성화된 시간</th>
+                                <th>관리 액션</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -977,45 +974,10 @@
                     </div>
                 `;
                 
-                document.getElementById('tokenHistoryTable').innerHTML = table;
+                contentContainer.innerHTML = table;
 
-                // 이벤트 바인딩: 전체 선택 및 선택 삭제
-                const selectAll = document.getElementById('th-select-all');
-                const checkboxes = Array.from(document.querySelectorAll('.th-select'));
-                if(selectAll){
-                    selectAll.addEventListener('change', (e)=>{
-                        checkboxes.forEach(cb=> cb.checked = e.target.checked);
-                    });
-                }
-                const delBtn = document.getElementById('th-delete-selected');
-                if(delBtn){
-                    delBtn.addEventListener('click', async ()=>{
-                        const ids = checkboxes.filter(cb=>cb.checked).map(cb=> parseInt(cb.value));
-                        if(ids.length === 0){ alert('삭제할 항목을 선택하세요'); return; }
-                        if(!confirm(`선택한 ${ids.length}건을 삭제하시겠습니까?`)) return;
-                        try{
-                            const res = await fetch('/admin/api/token-history/delete',{
-                                method:'POST',
-                                headers:{
-                                    'Content-Type':'application/json',
-                                    'X-CSRF-Token': csrfToken()
-                                },
-                                body: JSON.stringify({ ids })
-                            });
-                            const result = await res.json();
-                            if(result.success){
-                                alert('삭제되었습니다');
-                                loadTokenHistory();
-                            }else{
-                                alert('삭제 실패: ' + (result.error||'알 수 없는 오류'));
-                            }
-                        }catch(err){
-                            alert('삭제 중 오류가 발생했습니다');
-                        }
-                    });
-                }
             }catch(err){
-                document.getElementById('tokenHistoryTable').innerHTML = '<p class="muted">토큰 이력 로드 실패</p>';
+                contentContainer.innerHTML = '<p class="muted">비활성 사용자 목록 로드에 실패했습니다.</p>';
             }
         }
         
