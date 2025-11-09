@@ -143,45 +143,47 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
         conn.commit()
 
 
-def get_token_history(admin_user_id: int, limit: int = 50) -> List[dict]:
+def get_token_history(limit: int = 50) -> List[Dict[str, Any]]:
+    """
+    [최종 변경] 비활성화된(is_deleted=1) 사용자 목록을 조회하여,
+    프론트엔드가 기대하는 '이력' 형식으로 가공하여 반환합니다.
+    """
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
-        _ensure_admin(conn, admin_user_id)
+        cursor = conn.cursor()
 
-        rows = conn.execute(
-            """
-            SELECT th.id,
-                   th.change_type AS action,
-                   th.amount,
-                   strftime('%Y-%m-%dT%H:%M:%SZ', th.created_at) AS timestamp_utc,
-                   admin.username AS admin_username,
-                   target.username AS target_username
-            FROM token_history th
-            JOIN users admin ON th.changed_by = admin.id
-            JOIN users target ON th.user_id = target.id
-            ORDER BY th.created_at DESC
+        query = """
+            SELECT
+                id,
+                username,
+                email,
+                deleted_at as timestamp_utc
+            FROM
+                users
+            WHERE
+                is_deleted = 1
+            ORDER BY
+                deleted_at DESC
             LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        """
+        cursor.execute(query, (limit,))
+        rows = cursor.fetchall()
+        # 프론트엔드 호환성을 위해 기존 history 형식으로 변환
+        return [
+            {
+                "id": row["id"],
+                "target_username": row["username"],
+                "email": row["email"],
+                "timestamp_utc": row["timestamp_utc"],
+                "action": "deactivated"
+            } 
+            for row in rows
+        ]
 
-    return [dict(row) for row in rows]
 
-
-def delete_token_history_entries(ids: Sequence[int], admin_user_id: int) -> None:
-    if not ids:
-        raise TokenServiceError('No token history selected')
-
-    with get_conn() as conn:
-        conn.row_factory = sqlite3.Row
-        _ensure_admin(conn, admin_user_id)
-
-        placeholders = ','.join(['?'] * len(ids))
-        conn.execute(
-            f"DELETE FROM token_history WHERE id IN ({placeholders})",
-            list(ids),
-        )
-        conn.commit()
+# --- [제거됨] 불필요한 삭제 함수 ---
+# delete_token_history_entries 함수는 activity_logs의 감사 추적 목적상 제거되었습니다.
+# activity_logs는 삭제 불가능한 영구 기록으로 관리됩니다.
 
 
 def grant_tokens_bulk(user_id: int, amount: int, admin_user_id: int) -> None:
