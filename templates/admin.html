@@ -626,6 +626,7 @@
             <button class="active admin-tab" data-target="users">일반 사용자 관리</button>
             <button class="inactive admin-tab" data-target="admin-management">시스템 관리자 관리</button>
             <button class="inactive admin-tab" data-target="token-history">토큰 이력</button>
+            <button class="inactive admin-tab" data-target="control-deck">통합 관제실</button>
             <button class="inactive admin-tab" data-target="stats">통계</button>
             <button class="inactive admin-tab" data-target="settings">설정</button>
             </div>
@@ -706,6 +707,13 @@
             <div class="hd">토큰 변경 이력</div>
             <div class="bd" id="tokenHistoryTable">
                 <p class="muted">토큰 이력을 불러오는 중...</p>
+            </div>
+        </section>
+
+        <section class="panel hidden" id="control-deck">
+            <div class="hd">통합 관제실</div>
+            <div class="bd">
+                <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다. 백엔드 API 연동 후 테이블이 구현됩니다.</p>
             </div>
         </section>
 
@@ -1646,6 +1654,9 @@
                         case 'token-history':
                             loadTokenHistory();
                             break;
+                        case 'control-deck':
+                            loadActivityLogs();
+                            break;
                         case 'stats':
                             loadStats();
                             break;
@@ -1713,6 +1724,91 @@
                 }
             } catch (error) {
                 console.error('관리자 대시보드 통계 요청 실패:', error);
+            }
+        }
+        
+        // ====================================================================
+        // [신규] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수
+        // ====================================================================
+        async function loadActivityLogs(page = 1, limit = 50) {
+            const controlDeckSection = document.getElementById('control-deck');
+            const contentContainer = controlDeckSection.querySelector('.bd'); // .bd 클래스 내부를 타겟으로 지정
+            contentContainer.innerHTML = '<p class="muted">활동 로그를 불러오는 중...</p>';
+
+            try {
+                const response = await fetch(`/admin/api/activity-logs?page=${page}&limit=${limit}`, {
+                    headers: { 'X-CSRF-Token': csrfToken() }
+                });
+                const result = await response.json();
+
+                if (!result.success || !result.data.logs) {
+                    contentContainer.innerHTML = '<p class="text-danger">데이터를 불러오는 데 실패했습니다: ' + (result.error || '알 수 없는 오류') + '</p>';
+                    return;
+                }
+
+                const { logs, pagination } = result.data;
+
+                if (logs.length === 0) {
+                    contentContainer.innerHTML = '<p class="muted">기록된 활동 로그가 없습니다.</p>';
+                    return;
+                }
+
+                const tableRows = logs.map(log => {
+                    const timestamp = new Date(log.timestamp).toLocaleString('ko-KR', { hour12: false });
+                    let details = {};
+                    try {
+                        details = log.details ? JSON.parse(log.details) : {};
+                    } catch (e) {
+                        details = { raw: log.details || '' };
+                    }
+                    const detailsHtml = Object.entries(details).map(([key, value]) => `<div><small><strong>${key}:</strong> ${typeof value === 'object' ? JSON.stringify(value) : value}</small></div>`).join('');
+                    const performedByType = log.performed_by_type || 'SYSTEM';
+                    
+                    return `
+                        <tr>
+                            <td class="col-date">${timestamp}</td>
+                            <td>${log.actor_username || 'SYSTEM'} (${performedByType})</td>
+                            <td>${log.target_username || '-'}</td>
+                            <td><span class="badge" style="background-color: #7f8c8d;">${log.activity_type || '-'}</span></td>
+                            <td>${detailsHtml || '-'}</td>
+                            <td><span class="badge ${log.user_plan_snapshot === 'free' ? 'bg-danger' : log.user_plan_snapshot === 'vip' ? 'bg-success' : log.user_plan_snapshot === 'premium-vip' ? 'bg-info' : log.user_plan_snapshot === 'gold-vip' ? 'bg-warning' : 'bg-secondary'}">${log.user_plan_snapshot || '-'}</span></td>
+                            <td class="text-info">${log.token_balance_before !== null ? log.token_balance_before : '-'}</td>
+                            <td class="${log.token_change > 0 ? 'text-success' : log.token_change < 0 ? 'text-danger' : ''}">${log.token_change || 0} (${log.potential_cost || 0})</td>
+                            <td class="text-primary fw-bold">${log.token_balance_after !== null ? log.token_balance_after : '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const tableHtml = `
+                    <div class="table-container">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>시간</th>
+                                    <th>활동 주체</th>
+                                    <th>대상 유저</th>
+                                    <th>활동 유형</th>
+                                    <th>상세 내용</th>
+                                    <th>당시 등급</th>
+                                    <th>토큰(이전)</th>
+                                    <th>변화량(잠재)</th>
+                                    <th>토큰(이후)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                // 페이지네이션 HTML 생성 (생략 가능, 추후 구현)
+
+                contentContainer.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error('활동 로그 로드 중 오류 발생:', error);
+                contentContainer.innerHTML = '<p class="text-danger">활동 로그를 불러오는 중 오류가 발생했습니다.</p>';
             }
         }
         
