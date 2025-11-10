@@ -178,6 +178,9 @@ def init_db() -> None:
         # 성능 최적화 인덱스 생성
         _create_performance_indexes(conn)
         
+        # 마이그레이션 자동 적용
+        _apply_migrations(conn)
+        
         conn.commit()
         logger.info("데이터베이스 초기화 및 성능 최적화 완료")
         # Add soft-delete columns if missing
@@ -296,6 +299,46 @@ def seed_demo() -> None:
                 )
             """)
         conn.commit()
+
+def _apply_migrations(conn: sqlite3.Connection):
+    """마이그레이션 파일들을 자동으로 적용"""
+    migrations_dir = os.path.join(os.path.dirname(DB_PATH), 'migrations')
+    
+    # migrations 디렉토리가 없으면 생성
+    if not os.path.exists(migrations_dir):
+        os.makedirs(migrations_dir, exist_ok=True)
+        logger.info(f"마이그레이션 디렉토리 생성: {migrations_dir}")
+        return
+    
+    # 마이그레이션 파일 목록 가져오기 및 정렬
+    try:
+        sql_files = sorted([f for f in os.listdir(migrations_dir) if f.endswith('.sql')])
+        
+        if not sql_files:
+            logger.debug("적용할 마이그레이션 파일이 없습니다.")
+            return
+        
+        logger.info(f"마이그레이션 파일 {len(sql_files)}개 발견: {', '.join(sql_files)}")
+        
+        # 각 SQL 파일 실행
+        for sql_file in sql_files:
+            file_path = os.path.join(migrations_dir, sql_file)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    sql_script = f.read()
+                    # executescript는 여러 SQL 문을 한 번에 실행할 수 있게 해줍니다.
+                    conn.executescript(sql_script)
+                logger.info(f"마이그레이션 적용 완료: {sql_file}")
+            except sqlite3.Error as e:
+                # 테이블이 이미 존재하는 경우는 무시 (CREATE TABLE IF NOT EXISTS)
+                if "already exists" not in str(e).lower():
+                    logger.warning(f"마이그레이션 적용 중 오류 ({sql_file}): {e}")
+            except Exception as e:
+                logger.warning(f"마이그레이션 파일 읽기 실패 ({sql_file}): {e}")
+                
+    except Exception as e:
+        logger.warning(f"마이그레이션 적용 중 오류: {e}")
+
 
 def _create_performance_indexes(conn: sqlite3.Connection):
     """성능 최적화를 위한 인덱스 생성"""

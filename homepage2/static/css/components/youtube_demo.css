@@ -1,0 +1,652 @@
+/* ============================================
+   로.하 TAX 동영상 플레이어 스타일
+   네임스페이스: .roha-video-player
+   ============================================ */
+
+/* 전체 컨테이너 */
+.roha-video-player {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 비디오 컨테이너 */
+.roha-video-player .video-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 비율 */
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* 비디오 요소 */
+.roha-video-player .video-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* 로딩 스피너 */
+.roha-video-player .video-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.roha-video-player .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #10B981;
+    border-radius: 50%;
+    animation: roha-spin 0.8s linear infinite;
+}
+
+@keyframes roha-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 중앙 재생 버튼 오버레이 */
+.roha-video-player .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+}
+
+.roha-video-player .video-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.roha-video-player .play-overlay-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.3s ease;
+}
+
+.roha-video-player .play-overlay-btn:hover {
+    transform: scale(1.1);
+}
+
+/* 새로운 비디오 컨트롤 바 */
+.roha-video-player .video-control-bar {
+    background: #1a1a1a;
+    border-radius: 0 0 16px 16px;
+    padding: 2px 16px; /* 세로 패딩을 2px로 줄여서 전체 높이 20px 달성 */
+    margin-top: -8px; /* 비디오 컨테이너와 연결, 상단으로 더 올림 */
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1000; /* 다른 요소들 위에 표시 */
+    height: 20px; /* 전체 높이를 20px로 고정 */
+}
+
+/* 진행 바 섹션 */
+.roha-video-player .progress-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.roha-video-player .progress-bar-container {
+    flex: 1;
+}
+
+.roha-video-player .progress-bar {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: height 0.2s ease;
+}
+
+.roha-video-player .progress-bar:hover {
+    height: 8px;
+}
+
+.roha-video-player .progress-filled {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.roha-video-player .progress-handle {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.roha-video-player .progress-bar:hover .progress-handle {
+    opacity: 1;
+}
+
+/* 시간 표시 */
+.roha-video-player .time-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.roha-video-player .time-separator {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 컨트롤 버튼들 */
+.roha-video-player .control-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.roha-video-player .control-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+    min-width: 36px;
+    min-height: 36px;
+    position: relative;
+    z-index: 1001; /* 컨트롤 바보다 더 높은 우선순위 */
+}
+
+.roha-video-player .control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* 볼륨 컨테이너 */
+.roha-video-player .volume-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.roha-video-player .volume-container:hover .volume-slider-container {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 볼륨 슬라이더 컨테이너 */
+.roha-video-player .volume-slider-container {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    background: transparent; /* 검은 박스 제거 */
+    padding: 0; /* 패딩 제거 */
+    border-radius: 0; /* 둥근 모서리 제거 */
+    margin-bottom: 8px; /* 소리 아이콘과의 간격 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1002;
+    height: 80px; /* 수직 슬라이더 높이만큼 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 볼륨 슬라이더 */
+.roha-video-player .volume-slider {
+    width: 4px; /* 수직 슬라이더를 위한 얇은 너비 */
+    height: 80px; /* 수직 슬라이더를 위한 높이 */
+    background: rgba(255, 255, 255, 0.3); /* 흰색 트랙 */
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    writing-mode: bt-lr; /* 수직 슬라이더를 위한 설정 */
+    -webkit-appearance: slider-vertical;
+    transform: rotate(180deg); /* 위로 올라갈수록 소리가 커지도록 180도 회전 */
+    transform-origin: center;
+}
+
+.roha-video-player .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: white; /* 흰색으로 변경 */
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.roha-video-player .volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.roha-video-player .volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: white; /* 흰색으로 변경 */
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.roha-video-player .volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.roha-video-player .volume-slider::-webkit-slider-track {
+    background: rgba(255, 255, 255, 0.3); /* 흰색 트랙 */
+    border-radius: 2px;
+}
+
+.roha-video-player .volume-slider::-moz-range-track {
+    background: rgba(255, 255, 255, 0.3); /* 흰색 트랙 */
+    border-radius: 2px;
+    height: 4px;
+}
+
+.roha-video-player .control-btn:active {
+    transform: scale(0.95);
+}
+
+.roha-video-player .control-btn svg {
+    transition: color 0.2s ease;
+}
+
+.roha-video-player .control-btn:hover svg {
+    color: #10B981;
+}
+
+/* 반응형 디자인 - 새로운 컨트롤 바 */
+@media (max-width: 768px) {
+    .roha-video-player .video-control-bar {
+        padding: 4px 12px; /* 세로 패딩을 더 줄임 */
+        gap: 12px;
+    }
+    
+    .roha-video-player .progress-section {
+        gap: 8px;
+    }
+    
+    .roha-video-player .time-display {
+        font-size: 12px;
+        min-width: 70px;
+    }
+    
+    .roha-video-player .control-btn {
+        padding: 6px;
+        min-width: 32px;
+        min-height: 32px;
+    }
+    
+    .roha-video-player .control-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .roha-video-player .video-control-bar {
+        padding: 3px 10px; /* 세로 패딩을 더 줄임 */
+        gap: 8px;
+    }
+    
+    .roha-video-player .time-display {
+        font-size: 11px;
+        min-width: 60px;
+    }
+    
+    .roha-video-player .control-btn {
+        padding: 4px;
+        min-width: 28px;
+        min-height: 28px;
+    }
+    
+    .roha-video-player .control-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* 볼륨 슬라이더 */
+.roha-video-player .volume-slider-container {
+    position: relative;
+    width: 0;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.roha-video-player .controls-left:hover .volume-slider-container {
+    width: 80px;
+    margin-left: 8px;
+}
+
+.roha-video-player .volume-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.roha-video-player .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #10B981;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.roha-video-player .volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.roha-video-player .volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #10B981;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* 재생 속도 버튼 */
+.roha-video-player .speed-btn {
+    min-width: 48px;
+}
+
+.roha-video-player .speed-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* 재생 속도 메뉴 */
+.roha-video-player .speed-menu {
+    position: absolute;
+    bottom: 70px;
+    right: 60px;
+    background: rgba(28, 28, 28, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 30;
+}
+
+.roha-video-player .speed-option {
+    padding: 10px 20px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+
+.roha-video-player .speed-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.roha-video-player .speed-option.active {
+    background: #10B981;
+    font-weight: 600;
+}
+
+/* 비디오 플레이스홀더 */
+.roha-video-player .video-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+}
+
+.roha-video-player .placeholder-content {
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+}
+
+.roha-video-player .placeholder-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+.roha-video-player .placeholder-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.roha-video-player .placeholder-description {
+    font-size: 1.1rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.roha-video-player .placeholder-steps {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.roha-video-player .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.roha-video-player .step-item:hover {
+    transform: translateY(-3px);
+}
+
+.roha-video-player .step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.roha-video-player .step-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .roha-video-player .placeholder-content {
+        padding: 1rem;
+    }
+    
+    .roha-video-player .placeholder-title {
+        font-size: 1.5rem;
+    }
+    
+    .roha-video-player .placeholder-description {
+        font-size: 1rem;
+    }
+    
+    .roha-video-player .placeholder-steps {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .roha-video-player .step-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 0.75rem;
+    }
+}
+
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .roha-video-player {
+        padding: 1rem;
+    }
+    
+    .roha-video-player .video-container {
+        border-radius: 12px;
+    }
+    
+    .roha-video-player .video-controls {
+        padding: 15px 12px 10px;
+    }
+    
+    .roha-video-player .controls-left:hover .volume-slider-container {
+        width: 0; /* 모바일에서는 볼륨 슬라이더 숨김 */
+    }
+    
+    .roha-video-player .time-display {
+        font-size: 11px;
+    }
+    
+    .roha-video-player .control-btn {
+        padding: 6px;
+    }
+    
+    .roha-video-player .play-overlay-btn svg {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .roha-video-player .cta-button {
+        font-size: 16px;
+        padding: 14px 24px;
+    }
+    
+    .roha-video-player .speed-menu {
+        right: 12px;
+        bottom: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .roha-video-player {
+        padding: 0.5rem;
+    }
+    
+    .roha-video-player .video-container {
+        border-radius: 8px;
+    }
+    
+    .roha-video-player .cta-button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* 접근성 */
+.roha-video-player .control-btn:focus,
+.roha-video-player .cta-button:focus {
+    outline: 2px solid #10B981;
+    outline-offset: 2px;
+}
+
+/* 전체 화면 모드 */
+.roha-video-player.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    padding: 0;
+    z-index: 9999;
+    background: #000;
+}
+
+.roha-video-player.fullscreen .video-container {
+    padding-top: 0;
+    height: 100%;
+    border-radius: 0;
+}
+
+.roha-video-player.fullscreen .video-cta {
+    display: none;
+}

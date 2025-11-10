@@ -1,0 +1,1278 @@
+/* VIP 회원님 체크포인트 제목 스타일 */
+.vip-checkpoint-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* 엑셀 시트 안 가로 배열 목차 스타일 (이미지와 동일) */
+.vip-checklist-text {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+  background: #f8f9fa; /* 이미지와 동일한 회색 배경 */
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.checklist-text-item {
+  margin-bottom: 0;
+  padding: 12px 8px;
+  background: white; /* 이미지와 동일한 흰색 배경 */
+  border-radius: 8px;
+  border-left: 4px solid #10b981; /* 이미지와 동일한 녹색 세로 라인 */
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 80px;
+}
+
+.checklist-text-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+}
+
+.checklist-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  position: relative;
+  padding-left: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.checklist-description {
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  padding-left: 0;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.checklist-description:last-child {
+  margin-bottom: 0;
+}
+
+/* 모든 행이 동일한 컬럼 설정 사용 */
+.vip-excel-columns,
+.vip-help-row,
+.vip-compare-row {
+  display: grid;
+  grid-template-columns: var(--vip-columns);
+  gap: 0;
+}
+
+/* 비교 행 스타일 */
+.vip-compare-row {
+  margin-top: 4px;
+}
+.vip-compare-cell {
+  text-align: center;
+  padding: 8px 6px;
+  color: #1f2937;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+/* VIP 팝업 기본 스타일 */
+.vip-notice {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1600px;         /* 모든 컬럼 확장으로 인한 가로 크기 조정 */
+  height: 850px;         /* 고정 높이 (업데이트) */
+  color: #fff;
+  background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+  border-radius: 20px;
+  padding: 20px 24px;   /* 적절한 패딩 */
+  box-shadow: 0 25px 60px rgba(26, 188, 156, 0.4);
+  z-index: 10000;
+  pointer-events: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: visible;  /* 스크롤 제거 */
+}
+
+/* 백드롭 */
+.vip-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+  display: none;
+}
+
+/* 닫기 버튼 */
+.vip-notice .vip-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.vip-notice .vip-close:hover {
+  opacity: 1;
+}
+
+/* 헤드라인 강조 */
+.vip-headline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vip-icon {
+  font-size: 30px;
+  color: #e8f8f5;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.vip-title {
+  font-weight: 800;
+  font-size: 18px;
+  color: #e8f8f5;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
+}
+
+/* 핵심 기능 어필 */
+.vip-feature-highlight {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #e8f8f5;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 100%;
+  text-align: center;
+}
+
+.vip-feature-highlight strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 고급 마우스 시뮬레이션 영상 쇼케이스 */
+.vip-video-showcase {
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 가로 한 줄 컬럼 시트 - 구조/기본 스타일 */
+.sheet { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.sheet-row { display: flex; gap: 8px; }
+.sheet-cell { flex: 1; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.22); border-radius: 8px; background: rgba(255,255,255,0.06); color: #eafaf7; text-align: center; font-weight: 600; }
+.top-sheet .sheet-cell { background: rgba(26,188,156,0.12); border-color: rgba(26,188,156,0.28); }
+.bottom-sheet .sheet-cell { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+.sheet-arrows .arrow-cell { flex:1; text-align:center; color:#eafaf7; font-weight:900; border-radius:8px; padding:4px 0 }
+
+.vip-video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* 마법 스파클 효과 */
+.vip-magic-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.vip-sparkle-1 {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  font-size: 16px;
+  color: #fff;
+  animation: sparkle1 3s ease-in-out infinite;
+}
+
+.vip-sparkle-2 {
+  position: absolute;
+  top: 20%;
+  right: 15%;
+  font-size: 14px;
+  color: #fff;
+  animation: sparkle2 3s ease-in-out infinite;
+}
+
+.vip-sparkle-3 {
+  position: absolute;
+  bottom: 20%;
+  left: 20%;
+  font-size: 18px;
+  color: #fff;
+  animation: sparkle3 3s ease-in-out infinite;
+}
+
+.vip-sparkle-4 {
+  position: absolute;
+  bottom: 10%;
+  right: 10%;
+  font-size: 12px;
+  color: #fff;
+  animation: sparkle4 3s ease-in-out infinite;
+}
+
+/* 시뮬레이션 영상 */
+.vip-simulation-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+}
+
+/* 고급 대체 콘텐츠 */
+.vip-advanced-fallback {
+  padding: 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.vip-simulation-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vip-sim-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.vip-sim-label {
+  font-weight: 600;
+  color: #fff;
+  min-width: 70px;
+  font-size: 12px;
+}
+
+.vip-sim-before {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: simFadeOut 6s ease-in-out infinite;
+}
+
+.vip-sim-after {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  animation: simFadeIn 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+.vip-sim-cursor {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3zm7.9 7.9l-1.88 5.55L3 3l7.9 7.9z"/></svg>') no-repeat center;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.vip-cursor-business {
+  animation: cursorBusiness 6s ease-in-out infinite;
+}
+
+.vip-cursor-supply {
+  animation: cursorSupply 6s ease-in-out infinite;
+}
+
+.vip-cursor-tax {
+  animation: cursorTax 6s ease-in-out infinite;
+}
+
+.vip-simulation-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1abc9c;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(26, 188, 156, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(26, 188, 156, 0.2);
+}
+
+/* Excel 스프레드시트 프리뷰 스타일 */
+.vip-excel-preview {
+  background: #ffffff;
+  border: 2px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-bottom: 12px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.vip-excel-header {
+  background: #f6f8fa;
+  border-bottom: 2px solid #d0d7de;
+}
+
+.vip-excel-title {
+  background: #1abc9c;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+  border-bottom: 2px solid #16a085;
+}
+
+.vip-excel-columns {
+  display: grid;
+  grid-template-columns: var(--vip-columns, repeat(7, 1fr));
+  background: #ffffff;
+}
+
+.vip-excel-col {
+  padding: 10px 8px;            /* 더 넉넉한 패딩으로 가독성 향상 */
+  font-size: 12px;              /* 제목 크기 소폭 상향 */
+  font-weight: 800;             /* 두께 강화 */
+  text-align: center;
+  border-right: 1px solid #d0d7de;
+  background: linear-gradient(180deg, #f8fafb 0%, #eef3f6 100%); /* 미세 그라데이션 */
+  color: #111827;
+}
+
+.vip-excel-col:last-child {
+  border-right: none;
+}
+
+/* 예시값 한 줄 */
+.vip-excel-example{display:grid;grid-template-columns:var(--vip-columns, repeat(7,1fr));border-top:1px solid #d0d7de;background:#fff}
+.vip-example-cell{padding:10px 8px;font-family:"Courier New",monospace;font-size:12px;color:#374151;border-right:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;line-height:1.4}
+.vip-example-cell:last-child{border-right:none}
+
+
+/* 데이터 시뮬레이션 영역 */
+.vip-data-simulation {
+  background: #ffffff;
+  padding: 12px;
+}
+
+.vip-data-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 6px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e1e4e8;
+}
+
+.vip-data-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #24292f;
+  min-width: 60px;
+  margin-right: 8px;
+}
+
+.vip-data-cell {
+  position: relative;
+  flex: 1;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 3px;
+  padding: 0 6px;
+  overflow: hidden;
+}
+
+.vip-data-before {
+  position: absolute;
+  left: 6px;
+  font-size: 12px;
+  color: #656d76;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.vip-data-after {
+  position: absolute;
+  left: 6px;
+  font-size: 12px;
+  color: #1abc9c;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(15px);
+  transition: all 0.3s ease;
+}
+
+.vip-data-cursor {
+  position: absolute;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231abc9c"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3zm7.9 7.9l-1.88 5.55L3 3l7.9 7.9z"/></svg>') no-repeat center;
+  background-size: contain;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.vip-clean-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(26, 188, 156, 0.1) 50%, transparent 100%);
+  opacity: 0;
+  animation: cleanSweep 0.6s ease-in-out;
+}
+
+/* 정제 효과 애니메이션 */
+@keyframes cleanSweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* 사업자번호 정제 애니메이션 */
+.vip-business-row .vip-business-cursor {
+  animation: businessCursor 6s ease-in-out infinite;
+}
+
+.vip-business-row .vip-business-effect {
+  animation: businessClean 6s ease-in-out infinite;
+}
+
+@keyframes businessCursor {
+  0%, 15% { opacity: 0; }
+  16%, 25% { opacity: 1; }
+  26%, 100% { opacity: 0; }
+}
+
+@keyframes businessClean {
+  0%, 15% { opacity: 0; }
+  16%, 20% { opacity: 1; }
+  21%, 100% { opacity: 0; }
+}
+
+.vip-business-row .vip-data-before {
+  animation: businessBefore 6s ease-in-out infinite;
+}
+
+.vip-business-row .vip-data-after {
+  animation: businessAfter 6s ease-in-out infinite;
+}
+
+@keyframes businessBefore {
+  0%, 15% { opacity: 1; transform: translateX(0); }
+  20%, 100% { opacity: 0; transform: translateX(-15px); }
+}
+
+@keyframes businessAfter {
+  0%, 20% { opacity: 0; transform: translateX(15px); }
+  25%, 100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 사업자번호 행 전체 애니메이션 */
+.vip-business-row {
+  animation: businessRowPulse 6s ease-in-out infinite;
+}
+
+@keyframes businessRowPulse {
+  0%, 15% { background: #f8f9fa; }
+  16%, 25% { background: rgba(26, 188, 156, 0.1); }
+  26%, 100% { background: #f8f9fa; }
+}
+
+/* 총배달요금 정제 애니메이션 */
+.vip-supply-row .vip-supply-cursor {
+  animation: supplyCursor 6s ease-in-out infinite;
+}
+
+.vip-supply-row .vip-supply-effect {
+  animation: supplyClean 6s ease-in-out infinite;
+}
+
+@keyframes supplyCursor {
+  0%, 35% { opacity: 0; }
+  36%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+
+@keyframes supplyClean {
+  0%, 35% { opacity: 0; }
+  36%, 40% { opacity: 1; }
+  41%, 100% { opacity: 0; }
+}
+
+.vip-supply-row .vip-data-before {
+  animation: supplyBefore 6s ease-in-out infinite;
+}
+
+.vip-supply-row .vip-data-after {
+  animation: supplyAfter 6s ease-in-out infinite;
+}
+
+@keyframes supplyBefore {
+  0%, 35% { opacity: 1; transform: translateX(0); }
+  40%, 100% { opacity: 0; transform: translateX(-15px); }
+}
+
+@keyframes supplyAfter {
+  0%, 40% { opacity: 0; transform: translateX(15px); }
+  45%, 100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 총배달요금 행 전체 애니메이션 */
+.vip-supply-row {
+  animation: supplyRowPulse 6s ease-in-out infinite;
+}
+
+@keyframes supplyRowPulse {
+  0%, 35% { background: #f8f9fa; }
+  36%, 45% { background: rgba(26, 188, 156, 0.1); }
+  46%, 100% { background: #f8f9fa; }
+}
+
+/* 부가세 정제 애니메이션 */
+.vip-tax-row .vip-tax-cursor {
+  animation: taxCursor 6s ease-in-out infinite;
+}
+
+.vip-tax-row .vip-tax-effect {
+  animation: taxClean 6s ease-in-out infinite;
+}
+
+@keyframes taxCursor {
+  0%, 55% { opacity: 0; }
+  56%, 65% { opacity: 1; }
+  66%, 100% { opacity: 0; }
+}
+
+@keyframes taxClean {
+  0%, 55% { opacity: 0; }
+  56%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0; }
+}
+
+.vip-tax-row .vip-data-before {
+  animation: taxBefore 6s ease-in-out infinite;
+}
+
+.vip-tax-row .vip-data-after {
+  animation: taxAfter 6s ease-in-out infinite;
+}
+
+@keyframes taxBefore {
+  0%, 55% { opacity: 1; transform: translateX(0); }
+  60%, 100% { opacity: 0; transform: translateX(-15px); }
+}
+
+@keyframes taxAfter {
+  0%, 60% { opacity: 0; transform: translateX(15px); }
+  65%, 100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 부가세 행 전체 애니메이션 */
+.vip-tax-row {
+  animation: taxRowPulse 6s ease-in-out infinite;
+}
+
+@keyframes taxRowPulse {
+  0%, 55% { background: #f8f9fa; }
+  56%, 65% { background: rgba(26, 188, 156, 0.1); }
+  66%, 100% { background: #f8f9fa; }
+}
+
+/* 유저의 역할 안내 */
+.vip-user-role {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8f8f5;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  width: 100%;
+  text-align: center;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 핵심 컬럼명 목록 (2줄 블록 구조) */
+.vip-columns-block {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vip-column-item {
+  width: 100%;
+  padding: 8px 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.vip-column-item:last-child {
+  border-bottom: none;
+}
+
+.vip-column-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vip-column-title {
+  font-size: 18px;        /* 데스크톱용 폰트 크기 축소 */
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 6px;     /* 하단 여백 축소 */
+  line-height: 1.2;
+}
+
+.vip-column-desc {
+  font-size: 13px;        /* 데스크톱용 폰트 크기 축소 */
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+  padding: 4px 0;         /* 상하 패딩 추가 */
+}
+
+.vip-column-text::before {
+  content: '•';
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+/* 마우스 시뮬레이션 영상 컨테이너 */
+.vip-video-container {
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.vip-demo-video {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+/* 영상 대체 콘텐츠 (영상이 지원되지 않는 경우) */
+.vip-video-fallback {
+  padding: 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vip-demo-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.vip-excel-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.vip-cell-label {
+  font-weight: 600;
+  color: #fff;
+  min-width: 80px;
+  font-size: 14px;
+}
+
+.vip-cell-value {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.vip-cell-value.vip-before {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.vip-cell-value.vip-after {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.vip-demo-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.vip-magic-icon {
+  animation: magicSparkle 2s ease-in-out infinite;
+  color: #fff;
+}
+
+/* 마우스 커서 애니메이션 */
+.vip-mouse-cursor {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') no-repeat center;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+}
+
+.vip-cursor-1 {
+  top: 8px;
+  right: 8px;
+  animation: cursorMove1 6s ease-in-out infinite;
+}
+
+.vip-cursor-2 {
+  top: 8px;
+  right: 8px;
+  animation: cursorMove2 6s ease-in-out infinite;
+}
+
+.vip-cursor-3 {
+  top: 8px;
+  right: 8px;
+  animation: cursorMove3 6s ease-in-out infinite;
+}
+
+/* 고급 애니메이션 효과 */
+.vip-cell-animation {
+  position: relative;
+  overflow: hidden;
+}
+
+.vip-business-number .vip-animate-before {
+  animation: businessNumberClean 6s ease-in-out infinite;
+}
+
+.vip-business-number .vip-animate-after {
+  animation: businessNumberShow 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+.vip-supply-amount .vip-animate-before {
+  animation: supplyAmountClean 6s ease-in-out infinite;
+}
+
+.vip-supply-amount .vip-animate-after {
+  animation: supplyAmountShow 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+.vip-tax-amount .vip-animate-before {
+  animation: taxAmountClean 6s ease-in-out infinite;
+}
+
+.vip-tax-amount .vip-animate-after {
+  animation: taxAmountShow 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+/* 키프레임 애니메이션 */
+@keyframes sparkle1 {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  25% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+  50% { opacity: 0.8; transform: scale(1) rotate(180deg); }
+  75% { opacity: 0.6; transform: scale(0.8) rotate(270deg); }
+}
+
+@keyframes sparkle2 {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1.5) rotate(120deg); }
+  60% { opacity: 0.7; transform: scale(0.9) rotate(240deg); }
+  90% { opacity: 0.4; transform: scale(0.6) rotate(360deg); }
+}
+
+@keyframes sparkle3 {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  20% { opacity: 0.8; transform: scale(1.3) rotate(60deg); }
+  40% { opacity: 1; transform: scale(1.1) rotate(120deg); }
+  80% { opacity: 0.5; transform: scale(0.7) rotate(300deg); }
+}
+
+@keyframes sparkle4 {
+  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+  35% { opacity: 1; transform: scale(1.4) rotate(150deg); }
+  70% { opacity: 0.6; transform: scale(0.8) rotate(300deg); }
+}
+
+@keyframes simulationMagic {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  25% { opacity: 0.7; transform: scale(1.1) rotate(90deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+  75% { opacity: 0.7; transform: scale(1.1) rotate(270deg); }
+}
+
+@keyframes simFadeOut {
+  0%, 15% { opacity: 1; transform: scale(1); }
+  16%, 25% { opacity: 0.3; transform: scale(0.95); }
+  26%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes simFadeIn {
+  0%, 25% { opacity: 0; transform: scale(0.9); }
+  26%, 35% { opacity: 1; transform: scale(1); }
+  36%, 100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cursorBusiness {
+  0%, 15% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+  16%, 20% { opacity: 0.7; transform: translate(-2px, -2px) scale(1.1); }
+  21%, 25% { opacity: 1; transform: translate(-4px, -4px) scale(1); }
+  26%, 35% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+}
+
+@keyframes cursorSupply {
+  0%, 35% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+  36%, 40% { opacity: 0.7; transform: translate(-2px, -2px) scale(1.1); }
+  41%, 45% { opacity: 1; transform: translate(-4px, -4px) scale(1); }
+  46%, 55% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+}
+
+@keyframes cursorTax {
+  0%, 55% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+  56%, 60% { opacity: 0.7; transform: translate(-2px, -2px) scale(1.1); }
+  61%, 65% { opacity: 1; transform: translate(-4px, -4px) scale(1); }
+  66%, 100% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+}
+
+@keyframes cursorMove1 {
+  0%, 15% { opacity: 0; transform: translate(0, 0); }
+  16%, 25% { opacity: 1; transform: translate(-5px, -5px); }
+  26%, 35% { opacity: 0; transform: translate(0, 0); }
+}
+
+@keyframes cursorMove2 {
+  0%, 35% { opacity: 0; transform: translate(0, 0); }
+  36%, 45% { opacity: 1; transform: translate(-5px, -5px); }
+  46%, 55% { opacity: 0; transform: translate(0, 0); }
+}
+
+@keyframes cursorMove3 {
+  0%, 55% { opacity: 0; transform: translate(0, 0); }
+  56%, 65% { opacity: 1; transform: translate(-5px, -5px); }
+  66%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+
+/* 사업자번호 정제 애니메이션 */
+@keyframes businessNumberClean {
+  0%, 15% { opacity: 1; transform: scale(1); }
+  16%, 25% { opacity: 0.3; transform: scale(0.95); }
+  26%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes businessNumberShow {
+  0%, 25% { opacity: 0; transform: scale(0.9); }
+  26%, 35% { opacity: 1; transform: scale(1); }
+  36%, 100% { opacity: 1; transform: scale(1); }
+}
+
+/* 공급가액 정제 애니메이션 */
+@keyframes supplyAmountClean {
+  0%, 35% { opacity: 1; transform: scale(1); }
+  36%, 45% { opacity: 0.3; transform: scale(0.95); }
+  46%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes supplyAmountShow {
+  0%, 45% { opacity: 0; transform: scale(0.9); }
+  46%, 55% { opacity: 1; transform: scale(1); }
+  56%, 100% { opacity: 1; transform: scale(1); }
+}
+
+/* 세액 정제 애니메이션 */
+@keyframes taxAmountClean {
+  0%, 55% { opacity: 1; transform: scale(1); }
+  56%, 65% { opacity: 0.3; transform: scale(0.95); }
+  66%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes taxAmountShow {
+  0%, 65% { opacity: 0; transform: scale(0.9); }
+  66%, 75% { opacity: 1; transform: scale(1); }
+  76%, 100% { opacity: 1; transform: scale(1); }
+}
+
+
+/* 버튼 영역 */
+.vip-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;      /* 상단 여백 축소 */
+  width: 100%;
+  padding: 10px 14px;   /* 패딩 축소 */
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vip-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+  color: #fff;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(52, 73, 94, 0.3);
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.vip-btn:hover {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 73, 94, 0.4);
+}
+
+.vip-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 반응형 디자인 */
+        @media (max-width: 768px) {
+          .vip-notice {
+            width: 650px;         /* 태블릿용 고정 크기 (가로 더 크게) */
+            height: 400px;        /* 태블릿용 고정 높이 */
+            padding: 18px 20px;   /* 태블릿 패딩 */
+          }
+  
+  .vip-headline {
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+  }
+  
+  .vip-icon {
+    font-size: 26px;
+  }
+  
+  .vip-title {
+    font-size: 18px;
+  }
+  
+  .vip-feature-highlight {
+    font-size: 15px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  
+  .vip-user-role {
+    font-size: 16px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+  }
+  
+  .vip-video-showcase {
+    margin: 20px 0;
+    padding: 16px;
+  }
+  
+  .vip-video-wrapper {
+    max-width: 100%;
+  }
+  
+  .vip-simulation-video {
+    height: 100%;
+  }
+  
+  .vip-advanced-fallback {
+    height: 100%;
+    padding: 16px;
+  }
+  
+  .vip-columns-block {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+  }
+  
+  .vip-column-item {
+    padding: 14px 18px;
+  }
+  
+  .vip-column-title {
+    font-size: 17px;      /* 태블릿용 폰트 크기 */
+  }
+  
+  .vip-column-desc {
+    font-size: 12px;      /* 태블릿용 폰트 크기 */
+  }
+  
+  .vip-buttons {
+    margin-top: 10px;
+    padding: 14px 18px;
+  }
+  
+  .vip-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    min-width: 160px;
+  }
+  
+  .vip-sim-label {
+    font-size: 11px;
+    min-width: 60px;
+  }
+  
+  .vip-sim-before,
+  .vip-sim-after {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+  
+  .vip-columns-block {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+  }
+  
+  .vip-column-item {
+    padding: 12px 16px;
+  }
+  
+  .vip-column-title {
+    font-size: 15px;      /* 모바일용 폰트 크기 */
+  }
+  
+  .vip-column-desc {
+    font-size: 11px;      /* 모바일용 폰트 크기 */
+    padding: 3px 0;       /* 상하 패딩 축소 */
+  }
+}
+
+/* VIP 안내 버튼 */
+.vip-info-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  background: linear-gradient(135deg, #ffebee, #ffcdd2);
+  color: #000000;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(244, 67, 54, 0.25);
+  transition: all 0.3s ease;
+}
+
+.vip-info-btn:hover {
+  background: linear-gradient(135deg, #ffcdd2, #ffb3ba);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(244, 67, 54, 0.3);
+}
+
+/* 진행 상태 헤더 중앙 정렬용 */
+.panel .hd {
+  position: relative;
+}
+
+        @media (max-width: 480px) {
+          .vip-notice {
+            width: 500px;         /* 모바일용 고정 크기 (가로 더 크게) */
+            height: 350px;        /* 모바일용 고정 높이 */
+            padding: 16px 18px;   /* 모바일 패딩 */
+          }
+  
+  .vip-headline {
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+  }
+  
+  .vip-icon {
+    font-size: 24px;
+  }
+  
+  .vip-title {
+    font-size: 16px;
+  }
+  
+  .vip-feature-highlight {
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  
+  .vip-user-role {
+    font-size: 14px;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+  }
+  
+  .vip-video-showcase {
+    margin: 16px 0;
+    padding: 12px;
+  }
+  
+  .vip-simulation-text {
+    font-size: 11px;
+    gap: 4px;
+    margin-top: 5px;
+    padding: 4px 8px;
+  }
+  
+  .vip-columns-block {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+  }
+  
+  .vip-column-item {
+    padding: 12px 16px;
+  }
+  
+  .vip-column-title {
+    font-size: 16px;
+  }
+  
+  .vip-column-desc {
+    font-size: 12px;
+  }
+  
+  .vip-buttons {
+  margin-top: 6px;      /* 상단 여백 축소 */
+  padding: 10px 14px;   /* 패딩 축소 */
+  }
+  
+  .vip-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    min-width: 140px;
+  }
+}
+
+.panel .hd .vip-info-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}

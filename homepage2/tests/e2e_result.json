@@ -1,0 +1,16 @@
+{
+  "success": false,
+  "error_message": "공급받는자 정보를 추출할 수 없습니다.",
+  "files": [],
+  "total_recipients": 0,
+  "extraction_summary": {},
+  "amount_summary": {},
+  "conversion_log": [
+    "변환 프로세스 시작",
+    "기본 사용자 정보 검증",
+    "기본 사용자 정보 검증 완료",
+    "1단계: 파일 파싱 시작",
+    "파일 파싱 완료: 8027행",
+    "2단계: 업종별 절대지침 적용 시작"
+  ]
+}
