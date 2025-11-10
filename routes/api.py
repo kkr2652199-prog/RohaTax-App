@@ -696,3 +696,51 @@ def myhome_data_delete():
         return jsonify({'success': True, 'deleted': len(ids)})
     except Exception as e:
         return jsonify({'success': False, 'error': f'삭제 중 오류: {str(e)}'}), 500
+
+
+@api_bp.route('/v2/user/token-summary')
+def get_token_summary_v2():
+    """
+    activity_logs 기반의 새로운 토큰 현황 요약 API (v2)
+    Single Source of Truth 원칙: activity_logs 테이블을 기반으로 정확한 토큰 정보 제공
+    """
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
+
+    user_id = session['user_id']
+
+    try:
+        from datetime import datetime
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # 단 한 번의 쿼리로 총수량과 사용량을 계산
+            summary = conn.execute(
+                """
+                SELECT
+                    SUM(CASE WHEN token_change > 0 THEN token_change ELSE 0 END) as total_tokens,
+                    SUM(CASE WHEN token_change < 0 THEN ABS(token_change) ELSE 0 END) as used_tokens
+                FROM activity_logs
+                WHERE user_id = ?
+                """,
+                (user_id,)
+            ).fetchone()
+
+            total_tokens = summary['total_tokens'] if summary['total_tokens'] is not None else 0
+            used_tokens = summary['used_tokens'] if summary['used_tokens'] is not None else 0
+            available_tokens = total_tokens - used_tokens
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'total_tokens': int(total_tokens),
+                    'used_tokens': int(used_tokens),
+                    'available_tokens': int(available_tokens)
+                },
+                'last_updated': datetime.now().isoformat()
+            })
+
+    except Exception as e:
+        # 실제 운영 환경에서는 로깅이 더 중요
+        print(f"Error in get_token_summary_v2: {e}")
+        return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500

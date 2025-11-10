@@ -853,7 +853,7 @@
           <div class="stat-icon">💎</div>
           <div class="stat-content">
             <div class="stat-value">{{ user.token_balance or 0 }}</div>
-            <div class="stat-label">보유 토큰</div>
+            <div class="stat-label">토큰 총수량</div>
             <div class="stat-description">전체 토큰 잔액</div>
           </div>
         </div>
@@ -862,7 +862,7 @@
           <div class="stat-icon">📊</div>
           <div class="stat-content">
             <div class="stat-value">{{ user.tokens_used or 0 }}</div>
-            <div class="stat-label">사용 토큰</div>
+            <div class="stat-label">토큰 사용량</div>
             <div class="stat-description">누적 사용량</div>
           </div>
         </div>
@@ -871,7 +871,7 @@
           <div class="stat-icon">✅</div>
           <div class="stat-content">
             <div class="stat-value">{{ (user.token_balance or 0) - (user.tokens_used or 0) }}</div>
-            <div class="stat-label">사용 가능</div>
+            <div class="stat-label">토큰총잔량</div>
             <div class="stat-description">현재 사용 가능</div>
           </div>
         </div>
@@ -1369,10 +1369,12 @@ class RealtimeTokenManager {
         this.showLoadingIndicator();
         
         try {
-            const response = await fetch('/api/user/token-status');
+            // [수정 1] API 호출 주소를 v2로 변경
+            const response = await fetch('/api/v2/user/token-summary');
             const data = await response.json();
             
             if (data.success) {
+                // [수정 2] data.data를 직접 전달하도록 변경
                 this.updateUI(data.data);
                 this.showLastUpdated();
             } else {
@@ -1392,12 +1394,13 @@ class RealtimeTokenManager {
         // 토큰 상태 업데이트
         const tokenCards = document.querySelectorAll('.token-stat-card');
         if (tokenCards.length >= 3) {
+            // [수정] 데이터 경로를 직접 참조하도록 변경
             // 보유 토큰
-            tokenCards[0].querySelector('.stat-value').textContent = data.token_status.total_tokens;
+            tokenCards[0].querySelector('.stat-value').textContent = data.total_tokens;
             // 사용 토큰
-            tokenCards[1].querySelector('.stat-value').textContent = data.token_status.used_tokens;
+            tokenCards[1].querySelector('.stat-value').textContent = data.used_tokens;
             // 사용 가능 토큰
-            tokenCards[2].querySelector('.stat-value').textContent = data.token_status.available_tokens;
+            tokenCards[2].querySelector('.stat-value').textContent = data.available_tokens;
         }
     }
     
