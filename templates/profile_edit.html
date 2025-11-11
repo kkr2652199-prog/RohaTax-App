@@ -940,7 +940,29 @@
       <span class="accordion-icon" id="token-usage-arrow" style="font-size:1.5rem;transition:transform 0.3s ease;">▼</span>
     </div>
     <div class="accordion-content" id="token-usage-content" style="display:none;">
-      {% include 'components/token_history_table.html' %}
+      <div class="table-responsive">
+        <table id="activity-logs-table" class="table">
+          <thead>
+            <tr>
+              <th><input type="checkbox"></th>
+              <th>날짜/시간</th>
+              <th>회원등급</th>
+              <th>활동 유형</th>
+              <th>상세 정보</th>
+              <th>(거래 전) 잔량</th>
+              <th>충전량</th>
+              <th>사용량</th>
+              <th>(거래 후) 잔량</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- JavaScript가 이 부분을 채울 것입니다. -->
+            <tr>
+              <td colspan="9" style="text-align: center;">데이터를 불러오는 중입니다...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1543,6 +1565,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // 실시간 토큰 관리자 초기화
     window.tokenManager = new RealtimeTokenManager();
 });
+
+// 거래 내역 로드 및 렌더링 함수
+async function loadAndRenderActivityLogs() {
+    const tbody = document.querySelector('#activity-logs-table tbody');
+    if (!tbody) {
+        console.error('테이블의 tbody를 찾을 수 없습니다.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v2/user/activity-logs');
+        const result = await response.json();
+
+        if (!result.success || !Array.isArray(result.data)) {
+            tbody.innerHTML = '<tr><td colspan="9">거래 내역을 불러오는 데 실패했습니다.</td></tr>';
+            return;
+        }
+
+        if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9">거래 내역이 없습니다.</td></tr>';
+            return;
+        }
+
+        let previousBalance = 0;
+        const rowsHtml = result.data.map(log => {
+            const currentBalance = previousBalance + (log.token_change || 0);
+
+            const charge = (log.token_change > 0) ? `+${log.token_change}` : '-';
+            const usage = (log.token_change < 0) ? `${log.token_change}` : '-';
+            
+            // 백엔드에서 번역된 필드 사용
+            const activityTypeText = log.activity_type_korean || log.activity_type || '-';
+            const detailsText = log.details_summary || '세부 정보 없음';
+
+            const rowHtml = `
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>${new Date(log.timestamp).toLocaleString('ko-KR')}</td>
+                    <td>${log.user_plan_snapshot || '-'}</td>
+                    <td>${activityTypeText}</td>
+                    <td>${detailsText}</td>
+                    <td>${previousBalance}</td>
+                    <td class="charge">${charge}</td>
+                    <td class="usage">${usage}</td>
+                    <td>${currentBalance}</td>
+                </tr>
+            `;
+
+            previousBalance = currentBalance;
+            return rowHtml;
+        });
+
+        // 최신 내역이 위로 오도록 배열을 뒤집어서 삽입
+        tbody.innerHTML = rowsHtml.reverse().join('');
+
+    } catch (error) {
+        console.error('API 요청 실패:', error);
+        tbody.innerHTML = '<tr><td colspan="9">네트워크 오류가 발생했습니다.</td></tr>';
+    }
+}
+
+// 페이지가 완전히 로드된 후 함수 실행
+document.addEventListener('DOMContentLoaded', loadAndRenderActivityLogs);
 // ===== 골드 고객 관리 JS =====
 document.addEventListener('DOMContentLoaded', function(){
   const card = document.getElementById('gold-customer-card');
@@ -1988,6 +2073,44 @@ document.addEventListener('DOMContentLoaded', function(){
   .icon-btn:hover {
     background: #f3f4f6;
     transform: translateY(-1px);
+  }
+
+  /* 거래 내역 테이블 스타일 */
+  #activity-logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  #activity-logs-table th {
+    background: #f3f4f6;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+    vertical-align: middle;
+  }
+
+  #activity-logs-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  #activity-logs-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  #activity-logs-table .charge {
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  #activity-logs-table .usage {
+    color: #ef4444;
+    font-weight: 600;
   }
 </style>
 
