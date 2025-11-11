@@ -701,33 +701,44 @@ def myhome_data_delete():
 @api_bp.route('/v2/user/token-summary')
 def get_token_summary_v2():
     """
-    activity_logs 기반의 새로운 토큰 현황 요약 API (v2)
-    Single Source of Truth 원칙: activity_logs 테이블을 기반으로 정확한 토큰 정보 제공
+    '가장 최근 리셋' 이후의 activity_logs를 기준으로
+    '누적 충전량', '누적 사용량', '현재 잔량'을 정확하게 계산하여 제공하는 최종 API
     """
     if not session.get('user_id'):
         return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
 
-    user_id = session['user_id']
+    user_id = session.get('user_id')
 
     try:
         from datetime import datetime
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
             
-            # 단 한 번의 쿼리로 총수량과 사용량을 계산
+            # 이 쿼리가 이 작전의 핵심이다.
+            # WITH 구문을 사용하여 가장 최근의 리셋 시간을 먼저 찾고,
+            # 그 시간을 기준으로 데이터를 필터링하여 집계한다.
             summary = conn.execute(
                 """
+                WITH last_reset AS (
+                    -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
+                    SELECT MAX(timestamp) as reset_time
+                    FROM activity_logs
+                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                )
                 SELECT
-                    SUM(CASE WHEN token_change > 0 THEN token_change ELSE 0 END) as total_tokens,
-                    SUM(CASE WHEN token_change < 0 THEN ABS(token_change) ELSE 0 END) as used_tokens
-                FROM activity_logs
-                WHERE user_id = ?
+                    -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
+                    COALESCE(SUM(CASE WHEN al.token_change > 0 THEN al.token_change ELSE 0 END), 0) as total_charged,
+                    COALESCE(SUM(CASE WHEN al.token_change < 0 THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+                FROM activity_logs al, last_reset lr
+                WHERE al.user_id = ?
+                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time);
+                -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
                 """,
-                (user_id,)
+                (user_id, user_id)
             ).fetchone()
 
-            total_tokens = summary['total_tokens'] if summary['total_tokens'] is not None else 0
-            used_tokens = summary['used_tokens'] if summary['used_tokens'] is not None else 0
+            total_tokens = summary['total_charged']
+            used_tokens = summary['total_used']
             available_tokens = total_tokens - used_tokens
 
             return jsonify({
@@ -741,6 +752,5 @@ def get_token_summary_v2():
             })
 
     except Exception as e:
-        # 실제 운영 환경에서는 로깅이 더 중요
         print(f"Error in get_token_summary_v2: {e}")
         return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500
