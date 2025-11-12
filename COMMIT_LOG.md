@@ -66,3 +66,9 @@
   - admin.html 본문은 {% include %} 문으로 대체되어 가독성이 향상됨
   - 시각적 회귀 및 기능 이상이 없음을 '인간 검증'으로 확인함
 
+- **[5dc7211] refactor(html): admin.html의 실시간 업데이트 인디케이터 분리**
+
+  - admin.html의 두 번째 리팩토링 단계로, 실시간 업데이트 인디케이터를 partial 파일(_live_indicator.html)로 분리함
+  - admin.html의 가독성을 추가로 개선하고 컴포넌트화를 진행함
+  - 시각적 회귀 및 기능 이상이 없음을 '인간 검증'으로 확인함
+
