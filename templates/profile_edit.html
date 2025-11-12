@@ -432,27 +432,76 @@
   
   .token-stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .token-stat-card.primary:hover {
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+  
+  .token-stat-card.secondary:hover {
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  }
+  
+  .token-stat-card.success:hover {
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
   }
   
   .token-stat-card.primary {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    color: white;
+    background: #1f2937;
+    color: #6ee7b7;
+    font-weight: 900;
+    text-shadow: 
+      0 0 3px #10b981,
+      0 0 6px #10b981,
+      0 0 9px #10b981;
   }
   
   .token-stat-card.secondary {
-    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-    color: white;
+    background: #1f2937;
+    color: #93c5fd;
+    font-weight: 900;
+    text-shadow: 
+      0 0 3px #3b82f6,
+      0 0 6px #3b82f6,
+      0 0 9px #3b82f6;
   }
   
   .token-stat-card.success {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    color: white;
+    background: #1f2937;
+    color: #fcd34d;
+    font-weight: 900;
+    text-shadow: 
+      0 0 3px #f59e0b,
+      0 0 6px #f59e0b,
+      0 0 9px #f59e0b;
+  }
+  
+  .token-stat-card.primary .stat-icon {
+    text-shadow: 
+      0 0 3px #10b981,
+      0 0 6px #10b981,
+      0 0 9px #10b981;
+  }
+  
+  .token-stat-card.secondary .stat-icon {
+    text-shadow: 
+      0 0 3px #3b82f6,
+      0 0 6px #3b82f6,
+      0 0 9px #3b82f6;
+  }
+  
+  .token-stat-card.success .stat-icon {
+    text-shadow: 
+      0 0 3px #f59e0b,
+      0 0 6px #f59e0b,
+      0 0 9px #f59e0b;
   }
   
   .stat-icon {
     font-size: 2rem;
-    opacity: 0.8;
+    opacity: 1;
+    font-weight: 900;
   }
   
   .stat-content {
@@ -461,19 +510,23 @@
   
   .stat-value {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 900;
     margin-bottom: 0.25rem;
+    text-shadow: inherit;
   }
   
   .stat-label {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 800;
     margin-bottom: 0.25rem;
+    text-shadow: inherit;
   }
   
   .stat-description {
     font-size: 0.75rem;
-    opacity: 0.8;
+    opacity: 1;
+    font-weight: 700;
+    text-shadow: inherit;
   }
   
   .token-progress-section {
@@ -852,8 +905,8 @@
         <div class="token-stat-card primary">
           <div class="stat-icon">💎</div>
           <div class="stat-content">
-            <div class="stat-value">{{ user.token_balance or 0 }}</div>
-            <div class="stat-label">보유 토큰</div>
+            <div class="stat-value" id="total-tokens-display">로딩중...</div>
+            <div class="stat-label">토큰 총수량</div>
             <div class="stat-description">전체 토큰 잔액</div>
           </div>
         </div>
@@ -861,8 +914,8 @@
         <div class="token-stat-card secondary">
           <div class="stat-icon">📊</div>
           <div class="stat-content">
-            <div class="stat-value">{{ user.tokens_used or 0 }}</div>
-            <div class="stat-label">사용 토큰</div>
+            <div class="stat-value" id="tokens-used-display">로딩중...</div>
+            <div class="stat-label">토큰 사용량</div>
             <div class="stat-description">누적 사용량</div>
           </div>
         </div>
@@ -870,8 +923,8 @@
         <div class="token-stat-card success">
           <div class="stat-icon">✅</div>
           <div class="stat-content">
-            <div class="stat-value">{{ (user.token_balance or 0) - (user.tokens_used or 0) }}</div>
-            <div class="stat-label">사용 가능</div>
+            <div class="stat-value" id="available-tokens-display">로딩중...</div>
+            <div class="stat-label">토큰총잔량</div>
             <div class="stat-description">현재 사용 가능</div>
           </div>
         </div>
@@ -887,7 +940,29 @@
       <span class="accordion-icon" id="token-usage-arrow" style="font-size:1.5rem;transition:transform 0.3s ease;">▼</span>
     </div>
     <div class="accordion-content" id="token-usage-content" style="display:none;">
-      {% include 'components/token_history_table.html' %}
+      <div class="table-responsive">
+        <table id="activity-logs-table" class="table">
+          <thead>
+            <tr>
+              <th><input type="checkbox"></th>
+              <th>날짜/시간</th>
+              <th>회원등급</th>
+              <th>활동 유형</th>
+              <th>상세 정보</th>
+              <th>(거래 전) 잔량</th>
+              <th>충전량</th>
+              <th>사용량</th>
+              <th>(거래 후) 잔량</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- JavaScript가 이 부분을 채울 것입니다. -->
+            <tr>
+              <td colspan="9" style="text-align: center;">데이터를 불러오는 중입니다...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1357,31 +1432,47 @@ class RealtimeTokenManager {
     }
     
     init() {
-        this.updateTokenStatus();
+        // [수정] 초기 로드 시 즉시 API 호출하여 정확한 값으로 업데이트
+        // 서버 사이드 렌더링된 잘못된 값(users.tokens_used)을 덮어쓰기 위함
+        this.updateTokenStatus().catch(err => {
+            console.error('초기 토큰 상태 로드 실패:', err);
+            // 실패 시 기본값 표시
+            const totalEl = document.getElementById('total-tokens-display');
+            const usedEl = document.getElementById('tokens-used-display');
+            const availableEl = document.getElementById('available-tokens-display');
+            if (totalEl) totalEl.textContent = '0';
+            if (usedEl) usedEl.textContent = '0';
+            if (availableEl) availableEl.textContent = '0';
+        });
         this.startAutoUpdate();
         this.bindEvents();
     }
     
     async updateTokenStatus() {
-        if (this.isUpdating) return;
+        if (this.isUpdating) return Promise.resolve();
         
         this.isUpdating = true;
         this.showLoadingIndicator();
         
         try {
-            const response = await fetch('/api/user/token-status');
+            // [수정 1] API 호출 주소를 v2로 변경
+            const response = await fetch('/api/v2/user/token-summary');
             const data = await response.json();
             
             if (data.success) {
+                // [수정 2] data.data를 직접 전달하도록 변경
                 this.updateUI(data.data);
                 this.showLastUpdated();
+                return Promise.resolve(data.data);
             } else {
                 console.error('토큰 상태 업데이트 실패:', data.error);
                 this.showError('토큰 상태를 불러올 수 없습니다');
+                return Promise.reject(new Error(data.error || '토큰 상태 업데이트 실패'));
             }
         } catch (error) {
             console.error('API 요청 실패:', error);
             this.showError('네트워크 오류가 발생했습니다');
+            return Promise.reject(error);
         } finally {
             this.isUpdating = false;
             this.hideLoadingIndicator();
@@ -1389,15 +1480,24 @@ class RealtimeTokenManager {
     }
     
     updateUI(data) {
-        // 토큰 상태 업데이트
+        // 토큰 상태 업데이트 - ID로 직접 업데이트 (더 정확함)
+        const totalEl = document.getElementById('total-tokens-display');
+        const usedEl = document.getElementById('tokens-used-display');
+        const availableEl = document.getElementById('available-tokens-display');
+        
+        if (totalEl) totalEl.textContent = data.total_tokens || 0;
+        if (usedEl) usedEl.textContent = data.used_tokens || 0;
+        if (availableEl) availableEl.textContent = data.available_tokens || 0;
+        
+        // 기존 방식도 유지 (하위 호환성)
         const tokenCards = document.querySelectorAll('.token-stat-card');
         if (tokenCards.length >= 3) {
             // 보유 토큰
-            tokenCards[0].querySelector('.stat-value').textContent = data.token_status.total_tokens;
+            if (!totalEl) tokenCards[0].querySelector('.stat-value').textContent = data.total_tokens || 0;
             // 사용 토큰
-            tokenCards[1].querySelector('.stat-value').textContent = data.token_status.used_tokens;
+            if (!usedEl) tokenCards[1].querySelector('.stat-value').textContent = data.used_tokens || 0;
             // 사용 가능 토큰
-            tokenCards[2].querySelector('.stat-value').textContent = data.token_status.available_tokens;
+            if (!availableEl) tokenCards[2].querySelector('.stat-value').textContent = data.available_tokens || 0;
         }
     }
     
@@ -1487,6 +1587,83 @@ document.addEventListener('DOMContentLoaded', function() {
     // 실시간 토큰 관리자 초기화
     window.tokenManager = new RealtimeTokenManager();
 });
+
+// 거래 내역 로드 및 렌더링 함수
+async function loadAndRenderActivityLogs() {
+    const tbody = document.querySelector('#activity-logs-table tbody');
+    if (!tbody) {
+        console.error('테이블의 tbody를 찾을 수 없습니다.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v2/user/activity-logs');
+        const result = await response.json();
+
+        if (!result.success || !Array.isArray(result.data)) {
+            tbody.innerHTML = '<tr><td colspan="9">거래 내역을 불러오는 데 실패했습니다.</td></tr>';
+            return;
+        }
+
+        if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9">거래 내역이 없습니다.</td></tr>';
+            return;
+        }
+
+        let previousBalance = 0;
+        const rowsHtml = result.data.map(log => {
+            // [수정] TOKEN_RESET_BY_ADMIN의 경우 잔액을 0으로 설정
+            let currentBalance;
+            if (log.activity_type === 'TOKEN_RESET_BY_ADMIN') {
+                currentBalance = 0;  // 초기화 후 잔액은 항상 0
+            } else {
+                currentBalance = previousBalance + (log.token_change || 0);
+            }
+
+            const charge = (log.token_change > 0) ? `+${log.token_change}` : '-';
+            // [수정] 초기화의 경우 사용량 컬럼에 표시하지 않음 (마이너스는 빼야 하므로)
+            const usage = (log.token_change < 0 && log.activity_type !== 'TOKEN_RESET_BY_ADMIN') 
+                ? `${log.token_change}` 
+                : '-';
+            
+            // 백엔드에서 번역된 필드 사용
+            const activityTypeText = log.activity_type_korean || log.activity_type || '-';
+            const detailsText = log.details_summary || '세부 정보 없음';
+
+            const rowHtml = `
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>${new Date(log.timestamp).toLocaleString('ko-KR')}</td>
+                    <td>${log.user_plan_snapshot || '-'}</td>
+                    <td>${activityTypeText}</td>
+                    <td>${detailsText}</td>
+                    <td>${previousBalance}</td>
+                    <td class="charge">${charge}</td>
+                    <td class="usage">${usage}</td>
+                    <td>${currentBalance}</td>
+                </tr>
+            `;
+
+            // [수정] 초기화의 경우 다음 잔액을 0으로 설정
+            if (log.activity_type === 'TOKEN_RESET_BY_ADMIN') {
+                previousBalance = 0;
+            } else {
+                previousBalance = currentBalance;
+            }
+            return rowHtml;
+        });
+
+        // 최신 내역이 위로 오도록 배열을 뒤집어서 삽입
+        tbody.innerHTML = rowsHtml.reverse().join('');
+
+    } catch (error) {
+        console.error('API 요청 실패:', error);
+        tbody.innerHTML = '<tr><td colspan="9">네트워크 오류가 발생했습니다.</td></tr>';
+    }
+}
+
+// 페이지가 완전히 로드된 후 함수 실행
+document.addEventListener('DOMContentLoaded', loadAndRenderActivityLogs);
 // ===== 골드 고객 관리 JS =====
 document.addEventListener('DOMContentLoaded', function(){
   const card = document.getElementById('gold-customer-card');
@@ -1932,6 +2109,44 @@ document.addEventListener('DOMContentLoaded', function(){
   .icon-btn:hover {
     background: #f3f4f6;
     transform: translateY(-1px);
+  }
+
+  /* 거래 내역 테이블 스타일 */
+  #activity-logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  #activity-logs-table th {
+    background: #f3f4f6;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+    vertical-align: middle;
+  }
+
+  #activity-logs-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  #activity-logs-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  #activity-logs-table .charge {
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  #activity-logs-table .usage {
+    color: #ef4444;
+    font-weight: 600;
   }
 </style>
 

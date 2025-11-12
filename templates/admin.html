@@ -976,7 +976,7 @@
                 
                 contentContainer.innerHTML = table;
 
-            }catch(err){
+                        }catch(err){
                 contentContainer.innerHTML = '<p class="muted">비활성 사용자 목록 로드에 실패했습니다.</p>';
             }
         }
@@ -1824,7 +1824,11 @@
                     let usageDisplay = '';
                     const isUnlimited = ['unlimited', 'gold', 'gold-vip'].includes(log.user_plan_snapshot);
 
-                    if (log.token_change > 0) {
+                    // [수정] TOKEN_RESET_BY_ADMIN의 경우 사용량/충전량 표시하지 않음 (마이너스는 빼야 하므로)
+                    if (log.activity_type === 'TOKEN_RESET_BY_ADMIN') {
+                        chargeDisplay = '-';
+                        usageDisplay = '-';
+                    } else if (log.token_change > 0) {
                         chargeDisplay = `+${log.token_change}`; // 충전
                     } else {
                         if (isUnlimited && log.activity_type === 'FILE_CONVERT') {

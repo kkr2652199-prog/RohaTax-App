@@ -696,3 +696,196 @@ def myhome_data_delete():
         return jsonify({'success': True, 'deleted': len(ids)})
     except Exception as e:
         return jsonify({'success': False, 'error': f'삭제 중 오류: {str(e)}'}), 500
+
+
+@api_bp.route('/v2/user/token-summary')
+def get_token_summary_v2():
+    """
+    '가장 최근 리셋' 이후의 activity_logs를 기준으로
+    '누적 충전량', '누적 사용량', '현재 잔량'을 정확하게 계산하여 제공하는 최종 API
+    """
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
+
+    user_id = session.get('user_id')
+
+    try:
+        from datetime import datetime
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # 이 쿼리가 이 작전의 핵심이다.
+            # WITH 구문을 사용하여 가장 최근의 리셋 시간을 먼저 찾고,
+            # 그 시간을 기준으로 데이터를 필터링하여 집계한다.
+            summary = conn.execute(
+                """
+                WITH last_reset AS (
+                    -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
+                    SELECT MAX(timestamp) as reset_time
+                    FROM activity_logs
+                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                )
+                SELECT
+                    -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
+                    -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
+                    COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                    COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+                FROM activity_logs al, last_reset lr
+                WHERE al.user_id = ?
+                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time);
+                -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
+                """,
+                (user_id, user_id)
+            ).fetchone()
+
+            total_tokens = summary['total_charged']
+            used_tokens = summary['total_used']
+            available_tokens = total_tokens - used_tokens
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'total_tokens': int(total_tokens),
+                    'used_tokens': int(used_tokens),
+                    'available_tokens': int(available_tokens)
+                },
+                'last_updated': datetime.now().isoformat()
+            })
+
+    except Exception as e:
+        print(f"Error in get_token_summary_v2: {e}")
+        return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500
+
+
+@api_bp.route('/v2/user/activity-logs')
+def get_user_activity_logs_v2():
+    """
+    '가장 최근 리셋' 이후의 모든 activity_logs를 시간순(ASC)으로 제공하는 API
+    데이터 번역 시스템을 포함하여 사용자 친화적인 형태로 변환
+    """
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
+
+    user_id = session.get('user_id')
+
+    # 활동 유형 번역 사전
+    ACTIVITY_TYPE_MAP = {
+        "TOKEN_GRANT_BY_ADMIN": "토큰 지급 (관리자)",
+        "TOKEN_RESET_BY_ADMIN": "토큰 초기화 (관리자)",
+        "FILE_CONVERT": "파일 변환",
+        "GRADE_CHANGE_BY_ADMIN": "등급 변경 (관리자)",
+        "TOKEN_USE": "토큰 사용",
+        "TOKEN_CHARGE": "토큰 충전",
+        "LOGIN": "로그인",
+        "LOGOUT": "로그아웃",
+        "PROFILE_UPDATE": "프로필 수정"
+    }
+
+    def translate_activity_type(activity_type):
+        """활동 유형을 한글로 번역"""
+        return ACTIVITY_TYPE_MAP.get(activity_type, activity_type)
+
+    def summarize_details(activity_type, details_str):
+        """상세 정보를 요약 문장으로 변환"""
+        if not details_str:
+            return '세부 정보 없음'
+        
+        try:
+            details = json.loads(details_str) if isinstance(details_str, str) else details_str
+            
+            if activity_type == 'TOKEN_GRANT_BY_ADMIN':
+                amount = details.get('granted_amount', 0)
+                return f"{amount} 토큰 지급"
+            
+            elif activity_type == 'TOKEN_RESET_BY_ADMIN':
+                return "토큰 잔액 초기화"
+            
+            elif activity_type == 'FILE_CONVERT':
+                filename = details.get('filename', '파일')
+                rows = details.get('extracted_rows', 0)
+                return f"{filename} ({rows}건)"
+            
+            elif activity_type == 'GRADE_CHANGE_BY_ADMIN':
+                old_plan = details.get('old_plan', '')
+                new_plan = details.get('new_plan', '')
+                return f"{old_plan} → {new_plan}"
+            
+            elif activity_type == 'TOKEN_USE':
+                amount = details.get('amount', 0)
+                return f"{amount} 토큰 사용"
+            
+            elif activity_type == 'TOKEN_CHARGE':
+                amount = details.get('amount', 0)
+                return f"{amount} 토큰 충전"
+            
+            elif activity_type == 'PROFILE_UPDATE':
+                fields = details.get('updated_fields', [])
+                if fields:
+                    return f"{', '.join(fields)} 수정"
+                return "프로필 정보 수정"
+            
+            else:
+                # 기본적으로 JSON을 문자열로 반환하되, 주요 필드만 추출
+                if isinstance(details, dict):
+                    # 주요 필드가 있으면 표시
+                    if 'amount' in details:
+                        return f"금액: {details['amount']}"
+                    elif 'filename' in details:
+                        return f"파일: {details['filename']}"
+                    return str(details)
+                return str(details)
+                
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            # JSON 파싱 실패 시 원본 문자열 반환 (너무 길면 잘라서)
+            if isinstance(details_str, str) and len(details_str) > 50:
+                return details_str[:50] + "..."
+            return str(details_str) if details_str else '세부 정보 없음'
+
+    try:
+        from datetime import datetime
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # WITH 구문을 사용하여 가장 최근의 리셋 시간을 먼저 찾고,
+            # 그 시간을 기준으로 데이터를 필터링하여 시간순으로 정렬한다.
+            logs = conn.execute(
+                """
+                WITH last_reset AS (
+                    SELECT MAX(timestamp) as reset_time
+                    FROM activity_logs
+                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                )
+                SELECT
+                    al.timestamp,
+                    al.user_plan_snapshot,
+                    al.activity_type,
+                    al.details,
+                    al.token_change,
+                    al.token_balance_before,
+                    al.token_balance_after
+                FROM activity_logs al, last_reset lr
+                WHERE al.user_id = ?
+                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+                ORDER BY al.timestamp ASC;
+                """,
+                (user_id, user_id)
+            ).fetchall()
+
+            # 결과를 Python dict 리스트로 변환하고 번역 적용
+            result_logs = []
+            for log in logs:
+                log_dict = dict(log)
+                # 활동 유형 번역
+                log_dict['activity_type_korean'] = translate_activity_type(log_dict['activity_type'])
+                # 상세 정보 요약
+                log_dict['details_summary'] = summarize_details(log_dict['activity_type'], log_dict['details'])
+                result_logs.append(log_dict)
+
+            return jsonify({
+                'success': True,
+                'data': result_logs
+            })
+
+    except Exception as e:
+        print(f"Error in get_user_activity_logs_v2: {e}")
+        return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500

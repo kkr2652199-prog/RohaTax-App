@@ -1,4 +1,4 @@
-# RohaTax (로하택스) 통합 커서룰 v6.1 (Comprehensive Cursor Rules)
+# RohaTax (로하택스) 통합 커서룰 v7.0 (Comprehensive Cursor Rules)
 
 ## 🚨 **최우선 원칙 - 커서룰 1순위 확인**
 **모든 작업 전에 반드시 이 커서룰을 먼저 확인하고 준수해야 합니다!**
@@ -309,4 +309,93 @@ if not validate_csrf_token(request.form.get('csrf_token')):
   - 변환 엔진: `core/conversion_engine.py` (`file_name` 파라미터 사용)
 - **사용자 입력 보호**: 날짜 선택 시에도 수동 입력한 파일명 유지 (`userEditedFileName` 플래그)
 
+#### 거래 내역 시스템 (2025년 1월 추가)
+- **API 엔드포인트**: `GET /api/v2/user/activity-logs`
+- **기능**: 가장 최근 리셋 이후의 모든 거래 내역을 시간순으로 제공
+- **데이터 번역 시스템**: 
+  - 활동 유형 한글 번역 (`activity_type_korean`)
+  - 상세 정보 요약 문장 변환 (`details_summary`)
+- **위치**: `routes/api.py` - `get_user_activity_logs_v2()`
+
+#### 마이홈 거래 내역 테이블 (2025년 1월 추가)
+- **기능**: '흐르는 물' 로직으로 잔액 계산 및 표시
+- **UI 개선**: 
+  - 중앙 정렬 (`text-align: center`)
+  - 한 줄 표시 (`white-space: nowrap`)
+  - 수직 중앙 정렬 (`vertical-align: middle`)
+- **위치**: `templates/profile_edit.html` - `loadAndRenderActivityLogs()`
+
+#### 토큰 조회 API 개선 (2025년 1월 추가)
+- **API 엔드포인트**: `GET /api/v2/user/token-summary`
+- **기능**: 가장 최근 리셋 이후의 누적 충전량/사용량 계산
+- **위치**: `routes/api.py` - `get_token_summary_v2()`
+
+### API 개발 규칙 (2025년 1월 추가)
+
+#### 데이터 번역 시스템 - **필수 포함**
+모든 사용자 대면 API는 반드시 데이터 번역 시스템을 포함해야 합니다.
+
+```python
+# 활동 유형 번역 사전 (필수 포함)
+ACTIVITY_TYPE_MAP = {
+    "TOKEN_GRANT_BY_ADMIN": "토큰 지급 (관리자)",
+    "TOKEN_RESET_BY_ADMIN": "토큰 초기화 (관리자)",
+    "FILE_CONVERT": "파일 변환",
+    "GRADE_CHANGE_BY_ADMIN": "등급 변경 (관리자)",
+    # ... 기타 활동 유형
+}
+
+def translate_activity_type(activity_type):
+    """활동 유형을 한글로 번역"""
+    return ACTIVITY_TYPE_MAP.get(activity_type, activity_type)
+
+def summarize_details(activity_type, details_str):
+    """상세 정보를 요약 문장으로 변환"""
+    # JSON 파싱 및 요약 로직
+    # ...
+
+# API 응답 생성 시 번역 필드 추가
+log_dict['activity_type_korean'] = translate_activity_type(log_dict['activity_type'])
+log_dict['details_summary'] = summarize_details(log_dict['activity_type'], log_dict['details'])
+```
+
+#### 프론트엔드 테이블 렌더링 규칙
+```javascript
+// '흐르는 물' 로직: 잔액 계산
+let previousBalance = 0;
+const rowsHtml = result.data.map(log => {
+    const currentBalance = previousBalance + (log.token_change || 0);
+    
+    // 백엔드에서 번역된 필드 사용
+    const activityTypeText = log.activity_type_korean || log.activity_type || '-';
+    const detailsText = log.details_summary || '세부 정보 없음';
+    
+    // ... HTML 행 생성
+    
+    previousBalance = currentBalance;
+    return rowHtml;
+});
+
+// 최신 내역이 위로 오도록 역순 정렬
+tbody.innerHTML = rowsHtml.reverse().join('');
+```
+
+```css
+/* 거래 내역 테이블 스타일 (필수 적용) */
+#activity-logs-table th,
+#activity-logs-table td {
+    text-align: center;        /* 중앙 정렬 */
+    vertical-align: middle;   /* 수직 중앙 정렬 */
+    white-space: nowrap;       /* 한 줄 표시 */
+}
+```
+
+### 워크트리 작업 규칙 (2025년 1월 추가)
+- **homepage1 워크트리**: 모든 파일 수정은 `homepage1/` 디렉토리 내에서만 수행
+- **메인 프로젝트 보호**: 메인 `RohaTax` 프로젝트의 파일은 절대 수정 금지
+- **서버 포트**: homepage1은 5001 포트 사용
+
 **이 커서룰은 RohaTax 프로젝트의 모든 개발 활동에 적용되어야 하며, 프로젝트의 안정성과 일관성을 보장합니다.**
+
+**버전**: v7.0 (2025년 1월)
+**최종 업데이트**: 거래 내역 UI/UX 고도화, 데이터 번역 시스템 추가
