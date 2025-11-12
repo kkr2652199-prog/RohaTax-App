@@ -69,6 +69,28 @@ function toggleEmailVerification(element) {
 }
 
 /**
+ * 자동 새로고침 시작
+ * 30초마다 대시보드를 자동으로 새로고침합니다.
+ * 
+ * @global {number|null} autoRefreshInterval - 자동 새로고침 인터벌 ID (admin.html에서 선언됨)
+ * @global {function} refreshDashboard - 대시보드 새로고침 함수 (admin.html에서 정의됨)
+ */
+function startAutoRefresh() {
+    // 기존 인터벌이 있다면 제거
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    // 30초마다 자동 새로고침
+    autoRefreshInterval = setInterval(() => {
+        console.log('🔄 자동 새로고침 실행...');
+        refreshDashboard();
+    }, 30000); // 30초
+    
+    console.log('✅ 자동 새로고침 시작 (30초 간격)');
+}
+
+/**
  * 자동 새로고침 중지
  * 실행 중인 자동 새로고침 인터벌을 중지합니다.
  * 

@@ -193,21 +193,6 @@
         // 자동 새로고침 기능
         let autoRefreshInterval = null;
         
-        function startAutoRefresh() {
-            // 기존 인터벌이 있다면 제거
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-            
-            // 30초마다 자동 새로고침
-            autoRefreshInterval = setInterval(() => {
-                console.log('🔄 자동 새로고침 실행...');
-                refreshDashboard();
-            }, 30000); // 30초
-            
-            console.log('✅ 자동 새로고침 시작 (30초 간격)');
-        }
-        
         // 페이지 가시성 변경 시 업데이트
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
