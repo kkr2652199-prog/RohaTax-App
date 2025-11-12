@@ -54,3 +54,9 @@
   - 6개의 공통 스타일은 안전하게 보존됨
   - '강제 검증'을 통해 시각적 회귀(visual regression)가 없음을 최종 확인함
 
+- **[c74c722] chore(refactor): 리팩토링 임시 파일 및 백업 제거**
+
+  - homepage.css 분리 작업이 성공적으로 완료됨에 따라, 임무를 완수한 임시 파일 및 백업 파일들을 모두 제거함
+  - 삭제 파일: homepage.css.backup, homepage_specific_selectors.txt 등
+  - 이 커밋을 끝으로 'refactor/css-split' 브랜치의 모든 작업이 완료됨
+
