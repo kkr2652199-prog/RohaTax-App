@@ -34,3 +34,9 @@
   - homepage.html 전용 선택자 145개가 포함된 목록 파일(homepage_specific_selectors.txt) 생성
   - 실제 CSS 파일 수정 없이, 다음 단계인 '스타일 추출'을 위한 도구 준비 완료
 
+- **[2ec9e34] refactor(css): homepage.html 전용 스타일 파일 생성 및 복제**
+
+  - homepage.html 전용 스타일 145개를 담을 homepage_specific.css 파일을 생성함
+  - 원본 homepage.css에서 관련 스타일 블록을 모두 '복사'하여 구문 검증까지 완료
+  - 이 단계까지 원본 homepage.css는 전혀 수정되지 않았으며, 100% 안전한 상태임
+
