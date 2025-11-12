@@ -292,13 +292,6 @@
             }
         }
         
-        function logout(){ 
-            localStorage.removeItem('admin_token'); 
-            adminToken=null; 
-            // 새 창에서 홈페이지 열기 (관리자 버튼이 사라진 상태)
-            window.open('/', '_blank');
-        }
-
         function renderUsers(users){
             if (!Array.isArray(users) || users.length === 0) {
                 document.getElementById('usersTable').innerHTML = '<p class="muted">등록된 사용자가 없습니다.</p>';

@@ -38,3 +38,14 @@ function updateRefreshButtonText(text) {
     }
 }
 
+/**
+ * 관리자 로그아웃 기능
+ * 로컬 스토리지의 관리자 토큰을 제거하고 홈페이지로 이동합니다.
+ */
+function logout(){ 
+    localStorage.removeItem('admin_token'); 
+    adminToken=null; 
+    // 새 창에서 홈페이지 열기 (관리자 버튼이 사라진 상태)
+    window.open('/', '_blank');
+}
+
