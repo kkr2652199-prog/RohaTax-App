@@ -620,46 +620,7 @@
         <section class="panel hidden" id="admin-management">
             <div class="hd">시스템 관리자 관리</div>
             
-            <!-- 관리자 전용 대시보드 요약 카드 -->
-            <div class="bd">
-                <div class="admin-dashboard-summary">
-                    <div class="summary-card">
-                        <div class="summary-icon">💰</div>
-                        <div class="summary-content">
-                            <h3 class="summary-title">총 발급 토큰</h3>
-                            <p class="summary-value" id="totalIssuedTokens">-</p>
-                            <p class="summary-subtitle">전체 시스템</p>
-            </div>
-                </div>
-                    
-                    <div class="summary-card">
-                        <div class="summary-icon">👥</div>
-                        <div class="summary-content">
-                            <h3 class="summary-title">현재 활성 사용자</h3>
-                            <p class="summary-value" id="activeUsersCount">-</p>
-                            <p class="summary-subtitle">일반 사용자</p>
-            </div>
-        </div>
-
-                    <div class="summary-card">
-                        <div class="summary-icon">⚠️</div>
-                        <div class="summary-content">
-                            <h3 class="summary-title">시스템 에러율</h3>
-                            <p class="summary-value" id="systemErrorRate">-</p>
-                            <p class="summary-subtitle">최근 24시간</p>
-                        </div>
-        </div>
-
-                    <div class="summary-card">
-                        <div class="summary-icon">🔄</div>
-                        <div class="summary-content">
-                            <h3 class="summary-title">시스템 가동률</h3>
-                            <p class="summary-value" id="systemUptime">-</p>
-                            <p class="summary-subtitle">최근 7일</p>
-                        </div>
-                    </div>
-                </div>
-        </div>
+            {% include 'admin/partials/_stat_cards.html' %}
 
             <!-- 관리자 계정 목록 -->
             <div class="bd">
