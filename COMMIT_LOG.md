@@ -40,3 +40,17 @@
   - 원본 homepage.css에서 관련 스타일 블록을 모두 '복사'하여 구문 검증까지 완료
   - 이 단계까지 원본 homepage.css는 전혀 수정되지 않았으며, 100% 안전한 상태임
 
+- **[7a219d1] refactor(css): homepage.html에 분리된 CSS 파일 연결**
+
+  - homepage.html에 새로 생성된 homepage_specific.css 파일을 연결함
+  - 현재 상태는 원본과 복제본 CSS를 모두 로드하는 중복 상태
+  - 서버 환경에서 시각적 변화가 없음을 '인간 검증'으로 확인함
+  - 다음 단계인 '원본 스타일 제거'를 위한 안전한 발판을 마련함
+
+- **[09eb853] refactor(css): 원본 homepage.css에서 중복 스타일 제거**
+
+  - homepage.html 전용 스타일 145개 및 관련 규칙을 homepage.css에서 모두 제거함
+  - 파일 크기가 약 3,800줄에서 약 1,800줄로 크게 감소함
+  - 6개의 공통 스타일은 안전하게 보존됨
+  - '강제 검증'을 통해 시각적 회귀(visual regression)가 없음을 최종 확인함
+
