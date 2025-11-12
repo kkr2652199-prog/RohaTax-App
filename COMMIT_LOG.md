@@ -96,3 +96,9 @@
   - admin.html의 HTML 구조 분리 작업을 거의 마무리함
   - 시각적 회귀가 없음을 '인간 검증'으로 확인함
 
+- **[d1e5b09] refactor(css): admin.html의 인라인 CSS를 admin.css 파일로 분리**
+
+  - admin.html 내부에 존재하던 약 600줄의 인라인 CSS를 독립된 admin.css 파일로 완전히 분리함
+  - 구조(HTML)와 디자인(CSS)의 책임을 명확하게 분리하여 유지보수성을 크게 향상시킴
+  - 시각적 회귀가 없음을 '인간 검증'으로 확인함
+
