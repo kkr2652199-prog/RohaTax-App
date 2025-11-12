@@ -90,3 +90,9 @@
   - admin.html의 구조를 지속적으로 단순화하고 컴포넌트화를 진행함
   - 시각적 회귀가 없음을 '인간 검증'으로 확인함
 
+- **[66521e6] refactor(html): admin.html의 관리자 계정 목록 분리**
+
+  - admin.html의 여섯 번째 리팩토링 단계로, '관리자 계정 목록' 테이블을 partial 파일(_admin_list_table.html)로 분리함
+  - admin.html의 HTML 구조 분리 작업을 거의 마무리함
+  - 시각적 회귀가 없음을 '인간 검증'으로 확인함
+
