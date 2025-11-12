@@ -14,3 +14,14 @@ function updateLastRefreshTime() {
     console.log(`🔄 대시보드 업데이트: ${timeString}`);
 }
 
+/**
+ * 파일 다운로드 기능
+ * 현재는 placeholder로 구현되어 있으며, 추후 실제 다운로드 로직이 추가될 예정입니다.
+ * 
+ * @param {string} filename - 다운로드할 파일명
+ */
+function downloadFile(filename) {
+    // 파일 다운로드 로직 (추후 구현)
+    console.log('파일 다운로드:', filename);
+}
+
