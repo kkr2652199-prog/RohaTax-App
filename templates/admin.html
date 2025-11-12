@@ -235,14 +235,6 @@
             }
         }
         
-        // 새로고침 버튼 텍스트 업데이트
-        function updateRefreshButtonText(text) {
-            const refreshText = document.querySelector('.refresh-text');
-            if (refreshText) {
-                refreshText.textContent = text;
-            }
-        }
-        
         async function loadTokenHistory(){
             // [최종 수정] 이 함수는 이제 '비활성 사용자'를 로드하고 관리합니다.
             const contentContainer = document.getElementById('tokenHistoryTable');

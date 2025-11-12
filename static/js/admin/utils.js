@@ -25,3 +25,16 @@ function downloadFile(filename) {
     console.log('파일 다운로드:', filename);
 }
 
+/**
+ * 새로고침 버튼 텍스트 업데이트
+ * 자동 새로고침 토글 시 버튼 텍스트를 동적으로 변경합니다.
+ * 
+ * @param {string} text - 표시할 텍스트
+ */
+function updateRefreshButtonText(text) {
+    const refreshText = document.querySelector('.refresh-text');
+    if (refreshText) {
+        refreshText.textContent = text;
+    }
+}
+
