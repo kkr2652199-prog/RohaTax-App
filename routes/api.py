@@ -727,8 +727,9 @@ def get_token_summary_v2():
                 )
                 SELECT
                     -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
-                    COALESCE(SUM(CASE WHEN al.token_change > 0 THEN al.token_change ELSE 0 END), 0) as total_charged,
-                    COALESCE(SUM(CASE WHEN al.token_change < 0 THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+                    -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
+                    COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                    COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
                 FROM activity_logs al, last_reset lr
                 WHERE al.user_id = ?
                   AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time);
@@ -860,6 +861,7 @@ def get_user_activity_logs_v2():
                     al.activity_type,
                     al.details,
                     al.token_change,
+                    al.token_balance_before,
                     al.token_balance_after
                 FROM activity_logs al, last_reset lr
                 WHERE al.user_id = ?

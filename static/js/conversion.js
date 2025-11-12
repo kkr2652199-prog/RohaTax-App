@@ -83,11 +83,84 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const response = await fetch('/api/user-info', {
+                // 사용자 플랜 정보 조회
+                const userInfoResponse = await fetch('/api/user-info', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
                         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (userInfoResponse.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+
+                if (!userInfoResponse.ok) {
+                    throw new Error(`HTTP ${userInfoResponse.status}`);
+                }
+
+                const userInfoData = await userInfoResponse.json();
+                if (userInfoData.success && userInfoData.data && userInfoData.data.user) {
+                    const user = userInfoData.data.user;
+                    currentUserPlanType = (user.plan_type || '').toLowerCase();
+
+                    // 토큰 정보는 정확한 API로 조회
+                    try {
+                        const tokenResponse = await fetch('/api/v2/user/token-summary', {
+                            method: 'GET',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+                            if (tokenData.success && tokenData.data) {
+                                if (currentUserPlanType.includes('gold')) {
+                                    setTokenDisplay('무제한', '-', '무제한');
+                                } else {
+                                    // activity_logs 기반 정확한 값 사용
+                                    setTokenDisplay(
+                                        tokenData.data.total_tokens ?? 0,      // 지급: 200
+                                        tokenData.data.used_tokens ?? 0,        // 사용: 112
+                                        tokenData.data.available_tokens ?? 0     // 잔액: 88
+                                    );
+                                }
+                            }
+                        }
+                    } catch (tokenError) {
+                        console.error('토큰 정보 로드 오류:', tokenError);
+                        // 폴백: 기존 방식 사용
+                        if (currentUserPlanType.includes('gold')) {
+                            setTokenDisplay('무제한', '-', '무제한');
+                        } else {
+                            const granted = Number(user.token_balance ?? 0);
+                            const used = Number(user.tokens_used ?? 0);
+                            const available = granted - used;
+                            setTokenDisplay(granted, used, available);
+                        }
+                    }
+                }
+
+                return currentUserPlanType;
+            } catch (error) {
+                console.error('사용자 정보 로드 오류:', error);
+            }
+
+            return currentUserPlanType;
+        }
+
+        async function fetchTokenStatusAndUpdateDisplay() {
+            try {
+                // activity_logs 기반 정확한 토큰 정보 조회
+                const response = await fetch('/api/v2/user/token-summary', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
                         'Content-Type': 'application/json'
                     }
                 });
@@ -102,53 +175,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 const data = await response.json();
-                if (data.success && data.data && data.data.user) {
-                    const user = data.data.user;
-                    currentUserPlanType = (user.plan_type || '').toLowerCase();
-
-                    if (currentUserPlanType.includes('gold')) {
-                        setTokenDisplay('무제한', '-', '무제한');
-                    } else {
-                        const granted = Number(user.token_balance ?? 0);
-                        const used = Number(user.tokens_used ?? 0);
-                        const available = granted - used;
-                        setTokenDisplay(granted, used, available);
-                    }
-
-                    return currentUserPlanType;
-                }
-            } catch (error) {
-                console.error('사용자 정보 로드 오류:', error);
-            }
-
-            return currentUserPlanType;
-        }
-
-        async function fetchTokenStatusAndUpdateDisplay() {
-            try {
-                const response = await fetch('/api/token-status', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.status === 401) {
-                    window.location.href = '/login';
-                    return null;
-                }
-
-                const data = await response.json();
                 if (data.success && data.data) {
                     if (currentUserPlanType && currentUserPlanType.includes('gold')) {
                         setTokenDisplay('무제한', '-', '무제한');
                     } else {
                         const tokenData = data.data;
+                        // activity_logs 기반 정확한 값 사용
                         setTokenDisplay(
-                            tokenData.total_granted ?? 0,
-                            tokenData.total_used ?? 0,
-                            tokenData.available_tokens ?? 0
+                            tokenData.total_tokens ?? 0,      // 지급: 200
+                            tokenData.used_tokens ?? 0,        // 사용: 112
+                            tokenData.available_tokens ?? 0     // 잔액: 88
                         );
                     }
                     return data.data;
