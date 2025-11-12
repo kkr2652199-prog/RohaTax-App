@@ -113,3 +113,8 @@
   - JS 분리 리팩토링의 두 번째 단계로, 유틸리티 함수인 downloadFile()을 static/js/admin/utils.js 파일로 분리함
   - 기능적 회귀 및 부작용이 없음을 '인간 검증'으로 확인함
 
+- **[d0f7160] refactor(js): admin.html의 JS 함수(updateRefreshButtonText) 분리**
+
+  - JS 분리 리팩토링의 세 번째 단계로, DOM을 조작하는 유틸리티 함수인 updateRefreshButtonText()를 static/js/admin/utils.js 파일로 분리함
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함
+
