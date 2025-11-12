@@ -128,3 +128,8 @@
   - JS 분리 리팩토링의 다섯 번째 단계로, '설정' 탭의 UI와 상호작용하는 toggleEmailVerification() 함수를 static/js/admin/utils.js 파일로 분리함
   - 기능적 회귀가 없음을 '인간 검증'으로 확인함
 
+- **[69f2111] refactor(js): admin.html의 JS 함수(stopAutoRefresh) 분리**
+
+  - JS 분리 리팩토링의 여섯 번째 단계로, 전역 변수(autoRefreshInterval)에 의존하는 stopAutoRefresh() 함수를 static/js/admin/utils.js 파일로 분리함
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함
+
