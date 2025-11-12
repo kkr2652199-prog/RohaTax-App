@@ -606,16 +606,7 @@
 {% endblock %}
 {% block content %}
     <div id="adminDashboard" class="admin-wrap">
-        <div class="admin-header">
-            <div>
-                <h1>👑 관리자 대시보드</h1>
-                <p>실시간 시스템 현황 및 사용자 관리</p>
-            </div>
-            <div style="display:flex;gap:10px;">
-                <button class="btn" style="background:#27ae60;color:#fff;" onclick="window.location.href='/'">홈으로</button>
-                <button class="btn danger" onclick="logout()">로그아웃</button>
-            </div>
-        </div>
+        {% include 'admin/partials/_header.html' %}
 
         <div class="refresh-indicator" onclick="toggleAutoRefresh()">
             <span class="refresh-icon">🔄</span>
