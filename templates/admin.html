@@ -608,10 +608,7 @@
     <div id="adminDashboard" class="admin-wrap">
         {% include 'admin/partials/_header.html' %}
 
-        <div class="refresh-indicator" onclick="toggleAutoRefresh()">
-            <span class="refresh-icon">🔄</span>
-            <span class="refresh-text">실시간 업데이트</span>
-                </div>
+        {% include 'admin/partials/_live_indicator.html' %}
 
         <div class="tabs">
             <button class="active admin-tab" data-target="users">일반 사용자 관리</button>
