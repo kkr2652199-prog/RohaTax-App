@@ -102,3 +102,9 @@
   - 구조(HTML)와 디자인(CSS)의 책임을 명확하게 분리하여 유지보수성을 크게 향상시킴
   - 시각적 회귀가 없음을 '인간 검증'으로 확인함
 
+- **[5c0495c] refactor(js): admin.html의 첫 번째 JS 함수(updateLastRefreshTime) 분리**
+
+  - admin.html 리팩토링의 마지막 단계인 JavaScript 분리를 시작함
+  - 첫 번째 단계로, 가장 독립적이고 안전한 유틸리티 함수인 updateLastRefreshTime()을 static/js/admin/utils.js 파일로 분리함
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함
+
