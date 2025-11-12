@@ -133,3 +133,9 @@
   - JS 분리 리팩토링의 여섯 번째 단계로, 전역 변수(autoRefreshInterval)에 의존하는 stopAutoRefresh() 함수를 static/js/admin/utils.js 파일로 분리함
   - 기능적 회귀가 없음을 '인간 검증'으로 확인함
 
+- **[9184796] refactor(js): admin.html의 JS 함수(startAutoRefresh) 분리**
+
+  - JS 분리 리팩토링의 일곱 번째 단계로, 다른 함수(loadUsers, updateLastRefreshTime)를 호출하는 startAutoRefresh() 함수를 static/js/admin/utils.js 파일로 분리함
+  - 외부 파일에서 인라인 스크립트의 함수를 호출하는 의존성 문제를 성공적으로 해결함
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함
+
