@@ -68,3 +68,17 @@ function toggleEmailVerification(element) {
     }
 }
 
+/**
+ * 자동 새로고침 중지
+ * 실행 중인 자동 새로고침 인터벌을 중지합니다.
+ * 
+ * @global {number|null} autoRefreshInterval - 자동 새로고침 인터벌 ID (admin.html에서 선언됨)
+ */
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        console.log('⏹️ 자동 새로고침 중지');
+    }
+}
+

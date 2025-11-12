@@ -208,14 +208,6 @@
             console.log('✅ 자동 새로고침 시작 (30초 간격)');
         }
         
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-                console.log('⏹️ 자동 새로고침 중지');
-            }
-        }
-        
         // 페이지 가시성 변경 시 업데이트
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
