@@ -60,3 +60,9 @@
   - 삭제 파일: homepage.css.backup, homepage_specific_selectors.txt 등
   - 이 커밋을 끝으로 'refactor/css-split' 브랜치의 모든 작업이 완료됨
 
+- **[8082243] refactor(html): admin.html의 헤더 영역을 partial 파일로 분리**
+
+  - admin.html 리팩토링의 첫 단계로, 관리자 헤더 영역을 독립적인 partial 파일(_header.html)로 분리함
+  - admin.html 본문은 {% include %} 문으로 대체되어 가독성이 향상됨
+  - 시각적 회귀 및 기능 이상이 없음을 '인간 검증'으로 확인함
+
