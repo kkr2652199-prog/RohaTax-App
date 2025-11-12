@@ -49,3 +49,22 @@ function logout(){
     window.open('/', '_blank');
 }
 
+/**
+ * 이메일 인증 토글 기능
+ * 이메일 인증 설정의 체크박스 상태를 토글하고 UI를 업데이트합니다.
+ * 
+ * @param {HTMLElement} element - 토글 스위치 요소
+ */
+function toggleEmailVerification(element) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        element.classList.add('active');
+        element.nextElementSibling.textContent = '이메일 인증 활성화';
+    } else {
+        element.classList.remove('active');
+        element.nextElementSibling.textContent = '이메일 인증 비활성화';
+    }
+}
+
