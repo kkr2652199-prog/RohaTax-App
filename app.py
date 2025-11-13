@@ -215,6 +215,7 @@ from routes.admin.activity_log_api import activity_log_bp
 from routes.ops import ops_bp
 from routes.api import api_bp
 from routes.conversion_modules.gold_customers_routes import gold_customers_bp  # noop-reload
+from routes.conversion_modules.security_routes import security_bp
 
 if 'home' not in app.blueprints:
     app.register_blueprint(home_bp)
@@ -230,6 +231,8 @@ if 'api' not in app.blueprints:
     app.register_blueprint(api_bp)
 if 'gold_customers' not in app.blueprints:
     app.register_blueprint(gold_customers_bp)
+if 'security' not in app.blueprints:
+    app.register_blueprint(security_bp)
 
 
 @app.route('/')

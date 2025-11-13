@@ -28,6 +28,12 @@ from .utils.auth import (
 from core.utils import row_value
 from core.token_service import get_user_token_status
 from .conversion_modules.template_routes import get_templates, get_template_info, validate_template, upload_template
+from .conversion_modules.security_routes import (
+    get_security_status, 
+    get_notifications, 
+    mark_notification_read, 
+    test_validation as test_file_validation
+)
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -305,76 +311,6 @@ def get_guidelines_version():
                return error(f'버전 조회 실패: {str(e)}', status=500)
 
 
-@conversion_bp.route('/api/security/status', methods=['GET'])
-def get_security_status():
-    """보안 시스템 상태 조회 API"""
-    _, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        # 파일 검증 시스템 상태
-        validation_summary = file_validator.get_validation_summary()
-        
-        # 알림 시스템 상태
-        notification_stats = notification_system.get_notification_stats()
-        
-        # 최근 알림 목록
-        recent_notifications = notification_system.get_notifications(limit=10)
-        
-        return success('보안 시스템 상태 조회 성공', data={
-            'file_validation': validation_summary,
-            'notifications': notification_stats,
-            'recent_notifications': recent_notifications,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return error(f'보안 시스템 상태 조회 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/security/notifications', methods=['GET'])
-def get_notifications():
-    """알림 목록 조회 API"""
-    _, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        category = request.args.get('category')
-        priority = request.args.get('priority')
-        unread_only = request.args.get('unread_only', 'false').lower() == 'true'
-        limit = int(request.args.get('limit', 50))
-        
-        notifications = notification_system.get_notifications(
-            category=category,
-            priority=priority,
-            unread_only=unread_only,
-            limit=limit
-        )
-        
-        return success('알림 목록 조회 성공', data={
-            'notifications': notifications,
-            'count': len(notifications)
-        })
-        
-    except Exception as e:
-        return error(f'알림 목록 조회 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/security/notifications/<int:notification_id>/read', methods=['POST'])
-def mark_notification_read(notification_id):
-    """알림을 읽음으로 표시 API"""
-    _, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        notification_system.mark_as_read(notification_id)
-        return success('알림을 읽음으로 표시했습니다')
-        
-    except Exception as e:
-        return error(f'알림 읽음 표시 실패: {str(e)}', status=500)
 
 
 # 변환 시작: 파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입
@@ -1088,31 +1024,4 @@ def download_converted():
             }
         )
 
-@conversion_bp.route('/api/security/validation/test', methods=['POST'])
-def test_file_validation():
-    """파일 검증 테스트 API"""
-    _, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        data = request.get_json(silent=True) or {}
-        file_path = data.get('file_path')
-        target_folder = data.get('target_folder')
-        
-        if not file_path or not target_folder:
-            return error('file_path와 target_folder가 필요합니다', status=400)
-        
-        # 경로 검증 테스트
-        is_valid, message = file_validator.validate_destination_path(file_path, target_folder)
-        
-        return success('파일 검증 테스트 완료', data={
-            'file_path': file_path,
-            'target_folder': target_folder,
-            'is_valid': is_valid,
-            'message': message
-        })
-        
-    except Exception as e:
-        return error(f'파일 검증 테스트 실패: {str(e)}', status=500)
 
