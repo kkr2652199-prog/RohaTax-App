@@ -7,16 +7,9 @@ from flask import Blueprint, render_template, session, redirect, url_for, reques
 import os
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
+from core.utils import row_value
 
 main_bp = Blueprint('main', __name__)
-
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼"""
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
 
 
 @main_bp.route('/conversion')

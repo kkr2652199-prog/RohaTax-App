@@ -12,16 +12,9 @@ import time
 import os
 import json
 from datetime import datetime
+from core.utils import row_value
 
 token_bp = Blueprint('token', __name__)
-
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼"""
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
 
 
 def admin_required(func):

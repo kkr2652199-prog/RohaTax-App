@@ -724,6 +724,7 @@ def get_token_summary_v2():
                     SELECT MAX(timestamp) as reset_time
                     FROM activity_logs
                     WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                      AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
                 )
                 SELECT
                     -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
@@ -732,7 +733,8 @@ def get_token_summary_v2():
                     COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
                 FROM activity_logs al, last_reset lr
                 WHERE al.user_id = ?
-                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time);
+                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+                  AND COALESCE(al.is_deleted, 0) = 0;  -- [버그 수정] 삭제된 레코드 제외
                 -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
                 """,
                 (user_id, user_id)
@@ -854,8 +856,10 @@ def get_user_activity_logs_v2():
                     SELECT MAX(timestamp) as reset_time
                     FROM activity_logs
                     WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                      AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
                 )
                 SELECT
+                    al.id,  -- [추가] 프론트엔드 삭제 기능에 필요
                     al.timestamp,
                     al.user_plan_snapshot,
                     al.activity_type,
@@ -866,6 +870,7 @@ def get_user_activity_logs_v2():
                 FROM activity_logs al, last_reset lr
                 WHERE al.user_id = ?
                   AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+                  AND COALESCE(al.is_deleted, 0) = 0  -- [버그 수정] 삭제되지 않은 레코드만 조회
                 ORDER BY al.timestamp ASC;
                 """,
                 (user_id, user_id)

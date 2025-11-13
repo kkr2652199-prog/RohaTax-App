@@ -25,20 +25,11 @@ from .utils.auth import (
     ensure_login_for_json,
     is_authenticated,
 )
+from core.utils import row_value
 
 conversion_bp = Blueprint('conversion', __name__)
 
 logger = logging.getLogger(__name__)
-
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼.
-    Row는 dict.get을 지원하지 않으므로 키 인덱싱 후 None/누락을 기본값으로 대체한다.
-    """
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
 
 # 전역 변환 엔진 인스턴스 제거 (상태 격리를 위해)
 # conversion_engine = ConversionEngine()  # 제거됨 - 요청별 인스턴스 생성으로 변경
@@ -251,24 +242,24 @@ def user_info():
         
         # 민감한 정보는 제외하고 필요한 정보만 반환
         safe_user_data = {
-            'id': _row_value(user, 'id'),
-            'username': _row_value(user, 'username', ''),
-            'email': _row_value(user, 'email', ''),
-            'company_name': _row_value(user, 'company_name', ''),
-            'business_number': _row_value(user, 'business_number', ''),
-            'representative_name': _row_value(user, 'representative_name', ''),
-            'phone': _row_value(user, 'phone', ''),
-            'address': _row_value(user, 'address', ''),
-            'business_type': _row_value(user, 'business_type', ''),
-            'business_category': _row_value(user, 'business_category', ''),
-            'plan_type': _row_value(user, 'plan_type', ''),
-            'monthly_limit': _row_value(user, 'monthly_limit', 0),
-            'used_count': _row_value(user, 'used_count', 0),
-            'is_active': bool(_row_value(user, 'is_active', 0)),
-            'is_admin': bool(_row_value(user, 'is_admin', 0)),
-            'token_balance': _row_value(user, 'token_balance', 0) or 0,
-            'tokens_used': _row_value(user, 'tokens_used', 0) or 0,
-            'created_at': _row_value(user, 'created_at', '')
+            'id': row_value(user, 'id'),
+            'username': row_value(user, 'username', ''),
+            'email': row_value(user, 'email', ''),
+            'company_name': row_value(user, 'company_name', ''),
+            'business_number': row_value(user, 'business_number', ''),
+            'representative_name': row_value(user, 'representative_name', ''),
+            'phone': row_value(user, 'phone', ''),
+            'address': row_value(user, 'address', ''),
+            'business_type': row_value(user, 'business_type', ''),
+            'business_category': row_value(user, 'business_category', ''),
+            'plan_type': row_value(user, 'plan_type', ''),
+            'monthly_limit': row_value(user, 'monthly_limit', 0),
+            'used_count': row_value(user, 'used_count', 0),
+            'is_active': bool(row_value(user, 'is_active', 0)),
+            'is_admin': bool(row_value(user, 'is_admin', 0)),
+            'token_balance': row_value(user, 'token_balance', 0) or 0,
+            'tokens_used': row_value(user, 'tokens_used', 0) or 0,
+            'created_at': row_value(user, 'created_at', '')
         }
         
         return success('사용자 정보 조회 성공', data={'user': safe_user_data})
@@ -643,9 +634,38 @@ def start_conversion():
         logger.info(f"템플릿 건수: {template_count}개, 필요 토큰: {required_tokens}개")
     
     # ============================================
-    # 핵심 변경 3: 토큰 잔량 정밀 확인
+    # 핵심 변경 3: 토큰 잔량 정밀 확인 (activity_logs 기반)
     # ============================================
-    available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
+    # [버그 수정] users 테이블 대신 activity_logs 기반으로 정확한 토큰 잔량 계산
+    # get_token_summary_v2()와 동일한 로직 사용
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        summary = conn.execute(
+            """
+            WITH last_reset AS (
+                -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
+                SELECT MAX(timestamp) as reset_time
+                FROM activity_logs
+                WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                  AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
+            )
+            SELECT
+                -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
+                -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
+                COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+            FROM activity_logs al, last_reset lr
+            WHERE al.user_id = ?
+              AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+              AND COALESCE(al.is_deleted, 0) = 0;  -- [버그 수정] 삭제된 레코드 제외
+            -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
+            """,
+            (user_id, user_id)
+        ).fetchone()
+        
+        total_tokens = summary['total_charged'] if summary else 0
+        used_tokens = summary['total_used'] if summary else 0
+        available_tokens = total_tokens - used_tokens
     
     if not is_unlimited and available_tokens < required_tokens:
         # 부족한 토큰 정확히 계산

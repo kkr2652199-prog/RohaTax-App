@@ -6,16 +6,9 @@
 from flask import Blueprint, session, jsonify
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
+from core.utils import row_value
 
 user_bp = Blueprint('user', __name__)
-
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼"""
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
 
 
 @user_bp.route('/api/user-info', methods=['GET'])

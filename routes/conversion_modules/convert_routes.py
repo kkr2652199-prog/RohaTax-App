@@ -13,19 +13,12 @@ from core.security import generate_csrf_token
 from datetime import datetime
 from core.token_log_schema import make_token_log, DEFAULT_TOKEN_COSTS
 from core.token_logger import write_token_log
+from core.utils import row_value
 import os
 import tempfile
 import json
 
 convert_bp = Blueprint('convert', __name__)
-
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼"""
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
 
 
 @convert_bp.route('/api/convert/start', methods=['POST'])

@@ -24,13 +24,4 @@ conversion_bp.register_blueprint(template_bp)
 conversion_bp.register_blueprint(security_bp)
 conversion_bp.register_blueprint(convert_bp)
 
-# 공통 유틸리티 함수
-def _row_value(row, key, default=None):
-    """sqlite3.Row 안전 접근 헬퍼"""
-    try:
-        value = row[key]
-    except Exception:
-        return default
-    return default if value is None else value
-
 
