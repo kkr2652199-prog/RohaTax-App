@@ -8,6 +8,22 @@
 
 ---
 
+### 2025-11-13 19:47:44 (KST)
+
+- **[591e6a0] refactor(route): conversion.py의 템플릿 관리 책임 분리**
+
+  - **수정 파일:** `routes/conversion.py`
+
+  - **핵심 내용:** `conversion.py`의 템플릿 관련 4개 함수를 제거하고, `template_routes`에서 import 하도록 변경.
+
+  - conversion.py가 부당하게 가지고 있던 템플릿 관리 관련 4개 함수를 제거함.
+
+  - 원래 책임을 담당하던 template_routes 모듈을 import하여 사용하도록 변경함.
+
+  - '하나의 파일, 하나의 책임' 원칙에 따라 리팩토링을 진행함.
+
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함.
+
 ### 2025-01-12
 
 - **[afc153e] refactor(token): 토큰 잔액 조회 로직을 token_service로 통합**
