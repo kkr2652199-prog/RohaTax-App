@@ -88,3 +88,4 @@ window.showDashboard = showDashboard;
 window.refreshDashboard = refreshDashboard;
 window.toggleAutoRefresh = toggleAutoRefresh;
 
+
