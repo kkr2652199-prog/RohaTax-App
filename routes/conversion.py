@@ -26,6 +26,7 @@ from .utils.auth import (
     is_authenticated,
 )
 from core.utils import row_value
+from core.token_service import get_user_token_status
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -142,39 +143,34 @@ def use_token():
     if tokens_to_use <= 0:
         return error('토큰 수량은 1 이상이어야 합니다', status=400)
     
+    # 토큰 상태 조회 (중복 제거: token_service 사용)
+    token_status = get_user_token_status(user_id)
+    if token_status is None:
+        return error('사용자를 찾을 수 없습니다', status=404)
+    
+    available_tokens = token_status['available_tokens']
+    
+    if available_tokens < tokens_to_use:
+        return error(f'토큰이 부족합니다. 사용 가능: {available_tokens}개, 요청: {tokens_to_use}개', status=400)
+    
+    # 토큰 사용량 업데이트
     with get_conn() as conn:
-        # 현재 사용자 정보 조회
-        user = conn.execute(
-            "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (user_id,)
-        ).fetchone()
-        
-        if not user:
-            return error('사용자를 찾을 수 없습니다', status=404)
-        
-        # 사용 가능한 토큰 계산
-        available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-        
-        if available_tokens < tokens_to_use:
-            return error(f'토큰이 부족합니다. 사용 가능: {available_tokens}개, 요청: {tokens_to_use}개', status=400)
-        
-        # 토큰 사용량 업데이트
-        new_tokens_used = (user['tokens_used'] or 0) + tokens_to_use
+        new_tokens_used = token_status['tokens_used'] + tokens_to_use
         conn.execute(
             "UPDATE users SET tokens_used = ? WHERE id = ?", 
             (new_tokens_used, user_id)
         )
         conn.commit()
-        
-        # 업데이트된 잔액 반환
-        remaining_tokens = (user['token_balance'] or 0) - new_tokens_used
-        
-        return success('토큰이 사용되었습니다', data={
-            'tokens_used': tokens_to_use,
-            'remaining_tokens': remaining_tokens,
-            'total_granted': user['token_balance'] or 0,
-            'total_used': new_tokens_used
-        })
+    
+    # 업데이트된 잔액 반환
+    remaining_tokens = token_status['token_balance'] - new_tokens_used
+    
+    return success('토큰이 사용되었습니다', data={
+        'tokens_used': tokens_to_use,
+        'remaining_tokens': remaining_tokens,
+        'total_granted': token_status['token_balance'],
+        'total_used': new_tokens_used
+    })
 
 
 @conversion_bp.route('/api/token-status', methods=['GET'])
@@ -189,25 +185,19 @@ def token_status():
     logger.info(f"세션 전체: {dict(session)}")
     logger.info(f"요청 헤더: {dict(request.headers)}")
 
-    # 토큰 잔액 조회 (기존 방식으로 복원)
-    with get_conn() as conn:
-        user = conn.execute(
-            "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (user_id,)
-        ).fetchone()
-        
-        if not user:
-            logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
-            return error('사용자를 찾을 수 없습니다', status=404)
-        
-        available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-        logger.info(f"토큰 상태 조회 성공: Balance={user['token_balance']}, Used={user['tokens_used']}, Available={available_tokens}")
-        
-        return success('토큰 상태 조회 성공', data={
-            'total_granted': user['token_balance'] or 0,
-            'total_used': user['tokens_used'] or 0,
-            'available_tokens': available_tokens
-        })
+    # 토큰 잔액 조회 (중복 제거: token_service 사용)
+    token_status = get_user_token_status(user_id)
+    if token_status is None:
+        logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
+        return error('사용자를 찾을 수 없습니다', status=404)
+    
+    logger.info(f"토큰 상태 조회 성공: Balance={token_status['token_balance']}, Used={token_status['tokens_used']}, Available={token_status['available_tokens']}")
+    
+    return success('토큰 상태 조회 성공', data={
+        'total_granted': token_status['token_balance'],
+        'total_used': token_status['tokens_used'],
+        'available_tokens': token_status['available_tokens']
+    })
 
 
  
