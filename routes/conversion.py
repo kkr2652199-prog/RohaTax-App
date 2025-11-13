@@ -27,6 +27,7 @@ from .utils.auth import (
 )
 from core.utils import row_value
 from core.token_service import get_user_token_status
+from .conversion_modules.template_routes import get_templates, get_template_info, validate_template, upload_template
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -253,120 +254,6 @@ def user_info():
         }
         
         return success('사용자 정보 조회 성공', data={'user': safe_user_data})
-
-
-@conversion_bp.route('/api/templates', methods=['GET'])
-def get_templates():
-    """사용 가능한 템플릿 목록 조회 API"""
-    _, guard_response = ensure_login_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        templates = template_manager.get_available_templates()
-        return success('템플릿 목록 조회 성공', data={'templates': templates})
-    except Exception as e:
-        return error(f'템플릿 목록 조회 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/templates/<template_id>', methods=['GET'])
-def get_template_info(template_id):
-    """특정 템플릿 정보 조회 API"""
-    _, guard_response = ensure_login_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        template_info = template_manager.get_template_info(template_id)
-        if not template_info:
-            return error('템플릿을 찾을 수 없습니다', status=404)
-        
-        return success('템플릿 정보 조회 성공', data={'template': template_info})
-    except Exception as e:
-        return error(f'템플릿 정보 조회 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/templates/<template_id>/validate', methods=['GET'])
-def validate_template(template_id):
-    """템플릿 파일 유효성 검사 API"""
-    _, guard_response = ensure_login_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        is_valid = template_manager.validate_template_file(template_id)
-        template_path = template_manager.get_template_path(template_id)
-        
-        return success('템플릿 유효성 검사 완료', data={
-            'template_id': template_id,
-            'is_valid': is_valid,
-            'file_path': template_path
-        })
-    except Exception as e:
-        return error(f'템플릿 유효성 검사 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/templates/upload', methods=['POST'])
-def upload_template():
-    """템플릿 파일 업로드 API (관리자 전용)"""
-    _, guard_response = ensure_admin_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        # 업로드된 파일 확인
-        if 'template_file' not in request.files:
-            return error('템플릿 파일이 없습니다', status=400)
-        
-        template_file = request.files['template_file']
-        if template_file.filename == '':
-            return error('파일이 선택되지 않았습니다', status=400)
-        
-        # 파일 확장자 검증
-        if not template_file.filename.lower().endswith(('.xlsx', '.xlsm', '.xls')):
-            return error('Excel 파일만 업로드 가능합니다', status=400)
-        
-        # 템플릿 정보 파싱
-        template_id = request.form.get('template_id')
-        template_name = request.form.get('template_name')
-        template_description = request.form.get('template_description')
-        sheet_name = request.form.get('sheet_name', 'Sheet1')
-        header_row = int(request.form.get('header_row', 1))
-        
-        if not all([template_id, template_name]):
-            return error('템플릿 ID와 이름은 필수입니다', status=400)
-        
-        # 템플릿 디렉토리 생성
-        template_dir = template_manager.create_template_directory(template_id)
-        
-        # 파일 저장
-        filename = f"{template_id}_template.xlsx"
-        file_path = os.path.join(template_dir, filename)
-        template_file.save(file_path)
-        
-        # 템플릿 설정에 추가
-        template_info = {
-            "name": template_name,
-            "description": template_description or f"{template_name} 템플릿",
-            "file": f"{template_id}/{filename}",
-            "sheet_name": sheet_name,
-            "header_row": header_row,
-            "fields": {}  # 나중에 필드 매핑 추가 가능
-        }
-        
-        success_result = template_manager.add_template(template_id, template_info)
-        
-        if success_result:
-            return success('템플릿 업로드 성공', data={
-                'template_id': template_id,
-                'file_path': file_path,
-                'template_info': template_info
-            })
-        else:
-            return error('템플릿 설정 저장 실패', status=500)
-            
-    except Exception as e:
-        return error(f'템플릿 업로드 실패: {str(e)}', status=500)
 
 
 @conversion_bp.route('/api/validate-template-data', methods=['POST'])
