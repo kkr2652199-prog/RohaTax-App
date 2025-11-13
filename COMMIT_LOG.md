@@ -10,6 +10,18 @@
 
 ### 2025-01-12
 
+- **[afc153e] refactor(token): 토큰 잔액 조회 로직을 token_service로 통합**
+
+  - **수정 파일:** `routes/conversion.py`, `core/token_service.py`
+
+  - **핵심 내용:** `conversion.py`의 중복 쿼리를 `token_service.get_user_token_status()`로 통합하여 중앙화.
+
+  - routes/conversion.py에 중복으로 존재하던 토큰 잔액 조회 쿼리를 core/token_service.py의 get_user_token_status() 함수로 중앙화함.
+
+  - 코드 중복을 제거하고, 토큰 관련 비즈니스 로직의 책임을 분리함.
+
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함.
+
 - **[da182af] refactor(core): _row_value 함수를 core.utils로 통합하여 중복 제거**
 
   - 6개의 다른 파일에 중복으로 정의되어 있던 _row_value 헬퍼 함수를 core/utils.py의 row_value 함수로 통합함.
