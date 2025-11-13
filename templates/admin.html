@@ -32,7 +32,7 @@
             <div class="hd">비활성 사용자 관리</div>
             <div class="bd" id="tokenHistoryTable">
                 <p class="muted">비활성 사용자 목록을 불러오는 중...</p>
-            </div>
+                        </div>
         </section>
 
         <!-- [최종 수정] 통합 관제실 섹션 구조 재건 -->
@@ -51,7 +51,7 @@
                         <div>
                             <label for="filter-end-date" class="form-label fw-bold small">종료일</label>
                             <input type="date" id="filter-end-date" class="form-control form-control-sm">
-                        </div>
+                    </div>
                         <div>
                             <label for="filter-activity-type" class="form-label fw-bold small">활동 유형</label>
                             <select id="filter-activity-type" class="form-select form-select-sm">
@@ -64,17 +64,17 @@
                                 <option value="USER_RESTORE_BY_ADMIN">계정 복구</option>
                                 <option value="USER_PURGE_BY_ADMIN">계정 영구삭제</option>
                             </select>
-                        </div>
+                </div>
                         <div>
                             <label for="filter-user-search" class="form-label fw-bold small">사용자 검색</label>
                             <input type="text" id="filter-user-search" class="form-control form-control-sm" placeholder="사용자 이름...">
-                        </div>
+        </div>
                         <div>
                             <button id="btn-apply-filters" class="btn btn-primary btn-sm">검색</button>
                         </div>
-                    </div>
-                </div>
-
+            </div>
+            </div>
+            
                 <!-- 2. 데이터 표시 영역 -->
                 <div id="control-deck-content">
                     <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다.</p>
@@ -168,150 +168,6 @@
             refreshDashboard();
         });
         
-        // 이메일 인증 설정 로드
-        async function loadEmailVerificationSettings() {
-            console.log('🔧 이메일 인증 설정 로드 시작...');
-            
-            try {
-                const response = await fetch('/admin/api/email-settings', {
-                    headers: {
-                        'X-CSRF-Token': csrfToken()
-                    },
-                });
-                console.log('📡 API 응답 상태:', response.status);
-                console.log('📡 API 응답 헤더:', response.headers);
-                
-                const data = await response.json();
-                console.log('📊 API 응답 데이터:', data);
-                
-                if (data.success) {
-                    console.log('✅ API 호출 성공, UI 렌더링 시작...');
-                    renderEmailVerificationSettings(data.data);
-                } else {
-                    console.error('❌ API 호출 실패:', data.message);
-                    document.getElementById('emailVerificationSettings').innerHTML = 
-                        `<p class="muted">이메일 인증 설정을 불러올 수 없습니다: ${data.message}</p>`;
-                }
-            } catch (error) {
-                console.error('❌ 이메일 인증 설정 로드 실패:', error);
-                document.getElementById('emailVerificationSettings').innerHTML = 
-                    `<p class="muted">이메일 인증 설정을 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
-            }
-        }
-        
-        function renderEmailVerificationSettings(data) {
-            const { stats, settings } = data;
-            
-            const html = `
-                <div class="status-badge ${settings.email_verification_enabled === '1' ? 'enabled' : 'disabled'}">
-                    ${settings.email_verification_enabled === '1' ? '활성화됨' : '비활성화됨'}
-                </div>
-                
-                <div class="email-stats">
-                    <div class="email-stat-item">
-                        <div class="email-stat-value">${stats.total_users || 0}</div>
-                        <div class="email-stat-label">전체 사용자</div>
-                    </div>
-                    <div class="email-stat-item">
-                        <div class="email-stat-value">${stats.verified_users || 0}</div>
-                        <div class="email-stat-label">인증 완료</div>
-                    </div>
-                    <div class="email-stat-item">
-                        <div class="email-stat-value">${stats.pending_users || 0}</div>
-                        <div class="email-stat-label">인증 대기</div>
-                    </div>
-                    <div class="email-stat-item">
-                        <div class="email-stat-value">${(stats.verification_rate || 0).toFixed(1)}%</div>
-                        <div class="email-stat-label">인증률</div>
-                    </div>
-                </div>
-                
-                <form id="emailSettingsForm" class="email-settings-form">
-                    <div class="email-toggle">
-                        <div class="toggle-switch ${settings.email_verification_enabled === '1' ? 'active' : ''}" 
-                             onclick="toggleEmailVerification(this)">
-                            <input type="checkbox" name="email_verification_enabled" value="1" 
-                                   ${settings.email_verification_enabled === '1' ? 'checked' : ''}>
-                        </div>
-                        <span>이메일 인증 ${settings.email_verification_enabled === '1' ? '활성화' : '비활성화'}</span>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h4>토큰 만료 시간</h4>
-                        <p>인증 토큰이 유효한 시간을 설정합니다. (시간 단위)</p>
-                        <div class="setting-control">
-                            <input type="number" name="email_verification_expiry_hours" 
-                                   value="${settings.email_verification_expiry_hours || '24'}" 
-                                   min="1" max="168" class="number-input">
-                            <span>시간</span>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h4>최대 시도 횟수</h4>
-                        <p>사용자가 인증 이메일을 재발송할 수 있는 최대 횟수입니다.</p>
-                        <div class="setting-control">
-                            <input type="number" name="email_verification_max_attempts" 
-                                   value="${settings.email_verification_max_attempts || '3'}" 
-                                   min="1" max="10" class="number-input">
-                            <span>회</span>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h4>잠금 시간</h4>
-                        <p>최대 시도 횟수를 초과했을 때 재발송이 제한되는 시간입니다.</p>
-                        <div class="setting-control">
-                            <input type="number" name="email_verification_lockout_hours" 
-                                   value="${settings.email_verification_lockout_hours || '24'}" 
-                                   min="1" max="168" class="number-input">
-                            <span>시간</span>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="save-button">설정 저장</button>
-                </form>
-            `;
-            
-            document.getElementById('emailVerificationSettings').innerHTML = html;
-            
-            // 폼 제출 이벤트 추가
-            document.getElementById('emailSettingsForm').addEventListener('submit', saveEmailSettings);
-        }
-        
-        async function saveEmailSettings(event) {
-            event.preventDefault();
-            
-            const formData = new FormData(event.target);
-            const settings = {};
-            
-            for (let [key, value] of formData.entries()) {
-                settings[key] = value;
-            }
-            
-            try {
-                const response = await fetch('/admin/api/email-settings/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken()
-                    },
-                    body: JSON.stringify(settings)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('이메일 인증 설정이 저장되었습니다.');
-                    loadEmailVerificationSettings(); // 설정 다시 로드
-                } else {
-                    alert('설정 저장 실패: ' + result.error);
-                }
-            } catch (error) {
-                console.error('설정 저장 오류:', error);
-                alert('설정 저장 중 오류가 발생했습니다.');
-            }
-        }
         
         // 탭 클릭 이벤트 처리
         tabs.forEach(tab => {
@@ -412,6 +268,9 @@
     
     <!-- Admin Activity Log JS -->
     <script src="{{ url_for('static', filename='js/admin/activity_log.js') }}"></script>
+    
+    <!-- Admin Email Settings JS -->
+    <script src="{{ url_for('static', filename='js/admin/email_settings.js') }}"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
