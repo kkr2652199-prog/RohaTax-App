@@ -8,6 +8,22 @@
 
 ---
 
+### 2025-11-13 20:14:48 (KST)
+
+- **[1987c6b] refactor(route): conversion.py 보안 모듈 책임 분리 및 Blueprint 등록**
+
+  - **수정 파일:** `routes/conversion.py`, `app.py`
+
+  - **핵심 내용:** `conversion.py`의 보안 관련 함수를 제거하고, 누락되었던 `security_bp`를 `app.py`에 등록하여 버그 수정.
+
+  - conversion.py가 가지고 있던 보안 관련 4개 함수를 제거하고, security_routes에서 import하도록 변경함.
+
+  - 분리 과정에서 발견된, app.py에 security_bp가 등록되지 않았던 버그를 수정함.
+
+  - '하나의 파일, 하나의 책임' 원칙을 준수하고 시스템 안정성을 향상시킴.
+
+  - 기능적 회귀가 없음을 '인간 검증'으로 확인함.
+
 ### 2025-11-13 19:47:44 (KST)
 
 - **[591e6a0] refactor(route): conversion.py의 템플릿 관리 책임 분리**
