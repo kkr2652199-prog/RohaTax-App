@@ -58,3 +58,4 @@ function updateStatsContent(data) {
 window.loadStats = loadStats;
 window.updateStatsContent = updateStatsContent;
 
+

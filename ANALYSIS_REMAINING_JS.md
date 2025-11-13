@@ -361,3 +361,4 @@ saveEmailSettings()
 4. 분리 후 `admin.html`의 코드가 크게 줄어듦 (약 500줄 감소 예상)
 
 
+

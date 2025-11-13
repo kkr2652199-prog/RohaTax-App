@@ -365,63 +365,6 @@
         });
         
         // 관리자 사용자 목록 로드
-        async function loadAdminUsers() {
-            try {
-                const res = await fetch('/admin/api/admin-users', {
-                    headers: {
-                        'X-CSRF-Token': csrfToken()
-                    },
-                });
-                const body = await res.json();
-                const adminUsers = body?.data?.admin_users || [];
-                
-                if (adminUsers.length === 0) {
-                    document.getElementById('adminUsersTable').innerHTML = '<p class="muted">등록된 관리자가 없습니다.</p>';
-                    return;
-                }
-                
-                const adminItems = adminUsers.map(admin => `
-                    <div class="admin-user-item">
-                        <div class="admin-user-info">
-                            <div class="admin-user-avatar">${admin.username.charAt(0).toUpperCase()}</div>
-                            <div class="admin-user-details">
-                                <h5>${admin.username}</h5>
-                                <p>${admin.email || '이메일 없음'} • 가입일: ${admin.created_at ? new Date(admin.created_at).toLocaleDateString('ko-KR') : '-'}</p>
-                            </div>
-                        </div>
-                        <div class="admin-user-status">
-                            <span class="admin-status-badge ${admin.is_active ? 'admin-status-active' : 'admin-status-inactive'}">
-                                ${admin.is_active ? '활성' : '비활성'}
-                            </span>
-                        </div>
-                    </div>
-                `).join('');
-                
-                document.getElementById('adminUsersTable').innerHTML = adminItems;
-            } catch (err) {
-                document.getElementById('adminUsersTable').innerHTML = '<p class="muted">관리자 목록 로드 실패</p>';
-            }
-        }
-        
-        // 관리자 대시보드 통계 로드
-        async function loadAdminDashboardStats() {
-            try {
-                const response = await fetch('/admin/api/admin-dashboard-stats', {
-                    headers: {
-                        'X-CSRF-Token': csrfToken()
-                    },
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    updateAdminDashboardStats(data.data);
-                } else {
-                    console.error('관리자 대시보드 통계 로드 실패:', data.message);
-                }
-            } catch (error) {
-                console.error('관리자 대시보드 통계 요청 실패:', error);
-            }
-        }
         
         // ====================================================================
         // [최종 수정] 통합 관제실(Activity Logs) 데이터 로드 및 렌더링 함수 v5 (필터링 기능 연동)
@@ -583,19 +526,6 @@
             }
         }
         
-        function updateAdminDashboardStats(data) {
-            // 총 발급 토큰
-            document.getElementById('totalIssuedTokens').textContent = data.total_issued_tokens || 0;
-            
-            // 현재 활성 사용자
-            document.getElementById('activeUsersCount').textContent = data.active_users_count || 0;
-            
-            // 시스템 에러율
-            document.getElementById('systemErrorRate').textContent = `${data.system_error_rate || 0}%`;
-            
-            // 시스템 가동률
-            document.getElementById('systemUptime').textContent = `${data.system_uptime || 99.9}%`;
-        }
         
         // 관리자 목록 새로고침 버튼 이벤트
         document.getElementById('btnRefreshAdmins').addEventListener('click', () => {
@@ -635,6 +565,9 @@
     
     <!-- Admin Token History JS -->
     <script src="{{ url_for('static', filename='js/admin/token_history.js') }}"></script>
+    
+    <!-- Admin Management JS -->
+    <script src="{{ url_for('static', filename='js/admin/admin_management.js') }}"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
