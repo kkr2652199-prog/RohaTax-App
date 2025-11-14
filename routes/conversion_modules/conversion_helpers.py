@@ -7,11 +7,13 @@ import os
 import tempfile
 import logging
 import json
+import sqlite3
 from datetime import datetime
 from flask import request
 from core.file_parser import FileParser
 from core.responses import error
 from core.db import get_conn_optimized as get_conn
+from core.subscription_utils import get_user_subscription, is_unlimited_user
 
 logger = logging.getLogger(__name__)
 
@@ -177,5 +179,106 @@ def prepare_supplier_info(user, form_data, user_id):
         logger.info(f"기본 프로필 공급자 사용: {supplier['supplier_name']}")
     
     return supplier
+
+
+def check_token_balance(user_id, template_count):
+    """
+    토큰 잔량을 확인하고 부족 시 에러를 반환하는 함수
+    
+    무제한 회원(Gold VIP 등)의 경우 토큰 확인을 건너뛰고,
+    일반 회원의 경우 activity_logs 기반으로 정확한 토큰 잔량을 계산하여
+    템플릿 생성에 필요한 토큰이 충분한지 확인합니다.
+    
+    Args:
+        user_id: 사용자 ID
+        template_count: 생성할 템플릿 개수
+        
+    Returns:
+        tuple: (success: bool, error_response or None)
+               - success=True: 토큰이 충분하거나 무제한 회원, error_response는 None
+               - success=False: 토큰이 부족, error_response는 에러 응답 객체
+    """
+    # ============================================
+    # VIP/GoldVIP 무제한 처리
+    # ============================================
+    logger.info(f"사용자 플랜 확인 시작: user_id={user_id}")
+    subscription_info = get_user_subscription(user_id)
+    logger.info(f"구독 정보: {subscription_info}")
+    
+    is_unlimited = is_unlimited_user(user_id)
+    logger.info(f"is_unlimited_user 결과: {is_unlimited}")
+    
+    if is_unlimited:
+        required_tokens = 0  # Gold VIP는 토큰 차감 안함
+        logger.info(f"GoldVIP 무제한 사용: 템플릿 {template_count}개 변환")
+    else:
+        # VIP/Premium VIP/Free 회원: 템플릿 건수만큼 토큰 필요
+        required_tokens = template_count
+        logger.info(f"템플릿 건수: {template_count}개, 필요 토큰: {required_tokens}개")
+    
+    # ============================================
+    # 토큰 잔량 정밀 확인 (activity_logs 기반)
+    # ============================================
+    # [버그 수정] users 테이블 대신 activity_logs 기반으로 정확한 토큰 잔량 계산
+    # get_token_summary_v2()와 동일한 로직 사용
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        summary = conn.execute(
+            """
+            WITH last_reset AS (
+                -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
+                SELECT MAX(timestamp) as reset_time
+                FROM activity_logs
+                WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                  AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
+            )
+            SELECT
+                -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
+                -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
+                COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+            FROM activity_logs al, last_reset lr
+            WHERE al.user_id = ?
+              AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+              AND COALESCE(al.is_deleted, 0) = 0;  -- [버그 수정] 삭제된 레코드 제외
+            -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
+            """,
+            (user_id, user_id)
+        ).fetchone()
+        
+        total_tokens = summary['total_charged'] if summary else 0
+        used_tokens = summary['total_used'] if summary else 0
+        available_tokens = total_tokens - used_tokens
+    
+    if not is_unlimited and available_tokens < required_tokens:
+        # 부족한 토큰 정확히 계산
+        shortage = required_tokens - available_tokens
+        missing_tokens = shortage
+        
+        logger.warning(
+            f"토큰 부족 - 템플릿 {template_count}개, 필요 {required_tokens}토큰, "
+            f"보유 {available_tokens}토큰, 부족 {shortage}토큰"
+        )
+        
+        return False, error(
+            f'토큰이 부족합니다. 템플릿 {template_count}개 생성에 {required_tokens}토큰이 필요하지만, '
+            f'현재 {available_tokens}토큰을 보유하고 있어 {shortage}토큰이 부족합니다. '
+            f'필요한 토큰({shortage}개 × 200원 = {shortage * 200}원)을 구매한 후 다시 시도해주세요.',
+            status=400,
+            data={
+                'template_count': template_count,
+                'required_tokens': required_tokens,
+                'available_tokens': available_tokens,
+                'shortage': shortage,
+                'estimated_cost': shortage * 200  # 1토큰 = 200원
+            }
+        )
+    
+    # 토큰 잔량 확인 완료
+    logger.info(
+        f"토큰 잔량 확인 완료: 필요 {required_tokens}토큰, 보유 {available_tokens}토큰"
+    )
+    
+    return True, None
 
 

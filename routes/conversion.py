@@ -36,7 +36,7 @@ from .conversion_modules.security_routes import (
     get_guidelines_version
 )
 from .conversion_modules.guideline_routes import validate_template_data
-from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params, prepare_supplier_info
+from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params, prepare_supplier_info, check_token_balance
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -195,90 +195,18 @@ def start_conversion():
     logger.info(f"템플릿 건수 계산 완료: {template_count}개")
     
     # ============================================
-    # 핵심 변경 2: VIP/GoldVIP 무제한 처리
+    # 토큰 잔량 확인
     # ============================================
-    # Gold VIP 회원은 무제한 사용 가능
-    logger.info(f"사용자 플랜 확인 시작: user_id={user_id}")
-    subscription_info = get_user_subscription(user_id)
-    logger.info(f"구독 정보: {subscription_info}")
-    
-    is_unlimited = is_unlimited_user(user_id)
-    logger.info(f"is_unlimited_user 결과: {is_unlimited}")
-    
-    if is_unlimited:
-        required_tokens = 0  # Gold VIP는 토큰 차감 안함
-        logger.info(f"GoldVIP 무제한 사용: 템플릿 {template_count}개 변환")
-    else:
-        # VIP/Premium VIP/Free 회원: 템플릿 건수만큼 토큰 필요
-        required_tokens = template_count
-        logger.info(f"템플릿 건수: {template_count}개, 필요 토큰: {required_tokens}개")
-    
-    # ============================================
-    # 핵심 변경 3: 토큰 잔량 정밀 확인 (activity_logs 기반)
-    # ============================================
-    # [버그 수정] users 테이블 대신 activity_logs 기반으로 정확한 토큰 잔량 계산
-    # get_token_summary_v2()와 동일한 로직 사용
-    with get_conn() as conn:
-        conn.row_factory = sqlite3.Row
-        summary = conn.execute(
-            """
-            WITH last_reset AS (
-                -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
-                SELECT MAX(timestamp) as reset_time
-                FROM activity_logs
-                WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
-                  AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
-            )
-            SELECT
-                -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
-                -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
-                COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
-                COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
-            FROM activity_logs al, last_reset lr
-            WHERE al.user_id = ?
-              AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
-              AND COALESCE(al.is_deleted, 0) = 0;  -- [버그 수정] 삭제된 레코드 제외
-            -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
-            """,
-            (user_id, user_id)
-        ).fetchone()
-        
-        total_tokens = summary['total_charged'] if summary else 0
-        used_tokens = summary['total_used'] if summary else 0
-        available_tokens = total_tokens - used_tokens
-    
-    if not is_unlimited and available_tokens < required_tokens:
-        # 부족한 토큰 정확히 계산
-        shortage = required_tokens - available_tokens
-        missing_tokens = shortage
-        
-        logger.warning(
-            f"토큰 부족 - 템플릿 {template_count}개, 필요 {required_tokens}토큰, "
-            f"보유 {available_tokens}토큰, 부족 {shortage}토큰"
-        )
-        
-        return error(
-            f'토큰이 부족합니다. 템플릿 {template_count}개 생성에 {required_tokens}토큰이 필요하지만, '
-            f'현재 {available_tokens}토큰을 보유하고 있어 {shortage}토큰이 부족합니다. '
-            f'필요한 토큰({shortage}개 × 200원 = {shortage * 200}원)을 구매한 후 다시 시도해주세요.',
-            status=400,
-            data={
-                'template_count': template_count,
-                'required_tokens': required_tokens,
-                'available_tokens': available_tokens,
-                'shortage': shortage,
-                'estimated_cost': shortage * 200  # 1토큰 = 200원
-            }
-        )
-    
+    token_check_success, token_error_response = check_token_balance(user_id, template_count)
+    if not token_check_success:
+        return token_error_response
+
     # ============================================
     # 핵심 변경 4: 토큰은 변환 후 실제 생성된 수만큼만 차감
     # ============================================
     # 변환 전에는 차감하지 않고 잔량만 확인함
-    logger.info(
-        f"토큰 잔량 확인 완료: 필요 {required_tokens}토큰, 보유 {available_tokens}토큰"
-    )
-    
+    # 토큰 차감을 위해 is_unlimited 재확인
+    is_unlimited = is_unlimited_user(user_id)
     # 변환 시작 시간 기록
     import time
     conversion_start_time = time.time()
