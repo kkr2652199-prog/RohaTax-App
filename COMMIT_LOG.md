@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 15:31:53 KST
+
+**[5d1f709] feat(conversion): 핵심 변환 로직을 conversion_engine_routes로 완전 분리**
+
+- **수정 파일:** `app.py`, `routes/conversion.py` (삭제), `routes/conversion_modules/conversion_engine_routes.py` (신규), `routes/conversion_modules/page_routes.py`
+
+- **핵심 내용:** 기존 conversion.py에 남아있던 start_conversion, download_converted 함수를 새로운 전용 모듈로 이전함. app.py의 Blueprint 연결을 교체하고, 기존 conversion.py 파일을 물리적으로 삭제하여 '위대한 혼돈'의 시대를 공식적으로 종결함. 이로써 conversion 관련 모든 기능은 `conversion_modules` 내에서 명확한 책임을 갖게 됨. '인간 검증'을 통해 전체 변환 프로세스의 기능적 회귀가 없음을 최종 확인함.
+
+---
+
 ### 2025-11-14 14:20:45 KST
 
 **[0926fb5] refactor(conversion): 공급자 정보 준비 로직 분리**
