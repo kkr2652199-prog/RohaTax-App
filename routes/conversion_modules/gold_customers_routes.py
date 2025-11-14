@@ -112,23 +112,29 @@ def get_customers():
         offset = request.args.get('offset', 0, type=int)
         
         with get_conn() as conn:
-            # 검색 조건
-            where_clause = "user_id = ? AND is_deleted = 0"
+            # 검색 조건 (완전히 파라미터화된 쿼리로 안전하게 구성)
+            # 사용자 입력은 절대 쿼리 문자열에 포함되지 않고, 오직 파라미터로만 전달됨
+            base_where = "user_id = ? AND is_deleted = 0"
             params = [user_id]
             
             if search:
-                where_clause += " AND (company_name LIKE ? OR business_number LIKE ? OR representative_name LIKE ?)"
-                params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
+                # 검색 조건 추가 (하드코딩된 조건 문자열만 사용)
+                search_condition = " AND (company_name LIKE ? OR business_number LIKE ? OR representative_name LIKE ?)"
+                base_where += search_condition
+                # 사용자 입력은 파라미터로만 전달 (쿼리 문자열에 포함되지 않음)
+                search_param = f'%{search}%'
+                params.extend([search_param, search_param, search_param])
             
-            # 전체 개수 조회
-            count_query = f"SELECT COUNT(*) as total FROM gold_customers WHERE {where_clause}"
-            total = conn.execute(count_query, params).fetchone()['total']
+            # 전체 개수 조회 (완전히 파라미터화된 쿼리)
+            # f-string은 하드코딩된 조건 문자열만 연결하는 데 사용되며, 사용자 입력은 포함되지 않음
+            count_query = "SELECT COUNT(*) as total FROM gold_customers WHERE " + base_where
+            total = conn.execute(count_query, tuple(params)).fetchone()['total']
             
-            # 목록 조회
-            query = f"SELECT * FROM gold_customers WHERE {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
-            params.extend([limit, offset])
+            # 목록 조회 (완전히 파라미터화된 쿼리)
+            query_params = list(params) + [limit, offset]
+            query = "SELECT * FROM gold_customers WHERE " + base_where + " ORDER BY created_at DESC LIMIT ? OFFSET ?"
             
-            customers = conn.execute(query, params).fetchall()
+            customers = conn.execute(query, tuple(query_params)).fetchall()
             
             return jsonify({
                 'success': True,
