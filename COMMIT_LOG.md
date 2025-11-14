@@ -8,6 +8,34 @@
 
 ---
 
+### 2025-11-14 11:36:59 (KST)
+
+- **[f879301] refactor(conversion): 페이지 렌더링 로직을 page_routes.py로 분리**
+
+  - **수정 파일:** `routes/conversion.py`, `routes/conversion_modules/page_routes.py`, `app.py`
+
+  - **핵심 내용:** `conversion.py`에 남아있던 유일한 페이지 렌더링 함수인 `conversion()`을 독립적인 모듈로 분리함. 약 15줄 감소.
+
+  - 단일 책임 원칙을 강화하고, `conversion.py`가 순수 API 라우트 역할에 집중하도록 구조를 개선함.
+
+  - 새로운 `page_bp` Blueprint를 생성하고 `app.py`에 등록하여 시스템 통합 완료.
+
+### 2025-11-14 11:30:00 (KST)
+
+- **[aba911a] fix(conversion): 219줄의 실행 불가능한 데드 코드 제거**
+
+  - **수정 파일:** `routes/conversion.py`
+
+  - **핵심 내용:** `download_converted()` 함수 정상 종료(return) 이후에 위치하여 절대 실행될 수 없는 코드 블록을 완전히 삭제함. 약 219줄 감소.
+
+  - 코드의 가독성을 높이고 파일 크기를 즉시 감소시킴.
+
+  - **수정 파일:** `routes/conversion.py`
+
+  - **핵심 내용:** `download_converted()` 함수 정상 종료(return) 이후에 위치하여 절대 실행될 수 없는 코드 블록을 완전히 삭제함. 약 219줄 감소.
+
+  - 코드의 가독성을 높이고 파일 크기를 즉시 감소시킴.
+
 ### 2025-11-14 11:19:27 (KST)
 
 - **[f066749] refactor(conversion): 절대지침 검증 모듈 분리**
