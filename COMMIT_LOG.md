@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 13:44:10 KST
+
+**[2514d7e] refactor(conversion): 날짜 정규화 로직을 헬퍼 모듈로 분리**
+
+- **수정 파일:** `routes/conversion.py`, `routes/conversion_modules/conversion_helpers.py`
+
+- **핵심 내용:** 핵심 변환 함수 내부에 있던 날짜 처리 로직을 외부 헬퍼 모듈로 분리하여 코드 구조를 개선함.
+
+---
+
 ### 2025-11-14 13:14:58 KST
 
 **[e11653f] refactor(conversion): 헬퍼 함수를 conversion_helpers 모듈로 분리**
