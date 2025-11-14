@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 13:57:25 KST
+
+**[068d399] refactor(conversion): 파라미터 추출 및 검증 로직 분리**
+
+- **수정 파일:** `routes/conversion.py`, `routes/conversion_modules/conversion_helpers.py`
+
+- **핵심 내용:** 핵심 변환 함수의 진입점에 있던 입력값 검증 로직을 별도의 '검문소' 함수로 분리하여 구조를 명확히 함.
+
+---
+
 ### 2025-11-14 13:44:10 KST
 
 **[2514d7e] refactor(conversion): 날짜 정규화 로직을 헬퍼 모듈로 분리**
