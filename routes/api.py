@@ -200,33 +200,60 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 @api_bp.route('/user/token-status')
 def get_token_status():
-    """실시간 토큰 상태 조회 API"""
+    """실시간 토큰 상태 조회 API (표준 법률: activity_logs 기반)"""
     if not session.get('user_id'):
         return jsonify({'error': '로그인이 필요합니다'}), 401
     
     try:
+        from datetime import datetime
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
+            user_id = session.get('user_id')
+            
+            # 사용자 기본 정보 조회
             user = conn.execute(
                 """
                 SELECT 
-                    id, username, token_balance, COALESCE(tokens_used, 0) as tokens_used,
-                    created_at, plan_type, is_admin
+                    id, username, created_at, plan_type, is_admin
                 FROM users 
                 WHERE id = ? AND COALESCE(is_deleted, 0) = 0
                 """,
-                (session['user_id'],)
+                (user_id,)
             ).fetchone()
             
             if not user:
                 return jsonify({'error': '사용자 정보를 찾을 수 없습니다'}), 404
             
-            # 사용 가능한 토큰 계산
-            available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
+            # 표준 법률: activity_logs 기반 토큰 계산 (가장 최근 리셋 이후만)
+            summary = conn.execute(
+                """
+                WITH last_reset AS (
+                    -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
+                    SELECT MAX(timestamp) as reset_time
+                    FROM activity_logs
+                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
+                      AND COALESCE(is_deleted, 0) = 0
+                )
+                SELECT
+                    -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
+                    -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
+                    COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                    COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+                FROM activity_logs al, last_reset lr
+                WHERE al.user_id = ?
+                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
+                  AND COALESCE(al.is_deleted, 0) = 0
+                """,
+                (user_id, user_id)
+            ).fetchone()
+            
+            # 표준 법률에 따라 계산된 토큰 값
+            total_tokens = summary['total_charged']
+            used_tokens = summary['total_used']
+            available_tokens = total_tokens - used_tokens
             
             # 토큰 사용률 계산
-            total_tokens = user['token_balance'] or 0
-            usage_percentage = (user['tokens_used'] / total_tokens * 100) if total_tokens > 0 else 0
+            usage_percentage = (used_tokens / total_tokens * 100) if total_tokens > 0 else 0
             
             # 최근 사용 내역 조회
             recent_usage = conn.execute(
@@ -387,15 +414,39 @@ def admin_dashboard():
                 """
             ).fetchone()
             
-            # 토큰 사용 통계
+            # 토큰 사용 통계 (표준 법률: activity_logs 기반, 가장 최근 리셋 이후만 계산)
+            # 표준 법률(/api/v2/user/token-summary)과 완전히 동일한 로직을 사용
             token_stats = conn.execute(
                 """
+                WITH user_resets AS (
+                    -- 각 사용자별로 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트 시간을 찾는다 (표준 법률)
+                    SELECT 
+                        user_id,
+                        MAX(timestamp) as reset_time
+                    FROM activity_logs
+                    WHERE activity_type = 'TOKEN_RESET_BY_ADMIN'
+                      AND COALESCE(is_deleted, 0) = 0
+                      AND user_id IN (SELECT id FROM users WHERE COALESCE(is_deleted, 0) = 0)
+                    GROUP BY user_id
+                ),
+                user_summaries AS (
+                    -- 각 사용자별로 표준 법률에 따라 토큰 계산 (리셋 이후만)
+                    SELECT 
+                        al.user_id,
+                        COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
+                        COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
+                    FROM activity_logs al
+                    LEFT JOIN user_resets ur ON al.user_id = ur.user_id
+                    WHERE COALESCE(al.is_deleted, 0) = 0
+                      AND (ur.reset_time IS NULL OR al.timestamp >= ur.reset_time)
+                      AND al.user_id IN (SELECT id FROM users WHERE COALESCE(is_deleted, 0) = 0)
+                    GROUP BY al.user_id
+                )
                 SELECT 
-                    SUM(token_balance) as total_tokens_issued,
-                    SUM(COALESCE(tokens_used, 0)) as total_tokens_used,
-                    AVG(token_balance - COALESCE(tokens_used, 0)) as avg_available_tokens
-                FROM users 
-                WHERE COALESCE(is_deleted, 0) = 0
+                    COALESCE(SUM(total_charged), 0) as total_tokens_issued,
+                    COALESCE(SUM(total_used), 0) as total_tokens_used,
+                    COALESCE(AVG(total_charged - total_used), 0) as avg_available_tokens
+                FROM user_summaries
                 """
             ).fetchone()
             
