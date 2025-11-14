@@ -62,13 +62,28 @@ def myhome_data():
             else:
                 order_by = f"th.created_at {order}, th.id {order}"
 
-            # page items with optional join for plan_type
+            # page items with optional join for plan_type and balance_after (윈도우 함수로 N+1 문제 해결)
+            # 윈도우 함수를 사용하여 각 행의 balance_after를 한 번의 쿼리로 계산
+            # balance_after는 시간 순서(created_at, id)로 계산되어야 하므로, 윈도우 함수의 정렬은 항상 시간 순서로 고정
+            # 최종 결과는 사용자가 요청한 정렬 순서(order_by)로 정렬됨
             items = conn.execute(
                 f"""
-                SELECT th.id, th.change_type, th.amount, th.meta, th.created_at, u.plan_type
+                SELECT 
+                    th.id, 
+                    th.change_type, 
+                    th.amount, 
+                    th.meta, 
+                    th.created_at, 
+                    u.plan_type,
+                    COALESCE(SUM(th.amount) OVER (
+                        PARTITION BY th.user_id 
+                        ORDER BY th.created_at, th.id 
+                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                    ), 0) as balance_after
                 FROM token_history th
                 LEFT JOIN users u ON u.id = th.user_id
-                WHERE th.user_id = ? AND COALESCE(json_extract(th.meta, '$.deleted'), 0) = 0
+                WHERE th.user_id = ? 
+                  AND COALESCE(json_extract(th.meta, '$.deleted'), 0) = 0
                 ORDER BY {order_by}
                 LIMIT ? OFFSET ?
                 """,
@@ -77,18 +92,8 @@ def myhome_data():
 
             activity = []
             for r in items:
-                # balance_after: 누적합 (해당 시점까지)
-                bal = conn.execute(
-                    """
-                    SELECT COALESCE(SUM(amount), 0) as bal
-                    FROM token_history
-                    WHERE user_id = ?
-                      AND COALESCE(json_extract(meta, '$.deleted'), 0) = 0
-                      AND (created_at < ? OR (created_at = ? AND id <= ?))
-                    """,
-                    (uid, r['created_at'], r['created_at'], r['id'])
-                ).fetchone()
-                balance_after = bal['bal'] if bal else 0
+                # balance_after는 이미 쿼리에서 계산되어 있음 (N+1 문제 해결)
+                balance_after = r['balance_after'] if r['balance_after'] is not None else 0
 
                 try:
                     meta_obj = json.loads(r['meta']) if r['meta'] else {}
