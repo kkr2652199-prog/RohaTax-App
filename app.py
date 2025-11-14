@@ -214,7 +214,6 @@ from routes.conversion_modules.conversion_engine_routes import conversion_engine
 from routes.admin import admin_bp
 from routes.admin.activity_log_api import activity_log_bp
 from routes.ops import ops_bp
-from routes.api import api_bp
 from routes.api_modules.admin_api import admin_api_bp
 from routes.api_modules.user_api import user_api_bp
 from routes.conversion_modules.gold_customers_routes import gold_customers_bp  # noop-reload
@@ -236,8 +235,6 @@ if 'activity_log_api' not in app.blueprints:
     app.register_blueprint(activity_log_bp)
 if 'ops' not in app.blueprints:
     app.register_blueprint(ops_bp)
-if 'api' not in app.blueprints:
-    app.register_blueprint(api_bp)
 if 'admin_api' not in app.blueprints:
     app.register_blueprint(admin_api_bp)
 if 'user_api' not in app.blueprints:
