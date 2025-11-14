@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 21:49:03 KST
+
+**[1916956] refactor(api): 사용자 API를 user_api.py 모듈로 분리**
+
+- **수정 파일:** `routes/api.py`, `routes/api_modules/user_api.py`, `app.py`
+
+- **핵심 내용:** `api.py`에 남아있던 모든 사용자 관련 API 엔드포인트를 별도의 `user_api.py` 모듈로 분리하여, 단일 책임 원칙에 따라 API의 책임을 완전히 분리하고 코드의 구조적 명확성과 유지보수성을 극대화함.
+
+---
+
 ### 2025-11-14 21:22:55 KST
 
 **[7442080] refactor(api): 관리자 API를 admin_api.py 모듈로 분리**
