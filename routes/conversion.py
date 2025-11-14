@@ -36,7 +36,7 @@ from .conversion_modules.security_routes import (
     get_guidelines_version
 )
 from .conversion_modules.guideline_routes import validate_template_data
-from .conversion_modules.conversion_helpers import normalize_issue_date
+from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -147,43 +147,19 @@ def start_conversion():
     if guard_response is not None:
         return guard_response
     
-    # CSRF 토큰 검증 (간단히 처리)
-    csrf_token = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
-    if not csrf_token:
-        return error('보안 토큰이 없습니다. 다시 시도해주세요.', status=403)
-
-    # Form Data에서 파라미터 추출
-    template_id = (request.form.get('template_id') or 'hometax_official').strip()
-    issue_date_raw = (request.form.get('issue_date') or '').strip()
-    file_name = (request.form.get('file_name') or '').strip()
-    industry_type = (request.form.get('industry_type') or 'delivery').strip()
-    guidelines_json = request.form.get('guidelines', '{}')
+    # 파라미터 추출 및 검증
+    validation_success, validation_result = validate_and_extract_params(request)
+    if not validation_success:
+        return validation_result
     
-    # 업종별 지침 파싱
-    try:
-        import json
-        guidelines = json.loads(guidelines_json)
-        logger.info(f"활성화된 지침: {guidelines.get('name', 'Unknown')}")
-    except:
-        guidelines = {}
-    
-    # 파일 업로드 확인
-    if 'file' not in request.files:
-        return error('배달대행사 정산서 파일을 업로드해주세요', status=400)
-    
-    uploaded_file = request.files['file']
-    if uploaded_file.filename == '':
-        return error('파일이 선택되지 않았습니다', status=400)
-
-    if not issue_date_raw:
-        return error('전자세금일자를 선택하세요', status=400)
-    if not file_name:
-        return error('파일명을 입력하세요', status=400)
-
-    # issue_date 정규화: "25년10월01일" 또는 "251001" 또는 ISO 모두 수용 → ISO(YYYY-MM-DD)
-    issue_date = normalize_issue_date(issue_date_raw)
-    if not issue_date:
-        return error('전자세금일자 형식이 올바르지 않습니다', status=400)
+    # 검증 성공 시 파라미터 추출
+    template_id = validation_result['template_id']
+    issue_date = validation_result['issue_date']
+    issue_date_raw = validation_result['issue_date_raw']
+    file_name = validation_result['file_name']
+    industry_type = validation_result['industry_type']
+    guidelines = validation_result['guidelines']
+    uploaded_file = validation_result['uploaded_file']
 
     # 사용자 정보 로드 → 공급자 정보 자동 매핑
     with get_conn() as conn:

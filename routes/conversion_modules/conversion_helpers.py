@@ -6,8 +6,11 @@
 import os
 import tempfile
 import logging
+import json
 from datetime import datetime
+from flask import request
 from core.file_parser import FileParser
+from core.responses import error
 
 logger = logging.getLogger(__name__)
 
@@ -47,4 +50,66 @@ def normalize_issue_date(s: str) -> str:
         return datetime.fromisoformat(s).date().isoformat()
     except Exception:
         return ''
+
+
+def validate_and_extract_params(request):
+    """
+    변환 요청의 파라미터를 추출하고 유효성을 검사하는 함수
+    
+    Args:
+        request: Flask request 객체
+        
+    Returns:
+        tuple: (success: bool, result: dict or error_response)
+               - success=True: result는 추출된 파라미터 딕셔너리
+               - success=False: result는 에러 응답 객체
+    """
+    # CSRF 토큰 검증
+    csrf_token = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
+    if not csrf_token:
+        return False, error('보안 토큰이 없습니다. 다시 시도해주세요.', status=403)
+    
+    # Form Data에서 파라미터 추출
+    template_id = (request.form.get('template_id') or 'hometax_official').strip()
+    issue_date_raw = (request.form.get('issue_date') or '').strip()
+    file_name = (request.form.get('file_name') or '').strip()
+    industry_type = (request.form.get('industry_type') or 'delivery').strip()
+    guidelines_json = request.form.get('guidelines', '{}')
+    
+    # 업종별 지침 파싱
+    try:
+        guidelines = json.loads(guidelines_json)
+        logger.info(f"활성화된 지침: {guidelines.get('name', 'Unknown')}")
+    except:
+        guidelines = {}
+    
+    # 파일 업로드 확인
+    if 'file' not in request.files:
+        return False, error('배달대행사 정산서 파일을 업로드해주세요', status=400)
+    
+    uploaded_file = request.files['file']
+    if uploaded_file.filename == '':
+        return False, error('파일이 선택되지 않았습니다', status=400)
+    
+    # 필수 파라미터 검증
+    if not issue_date_raw:
+        return False, error('전자세금일자를 선택하세요', status=400)
+    if not file_name:
+        return False, error('파일명을 입력하세요', status=400)
+    
+    # issue_date 정규화: "25년10월01일" 또는 "251001" 또는 ISO 모두 수용 → ISO(YYYY-MM-DD)
+    issue_date = normalize_issue_date(issue_date_raw)
+    if not issue_date:
+        return False, error('전자세금일자 형식이 올바르지 않습니다', status=400)
+    
+    # 성공 시 추출된 파라미터 반환
+    return True, {
+        'template_id': template_id,
+        'issue_date': issue_date,
+        'issue_date_raw': issue_date_raw,
+        'file_name': file_name,
+        'industry_type': industry_type,
+        'guidelines': guidelines,
+        'uploaded_file': uploaded_file
+    }
 
