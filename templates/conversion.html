@@ -535,9 +535,6 @@
     <script>
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            // 토큰 상태 로드
-            loadTokenStatus();
-            
             // 달력 초기화
             initializeCalendar();
 
@@ -547,33 +544,6 @@
                 startBtn.addEventListener('click', startConversion);
             }
         });
-        
-        // 토큰 상태 로드
-        async function loadTokenStatus() {
-            try {
-                const response = await fetch('/api/token-status');
-                const data = await response.json();
-                
-                if (data.success) {
-                    const tokenData = data.data;
-                    document.getElementById('total-granted').textContent = tokenData.total_granted;
-                    document.getElementById('total-used').textContent = tokenData.total_used;
-                    document.getElementById('available-tokens').textContent = tokenData.available_tokens;
-                } else {
-                    console.error('토큰 상태 로드 실패:', data.message);
-                    // 기본값 설정
-                    document.getElementById('total-granted').textContent = '0';
-                    document.getElementById('total-used').textContent = '0';
-                    document.getElementById('available-tokens').textContent = '0';
-                }
-            } catch (error) {
-                console.error('토큰 상태 로드 실패:', error);
-                // 기본값 설정
-                document.getElementById('total-granted').textContent = '0';
-                document.getElementById('total-used').textContent = '0';
-                document.getElementById('available-tokens').textContent = '0';
-            }
-        }
         
         // 변환 시작: 공급자 정보 스켈레톤 생성 및 토큰 차감
         async function startConversion() {
@@ -662,8 +632,7 @@
                 setStep(3, '✅ 변환 산출물 무결성 검증 중입니다', 82);
                 await new Promise(r => setTimeout(r, 120));
 
-                // 토큰 상태 반영
-                loadTokenStatus();
+                // 토큰 상태는 static/js/conversion.js에서 자동으로 업데이트됨
 
                 // 4) 안전 폐기 및 완료
                 setStep(4, '🗑️ VIP님의 고객정보는 안전하게 폐기되었습니다', 100);
@@ -935,8 +904,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 토큰 상태 새로고침
-                    loadTokenStatus();
+                    // 토큰 상태는 static/js/conversion.js에서 자동으로 업데이트됨
                     return true;
                 } else {
                     alert('토큰 사용 실패: ' + data.message);
