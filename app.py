@@ -217,6 +217,7 @@ from routes.api import api_bp
 from routes.conversion_modules.gold_customers_routes import gold_customers_bp  # noop-reload
 from routes.conversion_modules.security_routes import security_bp
 from routes.conversion_modules.guideline_routes import guideline_bp
+from routes.conversion_modules.page_routes import page_bp
 
 if 'home' not in app.blueprints:
     app.register_blueprint(home_bp)
@@ -236,6 +237,8 @@ if 'security' not in app.blueprints:
     app.register_blueprint(security_bp)
 if 'guideline' not in app.blueprints:
     app.register_blueprint(guideline_bp)
+if 'page' not in app.blueprints:
+    app.register_blueprint(page_bp)
 
 
 @app.route('/')

@@ -122,23 +122,6 @@ def _calculate_template_count_precisely(uploaded_file, industry_type: str = 'del
         return 0
 
 
-@conversion_bp.route('/conversion')
-def conversion():
-    # 로그인 확인
-    if not is_authenticated():
-        return render_template(
-            'conversion.html',
-            guest_mode=True,
-            csrf_token=generate_csrf_token(),
-        )
-
-    return render_template(
-        'conversion.html',
-        guest_mode=False,
-        csrf_token=generate_csrf_token(),
-    )
-
-
 @conversion_bp.route('/api/use-token', methods=['POST'])
 def use_token():
     """변환 작업 시 토큰 사용 API"""
