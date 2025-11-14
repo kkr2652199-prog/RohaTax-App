@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 13:14:58 KST
+
+**[e11653f] refactor(conversion): 헬퍼 함수를 conversion_helpers 모듈로 분리**
+
+- **수정 파일:** `routes/conversion.py`, `routes/conversion_modules/conversion_helpers.py`
+
+- **핵심 내용:** 핵심 변환 로직과 직접적인 관련이 적은 헬퍼 함수를 별도 모듈로 분리 및 격리하여, 대규모 리팩토링의 첫 단계를 완료함.
+
+---
+
 ### 2025-11-14 12:40:00 KST
 
 **[0289d8d] refactor(token): 토큰 관리 API를 확장 버전으로 통합**
