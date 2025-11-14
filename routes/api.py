@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, session
 from core.db import get_conn_optimized as get_conn
 import sqlite3
 import json
+from datetime import datetime
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -189,14 +190,6 @@ def myhome_data_delete():
         return jsonify({'success': True, 'deleted': len(ids)})
     except Exception as e:
         return jsonify({'success': False, 'error': f'삭제 중 오류: {str(e)}'}), 500
-
-from flask import Blueprint, jsonify, request, session
-from core.db import get_conn_optimized as get_conn
-import sqlite3
-from datetime import datetime, timedelta
-import json
-
-api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 @api_bp.route('/user/token-status')
 def get_token_status():
@@ -581,177 +574,6 @@ def refresh_tokens():
             
     except Exception as e:
         return jsonify({'error': f'서버 오류: {str(e)}'}), 500
-
-
-@api_bp.route('/myhome-data')
-def myhome_data():
-    """마이홈 페이지용 요약/활동 데이터 제공 API
-    반환:
-    {
-      success: true,
-      token_summary: { total_granted, total_used, current_balance },
-      activity_history: [ { date, log_type, filename, customer_name, change_amount, balance_after } ... ]
-    }
-    """
-    if not session.get('user_id'):
-        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
-
-    try:
-        with get_conn() as conn:
-            conn.row_factory = sqlite3.Row
-            uid = session['user_id']
-
-            user_row = conn.execute(
-                "SELECT plan_type FROM users WHERE id = ?",
-                (uid,)
-            ).fetchone()
-            base_plan_type = (user_row['plan_type'] or '').upper() if user_row else ''
-
-            # 토큰 요약 (grant는 양수, use는 음수 가정; 없으면 부호 기준)
-            sum_row = conn.execute(
-                """
-                SELECT 
-                  COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS total_granted,
-                  COALESCE(ABS(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END)), 0) AS total_used
-                FROM token_history
-                WHERE user_id = ?
-                  AND (meta IS NULL OR meta NOT LIKE '%"deleted":1%')
-                """,
-                (uid,)
-            ).fetchone()
-
-            total_granted = sum_row['total_granted'] if sum_row else 0
-            total_used = sum_row['total_used'] if sum_row else 0
-            current_balance = total_granted - total_used
-
-            # 최근 활동 내역 (최신 30건 예시)
-            rows = conn.execute(
-                """
-                SELECT id, change_type, amount, meta, created_at
-                FROM token_history
-                WHERE user_id = ?
-                  AND (meta IS NULL OR meta NOT LIKE '%"deleted":1%')
-                ORDER BY created_at DESC, id DESC
-                LIMIT 30
-                """,
-                (uid,)
-            ).fetchall()
-
-            activity = []
-            for r in rows:
-                # 해당 시점까지 누적 잔액 계산
-                bal_row = conn.execute(
-                    """
-                    SELECT COALESCE(SUM(amount), 0) AS bal
-                    FROM token_history
-                    WHERE user_id = ?
-                      AND (meta IS NULL OR meta NOT LIKE '%"deleted":1%')
-                      AND (created_at < ? OR (created_at = ? AND id <= ?))
-                    """,
-                    (uid, r['created_at'], r['created_at'], r['id'])
-                ).fetchone()
-
-                balance_after = bal_row['bal'] if bal_row else 0
-
-                # 메타 파싱 및 기본 정보 추출
-                try:
-                    meta_obj = json.loads(r['meta']) if r['meta'] else {}
-                except json.JSONDecodeError:
-                    meta_obj = {}
-
-                filename = meta_obj.get('file_name') or meta_obj.get('file')
-                customer_name = meta_obj.get('customer_name')
-                meta_plan_type = meta_obj.get('plan_type') or meta_obj.get('planType')
-                effective_plan_type = (meta_plan_type or base_plan_type or '').upper()
-
-                # 금액 분리
-                raw_amount = int(r['amount'] or 0)
-                if raw_amount > 0:
-                    charge_amount = raw_amount
-                    usage_amount = 0
-                elif raw_amount < 0:
-                    charge_amount = 0
-                    usage_amount = abs(raw_amount)
-                else:
-                    charge_amount = usage_amount = 0
-
-                # 표시용 매핑
-                change_type = r['change_type'] or ''
-                if change_type == 'use':
-                    log_type = 'CONVERSION'
-                elif change_type == 'grant':
-                    log_type = 'GRANT'
-                elif change_type == 'reset':
-                    log_type = 'RESET'
-                else:
-                    log_type = change_type.upper() if change_type else 'UNKNOWN'
-
-                activity.append({
-                    'id': int(r['id']),
-                    'date': r['created_at'],
-                    'log_type': log_type,
-                    'plan_type': effective_plan_type,
-                    'filename': filename,
-                    'customer_name': customer_name,
-                    'change_amount': raw_amount,
-                    'charge_amount': charge_amount,
-                    'usage_amount': usage_amount,
-                    'balance_after': int(balance_after or 0)
-                })
-
-            return jsonify({
-                'success': True,
-                'token_summary': {
-                    'total_granted': int(total_granted),
-                    'total_used': int(total_used),
-                    'current_balance': int(current_balance)
-                },
-                'activity_history': activity
-            })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500
-
-
-@api_bp.route('/myhome-data/delete', methods=['POST'])
-def myhome_data_delete():
-    """마이홈 활동 내역 일괄 삭제(소프트 삭제)
-    body: { ids: [..] }
-    """
-    if not session.get('user_id'):
-        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
-
-    data = request.get_json(silent=True) or {}
-    ids = data.get('ids') or []
-    if not isinstance(ids, list) or not ids:
-        return jsonify({'success': False, 'error': '삭제할 항목이 없습니다'}), 400
-
-    try:
-        with get_conn() as conn:
-            for raw in ids:
-                try:
-                    th_id = int(raw)
-                except Exception:
-                    continue
-                row = conn.execute(
-                    "SELECT id, meta FROM token_history WHERE id = ? AND user_id = ?",
-                    (th_id, session['user_id'])
-                ).fetchone()
-                if not row:
-                    continue
-                try:
-                    m = json.loads(row['meta']) if row['meta'] else {}
-                except Exception:
-                    m = {}
-                m['deleted'] = 1
-                conn.execute(
-                    "UPDATE token_history SET meta = ? WHERE id = ? AND user_id = ?",
-                    (json.dumps(m, ensure_ascii=False), th_id, session['user_id'])
-                )
-            conn.commit()
-        return jsonify({'success': True, 'deleted': len(ids)})
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'삭제 중 오류: {str(e)}'}), 500
 
 
 @api_bp.route('/v2/user/token-summary')
