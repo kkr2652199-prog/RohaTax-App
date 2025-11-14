@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 14:20:45 KST
+
+**[0926fb5] refactor(conversion): 공급자 정보 준비 로직 분리**
+
+- **수정 파일:** `routes/conversion.py`, `routes/conversion_modules/conversion_helpers.py`
+
+- **핵심 내용:** 핵심 변환 함수 내부에 있던 골드 회원 관련 공급자 정보 준비 로직을 외부 '병참' 함수로 분리하여 구조를 개선함.
+
+---
+
 ### 2025-11-14 13:57:25 KST
 
 **[068d399] refactor(conversion): 파라미터 추출 및 검증 로직 분리**
