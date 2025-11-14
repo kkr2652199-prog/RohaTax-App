@@ -10,7 +10,7 @@
 
 ### 2025-11-14 21:22:55 KST
 
-**[240e933] refactor(api): 관리자 API를 admin_api.py 모듈로 분리**
+**[7442080] refactor(api): 관리자 API를 admin_api.py 모듈로 분리**
 
 - **수정 파일:** `routes/api.py`, `routes/api_modules/admin_api.py`, `app.py`
 
