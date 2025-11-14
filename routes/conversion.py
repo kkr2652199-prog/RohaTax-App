@@ -36,7 +36,7 @@ from .conversion_modules.security_routes import (
     get_guidelines_version
 )
 from .conversion_modules.guideline_routes import validate_template_data
-from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params
+from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params, prepare_supplier_info
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -287,53 +287,8 @@ def start_conversion():
     # ============================================
     # 골드 회원 공급자 선택 분기
     # ============================================
-    # selectedCustomerId 파라미터 확인
-    selected_customer_id = request.form.get('selectedCustomerId', '').strip()
-    
-    supplier = None
-    
-    # 골드 회원이고 고객을 선택한 경우
-    user_plan_type = user['plan_type'] if 'plan_type' in user.keys() else None
-    if selected_customer_id and user_plan_type in ['gold', 'gold-vip']:
-        logger.info(f"골드 고객 선택됨: customer_id={selected_customer_id}")
-        
-        with get_conn() as conn:
-            customer = conn.execute(
-                "SELECT * FROM gold_customers WHERE id = ? AND user_id = ? AND is_deleted = 0",
-                (int(selected_customer_id), user_id)
-            ).fetchone()
-            
-            if customer:
-                import json
-                business_kind = customer['business_kind'] if 'business_kind' in customer.keys() else '{}'
-                try:
-                    business_kind_dict = json.loads(business_kind) if isinstance(business_kind, str) else business_kind
-                except:
-                    business_kind_dict = {}
-                
-                supplier = {
-                    'supplier_name': customer['company_name'] if 'company_name' in customer.keys() else '',
-                    'supplier_business_number': customer['business_number'] if 'business_number' in customer.keys() else '',
-                    'supplier_representative': customer['representative_name'] if 'representative_name' in customer.keys() else '',
-                    'supplier_email': customer['email'] if 'email' in customer.keys() else '',
-                    'supplier_address': customer['address'] if 'address' in customer.keys() else '',
-                    'supplier_business_type': business_kind_dict.get('업태', ''),
-                    'supplier_business_category': business_kind_dict.get('종목', ''),
-                }
-                logger.info(f"골드 고객 정보 적용: {supplier['supplier_name']}")
-    
-    # 골드 고객 미선택 또는 비골드 회원: 기본 프로필 공급자 사용
-    if not supplier:
-        supplier = {
-            'supplier_name': user['company_name'] or user['username'],
-            'supplier_business_number': user['business_number'] or '',
-            'supplier_representative': user['representative_name'] or '',
-            'supplier_email': user['email'] or '',
-            'supplier_address': user['address'] or '',
-            'supplier_business_type': user['business_type'] if 'business_type' in user.keys() else '',
-            'supplier_business_category': user['business_category'] if 'business_category' in user.keys() else '',
-        }
-        logger.info(f"기본 프로필 공급자 사용: {supplier['supplier_name']}")
+    supplier = prepare_supplier_info(user, validation_result, user_id)
+
     
     # 사용자 정보를 절대지침 시스템에 전달
     user_info = {
