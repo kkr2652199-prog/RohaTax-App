@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 12:29:11 KST
+
+**[5aa2e36] refactor(user): user_info API를 확장 버전으로 통합**
+
+- **수정 파일:** `routes/conversion_modules/user_routes.py`, `routes/conversion.py`, `app.py`
+
+- **핵심 내용:** 분산되어 있던 `user_info` 함수를 18개 필드를 반환하는 확장 버전으로 통합하고 중앙화하여, 시스템 전체의 데이터 일관성을 확보함.
+
+---
+
 ### 2025-11-14 11:36:59 (KST)
 
 - **[f879301] refactor(conversion): 페이지 렌더링 로직을 page_routes.py로 분리**
