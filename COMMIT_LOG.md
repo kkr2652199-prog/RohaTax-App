@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 17:14:20 KST
+
+**[e2f055a] fix(template): 불필요한 인라인 토큰 조회 스크립트 제거**
+
+- **수정 파일:** `templates/conversion.html`
+
+- **핵심 내용:** `/api/token-status`를 호출하던 중복된 인라인 스크립트를 제거하여, `static/js/conversion.js`의 정식 토큰 조회 시스템만 사용하도록 통일함.
+
+---
+
 ### 2025-11-14 16:02:36 KST
 
 **[59ccdec] perf(api): 토큰 사용 내역 조회 시 N+1 쿼리 문제 해결**
