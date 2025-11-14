@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 12:40:00 KST
+
+**[0289d8d] refactor(token): 토큰 관리 API를 확장 버전으로 통합**
+
+- **수정 파일:** `routes/conversion_modules/token_routes.py`, `routes/conversion.py`, `app.py`
+
+- **핵심 내용:** 분산되어 있던 토큰 관리 API를 안정성과 기능이 강화된 버전으로 통합하고 중앙화함.
+
+---
+
 ### 2025-11-14 12:29:11 KST
 
 **[5aa2e36] refactor(user): user_info API를 확장 버전으로 통합**
