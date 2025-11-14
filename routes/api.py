@@ -23,12 +23,7 @@ def myhome_data():
             conn.row_factory = sqlite3.Row
             uid = session['user_id']
 
-            user_row = conn.execute(
-                "SELECT plan_type FROM users WHERE id = ?",
-                (uid,)
-            ).fetchone()
-            base_plan_type = (user_row['plan_type'] or '').upper() if user_row else ''
-
+            # 사용자 plan_type 조회 (중복 제거: 한 번만 조회)
             user_row = conn.execute(
                 "SELECT plan_type FROM users WHERE id = ?",
                 (uid,)
