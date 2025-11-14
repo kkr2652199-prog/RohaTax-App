@@ -219,6 +219,7 @@ from routes.conversion_modules.security_routes import security_bp
 from routes.conversion_modules.guideline_routes import guideline_bp
 from routes.conversion_modules.page_routes import page_bp
 from routes.conversion_modules.user_routes import user_bp
+from routes.conversion_modules.token_routes import token_bp
 
 if 'home' not in app.blueprints:
     app.register_blueprint(home_bp)
@@ -242,6 +243,8 @@ if 'page' not in app.blueprints:
     app.register_blueprint(page_bp)
 if 'user' not in app.blueprints:
     app.register_blueprint(user_bp)
+if 'token' not in app.blueprints:
+    app.register_blueprint(token_bp)
 
 
 @app.route('/')

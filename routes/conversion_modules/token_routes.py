@@ -8,13 +8,17 @@ from functools import wraps
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.security import generate_csrf_token
+from core.token_service import get_user_token_status
+from ..utils.auth import ensure_login_for_json
 import time
 import os
 import json
+import logging
 from datetime import datetime
 from core.utils import row_value
 
 token_bp = Blueprint('token', __name__)
+logger = logging.getLogger(__name__)
 
 
 def admin_required(func):
@@ -31,80 +35,88 @@ def admin_required(func):
 @token_bp.route('/api/use-token', methods=['POST'])
 def use_token():
     """변환 작업 시 토큰 사용 API"""
-    if not session.get('user_id'):
-        return error("로그인이 필요합니다", 401)
-    
     try:
-        data = request.get_json()
+        user_id, guard_response = ensure_login_for_json()
+        if guard_response is not None:
+            logger.warning("로그인되지 않은 사용자")
+            return guard_response
+        
+        logger.info(f"토큰 사용 요청 - 세션 ID: {user_id}")
+        
+        data = request.get_json(silent=True) or {}
         tokens_to_use = data.get('tokens', 1)
         
+        # 타입 검증 (기존 token_routes.py의 isinstance 검증 유지)
         if not isinstance(tokens_to_use, int) or tokens_to_use <= 0:
+            logger.warning(f"유효하지 않은 토큰 수: {tokens_to_use}")
             return error("유효하지 않은 토큰 수입니다", 400)
         
+        # 토큰 상태 조회 (중앙화된 token_service 사용)
+        token_status = get_user_token_status(user_id)
+        if token_status is None:
+            logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
+            return error('사용자를 찾을 수 없습니다', status=404)
+        
+        available_tokens = token_status['available_tokens']
+        
+        if available_tokens < tokens_to_use:
+            logger.warning(f"토큰 부족 - 사용 가능: {available_tokens}개, 요청: {tokens_to_use}개")
+            return error(f'토큰이 부족합니다. 사용 가능: {available_tokens}개, 요청: {tokens_to_use}개', status=400)
+        
+        # 토큰 사용량 업데이트
         with get_conn() as conn:
-            # 현재 사용자 정보 조회
-            user = conn.execute(
-                "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-                (session['user_id'],)
-            ).fetchone()
-            
-            if not user:
-                return error("사용자를 찾을 수 없습니다", 404)
-            
-            # 사용 가능한 토큰 계산
-            available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-            
-            if available_tokens < tokens_to_use:
-                return error(f"토큰이 부족합니다. 사용 가능: {available_tokens}개", 400)
-            
-            # 토큰 사용 기록
-            new_tokens_used = (user['tokens_used'] or 0) + tokens_to_use
+            new_tokens_used = token_status['tokens_used'] + tokens_to_use
             conn.execute(
-                "UPDATE users SET tokens_used = ? WHERE id = ?",
-                (new_tokens_used, session['user_id'])
+                "UPDATE users SET tokens_used = ? WHERE id = ?", 
+                (new_tokens_used, user_id)
             )
             conn.commit()
-            
-            # 새로운 토큰 상태 반환
-            remaining_tokens = available_tokens - tokens_to_use
-            
-            return success({
-                "tokens_used": tokens_to_use,
-                "remaining_tokens": remaining_tokens,
-                "total_tokens": user['token_balance'] or 0,
-                "used_tokens": new_tokens_used
-            })
+        
+        # 업데이트된 잔액 반환
+        remaining_tokens = token_status['token_balance'] - new_tokens_used
+        
+        logger.info(f"토큰 사용 성공 - 사용: {tokens_to_use}개, 남은 잔액: {remaining_tokens}개")
+        
+        return success('토큰이 사용되었습니다', data={
+            'tokens_used': tokens_to_use,
+            'remaining_tokens': remaining_tokens,
+            'total_granted': token_status['token_balance'],
+            'total_used': new_tokens_used
+        })
             
     except Exception as e:
+        logger.error(f"토큰 사용 중 오류가 발생했습니다: {str(e)}")
         return error(f"토큰 사용 중 오류가 발생했습니다: {str(e)}", 500)
 
 
 @token_bp.route('/api/token-status', methods=['GET'])
 def token_status():
     """현재 토큰 상태 조회 API (캐싱 적용)"""
-    if not session.get('user_id'):
-        return error("로그인이 필요합니다", 401)
-    
     try:
-        with get_conn() as conn:
-            user = conn.execute(
-                "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-                (session['user_id'],)
-            ).fetchone()
-            
-            if not user:
-                return error("사용자를 찾을 수 없습니다", 404)
-            
-            available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-            
-            return success({
-                "available_tokens": available_tokens,
-                "total_tokens": user['token_balance'] or 0,
-                "used_tokens": user['tokens_used'] or 0,
-                "timestamp": int(time.time())
-            })
+        user_id, guard_response = ensure_login_for_json()
+        if guard_response is not None:
+            logger.warning("로그인되지 않은 사용자")
+            return guard_response
+
+        logger.info(f"토큰상태 요청 - 세션 ID: {user_id}")
+
+        # 토큰 잔액 조회 (중앙화된 token_service 사용)
+        token_status = get_user_token_status(user_id)
+        if token_status is None:
+            logger.warning(f"사용자 ID {user_id}를 찾을 수 없음")
+            return error('사용자를 찾을 수 없습니다', status=404)
+        
+        logger.info(f"토큰 상태 조회 성공: Balance={token_status['token_balance']}, Used={token_status['tokens_used']}, Available={token_status['available_tokens']}")
+        
+        return success('토큰 상태 조회 성공', data={
+            'total_granted': token_status['token_balance'],
+            'total_used': token_status['tokens_used'],
+            'available_tokens': token_status['available_tokens'],
+            'timestamp': int(time.time())  # 기존 token_routes.py의 timestamp 필드 유지
+        })
             
     except Exception as e:
+        logger.error(f"토큰 상태 조회 중 오류가 발생했습니다: {str(e)}")
         return error(f"토큰 상태 조회 중 오류가 발생했습니다: {str(e)}", 500)
 
 
