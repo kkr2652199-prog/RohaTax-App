@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 15:49:17 KST
+
+**[f79ff72] fix(security): gold_customers_routes에서 SQL Injection 취약점 제거**
+
+- **수정 파일:** `routes/conversion_modules/gold_customers_routes.py`
+
+- **핵심 내용:** 동적 쿼리 생성 로직을 파라미터화된 쿼리로 변경하여, 심각한 보안 취약점을 해결함.
+
+---
+
 ### 2025-11-14 15:31:53 KST
 
 **[5d1f709] feat(conversion): 핵심 변환 로직을 conversion_engine_routes로 완전 분리**
