@@ -36,6 +36,7 @@ from .conversion_modules.security_routes import (
     get_guidelines_version
 )
 from .conversion_modules.guideline_routes import validate_template_data
+from .conversion_modules.conversion_helpers import normalize_issue_date
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -180,28 +181,6 @@ def start_conversion():
         return error('파일명을 입력하세요', status=400)
 
     # issue_date 정규화: "25년10월01일" 또는 "251001" 또는 ISO 모두 수용 → ISO(YYYY-MM-DD)
-    def normalize_issue_date(s: str) -> str:
-        try:
-            # 251001 형태
-            if len(s) == 6 and s.isdigit():
-                yy = int(s[0:2])
-                mm = int(s[2:4])
-                dd = int(s[4:6])
-                yyyy = 2000 + yy
-                return f"{yyyy:04d}-{mm:02d}-{dd:02d}"
-            # 25년10월01일 형태
-            if '년' in s and '월' in s and '일' in s:
-                yy = int(s.split('년')[0][-2:])
-                rest = s.split('년')[1]
-                mm = int(rest.split('월')[0])
-                dd = int(rest.split('월')[1].split('일')[0])
-                yyyy = 2000 + yy
-                return f"{yyyy:04d}-{mm:02d}-{dd:02d}"
-            # ISO 날짜 시도
-            return datetime.fromisoformat(s).date().isoformat()
-        except Exception:
-            return ''
-
     issue_date = normalize_issue_date(issue_date_raw)
     if not issue_date:
         return error('전자세금일자 형식이 올바르지 않습니다', status=400)
