@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 21:22:55 KST
+
+**[240e933] refactor(api): 관리자 API를 admin_api.py 모듈로 분리**
+
+- **수정 파일:** `routes/api.py`, `routes/api_modules/admin_api.py`, `app.py`
+
+- **핵심 내용:** `api.py`의 관리자 관련 API를 별도 모듈로 분리하여 구조를 개선함.
+
+---
+
 ### 2025-11-14 21:10:43 KST
 
 **[7212ed0] perf(api): myhome-data에서 중복 사용자 조회 제거**
