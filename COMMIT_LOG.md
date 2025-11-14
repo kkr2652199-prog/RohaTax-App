@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-14 21:10:43 KST
+
+**[7212ed0] perf(api): myhome-data에서 중복 사용자 조회 제거**
+
+- **수정 파일:** `routes/api.py`
+
+- **핵심 내용:** `/api/myhome-data` 함수 내 불필요한 중복 DB 쿼리를 제거하여 성능을 개선함.
+
+---
+
 ### 2025-11-14 20:53:03 KST
 
 **[2f55e81] refactor(api): 중복된 /api/myhome-data 엔드포인트 제거**
