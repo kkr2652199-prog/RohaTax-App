@@ -5,7 +5,7 @@
 
 from flask import Blueprint, render_template, session
 from core.security import generate_csrf_token
-from .utils.auth import is_authenticated
+from routes.utils.auth import is_authenticated
 
 page_bp = Blueprint('page', __name__)
 
@@ -26,4 +26,5 @@ def conversion():
         guest_mode=False,
         csrf_token=generate_csrf_token(),
     )
+
 

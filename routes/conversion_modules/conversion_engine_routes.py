@@ -1,133 +1,37 @@
-from flask import Blueprint, render_template, session, redirect, url_for, jsonify, request
+"""
+변환 엔진 라우트 모듈
+변환 시작 및 다운로드 기능을 담당하는 핵심 모듈
+"""
+
+from flask import Blueprint, session, url_for, request, send_file
 from urllib.parse import quote
 import os
-from core.db import get_conn_optimized as get_conn
-from core.responses import success, error
-# from core.template_manager import template_manager
-from core.data_bus import validate_convert_start, normalize_convert_start, SCHEMA_VERSION
-from core.absolute_guidelines import absolute_guidelines
-from core.file_validator import file_validator
-from core.notification_system import notification_system
-from core.security import generate_csrf_token
-from core.conversion_engine import ConversionEngine
-from core.subscription_utils import get_user_subscription, is_unlimited_user, update_plan_price_and_tokens
-from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_template_count
-from core.token_deduction_processor import TokenDeductionProcessor  # 연동 모듈 추가
-from core.activity_service import record_activity  # 기록관 연동 모듈 추가
-from datetime import datetime
 import time
 import logging
 import sqlite3
+import zipfile
+import io
+import re
+import traceback
+from datetime import datetime
 
-from .utils.auth import (
-    current_user_id,
-    ensure_admin_for_json,
-    ensure_login_for_json,
-    is_authenticated,
-)
-from core.utils import row_value
-from core.token_service import get_user_token_status
-from .conversion_modules.template_routes import get_templates, get_template_info, validate_template, upload_template
-from .conversion_modules.security_routes import (
-    get_security_status, 
-    get_notifications, 
-    mark_notification_read, 
-    test_validation as test_file_validation,
-    get_guidelines_version
-)
-from .conversion_modules.guideline_routes import validate_template_data
-from .conversion_modules.conversion_helpers import normalize_issue_date, validate_and_extract_params, prepare_supplier_info, check_token_balance
+from core.db import get_conn_optimized as get_conn
+from core.responses import success, error
+from core.conversion_engine import ConversionEngine
+from core.subscription_utils import get_user_subscription, is_unlimited_user
+from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_template_count
+from core.token_deduction_processor import TokenDeductionProcessor
+from core.activity_service import record_activity
+from routes.utils.auth import ensure_login_for_json
+from .conversion_helpers import validate_and_extract_params, prepare_supplier_info, check_token_balance
 
-conversion_bp = Blueprint('conversion', __name__)
+conversion_engine_bp = Blueprint('conversion_engine', __name__)
 
 logger = logging.getLogger(__name__)
 
-# 전역 변환 엔진 인스턴스 제거 (상태 격리를 위해)
-# conversion_engine = ConversionEngine()  # 제거됨 - 요청별 인스턴스 생성으로 변경
-
-
-def _calculate_template_count_precisely(uploaded_file, industry_type: str = 'delivery') -> int:
-    """
-    변환 전 템플릿 건수를 정밀하게 계산하는 함수
-    
-    실제 변환 로직과 동일한 방식으로 공급받는자 수를 계산하여
-    필요한 토큰 수를 정확히 예측
-    
-    Args:
-        uploaded_file: Flask uploaded file
-        industry_type: 업종 타입 (기본값: 'delivery')
-        
-    Returns:
-        int: 템플릿 건수 (공급받는자 수)
-    """
-    from core.file_parser import FileParser
-    
-    try:
-        logger.info(f"템플릿 건수 정밀 계산 시작: 업종={industry_type}")
-        
-        # 임시 파일로 저장
-        import tempfile
-        temp_dir = tempfile.mkdtemp()
-        temp_file_path = os.path.join(temp_dir, uploaded_file.filename)
-        
-        # 파일 포인터를 처음으로 이동 후 저장
-        uploaded_file.seek(0)
-        uploaded_file.save(temp_file_path)
-        
-        # 파일 파싱
-        file_parser = FileParser()
-        parsed_data = file_parser.parse_file(temp_file_path)
-        
-        logger.info(f"파싱 결과: {type(parsed_data)}")
-        logger.info(f"파싱 결과 키: {list(parsed_data.keys()) if isinstance(parsed_data, dict) else 'Not a dict'}")
-        
-        if not parsed_data:
-            logger.warning("파일 파싱 실패 또는 데이터 없음")
-            return 0
-        
-        # 파싱된 데이터에서 행 수 계산
-        # parse_file이 반환하는 구조: {'data_sections': {...}, 'total_rows': int}
-        total_rows = parsed_data.get('total_rows', 0)
-        
-        if total_rows > 0:
-            recipient_count = total_rows
-            logger.info(f"파싱된 총 행 수: {recipient_count}")
-        else:
-            # 데이터 섹션에서 계산 시도
-            data_sections = parsed_data.get('data_sections', {})
-            data_section = data_sections.get('data_section', [])
-            
-            if isinstance(data_section, list):
-                recipient_count = len(data_section)
-            elif hasattr(data_section, '__len__'):
-                recipient_count = len(data_section)
-            else:
-                # 기본값으로 50 반환 (임시)
-                logger.warning("파싱된 데이터에서 행 수를 계산할 수 없음, 기본값 50 사용")
-                recipient_count = 50
-        
-        # 임시 파일 정리
-        try:
-            os.remove(temp_file_path)
-            os.rmdir(temp_dir)
-        except Exception as cleanup_error:
-            logger.warning(f"임시 파일 정리 실패: {cleanup_error}")
-        
-        logger.info(f"템플릿 건수 계산 완료: {recipient_count}건")
-        
-        return recipient_count
-        
-    except Exception as e:
-        logger.error(f"템플릿 건수 계산 중 오류 발생: {str(e)}")
-        # 실패 시 0 반환 (안전한 기본값)
-        return 0
-
-
-
-
 
 # 변환 시작: 파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입
-@conversion_bp.route('/api/convert/start', methods=['POST'])
+@conversion_engine_bp.route('/api/convert/start', methods=['POST'])
 def start_conversion():
     """변환 시작 API (파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입)
 
@@ -208,7 +112,6 @@ def start_conversion():
     # 토큰 차감을 위해 is_unlimited 재확인
     is_unlimited = is_unlimited_user(user_id)
     # 변환 시작 시간 기록
-    import time
     conversion_start_time = time.time()
     logger.info(f"변환 시작: {time.strftime('%Y-%m-%d %H:%M:%S')} - 사용자 {user_id}")
 
@@ -323,7 +226,6 @@ def start_conversion():
             logger.error(f"활동 로그 기록 중 오류 발생: {str(activity_error)}")
             # 활동 로그 기록 실패는 치명적이지 않으므로 계속 진행
             # 하지만 경고 로그는 남김
-            import traceback
             traceback.print_exc()
         
         # ============================================
@@ -360,7 +262,7 @@ def start_conversion():
 
         return success('변환 완료', data={
             'conversion_result': conversion_result,
-            'download_url': url_for('conversion.download_converted', _external=False),
+            'download_url': url_for('conversion_engine.download_converted', _external=False),
             'download_filename': file_name,
             'detailed_stats': conversion_result.get('detailed_stats', {}),
             'tokens': tokens_payload
@@ -369,7 +271,6 @@ def start_conversion():
     except Exception as e:
         # 변환 전에 토큰을 차감하지 않았으므로 환불 불필요
         logger.error(f"변환 실패: {str(e)}")
-        import traceback
         traceback.print_exc()
         
         # 임시 파일 정리
@@ -378,7 +279,7 @@ def start_conversion():
         return error(f'변환 처리 중 오류 발생: {str(e)}', status=500)
 
 
-@conversion_bp.route('/api/convert/download', methods=['GET'])
+@conversion_engine_bp.route('/api/convert/download', methods=['GET'])
 def download_converted():
     """변환된 홈텍스 파일 다운로드
 
@@ -394,8 +295,6 @@ def download_converted():
         return error('다운로드할 변환 결과가 없습니다', status=404)
 
     try:
-        from flask import send_file
-
         files = [p for p in conversion_result.get('files', []) if os.path.exists(p)]
 
         # 사용자가 다운로드 모드를 선택할 수 있도록 쿼리 파라미터 지원
@@ -424,9 +323,6 @@ def download_converted():
             )
 
         # 2개 이상 또는 zip 강제 시 ZIP으로 제공
-        import zipfile
-        import io
-
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for file_path in files:
@@ -442,7 +338,6 @@ def download_converted():
             # 확장자 제거 후 .zip 추가
             base_name = user_file_name.rsplit('.', 1)[0] if '.' in user_file_name else user_file_name
             # Windows 금지 문자 제거
-            import re
             base_name = re.sub(r'[\\/:*?"<>|]', '', base_name).strip()
             if base_name:  # 제거 후 빈 문자열이 아니면
                 zip_filename = f"{base_name}.zip"
@@ -456,4 +351,3 @@ def download_converted():
         
     except Exception as e:
         return error(f'다운로드 처리 중 오류가 발생했습니다: {str(e)}', status=500)
-
