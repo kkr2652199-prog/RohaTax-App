@@ -8,6 +8,20 @@
 
 ---
 
+### 2025-11-14 11:19:27 (KST)
+
+- **[f066749] refactor(conversion): 절대지침 검증 모듈 분리**
+
+  - **수정 파일:** `routes/conversion.py`, `app.py`, `routes/conversion_modules/guideline_routes.py`
+
+  - **핵심 내용:** `conversion.py`의 절대지침 관련 2개 함수를 중앙 모듈로 이전하여 중복 제거. 약 50줄 감소.
+
+  - routes/conversion.py에 중복으로 존재하던 절대지침 관련 2개 함수(validate_template_data, get_guidelines_version)를 제거함.
+
+  - 이를 중앙화된 guideline 모듈을 사용하도록 변경하여, 코드 중복을 해소하고 책임 분리 원칙을 강화함.
+
+  - '인간 검증'을 통해 기능적 회귀가 없음을 확인함.
+
 ### 2025-11-13 20:14:48 (KST)
 
 - **[1987c6b] refactor(route): conversion.py 보안 모듈 책임 분리 및 Blueprint 등록**
