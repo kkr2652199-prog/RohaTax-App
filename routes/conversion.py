@@ -32,8 +32,10 @@ from .conversion_modules.security_routes import (
     get_security_status, 
     get_notifications, 
     mark_notification_read, 
-    test_validation as test_file_validation
+    test_validation as test_file_validation,
+    get_guidelines_version
 )
+from .conversion_modules.guideline_routes import validate_template_data
 
 conversion_bp = Blueprint('conversion', __name__)
 
@@ -260,55 +262,6 @@ def user_info():
         }
         
         return success('사용자 정보 조회 성공', data={'user': safe_user_data})
-
-
-@conversion_bp.route('/api/validate-template-data', methods=['POST'])
-def validate_template_data():
-    """템플릿 데이터 절대지침 검증 API"""
-    user_id, guard_response = ensure_login_for_json()
-    if guard_response is not None:
-        return guard_response
-    
-    try:
-        data = request.get_json(silent=True) or {}
-        
-        # 절대지침 검증 수행
-        success_result, errors = absolute_guidelines.validate_template_data(data)
-        
-        # 검증 결과 로그 기록
-        absolute_guidelines.log_validation_result(
-            data, success_result, errors, user_id
-        )
-        
-        if success_result:
-            return success('절대지침 검증 통과', data={
-                'compliant': True,
-                'errors': [],
-                'guideline_version': absolute_guidelines.get_guideline_version()
-            })
-        else:
-            return error('절대지침 검증 실패', data={
-                'compliant': False,
-                'errors': errors,
-                'guideline_version': absolute_guidelines.get_guideline_version()
-            }, status=422)
-            
-    except Exception as e:
-        return error(f'검증 처리 실패: {str(e)}', status=500)
-
-
-@conversion_bp.route('/api/guidelines/version', methods=['GET'])
-def get_guidelines_version():
-    """절대지침 버전 조회 API"""
-    try:
-        version = absolute_guidelines.get_guideline_version()
-        return success('절대지침 버전 조회 성공', data={
-            'version': version,
-            'last_updated': '2025-10-01',
-            'status': 'active'
-        })
-    except Exception as e:
-               return error(f'버전 조회 실패: {str(e)}', status=500)
 
 
 
