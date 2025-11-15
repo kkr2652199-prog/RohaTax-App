@@ -11,7 +11,14 @@ import pandas as pd
 
 from .config_builder import build_forbidden_keywords_map, get_scoring_config
 from .number_parser import default_number_parser
-from .scoring_utils import score_representative_header
+from .scoring_utils import (
+    score_representative_header,
+    count_matched_fields,
+    calculate_data_density,
+    evaluate_data_quality,
+    calculate_csv_data_density,
+    count_csv_matched_fields,
+)
 
 FamilyExtractor = Callable[[Worksheet, Dict[str, List[str]]], List[Dict[str, Any]]]
 NumberParser = Callable[[Any], float]
@@ -206,7 +213,7 @@ class HeaderLocator:
             if row in title_rows:
                 continue
 
-            data_density = self._calculate_data_density(sheet, row, max_col)
+            data_density = calculate_data_density(sheet, row, max_col)
             header_candidates.append((row, data_density))
 
         if not header_candidates:
@@ -235,8 +242,8 @@ class HeaderLocator:
         scan_rows = min(10, len(df))
 
         for row_idx in range(scan_rows):
-            data_density = self._calculate_csv_data_density(df, row_idx)
-            matched_fields = self._count_csv_matched_fields(
+            data_density = calculate_csv_data_density(df, row_idx)
+            matched_fields = count_csv_matched_fields(
                 df,
                 row_idx,
                 required_keywords,
@@ -264,7 +271,7 @@ class HeaderLocator:
 
         if not header_candidates:
             density_scores = [
-                (row, self._calculate_csv_data_density(df, row)) for row in range(scan_rows)
+                (row, calculate_csv_data_density(df, row)) for row in range(scan_rows)
             ]
             density_scores.sort(key=lambda x: (x[1], -x[0]), reverse=True)
             best_header_row = density_scores[0][0]
@@ -576,8 +583,8 @@ class HeaderLocator:
             scan_rows = min(1000, max_row)
 
             for row in range(1, scan_rows + 1):
-                data_density = self._calculate_data_density(sheet, row, max_col)
-                matched_fields = self._count_matched_fields(
+                data_density = calculate_data_density(sheet, row, max_col)
+                matched_fields = count_matched_fields(
                     sheet,
                     row,
                     max_col,
@@ -655,7 +662,7 @@ class HeaderLocator:
                     row_data.append(cell_value)
                 data.append(row_data)
 
-            data_quality_score = self._evaluate_data_quality(data, headers)
+            data_quality_score = evaluate_data_quality(data, headers)
             final_score = best_header['header_score'] * 0.7 + data_quality_score * 0.3
 
             families: List[Dict[str, Any]] = []
@@ -772,61 +779,6 @@ class HeaderLocator:
             self.logger.warning("같은 행 아빠값 최대값 계산 중 오류: %s", exc)
             return 0.0
 
-    def _count_matched_fields(
-        self,
-        sheet: Worksheet,
-        row: int,
-        max_col: int,
-        required_keywords: Dict[str, List[str]],
-        forbidden_keywords_map: Dict[str, List[str]],
-    ) -> int:
-        matched_fields = set()
-        max_col = min(max_col, 50)
-
-        for col in range(1, max_col + 1):
-            cell_value = sheet.cell(row=row, column=col).value
-            if cell_value is None:
-                continue
-
-            cell_text = str(cell_value).lower().strip()
-
-            for field_type, keywords in required_keywords.items():
-                if field_type in matched_fields:
-                    continue
-
-                forbidden_keywords = forbidden_keywords_map.get(field_type, [])
-                if any(keyword.lower() in cell_text for keyword in forbidden_keywords):
-                    self.logger.debug(
-                        "금지어 감지: %s 필드에서 금지어 발견 '%s' (행 %d, 컬럼 %d)",
-                        field_type,
-                        cell_text,
-                        row,
-                        col,
-                    )
-                    continue
-
-                if any(keyword.lower() in cell_text for keyword in keywords):
-                    matched_fields.add(field_type)
-                    self.logger.debug(
-                        "지능앱 헤더 감지: %s 매칭 '%s' → '%s' (행 %d, 컬럼 %d)",
-                        field_type,
-                        keywords[0],
-                        cell_text,
-                        row,
-                        col,
-                    )
-                    break
-
-        matched_count = len(matched_fields)
-        self.logger.debug(
-            "지능앱 헤더 감지: 행 %d에서 %d개 필드 매칭 (%s)",
-            row,
-            matched_count,
-            matched_fields,
-        )
-
-        return matched_count
-
     def _detect_title_rows(self, sheet: Worksheet, max_col: int) -> List[int]:
         title_rows: List[int] = []
 
@@ -880,140 +832,6 @@ class HeaderLocator:
             and pattern['long_text_count'] >= 1
             and pattern['number_count'] <= 1
         )
-
-    def _calculate_data_density(
-        self,
-        sheet: Worksheet,
-        row: int,
-        max_col: int,
-    ) -> float:
-        text_count = 0
-        number_count = 0
-        empty_count = 0
-
-        max_col = min(max_col, 50)
-
-        for col in range(1, max_col + 1):
-            cell_value = sheet.cell(row=row, column=col).value
-
-            if cell_value is None or str(cell_value).strip() == '':
-                empty_count += 1
-            elif isinstance(cell_value, (int, float)):
-                number_count += 1
-            else:
-                text_count += 1
-
-        total_cells = max_col
-        if total_cells == 0:
-            return 0.0
-
-        text_ratio = text_count / total_cells
-        number_ratio = number_count / total_cells
-        empty_ratio = empty_count / total_cells
-
-        header_score = text_ratio * 2 + number_ratio * 0.5 + empty_ratio * 0.1
-        return header_score
-
-    def _evaluate_data_quality(
-        self,
-        data: List[List[Any]],
-        headers: List[str],
-    ) -> float:
-        if not data or not headers:
-            return 0.0
-
-        total_cells = len(data) * len(headers)
-        if total_cells == 0:
-            return 0.0
-
-        empty_cells = 0
-        for row in data:
-            for cell in row:
-                if cell is None or str(cell).strip() == "":
-                    empty_cells += 1
-
-        completeness_score = 1.0 - (empty_cells / total_cells)
-
-        consistency_score = 0.0
-        if len(data) > 1:
-            row_lengths = [
-                len([cell for cell in row if cell is not None and str(cell).strip()])
-                for row in data
-            ]
-            if row_lengths:
-                avg_length = sum(row_lengths) / len(row_lengths)
-                variance = sum((length - avg_length) ** 2 for length in row_lengths) / len(row_lengths)
-                consistency_score = max(0.0, 1.0 - (variance / (avg_length + 1)))
-
-        quality_score = completeness_score * 0.7 + consistency_score * 0.3
-        return min(1.0, max(0.0, quality_score))
-
-    # ------------------------------------------------------------------
-    # 내부 유틸리티 (CSV)
-    # ------------------------------------------------------------------
-    def _calculate_csv_data_density(self, df: pd.DataFrame, row_idx: int) -> float:
-        if row_idx >= len(df):
-            return 0.0
-
-        row_data = df.iloc[row_idx]
-        text_count = 0
-        number_count = 0
-        empty_count = 0
-
-        for value in row_data:
-            if pd.isna(value) or str(value).strip() == "":
-                empty_count += 1
-            elif isinstance(value, (int, float)):
-                number_count += 1
-            else:
-                text_count += 1
-
-        total_cells = len(row_data)
-        if total_cells == 0:
-            return 0.0
-
-        text_ratio = text_count / total_cells
-        number_ratio = number_count / total_cells
-        empty_ratio = empty_count / total_cells
-
-        header_score = text_ratio * 2 + number_ratio * 0.5 + empty_ratio * 0.1
-        return header_score
-
-    def _count_csv_matched_fields(
-        self,
-        df: pd.DataFrame,
-        row_idx: int,
-        required_keywords: Dict[str, List[str]],
-    ) -> int:
-        if row_idx >= len(df):
-            return 0
-
-        matched_fields = set()
-        row_data = df.iloc[row_idx]
-
-        for cell_value in row_data:
-            if pd.isna(cell_value):
-                continue
-
-            cell_text = str(cell_value).lower().strip()
-
-            for field_type, keywords in required_keywords.items():
-                if field_type in matched_fields:
-                    continue
-
-                if any(keyword.lower() in cell_text for keyword in keywords):
-                    matched_fields.add(field_type)
-                    break
-
-        matched_count = len(matched_fields)
-        self.logger.debug(
-            "지능앱 CSV 헤더 감지: 행 %d에서 %d개 필드 매칭 (%s)",
-            row_idx,
-            matched_count,
-            matched_fields,
-        )
-
-        return matched_count
 
     # ------------------------------------------------------------------
     # 설정/빌더
