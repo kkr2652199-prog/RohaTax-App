@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 11:00:20 KST
+
+**[35377e2] refactor(parser): 유틸리티 및 점수 계산 로직 분리**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`, `core/file_parser_utils/number_parser.py`, `core/file_parser_utils/scoring_utils.py`
+
+- **핵심 내용:** header_locator.py에 혼재되어 있던 숫자 파싱과 점수 계산 로직을 각각 독립적인 number_parser.py와 scoring_utils.py 모듈로 분리하여 단일 책임 원칙을 강화하고 코드의 재사용성을 높임.
+
+---
+
 ### 2025-11-15 10:39:28 KST
 
 **[a9895c3] refactor(parser): 설정 빌더 로직을 config_builder 모듈로 분리**
