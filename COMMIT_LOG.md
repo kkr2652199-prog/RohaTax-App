@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 11:50:07 KST
+
+**[d0eae96] refactor(parser): 헤더 탐지 로직을 header_detector 모듈로 분리**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`, `core/file_parser_utils/header_detector.py`
+
+- **핵심 내용:** header_locator.py에 혼재되어 있던 헤더 행 탐지 관련 7개 메서드를 독립적인 header_detector.py 모듈로 분리함. 이는 header_locator.py 리팩토링의 다섯 번째 단계로, 핵심 탐지 로직의 책임을 명확히 하고 코드의 구조를 개선함.
+
+---
+
 ### 2025-11-15 11:37:55 KST
 
 **[42a6289] refactor(parser): 컬럼 매핑 로직을 column_mapper 모듈로 분리**
