@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 10:39:28 KST
+
+**[a9895c3] refactor(parser): 설정 빌더 로직을 config_builder 모듈로 분리**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`, `core/file_parser_utils/config_builder.py`
+
+- **핵심 내용:** header_locator.py에 혼재되어 있던 설정 관련 메서드를 독립적인 config_builder.py 모듈로 분리하고, 중복된 get_actual_data_range() 메서드를 통합하여 코드 구조를 개선함.
+
+---
+
 ### 2025-11-14 21:49:03 KST
 
 **[1916956] refactor(api): 사용자 API를 user_api.py 모듈로 분리**
