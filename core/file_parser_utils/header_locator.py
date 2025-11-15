@@ -10,6 +10,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 import pandas as pd
 
 from .config_builder import build_forbidden_keywords_map, get_scoring_config
+from .number_parser import default_number_parser
+from .scoring_utils import score_representative_header
 
 FamilyExtractor = Callable[[Worksheet, Dict[str, List[str]]], List[Dict[str, Any]]]
 NumberParser = Callable[[Any], float]
@@ -83,7 +85,7 @@ class HeaderLocator:
                 has_bn = any_in(['사업자', '등록번호', '공급받는자사업자', '공급받는자 사업자'])
 
                 representative_scores = [
-                    self._score_representative_header(header)
+                    score_representative_header(header)
                     for header in headers_lower
                 ]
 
@@ -361,7 +363,7 @@ class HeaderLocator:
 
             header_value = str(raw_header_value).strip()
             header_lower = header_value.lower()
-            score = self._score_representative_header(header_value)
+            score = score_representative_header(header_value)
 
             if score > best_rep_score:
                 best_rep_score = score
@@ -751,7 +753,7 @@ class HeaderLocator:
                 return 0.0
 
             max_dad_amount = 0.0
-            converter = number_parser or self._default_number_parser
+            converter = number_parser or default_number_parser
 
             for family in families:
                 dad_amount = converter(family.get('공급가액', 0))
@@ -1016,42 +1018,6 @@ class HeaderLocator:
     # ------------------------------------------------------------------
     # 설정/빌더
     # ------------------------------------------------------------------
-    def _score_representative_header(self, header: str) -> int:
-        header_lower = header.strip().lower()
-
-        if not header_lower or header_lower in {'', 'none', 'nan'}:
-            return -100
-
-        score = 0
-
-        if '대표자' in header_lower:
-            score += 90
-        elif '대표' in header_lower:
-            score += 70
-
-        if any(keyword in header_lower for keyword in ['사장', '원장', '점주', '대표원장']):
-            score += 60
-
-        if any(keyword in header_lower for keyword in ['성명', '성함', '이름']):
-            score += 40
-
-        if any(keyword in header_lower for keyword in ['공급받는자', '수취인', '구매자', '거래처', '고객', '매입자', '업체', '가맹점', '매장', '점포', '업소']):
-            score += 10
-
-        if any(keyword in header_lower for keyword in ['담당', '매니저', '관리자', '점장']):
-            score -= 30
-
-        if any(keyword in header_lower for keyword in ['등록자', '작성자', '입력자']):
-            score -= 50
-
-        if '대표번호' in header_lower:
-            score -= 80
-
-        if '번호' in header_lower and not any(keyword in header_lower for keyword in ['성명', '성함', '이름']):
-            score -= 60
-
-        return score
-
     def _select_by_score(
         self,
         sheet_results: List[Dict[str, Any]],
@@ -1098,15 +1064,5 @@ class HeaderLocator:
     # ------------------------------------------------------------------
     # 내부 공용 유틸리티
     # ------------------------------------------------------------------
-    def _default_number_parser(self, value: Any) -> float:
-        try:
-            if value is None:
-                return 0.0
-            if isinstance(value, (int, float)):
-                return float(value)
-            stripped = str(value).strip().replace(',', '')
-            return float(stripped) if stripped not in ['', 'None', 'nan'] else 0.0
-        except Exception:
-            return 0.0
 
 
