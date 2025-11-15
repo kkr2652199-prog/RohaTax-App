@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 00:05:04 KST
+
+**[0ead361] refactor(extractor): 컬럼 매핑 및 점수 계산 로직을 column_scorer로 분리**
+
+- **수정 파일:** `core/recipient_extractor/second_priority_handler.py`, `core/recipient_extractor/utils/column_scorer.py`, `core/recipient_extractor/utils/__init__.py`
+
+- **핵심 내용:** second_priority_handler.py에 혼재되어 있던 가장 복잡한 핵심 로직인 컬럼 매핑 및 점수 계산 관련 8개 메서드를 독립적인 `core/recipient_extractor/utils/column_scorer.py` 모듈로 분리함. 이로 인해 second_priority_handler.py의 라인 수가 55% 감소했으며, 핵심 판단 로직의 책임이 명확히 분리됨. 이는 second_priority_handler.py 리팩토링의 네 번째 단계로, 코드의 모듈성과 유지보수성을 극대화함.
+
+---
+
 ### 2025-11-15 23:48:46 KST
 
 **[47ac3a4] refactor(extractor): 설정 및 키워드 로직을 config_loader 모듈로 분리**
