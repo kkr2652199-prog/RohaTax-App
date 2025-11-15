@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 23:28:13 KST
+
+**[76764ab] fix(extractor): 분리된 검증 함수 호출 경로 수정 및 누락된 메서드 추가**
+
+- **수정 파일:** `core/file_parser_utils/column_mapper.py`, `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/pipeline.py`, `core/recipient_extractor/second_priority_handler.py`, `core/recipient_extractor/validation.py`, `core/recipient_extractor/utils/sheet_detector.py`
+
+- **핵심 내용:** '진실 규명 작전'과 '파수대 건설' 작전에서 모듈을 분리한 후 발생한 AttributeError들을 해결함. main_extractor.py에서 분리된 검증 함수들을 올바르게 호출하도록 수정하고, pipeline.py가 호출하던 누락된 'validate_recipients' 메서드를 Validator 클래스에 새로 구현함. 또한 column_mapper.py에 검증/완료일자 관련 컬럼을 금액 필드 매핑에서 제외하는 로직을 추가하여 변환 오류를 방지함. 이로써 모든 기능적 회귀 문제를 해결하고 시스템의 안정성을 복원함.
+
+---
+
 ### 2025-11-15 12:58:47 KST
 
 **[71b75ca] refactor(extractor): 데이터 검증 로직을 data_validator 모듈로 분리**
