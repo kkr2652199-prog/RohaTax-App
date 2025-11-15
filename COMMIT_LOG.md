@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 12:25:53 KST
+
+**[61a3968] refactor(parser): header_locator 로직을 외부 모듈 호출 중심으로 재구성**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`
+
+- **핵심 내용:** header_locator.py에 마지막으로 남아있던 복잡한 로직들을, 분리된 외부 모듈(config_builder, scoring_utils 등)을 호출하는 단순한 지휘부 역할로 재구성함. inspect_all_sheets 메서드의 내부 로직을 헬퍼 메서드로 분리하여 가독성을 높임. 이로써 '감시탑 해체' 작전을 공식적으로 종결하고, 파일 파싱 계층의 모듈화를 완성함.
+
+---
+
 ### 2025-11-15 11:50:07 KST
 
 **[d0eae96] refactor(parser): 헤더 탐지 로직을 header_detector 모듈로 분리**
