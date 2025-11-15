@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 16:57:22 KST
+
+**[1f648be] refactor(extractor): [최고사령부 해체 1-1] 서브지침 처리 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/sub_guideline_processor.py`
+
+- **핵심 내용:** main_extractor.py에 혼재되어 있던 서브지침 처리 관련 3개 메서드(_check_and_apply_sub_guideline, _extract_with_sub_guidelines, _extract_with_basic_mode)를 독립적인 `core/recipient_extractor/utils/sub_guideline_processor.py` 모듈로 분리함. 이는 main_extractor.py 리팩토링의 첫 단계로, 단일 책임 원칙을 강화하고 코드의 구조를 개선함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 00:33:17 KST
 
 **[e432d11] refactor(extractor): 핵심 추출 로직을 extractor 모듈로 분리**
