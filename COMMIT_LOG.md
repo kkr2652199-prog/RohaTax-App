@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-01-15 12:48:00 KST
+
+**[71b75ca] refactor(extractor): 데이터 검증 로직을 data_validator 모듈로 분리**
+
+- **수정 파일:** `core/recipient_extractor/second_priority_handler.py`, `core/recipient_extractor/utils/data_validator.py`, `core/recipient_extractor/utils/__init__.py`, `core/recipient_extractor/utils/legacy_utils.py`
+
+- **핵심 내용:** second_priority_handler.py에 혼재되어 있던 데이터 유효성 검증 관련 6개 메서드를 독립적인 `core/recipient_extractor/utils/data_validator.py` 모듈로 분리함. 이 과정에서 기존 `utils.py`와의 충돌을 피하기 위해 `utils`를 패키지로 만들고, `legacy_utils.py`로 분리하여 호환성을 유지함. 이는 second_priority_handler.py 리팩토링의 첫 단계로, 단일 책임 원칙을 강화하고 코드의 재사용성을 높임.
+
+---
+
 ### 2025-11-15 12:25:53 KST
 
 **[61a3968] refactor(parser): header_locator 로직을 외부 모듈 호출 중심으로 재구성**
