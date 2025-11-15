@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 00:33:17 KST
+
+**[e432d11] refactor(extractor): 핵심 추출 로직을 extractor 모듈로 분리**
+
+- **수정 파일:** `core/recipient_extractor/second_priority_handler.py`, `core/recipient_extractor/utils/extractor.py`, `core/recipient_extractor/utils/__init__.py`
+
+- **핵심 내용:** second_priority_handler.py의 가장 큰 핵심 로직인 extract_recipients_from_second_priority() 메서드를 독립적인 `core/recipient_extractor/utils/extractor.py` 모듈로 분리함. 이로 인해 second_priority_handler.py의 라인 수가 94% 감소했으며, 이제 이 클래스는 외부 전문 모듈들을 호출하는 단순한 '지휘관' 역할만 수행하게 됨. 이는 second_priority_handler.py 리팩토링의 마지막 단계로, 코드의 모듈성과 유지보수성을 극대화함.
+
+---
+
 ### 2025-11-16 00:13:48 KST
 
 **[0ead361] refactor(extractor): 컬럼 매핑 및 점수 계산 로직을 column_scorer로 분리**
