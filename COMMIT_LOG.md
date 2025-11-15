@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 11:37:55 KST
+
+**[42a6289] refactor(parser): 컬럼 매핑 로직을 column_mapper 모듈로 분리**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`, `core/file_parser_utils/column_mapper.py`
+
+- **핵심 내용:** header_locator.py에 혼재되어 있던 컬럼 매핑 관련 메서드(map_columns, _validate_dad_column_before_mom)를 독립적인 column_mapper.py 모듈로 분리함. 이는 header_locator.py 리팩토링의 네 번째 단계로, 단일 책임 원칙을 강화하고 코드의 재사용성을 높임.
+
+---
+
 ### 2025-11-15 11:14:45 KST
 
 **[8c97a23] refactor(parser): 점수 계산 및 데이터 품질 평가 로직을 scoring_utils로 분리**
