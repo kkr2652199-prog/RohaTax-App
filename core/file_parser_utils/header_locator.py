@@ -9,6 +9,8 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import pandas as pd
 
+from .config_builder import build_forbidden_keywords_map, get_scoring_config
+
 FamilyExtractor = Callable[[Worksheet, Dict[str, List[str]]], List[Dict[str, Any]]]
 NumberParser = Callable[[Any], float]
 
@@ -31,8 +33,8 @@ class HeaderLocator:
     ) -> Optional[Dict[str, Any]]:
         """모든 시트를 검열하여 최적의 시트를 선택한다."""
 
-        weights, thresholds, override_all5 = self._get_scoring_config()
-        forbidden_keywords_map = self._build_forbidden_keywords_map()
+        weights, thresholds, override_all5 = get_scoring_config()
+        forbidden_keywords_map = build_forbidden_keywords_map()
 
         best_result: Optional[Dict[str, Any]] = None
         sheet_results: List[Dict[str, Any]] = []
@@ -419,11 +421,6 @@ class HeaderLocator:
 
         self.logger.info("컬럼 매핑 결과: %s", column_mapping)
         return column_mapping
-
-    def get_actual_data_range(self, sheet: Worksheet) -> Tuple[int, int]:
-        """실제 데이터가 존재하는 행/열 범위를 반환한다."""
-
-        return self._find_actual_data_range(sheet)
 
     def _validate_dad_column_before_mom(
         self,
@@ -1019,28 +1016,6 @@ class HeaderLocator:
     # ------------------------------------------------------------------
     # 설정/빌더
     # ------------------------------------------------------------------
-    def _build_forbidden_keywords_map(self) -> Dict[str, List[str]]:
-        """필요 이상의 금지어를 적용하지 않는다."""
-        return {
-            'business_number': [],
-            'store_name': [],
-            'representative': [],
-            'address': [],
-            'email': [],
-        }
-
-    def _get_scoring_config(self) -> Tuple[Dict[str, int], Dict[str, int], bool]:
-        weights = {
-            'business_number': 30,
-            'representative': 10,
-            'address': 30,
-            'email': 20,
-            'store_name': 10,
-        }
-        thresholds = {'pass': 80, 'candidate': 70}
-        override_all5 = True
-        return weights, thresholds, override_all5
-
     def _score_representative_header(self, header: str) -> int:
         header_lower = header.strip().lower()
 
