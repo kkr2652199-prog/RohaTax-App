@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 17:56:50 KST
+
+**[6a29c52] refactor(extractor): [최고사령부 해체 1-2] 설정 관리 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/config_manager.py`
+
+- **핵심 내용:** main_extractor.py에 혼재되어 있던 설정 관리 관련 7개 메서드를 독립적인 `core/recipient_extractor/utils/config_manager.py` 모듈로 분리함. RecipientExtractor 클래스는 이제 ConfigManager를 통해 설정을 관리하며, 코드의 책임이 명확해짐. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-15 16:57:22 KST
 
 **[1f648be] refactor(extractor): [최고사령부 해체 1-1] 서브지침 처리 로직 분리**
