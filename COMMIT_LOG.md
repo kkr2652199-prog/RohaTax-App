@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 11:14:45 KST
+
+**[8c97a23] refactor(parser): 점수 계산 및 데이터 품질 평가 로직을 scoring_utils로 분리**
+
+- **수정 파일:** `core/file_parser_utils/header_locator.py`, `core/file_parser_utils/scoring_utils.py`
+
+- **핵심 내용:** header_locator.py에 혼재되어 있던 점수 계산 및 데이터 품질 평가 관련 메서드(_count_matched_fields, _count_csv_matched_fields, _calculate_data_density, _calculate_csv_data_density, _evaluate_data_quality)를 scoring_utils.py 모듈로 분리하여, 모든 점수 계산 및 데이터 품질 평가 로직을 한 곳에 통합함. 이는 header_locator.py 리팩토링의 세 번째 단계로, 코드의 응집도를 높이고 재사용성을 향상시킴.
+
+---
+
 ### 2025-11-15 11:00:20 KST
 
 **[35377e2] refactor(parser): 유틸리티 및 점수 계산 로직 분리**
