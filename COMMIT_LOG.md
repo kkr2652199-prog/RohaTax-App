@@ -8,7 +8,7 @@
 
 ---
 
-### 2025-01-15 12:48:00 KST
+### 2025-11-15 12:58:47 KST
 
 **[71b75ca] refactor(extractor): 데이터 검증 로직을 data_validator 모듈로 분리**
 
