@@ -92,57 +92,12 @@ class HeaderLocator:
                 if not sheet_result:
                     continue
 
-                headers_lower = [str(h).lower() for h in sheet_result["headers"]]
-
-                def any_in(keys: List[str]) -> bool:
-                    return any(
-                        any(key in header for header in headers_lower) for key in keys
-                    )
-
-                has_bn = any_in(['사업자', '등록번호', '공급받는자사업자', '공급받는자 사업자'])
-
-                representative_scores = [
-                    score_representative_header(header)
-                    for header in headers_lower
-                ]
-
-                strong_rep = any(score >= 60 for score in representative_scores)
-                medium_rep = any(40 <= score < 60 for score in representative_scores)
-                fallback_rep = any(20 <= score < 40 for score in representative_scores)
-                registration_rep = any(
-                    ('등록자' in header or '작성자' in header or '입력자' in header)
-                    for header in headers_lower
+                # 외부 함수를 사용하여 점수 계산 및 필드 확인
+                sheet_result = self._calculate_sheet_scores(
+                    sheet_result,
+                    weights,
+                    total_delivery_amount,
                 )
-
-                if strong_rep:
-                    representative_points = weights.get('representative', 10)
-                elif medium_rep:
-                    representative_points = max(int(weights.get('representative', 10) * 0.6), 4)
-                elif fallback_rep:
-                    representative_points = max(int(weights.get('representative', 10) * 0.4), 3)
-                elif registration_rep:
-                    representative_points = max(int(weights.get('representative', 10) * 0.2), 2)
-                else:
-                    representative_points = 0
-
-                has_rep = representative_points > 0
-                has_addr = any_in(['주소', '소재지', '사업장', '공급받는자주소', '공급받는자 주소'])
-                has_email = any_in(['이메일', 'email', '메일', '공급받는자이메일', '공급받는자 이메일'])
-                has_store = any_in(['가맹점', '상호', '상호명', '매장', '점포', '업체', '가게', '공급받는자상호', '공급받는자 상호', '매장명', '점포명'])
-
-                found5 = sum([has_bn, has_rep, has_addr, has_email, has_store])
-
-                sheet_score_pts = (
-                    (weights.get('business_number', 30) if has_bn else 0)
-                    + representative_points
-                    + (weights.get('address', 30) if has_addr else 0)
-                    + (weights.get('email', 20) if has_email else 0)
-                    + (weights.get('store_name', 10) if has_store else 0)
-                )
-
-                sheet_result['core_fields_found'] = found5
-                sheet_result['scoring_points'] = sheet_score_pts
-                sheet_result['delivery_amount'] = total_delivery_amount
 
                 if total_delivery_amount > 0:
                     delivery_bonus = min(total_delivery_amount / 1_000_000, 50)
@@ -232,6 +187,67 @@ class HeaderLocator:
     # ------------------------------------------------------------------
     # 내부 유틸리티 (엑셀)
     # ------------------------------------------------------------------
+    def _calculate_sheet_scores(
+        self,
+        sheet_result: Dict[str, Any],
+        weights: Dict[str, int],
+        total_delivery_amount: float,
+    ) -> Dict[str, Any]:
+        """시트 점수를 계산하고 필드 존재 여부를 확인한다."""
+        headers_lower = [str(h).lower() for h in sheet_result["headers"]]
+
+        def any_in(keys: List[str]) -> bool:
+            return any(
+                any(key in header for header in headers_lower) for key in keys
+            )
+
+        has_bn = any_in(['사업자', '등록번호', '공급받는자사업자', '공급받는자 사업자'])
+
+        representative_scores = [
+            score_representative_header(header)
+            for header in headers_lower
+        ]
+
+        strong_rep = any(score >= 60 for score in representative_scores)
+        medium_rep = any(40 <= score < 60 for score in representative_scores)
+        fallback_rep = any(20 <= score < 40 for score in representative_scores)
+        registration_rep = any(
+            ('등록자' in header or '작성자' in header or '입력자' in header)
+            for header in headers_lower
+        )
+
+        if strong_rep:
+            representative_points = weights.get('representative', 10)
+        elif medium_rep:
+            representative_points = max(int(weights.get('representative', 10) * 0.6), 4)
+        elif fallback_rep:
+            representative_points = max(int(weights.get('representative', 10) * 0.4), 3)
+        elif registration_rep:
+            representative_points = max(int(weights.get('representative', 10) * 0.2), 2)
+        else:
+            representative_points = 0
+
+        has_rep = representative_points > 0
+        has_addr = any_in(['주소', '소재지', '사업장', '공급받는자주소', '공급받는자 주소'])
+        has_email = any_in(['이메일', 'email', '메일', '공급받는자이메일', '공급받는자 이메일'])
+        has_store = any_in(['가맹점', '상호', '상호명', '매장', '점포', '업체', '가게', '공급받는자상호', '공급받는자 상호', '매장명', '점포명'])
+
+        found5 = sum([has_bn, has_rep, has_addr, has_email, has_store])
+
+        sheet_score_pts = (
+            (weights.get('business_number', 30) if has_bn else 0)
+            + representative_points
+            + (weights.get('address', 30) if has_addr else 0)
+            + (weights.get('email', 20) if has_email else 0)
+            + (weights.get('store_name', 10) if has_store else 0)
+        )
+
+        sheet_result['core_fields_found'] = found5
+        sheet_result['scoring_points'] = sheet_score_pts
+        sheet_result['delivery_amount'] = total_delivery_amount
+
+        return sheet_result
+
     def _find_priority_sheet(
         self,
         workbook: openpyxl.Workbook,
