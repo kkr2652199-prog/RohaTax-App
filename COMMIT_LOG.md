@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-15 23:48:46 KST
+
+**[47ac3a4] refactor(extractor): 설정 및 키워드 로직을 config_loader 모듈로 분리**
+
+- **수정 파일:** `core/recipient_extractor/second_priority_handler.py`, `core/recipient_extractor/utils/config_loader.py`
+
+- **핵심 내용:** second_priority_handler.py의 __init__ 메서드에 하드코딩되어 있던 모든 설정값과 키워드 리스트를 독립적인 `core/recipient_extractor/utils/config_loader.py` 모듈로 분리함. __init__ 메서드는 이제 외부 함수를 호출하여 설정을 로드하는 단순한 역할만 수행하게 됨. 이는 second_priority_handler.py 리팩토링의 세 번째 단계로, 설정 관리의 중앙화를 통해 코드의 유지보수성을 향상시킴.
+
+---
+
 ### 2025-11-15 23:28:13 KST
 
 **[76764ab] fix(extractor): 분리된 검증 함수 호출 경로 수정 및 누락된 메서드 추가**
