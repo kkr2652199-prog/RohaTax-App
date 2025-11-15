@@ -38,7 +38,7 @@ from .utils.sub_guideline_processor import (
     extract_with_sub_guidelines,
     extract_with_basic_mode,
 )
-from ..industry_config_loader import industry_config_loader
+from .utils.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +55,9 @@ class RecipientExtractor:
     def __init__(self):
         """공급받는자 추출기 초기화"""
         self.logger = logger
-        self.current_industry = None
-        self.current_guideline = None
         
-        # 설정 파일 로더 초기화
-        self.config_loader = industry_config_loader
-        self.logger.info("업종별 설정 파일 로더 초기화 완료")
-        
-        # 기본 키워드 (배달대행사용)
-        self.store_keywords = self._get_store_keywords('delivery')
+        # 설정 관리자 초기화
+        self.config_manager = ConfigManager(self.logger)
         
         # 모듈화된 구성요소들
         self.field_extractors = FieldExtractors()
@@ -74,48 +68,32 @@ class RecipientExtractor:
         self.pipeline = RecipientExtractionPipeline(self)
         self.normalize_colname = normalize_colname
     
-    def _get_store_keywords(self, industry: str) -> List[str]:
-        """설정 파일에서 업종별 상호 키워드를 가져옴"""
-        config = self.config_loader.get_industry_config(industry)
-        if config and 'store_keywords' in config:
-            return config['store_keywords']
-        return []
+    @property
+    def current_industry(self):
+        """현재 업종 반환"""
+        return self.config_manager.current_industry
     
-    def _get_industry_config(self, industry: str) -> Dict[str, Any]:
-        """설정 파일에서 업종별 설정을 가져옴"""
-        return self.config_loader.get_industry_config(industry) or {}
+    @property
+    def current_guideline(self):
+        """현재 지침 반환"""
+        return self.config_manager.current_guideline
     
-    def _get_sub_guidelines(self, industry: str) -> Dict[str, Any]:
-        """서브 지침 가져오기"""
-        main_config = self._get_industry_config(industry)
-        return main_config.get('sub_guidelines', {})
+    @property
+    def store_keywords(self):
+        """현재 상호 키워드 반환"""
+        return self.config_manager.store_keywords
     
     def set_industry_guideline(self, industry: str, guideline: Dict[str, Any] = None) -> None:
         """업종별 지침 설정 (설정 파일 기반)"""
-        self.current_industry = industry
-        
-        # 설정 파일에서 업종별 규칙 로드
-        config = self._get_industry_config(industry)
-        if config:
-            self.current_guideline = config
-            self.store_keywords = config.get('store_keywords', [])
-            self.logger.info(f"업종별 지침 적용: {config.get('name', 'Unknown')}")
-        else:
-            # 알 수 없는 업종인 경우 배달대행사 기본값 사용
-            self.current_industry = 'delivery'
-            self.current_guideline = self._get_industry_config('delivery')
-            self.store_keywords = self._get_store_keywords('delivery')
-            self.logger.warning(f"알 수 없는 업종 '{industry}', 배달대행사 지침으로 대체")
+        self.config_manager.set_industry_guideline(industry, guideline)
     
     def get_current_guideline(self) -> Dict[str, Any]:
         """현재 적용된 지침 반환 (설정 파일 기반)"""
-        return self.current_guideline or self._get_industry_config('delivery')
+        return self.config_manager.get_current_guideline()
     
     def is_guideline_ready(self) -> bool:
         """현재 지침이 사용 준비되었는지 확인"""
-        if not self._current_guideline:
-            return False
-        return self.current_guideline.get('status', 'ready') == 'ready'
+        return self.config_manager.is_guideline_ready()
     
     def extract_recipients_simple(
         self, parsed_data: Dict[str, Any], industry: Optional[str] = None
@@ -219,7 +197,7 @@ class RecipientExtractor:
             column_names = [str(col) for col in row.index]
             
             # 서브지침 설정에서 특별 매핑 정보 가져오기
-            sub_guidelines = self._get_sub_guidelines(self.current_industry)
+            sub_guidelines = self.config_manager.get_sub_guidelines(self.current_industry)
             template_rule = sub_guidelines.get('delivery_template', {})
             
             # 템플릿용 컬럼 매핑 우선 적용
