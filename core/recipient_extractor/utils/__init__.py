@@ -24,6 +24,11 @@ from .column_scorer import (
     get_synonyms as get_column_synonyms,  # column_scorer의 get_synonyms
 )
 
+# 공급받는자 정보 추출 함수들
+from .extractor import (
+    extract_recipients_from_second_priority,
+)
+
 # 기존 utils.py의 모든 함수들을 re-export (legacy_utils.py로 이동)
 from .legacy_utils import (
     get_synonyms,  # legacy_utils의 get_synonyms (다른 용도)
@@ -54,6 +59,8 @@ __all__ = [
     'calculate_general_field_score',
     'validate_total_column_before_vat',
     'get_column_synonyms',
+    # 공급받는자 정보 추출 함수들
+    'extract_recipients_from_second_priority',
     # 기존 utils.py 함수들
     'get_synonyms',
     'find_header_row',
