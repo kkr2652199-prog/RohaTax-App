@@ -27,6 +27,12 @@ from .utils import (
     extract_amount,
     extract_total_amount_simple,
 )
+from .utils.data_validator import (
+    is_valid_business_number,
+    is_valid_email,
+    is_valid_address,
+    is_valid_representative_name,
+)
 from ..industry_config_loader import industry_config_loader
 
 logger = logging.getLogger(__name__)
@@ -723,7 +729,7 @@ class RecipientExtractor:
                                 
                                 if business_number_raw:
                                     business_number = field_extractors.extract_business_number(business_number_raw)
-                                    if business_number and self.second_priority_handler._is_valid_business_number(business_number):
+                                    if business_number and is_valid_business_number(business_number):
                                         enhanced_recipient['사업자등록번호'] = business_number
                                         self.logger.info(f"✅ 특별대우 사업자등록번호 추출: '{business_number_raw}' → '{business_number}'")
                                         found_match = True
@@ -744,7 +750,7 @@ class RecipientExtractor:
                                 # 2순위 방식으로 이메일 추출
                                 email_raw = str(row.get('사업자이메일', '')).strip()
                                 if email_raw and email_raw != 'nan':
-                                    if self.second_priority_handler._is_valid_email(email_raw):
+                                    if is_valid_email(email_raw):
                                         email = field_extractors.extract_email(email_raw, row)
                                         if email:
                                             enhanced_recipient['사업자이메일'] = email
@@ -767,7 +773,7 @@ class RecipientExtractor:
                                 # 2순위 방식으로 주소 추출
                                 address_raw = str(row.get('도착지주소', '')).strip()
                                 if address_raw and address_raw != 'nan':
-                                    if self.second_priority_handler._is_valid_address(address_raw):
+                                    if is_valid_address(address_raw):
                                         address = field_extractors.extract_address(address_raw, row)
                                         if address:
                                             enhanced_recipient['사업장주소'] = address
@@ -789,7 +795,7 @@ class RecipientExtractor:
                             if enhanced_recipient['상호'] in str(row.get('가맹점', '')):
                                 # 2순위 방식으로 대표자명 추출 (우선순위 키워드 활용)
                                 representative_candidate = extract_representative_simple(row, column_names)
-                                if representative_candidate and self.second_priority_handler._is_valid_representative_name(representative_candidate):
+                                if representative_candidate and is_valid_representative_name(representative_candidate):
                                     enhanced_recipient['대표명'] = representative_candidate
                                     self.logger.info(
                                         "✅ 특별대우 대표자명 우선순위 추출: '%s'",
@@ -801,7 +807,7 @@ class RecipientExtractor:
                                 # 최후의 수단: 등록자명 컬럼 활용 (유효성 검증 후 적용)
                                 representative_raw = str(row.get('등록자명', '')).strip()
                                 if representative_raw and representative_raw.lower() not in {'nan', 'none', 'null', ''}:
-                                    if self.second_priority_handler._is_valid_representative_name(representative_raw):
+                                    if is_valid_representative_name(representative_raw):
                                         representative = field_extractors.extract_representative(representative_raw, row)
                                         if representative:
                                             enhanced_recipient['대표명'] = representative

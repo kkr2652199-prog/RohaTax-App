@@ -28,6 +28,13 @@ from .utils.data_validator import (
     is_valid_email,
     is_valid_amount,
 )
+from .utils.sheet_detector import (
+    detect_second_priority_sheet,
+    find_business_number_columns,
+    calculate_empty_ratio,
+    has_email_in_business_number_column,
+    has_standard_headers,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,39 +80,8 @@ class SecondPriorityHandler:
         ]
         
     def is_second_priority_sheet(self, df: pd.DataFrame, column_names: List[str]) -> bool:
-        """
-        2순위 시트 감지 로직 (5형제 기준)
-        
-        감지 조건:
-        1. 사업자등록번호 빈 비율 50% 이상
-        2. 이메일 형식 데이터가 사업자등록번호 컬럼에 있음
-        3. 표준 헤더명이 아닌 경우
-        4. 5형제 중 누락된 필드가 많은 경우
-        """
-        try:
-            # 조건 1: 사업자등록번호 빈 비율 확인
-            business_number_cols = self._find_business_number_columns(column_names)
-            if business_number_cols:
-                empty_ratio = self._calculate_empty_ratio(df, business_number_cols[0])
-                if empty_ratio >= 0.5:
-                    self.logger.info(f"2순위 시트 감지: 사업자등록번호 빈 비율 {empty_ratio:.1%}")
-                    return True
-            
-            # 조건 2: 이메일 형식 데이터가 사업자등록번호 컬럼에 있는지 확인
-            if self._has_email_in_business_number_column(df, column_names):
-                self.logger.info("2순위 시트 감지: 이메일 형식 데이터가 사업자등록번호 컬럼에 존재")
-                return True
-            
-            # 조건 3: 표준 헤더명이 아닌 경우
-            if not self._has_standard_headers(column_names):
-                self.logger.info("2순위 시트 감지: 표준 헤더명이 아님")
-                return True
-                
-            return False
-            
-        except Exception as e:
-            self.logger.error(f"2순위 시트 감지 중 오류: {e}")
-            return False
+        """2순위 시트 감지 로직 (외부 모듈 호출)"""
+        return detect_second_priority_sheet(df, column_names)
     
     def remap_headers_for_second_priority(self, df: pd.DataFrame, column_names: List[str]) -> Dict[str, int]:
         """
@@ -184,58 +160,6 @@ class SecondPriorityHandler:
             self.logger.error(f"2순위 시트 헤더 재매핑 중 오류: {e}")
             return {}
     
-    def _find_business_number_columns(self, column_names: List[str]) -> List[int]:
-        """사업자등록번호 관련 컬럼 찾기"""
-        business_keywords = ['사업자', '등록번호', '법인등록번호', '사업자번호']
-        matches = []
-        
-        for idx, col_name in enumerate(column_names):
-            clean_name = str(col_name).replace('\n', ' ').strip().lower()
-            if any(keyword in clean_name for keyword in business_keywords):
-                matches.append(idx)
-        
-        return matches
-    
-    def _calculate_empty_ratio(self, df: pd.DataFrame, col_idx: int) -> float:
-        """컬럼의 빈 값 비율 계산"""
-        if col_idx >= len(df.columns):
-            return 1.0
-        
-        col_data = df.iloc[:, col_idx]
-        total_rows = len(col_data)
-        empty_rows = col_data.isna().sum() + (col_data == '').sum()
-        
-        return empty_rows / total_rows if total_rows > 0 else 1.0
-    
-    def _has_email_in_business_number_column(self, df: pd.DataFrame, column_names: List[str]) -> bool:
-        """사업자등록번호 컬럼에 이메일 형식 데이터가 있는지 확인"""
-        business_cols = self._find_business_number_columns(column_names)
-        
-        for col_idx in business_cols:
-            if col_idx >= len(df.columns):
-                continue
-                
-            col_data = df.iloc[:, col_idx].dropna()
-            email_count = 0
-            
-            for value in col_data.head(10):  # 상위 10개 행만 확인
-                if isinstance(value, str) and '@' in value:
-                    email_count += 1
-            
-            if email_count > 0:
-                self.logger.warning(f"컬럼 {col_idx} ({column_names[col_idx]})에 이메일 형식 데이터 {email_count}개 발견")
-                return True
-        
-        return False
-    
-    def _has_standard_headers(self, column_names: List[str]) -> bool:
-        """표준 헤더 존재 여부: 5개 중 최소 3개 이상 존재해야 True"""
-        standard_headers = ['가맹점명', '대표자명', '주소', '사업자번호', '이메일']
-        found = 0
-        for header in standard_headers:
-            if any(header in str(col).replace('\n', ' ').strip() for col in column_names):
-                found += 1
-        return found >= 3
     
     def _find_best_column_match(self, df: pd.DataFrame, column_names: List[str], required: str) -> Optional[Tuple[int, str]]:
         """필수 컬럼에 대한 최적 매칭 찾기 - 더 관대한 매칭"""
@@ -687,7 +611,7 @@ class SecondPriorityHandler:
                         col_idx = column_mapping['부가세']
                         if col_idx < len(row):
                             tax_raw = str(row.iloc[col_idx]).strip()
-                            if self._is_valid_amount(tax_raw):
+                            if is_valid_amount(tax_raw):
                                 try:
                                     tax = float(str(row.iloc[col_idx]).replace(',', '').replace('원', ''))
                                     recipient_info['부가세'] = tax

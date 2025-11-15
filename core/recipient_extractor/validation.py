@@ -101,6 +101,28 @@ class Validator:
         
         return is_valid
 
+    def validate_recipients(self, recipients: List[Dict[str, Any]], stats: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """공급받는자 목록 검증 및 필터링"""
+        if not recipients:
+            return []
+        
+        # stats에서 guideline 추출 시도, 없으면 기본값 사용
+        guideline = stats.get('guideline', {}) if stats else {}
+        if not guideline:
+            # 기본 guideline 설정
+            guideline = {
+                'min_valid_fields': 3,
+                'confidence_threshold': 0.3
+            }
+        
+        validated_list = []
+        for recipient in recipients:
+            if self.validate_recipient(recipient, guideline):
+                validated_list.append(recipient)
+        
+        self.logger.info(f"검증 완료: {len(validated_list)}/{len(recipients)}건 통과")
+        return validated_list
+
     def remove_duplicates(self, recipients: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """사업자등록번호 기준 중복 제거"""
         seen_numbers = set()

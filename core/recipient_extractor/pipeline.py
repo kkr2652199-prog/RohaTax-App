@@ -189,8 +189,15 @@ class RecipientExtractionPipeline:
         guideline_name = self.get_current_guideline().get(
             "name", "알 수 없는 지침"
         )
+        current_guideline = self.get_current_guideline()
 
         # 추가 검증 및 보정
+        # stats에 guideline 포함하여 전달
+        if stats:
+            stats['guideline'] = current_guideline
+        else:
+            stats = {'guideline': current_guideline}
+        
         validated_recipients = self.validator.validate_recipients(
             recipients, stats
         )

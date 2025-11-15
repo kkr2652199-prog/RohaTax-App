@@ -21,6 +21,9 @@ def map_columns(
 
     column_mapping: Dict[str, int] = {}
 
+    # 검증/완료일자 관련 컬럼 제외를 위한 금지 키워드
+    excluded_keywords = ['유효성검사', '외국인제외검증', '완료일자', '검증', '외국인', '제외', '일자별']
+
     mom_keywords = ['부가세', '세액', 'vat', '세금', '부가세액']
     for col_num in range(1, sheet.max_column + 1):
         raw_value = sheet.cell(header_row, col_num).value
@@ -28,6 +31,16 @@ def map_columns(
             continue
 
         cell_value = str(raw_value).strip().lower()
+        
+        # 금지 키워드가 포함된 컬럼은 제외
+        if any(excluded_keyword in cell_value for excluded_keyword in excluded_keywords):
+            logger.debug(
+                "검증/완료일자 관련 컬럼 제외: '%s' (컬럼 %d)",
+                cell_value,
+                col_num,
+            )
+            continue
+        
         if any(keyword in cell_value for keyword in mom_keywords):
             column_mapping['mom_amount'] = col_num
             dad_col = validate_dad_column_before_mom(sheet, col_num, header_row)
@@ -47,6 +60,16 @@ def map_columns(
             if raw_value is None:
                 continue
             cell_value = str(raw_value).strip().lower()
+            
+            # 금지 키워드가 포함된 컬럼은 제외
+            if any(excluded_keyword in cell_value for excluded_keyword in excluded_keywords):
+                logger.debug(
+                    "검증/완료일자 관련 컬럼 제외: '%s' (컬럼 %d)",
+                    cell_value,
+                    col_num,
+                )
+                continue
+            
             if any(keyword in cell_value for keyword in dad_keywords):
                 column_mapping['dad_amount'] = col_num
                 break
