@@ -19,7 +19,7 @@ def conversion():
     print(f"🔍 변환 페이지 접근 - 세션 user_id: {session.get('user_id')}")
     if not session.get('user_id'):
         print("❌ 세션에 user_id가 없음 - VIP 회원가입 페이지로 리다이렉트")
-        return redirect(url_for('home.register'))
+        return redirect(url_for('registration.register'))
     
     # 토큰 잔액 확인 (지급된 토큰 - 사용한 토큰)
     with get_conn() as conn:
