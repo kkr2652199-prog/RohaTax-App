@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 12:02:44 KST
+
+**[5c1d043] refactor(home): [수도 재편 1-1] API 엔드포인트 분리**
+
+- **수정 파일:** `routes/home.py`, `routes/home_modules/api_routes.py`, `app.py`
+
+- **핵심 내용:** home.py에 혼재되어 있던 API 관련 엔드포인트(사용자명/이메일 중복 확인 등)를 독립적인 `routes/home_modules/api_routes.py` 모듈로 분리함. 이는 home.py 리팩토링의 첫 단계로, 단일 책임 원칙을 강화하고 코드의 구조를 개선함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 11:33:12 KST
 
 **[4ecc7f7] refactor(extractor): [최고사령부 해체 1-6] 특별대우 로직 분리**
