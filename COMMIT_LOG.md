@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 10:52:42 KST
+
+**[fd763f8] refactor(extractor): [최고사령부 해체 1-4] 시트 선택 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/sheet_selector.py`, `core/recipient_extractor/utils/__init__.py`
+
+- **핵심 내용:** main_extractor.py에 혼재되어 있던 시트 선택 관련 3개 핵심 메서드(_select_optimal_sheet_by_family_rule, _extract_family_from_sheet_simple, _extract_numeric_value)를 독립적인 `core/recipient_extractor/utils/sheet_selector.py` 모듈로 분리함. RecipientExtractor 클래스는 이제 외부 함수를 호출하는 wrapper 역할만 수행하게 되어, 핵심 전략 로직의 책임이 명확히 분리됨. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 10:32:05 KST
 
 **[71a9272] refactor(extractor): [최고사령부 해체 1-3] 행 단위 추출 로직 분리**
