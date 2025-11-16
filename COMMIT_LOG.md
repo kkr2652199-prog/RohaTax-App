@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 16:28:16 KST
+
+**[5219c5b] feat(db): activity_logs 테이블 생성 및 모델 적용**
+
+- **수정 파일:** `models/activity_log.py`, `database/migrations/create_activity_logs_model.py`, `requirements.txt`, `models/__init__.py`, `run_migration.py`, `check_table.py`
+
+- **핵심 내용:** '중앙 정보국' 설립을 위한 핵심 테이블인 activity_logs 테이블을 성공적으로 생성함. models/activity_log.py에 SQLAlchemy 모델을 정의하고, 마이그레이션 스크립트를 통해 데이터베이스에 반영함. 이로써 활동 기록의 영구적인 저장 및 관리가 가능해졌으며, 제국의 데이터 일관성 확보를 위한 첫 발걸음을 내딛음. '인간 검증'을 통해 시스템의 안정성을 확인하였음.
+
+---
+
 ### 2025-11-16 13:41:10 KST
 
 **[3cea227] refactor(home): [수도 재편 1-5] 비밀번호 재설정 로직 분리**
