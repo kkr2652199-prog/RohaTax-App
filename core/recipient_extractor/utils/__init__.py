@@ -29,6 +29,13 @@ from .extractor import (
     extract_recipients_from_second_priority,
 )
 
+# 시트 선택 함수들
+from .sheet_selector import (
+    select_optimal_sheet_by_family_rule,
+    extract_family_from_sheet_simple,
+    extract_numeric_value,
+)
+
 # 기존 utils.py의 모든 함수들을 re-export (legacy_utils.py로 이동)
 from .legacy_utils import (
     get_synonyms,  # legacy_utils의 get_synonyms (다른 용도)
@@ -61,6 +68,10 @@ __all__ = [
     'get_column_synonyms',
     # 공급받는자 정보 추출 함수들
     'extract_recipients_from_second_priority',
+    # 시트 선택 함수들
+    'select_optimal_sheet_by_family_rule',
+    'extract_family_from_sheet_simple',
+    'extract_numeric_value',
     # 기존 utils.py 함수들
     'get_synonyms',
     'find_header_row',
