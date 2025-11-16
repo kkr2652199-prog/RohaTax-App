@@ -211,7 +211,7 @@ def register_post():
                 # 인증 이메일 발송
                 if email_manager.send_verification_email(user_id, email, token):
                     flash('회원가입이 완료되었습니다. 이메일 인증을 완료해주세요.', 'success')
-                    return redirect(url_for('home.email_verification_pending', user_id=user_id))
+                    return redirect(url_for('email.email_verification_pending', user_id=user_id))
                 else:
                     flash('회원가입은 완료되었지만 이메일 발송에 실패했습니다. 관리자에게 문의해주세요.', 'warning')
             else:

@@ -229,7 +229,7 @@
         </div>
         
         <div class="resend-section">
-            <form method="POST" action="{{ url_for('home.resend_verification') }}">
+            <form method="POST" action="{{ url_for('email.resend_verification') }}">
                 <input type="hidden" name="user_id" value="{{ user.id }}">
                 <input type="hidden" name="email" value="{{ user.email }}">
                 <button type="submit" class="resend-button" id="resendBtn">
