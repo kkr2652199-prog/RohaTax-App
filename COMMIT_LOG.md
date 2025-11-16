@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 10:32:05 KST
+
+**[71a9272] refactor(extractor): [최고사령부 해체 1-3] 행 단위 추출 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/row_extractor.py`
+
+- **핵심 내용:** main_extractor.py에 혼재되어 있던 행 단위 데이터 추출 관련 2개 핵심 메서드(_extract_from_row_intelligent, _extract_from_row_template_mode)를 독립적인 `core/recipient_extractor/utils/row_extractor.py` 모듈로 분리함. RecipientExtractor 클래스는 이제 외부 함수를 호출하는 wrapper 역할만 수행하게 되어, 핵심 실행 로직의 책임이 명확히 분리됨. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-15 17:56:50 KST
 
 **[6a29c52] refactor(extractor): [최고사령부 해체 1-2] 설정 관리 로직 분리**
