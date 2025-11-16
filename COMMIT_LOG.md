@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 13:15:51 KST
+
+**[3d4d80a] refactor(home): [수도 재편 1-4] 프로필 관리 로직 분리**
+
+- **수정 파일:** `routes/home.py`, `routes/home_modules/profile_routes.py`, `app.py`
+
+- **핵심 내용:** home.py에 혼재되어 있던 프로필 관리 관련 함수들을 독립적인 `routes/home_modules/profile_routes.py` 모듈로 분리함. 관련 url_for 참조를 모두 업데이트하여 시스템 전반의 일관성을 확보함. 이는 home.py 리팩토링의 네 번째 단계로, 단일 책임 원칙을 강화하고 코드의 구조를 개선함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 12:53:39 KST
 
 **[6dbb73c] refactor(home): [수도 재편 1-3] 회원가입 로직 분리**
