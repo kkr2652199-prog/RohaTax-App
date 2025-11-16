@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 11:33:12 KST
+
+**[4ecc7f7] refactor(extractor): [최고사령부 해체 1-6] 특별대우 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/enhancement_handler.py`, `core/recipient_extractor/utils/__init__.py`
+
+- **핵심 내용:** main_extractor.py의 마지막 핵심 로직인 _enhance_first_priority_with_second_priority_logic 메서드를 독립적인 `core/recipient_extractor/utils/enhancement_handler.py` 모듈로 분리함. 이로써 '최고사령부 해체' 작전을 공식적으로 종결하고, main_extractor.py의 모듈화를 완성함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 11:08:25 KST
 
 **[58e0145] refactor(extractor): [최고사령부 해체 1-5] 2순위 시트 감지 로직 분리**
