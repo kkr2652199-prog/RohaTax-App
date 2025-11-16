@@ -213,6 +213,7 @@ from routes.home_modules.api_routes import home_api_bp
 from routes.home_modules.auth_routes import auth_bp
 from routes.home_modules.registration_routes import registration_bp
 from routes.home_modules.profile_routes import profile_bp
+from routes.home_modules.password_routes import password_bp
 # from routes.conversion import conversion_bp  # 제거됨 - conversion_engine_routes로 이동
 from routes.conversion_modules.conversion_engine_routes import conversion_engine_bp
 from routes.admin import admin_bp
@@ -237,6 +238,8 @@ if 'registration' not in app.blueprints:
     app.register_blueprint(registration_bp)
 if 'profile' not in app.blueprints:
     app.register_blueprint(profile_bp)
+if 'password' not in app.blueprints:
+    app.register_blueprint(password_bp)
 # if 'conversion' not in app.blueprints:  # 제거됨
 #     app.register_blueprint(conversion_bp)  # 제거됨
 if 'conversion_engine' not in app.blueprints:
