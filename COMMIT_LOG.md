@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-16 11:08:25 KST
+
+**[58e0145] refactor(extractor): [최고사령부 해체 1-5] 2순위 시트 감지 로직 분리**
+
+- **수정 파일:** `core/recipient_extractor/main_extractor.py`, `core/recipient_extractor/utils/second_priority_detector.py`, `core/recipient_extractor/utils/__init__.py`
+
+- **핵심 내용:** main_extractor.py에 혼재되어 있던 2순위 시트 감지 관련 메서드(_detect_second_priority_sheet)를 독립적인 `core/recipient_extractor/utils/second_priority_detector.py` 모듈로 분리함. RecipientExtractor 클래스는 이제 외부 함수를 호출하는 wrapper 역할만 수행하게 되어, 책임이 명확히 분리됨. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 10:52:42 KST
 
 **[fd763f8] refactor(extractor): [최고사령부 해체 1-4] 시트 선택 로직 분리**
