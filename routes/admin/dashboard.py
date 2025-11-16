@@ -28,7 +28,7 @@ def admin_dashboard():
             (admin_user_id,),
         ).fetchone()
         if not admin_user or not admin_user['is_admin']:
-            return redirect(url_for('home.login'))
+            return redirect(url_for('auth.login'))
 
         general_users_rows = conn.execute(
             """

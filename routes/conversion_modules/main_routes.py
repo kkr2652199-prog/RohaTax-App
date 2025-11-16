@@ -30,7 +30,7 @@ def conversion():
         
         if not user:
             print(f"❌ 사용자 ID {session['user_id']}를 찾을 수 없음 - 로그인 페이지로 리다이렉트")
-            return redirect(url_for('home.login'))
+            return redirect(url_for('auth.login'))
         
         # 사용 가능한 토큰 = 지급된 토큰 - 사용한 토큰
         available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
@@ -47,7 +47,7 @@ def admin_token_dashboard():
     """관리자 토큰 대시보드 (간단 HTML + JS)"""
     # 로그인 + 관리자 확인(리디렉트)
     if not session.get('user_id'):
-        return redirect(url_for('home.login'))
+        return redirect(url_for('auth.login'))
     if not session.get('is_admin'):
         return redirect(url_for('main.conversion'))
 

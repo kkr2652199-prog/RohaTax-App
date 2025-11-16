@@ -30,105 +30,6 @@ def old_home():
     return render_template('index.html')
 
 
-@home_bp.route('/login')
-def login():
-    return render_template('login.html')
-
-
-@home_bp.route('/login', methods=['POST'])
-def login_post():
-    logger = logging.getLogger(__name__)
-    username = (request.form.get('username') or '').strip()
-    password = (request.form.get('password') or '').strip()
-    if not username or not password:
-        flash('입력값을 확인해주세요', 'error')
-        return redirect(url_for('home.login'))
-    # 실제 인증 (원인 파악을 위한 단계별 검사)
-    with get_conn() as conn:
-        conn.row_factory = sqlite3.Row
-        # 우선 삭제되지 않은 최신 계정 우선 조회
-        row = conn.execute(
-            """
-            SELECT id, username, password, is_admin,
-                   COALESCE(is_deleted,0) AS is_deleted,
-                   COALESCE(is_active,1) AS is_active,
-                   COALESCE(approval_status,'approved') AS approval_status
-            FROM users
-            WHERE username = ? AND COALESCE(is_deleted,0) = 0
-            ORDER BY id DESC
-            LIMIT 1
-            """,
-            (username,)
-        ).fetchone()
-        # 활성 사용자가 없을 때: 삭제된 사용자가 존재하면 비밀번호 일치 시 자동 복구
-        if not row:
-            deleted_row = conn.execute(
-                """
-                SELECT id, username, password, is_admin,
-                       COALESCE(is_deleted,0) AS is_deleted,
-                       COALESCE(is_active,1) AS is_active,
-                       COALESCE(approval_status,'approved') AS approval_status
-                FROM users
-                WHERE username = ? AND COALESCE(is_deleted,0) = 1
-                ORDER BY id DESC LIMIT 1
-                """,
-                (username,)
-            ).fetchone()
-            if not deleted_row:
-                flash('존재하지 않는 아이디입니다', 'error')
-                return redirect(url_for('home.login'))
-            # 비밀번호 검증 후 자동 복구 (bcrypt 검증)
-            if not verify_password(password, deleted_row['password']):
-                flash('삭제된 계정입니다. 관리자에게 문의하세요', 'error')
-                return redirect(url_for('home.login'))
-            conn.execute(
-                "UPDATE users SET is_deleted = 0, is_active = 1, approval_status = 'approved' WHERE id = ?",
-                (deleted_row['id'],)
-            )
-            conn.commit()
-            row = conn.execute(
-                """
-                SELECT id, username, password, is_admin,
-                       COALESCE(is_deleted,0) AS is_deleted,
-                       COALESCE(is_active,1) AS is_active,
-                       COALESCE(approval_status,'approved') AS approval_status
-                FROM users WHERE id = ?
-                """,
-                (deleted_row['id'],)
-            ).fetchone()
-    if row['is_deleted']:
-        flash('삭제된 계정입니다. 관리자에게 문의하세요', 'error')
-        return redirect(url_for('home.login'))
-    if not row['is_active']:
-        flash('비활성화된 계정입니다. 관리자에게 문의하세요', 'error')
-        return redirect(url_for('home.login'))
-    if row['approval_status'] != 'approved':
-        flash('승인 대기/거부된 계정입니다', 'error')
-        return redirect(url_for('home.login'))
-    # bcrypt 비밀번호 검증 (평문 지원 포함)
-    if not verify_password(password, row['password']):
-        flash('비밀번호가 올바르지 않습니다', 'error')
-        return redirect(url_for('home.login'))
-    user = row
-    # Clear any previous session to avoid privilege leakage across accounts
-    session.clear()
-    session['user_id'] = user['id']
-    session['username'] = user['username']
-    session['is_admin'] = int(user['is_admin'] or 0)
-    session.permanent = True  # 세션 영구화
-    flash('로그인 성공', 'success')
-    if session['is_admin']:
-        return redirect(url_for('admin.admin_dashboard'))
-    return redirect(url_for('home.home'))
-
-
-@home_bp.route('/logout')
-def logout():
-    session.clear()
-    flash('로그아웃되었습니다', 'info')
-    return redirect(url_for('home.home'))
-
-
 @home_bp.route('/register')
 def register():
     return render_template('register.html')
@@ -344,7 +245,7 @@ def register_post():
         # 이메일 인증 비활성화 시 기존 흐름 유지
         flash('회원가입이 완료되었습니다. 로그인해 주세요.', 'success')
     
-    return redirect(url_for('home.login'))
+    return redirect(url_for('auth.login'))
 @home_bp.route('/email-verification-pending/<int:user_id>')
 def email_verification_pending(user_id):
     """이메일 인증 대기 페이지"""
@@ -365,7 +266,7 @@ def email_verification_pending(user_id):
             
             if user['email_verified']:
                 flash('이미 이메일 인증이 완료되었습니다', 'info')
-                return redirect(url_for('home.login'))
+                return redirect(url_for('auth.login'))
             
             return render_template('email_verification_pending.html', user=user)
             
@@ -383,7 +284,7 @@ def verify_email(token):
         
         if is_valid:
             flash(message, 'success')
-            return redirect(url_for('home.login'))
+            return redirect(url_for('auth.login'))
         else:
             flash(message, 'error')
             return redirect(url_for('home.register'))
@@ -489,7 +390,7 @@ def profile_edit():
         
         if not user:
             flash('사용자 정보를 찾을 수 없습니다', 'error')
-            return redirect(url_for('home.login'))
+            return redirect(url_for('auth.login'))
     
     from core.security import generate_csrf_token
     token = generate_csrf_token()
@@ -668,7 +569,7 @@ def forgot_password_post():
         if not user:
             # 보안을 위해 이메일이 없는 경우에도 성공 메시지 표시
             flash('입력하신 이메일로 비밀번호 재설정 링크를 보냈습니다. 이메일을 확인해주세요.', 'success')
-            return redirect(url_for('home.login'))
+            return redirect(url_for('auth.login'))
         
         try:
             # 비밀번호 재설정 토큰 생성
@@ -689,7 +590,7 @@ def forgot_password_post():
             logger.error(f"비밀번호 재설정 토큰 생성 중 오류 발생: {e}")
             flash('비밀번호 재설정 요청 처리 중 오류가 발생했습니다. 다시 시도해주세요.', 'error')
     
-    return redirect(url_for('home.login'))
+    return redirect(url_for('auth.login'))
 
 
 @home_bp.route('/reset-password/<token>')
@@ -753,5 +654,5 @@ def reset_password_post(token):
         logger.error(f"비밀번호 재설정 중 오류 발생: {e}")
         flash('비밀번호 재설정 중 오류가 발생했습니다. 다시 시도해주세요.', 'error')
     
-    return redirect(url_for('home.login'))
+    return redirect(url_for('auth.login'))
 

@@ -111,7 +111,7 @@
                 이미 계정이 있다면 로그인하고, 없다면 지금 바로 회원가입을 진행해 주세요.
             </p>
             <div class="guest-overlay__actions">
-                <a href="{{ url_for('home.login') }}" class="guest-overlay__button guest-overlay__button--login">🔐 로그인 하기</a>
+                <a href="{{ url_for('auth.login') }}" class="guest-overlay__button guest-overlay__button--login">🔐 로그인 하기</a>
                 <a href="{{ url_for('home.register') }}" class="guest-overlay__button guest-overlay__button--signup">✨ 무료 회원가입</a>
             </div>
         </div>
