@@ -41,6 +41,11 @@ from .second_priority_detector import (
     detect_second_priority_sheet,
 )
 
+# 특별대우 로직 함수들
+from .enhancement_handler import (
+    enhance_first_priority_with_second_priority_logic,
+)
+
 # 기존 utils.py의 모든 함수들을 re-export (legacy_utils.py로 이동)
 from .legacy_utils import (
     get_synonyms,  # legacy_utils의 get_synonyms (다른 용도)
@@ -79,6 +84,8 @@ __all__ = [
     'extract_numeric_value',
     # 2순위 시트 감지 함수들
     'detect_second_priority_sheet',
+    # 특별대우 로직 함수들
+    'enhance_first_priority_with_second_priority_logic',
     # 기존 utils.py 함수들
     'get_synonyms',
     'find_header_row',
