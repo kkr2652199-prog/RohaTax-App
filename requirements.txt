@@ -18,3 +18,4 @@ bandit==1.7.5
 safety==2.3.5
 redis==4.6.0
 python-dotenv==1.0.0
+sqlalchemy==2.0.23
