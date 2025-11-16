@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import logging
 import sqlite3
+import json
 from core.db import get_conn_optimized as get_conn
 from core.password_utils import verify_password
 
@@ -93,6 +94,37 @@ def login_post():
     session['username'] = user['username']
     session['is_admin'] = int(user['is_admin'] or 0)
     session.permanent = True  # 세션 영구화
+    
+    # 활동 로그 기록: 사용자 로그인 성공
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_logs (
+                    user_id, timestamp, performed_by_id, performed_by_type, 
+                    activity_type, details, token_change, potential_cost, 
+                    token_balance_before, token_balance_after, user_plan_snapshot, is_deleted
+                ) VALUES (?, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user['id'],  # user_id
+                    user['id'],  # performed_by_id (자신이 로그인)
+                    'USER',  # performed_by_type
+                    'USER_LOGIN',  # activity_type
+                    json.dumps({'message': 'User logged in successfully'}, ensure_ascii=False),  # details
+                    0,  # token_change
+                    0,  # potential_cost
+                    None,  # token_balance_before
+                    None,  # token_balance_after
+                    None,  # user_plan_snapshot
+                    0  # is_deleted
+                )
+            )
+            conn.commit()
+    except Exception as e:
+        logger.error(f"활동 로그 기록 실패: {str(e)}")
+        # 로그 기록 실패해도 로그인은 계속 진행
+    
     flash('로그인 성공', 'success')
     if session['is_admin']:
         return redirect(url_for('admin.admin_dashboard'))

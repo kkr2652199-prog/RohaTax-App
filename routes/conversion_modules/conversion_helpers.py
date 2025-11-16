@@ -14,6 +14,7 @@ from core.file_parser import FileParser
 from core.responses import error
 from core.db import get_conn_optimized as get_conn
 from core.subscription_utils import get_user_subscription, is_unlimited_user
+from core.token_service import get_token_status_from_activity_log
 
 logger = logging.getLogger(__name__)
 
@@ -219,36 +220,15 @@ def check_token_balance(user_id, template_count):
     # ============================================
     # 토큰 잔량 정밀 확인 (activity_logs 기반)
     # ============================================
-    # [버그 수정] users 테이블 대신 activity_logs 기반으로 정확한 토큰 잔량 계산
-    # get_token_summary_v2()와 동일한 로직 사용
-    with get_conn() as conn:
-        conn.row_factory = sqlite3.Row
-        summary = conn.execute(
-            """
-            WITH last_reset AS (
-                -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
-                SELECT MAX(timestamp) as reset_time
-                FROM activity_logs
-                WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
-                  AND COALESCE(is_deleted, 0) = 0  -- [버그 수정] 삭제된 레코드 제외
-            )
-            SELECT
-                -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
-                -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
-                COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
-                COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
-            FROM activity_logs al, last_reset lr
-            WHERE al.user_id = ?
-              AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
-              AND COALESCE(al.is_deleted, 0) = 0;  -- [버그 수정] 삭제된 레코드 제외
-            -- 만약 리셋 기록이 없다면 (lr.reset_time IS NULL), 모든 로그를 포함한다.
-            """,
-            (user_id, user_id)
-        ).fetchone()
-        
-        total_tokens = summary['total_charged'] if summary else 0
-        used_tokens = summary['total_used'] if summary else 0
-        available_tokens = total_tokens - used_tokens
+    # [중앙은행 함수 사용] activity_logs 기반으로 정확한 토큰 잔량 계산
+    token_status = get_token_status_from_activity_log(user_id)
+    if not token_status:
+        logger.error(f"사용자 ID {user_id}의 토큰 상태를 조회할 수 없음")
+        return error('토큰 상태를 확인할 수 없습니다', status=500)
+    
+    total_tokens = token_status['token_balance']
+    used_tokens = token_status['tokens_used']
+    available_tokens = token_status['available_tokens']
     
     if not is_unlimited and available_tokens < required_tokens:
         # 부족한 토큰 정확히 계산

@@ -7,6 +7,7 @@ from flask import Blueprint, session, jsonify
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.utils import row_value
+from core.token_service import calculate_available_tokens
 from ..utils.auth import ensure_login_for_json
 import logging
 
@@ -91,7 +92,7 @@ def admin_users():
             
             users_data = []
             for user in users:
-                available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
+                available_tokens = calculate_available_tokens(user['token_balance'], user['tokens_used'])
                 users_data.append({
                     'id': user['id'],
                     'username': user['username'],
