@@ -246,3 +246,4 @@ def is_valid_amount(amount: str) -> bool:
     except (ValueError, TypeError):
         return False
 
+

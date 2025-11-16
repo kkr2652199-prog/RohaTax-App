@@ -17,3 +17,4 @@ def default_number_parser(value: Any) -> float:
     except Exception:
         return 0.0
 
+

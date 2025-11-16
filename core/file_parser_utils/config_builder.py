@@ -29,3 +29,4 @@ def get_scoring_config() -> Tuple[Dict[str, int], Dict[str, int], bool]:
     override_all5 = True
     return weights, thresholds, override_all5
 
+

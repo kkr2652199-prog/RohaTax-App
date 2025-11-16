@@ -633,3 +633,4 @@ def get_user_activity_logs_v2():
         print(f"Error in get_user_activity_logs_v2: {e}")
         return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500
 
+

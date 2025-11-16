@@ -41,3 +41,4 @@ def load_config() -> Dict[str, List[str]]:
         'amount_columns': ['공급가액', '부가세', '요금합계'],
     }
 
+

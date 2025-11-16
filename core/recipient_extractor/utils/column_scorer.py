@@ -422,3 +422,4 @@ def get_synonyms(field: str) -> List[str]:
     }
     return synonym_map.get(field, [])
 
+

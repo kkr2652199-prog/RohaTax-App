@@ -69,3 +69,4 @@ class ConfigManager:
             return False
         return self.current_guideline.get('status', 'ready') == 'ready'
 
+
