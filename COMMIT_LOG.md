@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-18 20:30:00 KST
+
+**[대혁명 1-1] perf(parser): 중복 파일 파싱 제거 및 단일 파싱 구현**
+
+- **수정 파일:** `core/file_upload_helper.py`, `routes/conversion_modules/conversion_engine_routes.py`, `core/conversion_engine.py`
+
+- **핵심 내용:** 화이트보드 작전에서 설계한 이상적 흐름도의 Phase 1을 구현. `calculate_template_count` 함수를 `calculate_count_and_parse`로 변경하여 템플릿 건수와 파싱된 데이터를 튜플로 반환하도록 수정. `start_conversion`에서 파싱된 데이터를 `convert_file`에 직접 전달하여 중복 파싱을 완전히 제거. `convert_file` 함수는 `parsed_data`를 선택적 인자로 받아 재사용하거나, 미제공 시 하위 호환성을 위해 기존 로직을 실행. 이로써 파일은 단 한 번만 파싱되고, 그 결과가 템플릿 건수 계산과 변환 프로세스 모두에서 재사용되어 구조적 낭비를 제거함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-16 13:41:10 KST
 
 **[3cea227] refactor(home): [수도 재편 1-5] 비밀번호 재설정 로직 분리**
