@@ -10,7 +10,7 @@
 
 ### 2025-11-18 20:56:42 KST
 
-**[대혁명 1-1] perf(parser): 중복 파일 파싱 제거 및 단일 파싱 구현**
+**[8b6fe15] perf(parser): [대혁명 1-1] 중복 파일 파싱 제거 및 단일 파싱 구현**
 
 - **수정 파일:** `core/file_upload_helper.py`, `routes/conversion_modules/conversion_engine_routes.py`, `core/conversion_engine.py`
 
