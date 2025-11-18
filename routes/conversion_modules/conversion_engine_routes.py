@@ -19,7 +19,7 @@ from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.conversion_engine import ConversionEngine
 from core.subscription_utils import get_user_subscription, is_unlimited_user
-from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_template_count
+from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_count_and_parse
 from core.token_deduction_processor import TokenDeductionProcessor
 from core.activity_service import record_activity
 from routes.utils.auth import ensure_login_for_json
@@ -87,9 +87,9 @@ def start_conversion():
     temp_file_path = save_uploaded_file(uploaded_file)
     
     # ============================================
-    # 핵심 변경 2: 템플릿 건수 정밀 계산
+    # 대혁명 1단계: 템플릿 건수 계산 및 파싱 (단일 파싱)
     # ============================================
-    template_count = calculate_template_count(temp_file_path, industry_type)
+    template_count, parsed_data = calculate_count_and_parse(temp_file_path, industry_type)
     
     if template_count == 0:
         # 임시 파일 정리
@@ -97,6 +97,7 @@ def start_conversion():
         return error('파일에서 템플릿 건수를 계산할 수 없습니다. 파일 형식을 확인해주세요.', status=400)
     
     logger.info(f"템플릿 건수 계산 완료: {template_count}개")
+    logger.info(f"파싱된 데이터 준비 완료 (재사용 가능)")
     
     # ============================================
     # 토큰 잔량 확인
@@ -141,7 +142,7 @@ def start_conversion():
         # 요청별 새로운 변환 엔진 인스턴스 생성 (상태 격리)
         conversion_engine = ConversionEngine()
         
-        # 전체 변환 프로세스 실행 (상태 격리된 인스턴스 사용)
+        # 대혁명 1단계: 전체 변환 프로세스 실행 (파싱된 데이터 재사용)
         conversion_result = conversion_engine.convert_file(
             uploaded_file_path=temp_file_path,
             supplier_info=supplier,
@@ -150,7 +151,8 @@ def start_conversion():
             guidelines=guidelines,
             issue_date=issue_date,
             file_name=file_name,
-            user_info=user_info
+            user_info=user_info,
+            parsed_data=parsed_data  # 대혁명: 재파싱 방지, 파싱된 데이터 재사용
         )
         
         if not conversion_result['success']:
