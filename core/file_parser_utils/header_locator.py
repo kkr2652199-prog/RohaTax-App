@@ -282,11 +282,25 @@ class HeaderLocator:
                 matched_fields = sheet_result.get('matched_fields', 0)
                 families = sheet_result.get('families', [])
 
-                if matched_fields >= 5 and families:
+                # 대혁명 2단계: 현명한 왕의 법률 - 더 유연한 조건
+                if matched_fields >= 5 or (matched_fields >= 4 and families):
                     max_dad_with_mom = self._get_max_dad_with_mom_same_row(
                         sheet_result,
                         number_parser,
                     )
+
+                    # 대혁명 2단계: 보안관 임명 - 압도적인 1순위 시트 발견 시 즉시 종료
+                    if max_dad_with_mom >= 1_000_000:
+                        best_sheet = sheet_result
+                        best_sheet['max_dad_amount'] = max_dad_with_mom
+                        best_sheet['priority'] = '1순위'
+                        
+                        self.logger.info(
+                            "👑 왕을 발견했습니다: '%s' (아빠값: %s원). 즉시 수색을 종료합니다.",
+                            sheet_name,
+                            f"{max_dad_with_mom:,.0f}",
+                        )
+                        return best_sheet
 
                     if (
                         max_dad_with_mom > max_dad_amount
