@@ -230,11 +230,11 @@
             loadAdminDashboardStats();
         });
         
-        // 30초마다 자동 새로고침
-        setInterval(() => {
-            loadUsers();
-            loadTokenHistory();
-        }, 30000);
+        // [중복 호출 제거] utils.js의 startAutoRefresh와 충돌 방지
+        // setInterval(() => {
+        //     loadUsers();
+        //     loadTokenHistory();
+        // }, 30000);
 
         
         // [신규] 검색 버튼에 이벤트 리스너 추가

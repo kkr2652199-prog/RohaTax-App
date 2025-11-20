@@ -81,13 +81,13 @@ function startAutoRefresh() {
         clearInterval(autoRefreshInterval);
     }
     
-    // 30초마다 자동 새로고침
-    autoRefreshInterval = setInterval(() => {
-        console.log('🔄 자동 새로고침 실행...');
-        refreshDashboard();
-    }, 30000); // 30초
+    // [성능 테스트용 일시 중지] 자동 새로고침 비활성화
+    // autoRefreshInterval = setInterval(() => {
+    //     console.log('🔄 자동 새로고침 실행...');
+    //     refreshDashboard();
+    // }, 30000); // 30초
     
-    console.log('✅ 자동 새로고침 시작 (30초 간격)');
+    console.log('⏸️ 자동 새로고침 일시 중지됨 (변환 성능 테스트 중)');
 }
 
 /**
