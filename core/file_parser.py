@@ -16,6 +16,7 @@ from .file_parser_utils.parallel_runner import ParallelRunner
 from .file_parser_utils.reporting import ReportingUtils
 from .file_parser_utils.validators import FileUploadValidator
 from .file_parser_utils.validation_pipeline import ValidationPipeline
+from .utils import MockWorkbook
 
 logger = logging.getLogger(__name__)
 
@@ -245,8 +246,17 @@ class FileParser:
     
     def _parse_excel(self, file_path: Path) -> Dict[str, Any]:
         """Excel 파일 파싱 - 지능앱 시트 검열 알고리즘 적용"""
+        workbook = None
         try:
-            workbook = openpyxl.load_workbook(file_path, data_only=True)
+            # [Calamine Engine] 고속 로딩 (0.5초 로딩)
+            # 모든 시트를 한 번에 읽어온다. (sheet_name=None)
+            self.logger.info("🚀 Calamine 엔진으로 Excel 파일 로딩 시작...")
+            all_dfs = pd.read_excel(file_path, engine='calamine', sheet_name=None, header=None)
+            self.logger.info(f"✅ Calamine 엔진 로딩 완료: {len(all_dfs)}개 시트")
+            
+            # Pandas DataFrame을 OpenPyXL Workbook처럼 감싸는 어댑터 적용
+            workbook = MockWorkbook(all_dfs)
+            
             best_sheet_result = self.header_locator.inspect_all_sheets(
                 workbook,
                 self.required_keywords,
@@ -372,6 +382,13 @@ class FileParser:
         except Exception as e:
             self.logger.error(f"Excel 파싱 중 예상치 못한 오류 발생: {file_path} - {str(e)}", exc_info=True)
             return self._create_error_response(f"Excel 파일 처리 중 오류가 발생했습니다. 관리자에게 문의해주세요. (오류 코드: {hash(str(e)) % 10000})")
+        finally:
+            # 리소스 관리: workbook 닫기 (메모리 누수 방지)
+            if workbook is not None:
+                try:
+                    workbook.close()
+                except Exception as close_error:
+                    self.logger.warning(f"workbook 닫기 중 오류 (무시): {close_error}")
     
     def _parse_csv(self, file_path: Path) -> Dict[str, Any]:
         """CSV 파일 파싱 - 헤더 제목 밑 빈 칸부터 데이터 추출"""
