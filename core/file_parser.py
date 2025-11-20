@@ -165,12 +165,15 @@ class FileParser:
         """
         시트에서 5형제 가족 찾기
         
+        [최적화] 여기서는 통합(Merge)을 수행하지 않고 원본 데이터만 반환한다.
+        통합은 상위 호출자(_parse_excel)가 1순위 여부에 따라 선택적으로 수행한다.
+        
         Args:
             sheet: openpyxl Worksheet 객체
             required_keywords: 필수 컬럼 키워드 딕셔너리
             
         Returns:
-            List[Dict]: 찾은 가족 정보 리스트
+            List[Dict]: 찾은 가족 정보 리스트 (통합되지 않은 원본 데이터)
         """
         families = []
         
@@ -194,8 +197,9 @@ class FileParser:
                 if family_data:
                     raw_families.append(family_data)
             
-            # 가족 통합 로직 적용
-            families = self.industry_rules.merge_family_data(raw_families)
+            # [최적화] 여기서는 통합하지 않고 원본 데이터만 반환
+            # 통합은 상위 호출자(_parse_excel)가 1순위 여부에 따라 선택적으로 수행
+            families = raw_families
                     
         except Exception as e:
             self.logger.warning(f"가족 검색 중 오류: {str(e)}")
@@ -271,6 +275,19 @@ class FileParser:
             best_data = best_sheet_result.get('data', [])
             priority = best_sheet_result.get('priority')
             families = best_sheet_result.get('families', [])
+            
+            # [최적화] 1순위 시트(월 정산서)는 이미 통합된 데이터이므로 가족 통합 생략
+            # 2순위 이하 시트(일간 내역서)는 흩어진 데이터를 합쳐야 하므로 통합 필요
+            if priority != '1순위' and families:
+                self.logger.info(
+                    f"2순위 이하 시트 감지 - 가족 통합 수행: {len(families)}개 정보"
+                )
+                families = self.industry_rules.merge_family_data(families)
+                self.logger.info(f"가족 통합 완료: {len(families)}개")
+            elif priority == '1순위':
+                self.logger.info(
+                    f"1순위 시트(월 정산서) '{best_sheet_name}' - 가족 통합 생략 (이미 통합된 데이터)"
+                )
             
             # 중요: 1순위 시트 데이터로 완전히 교체
             if priority == '1순위':
