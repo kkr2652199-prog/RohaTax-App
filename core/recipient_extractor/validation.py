@@ -20,16 +20,25 @@ class Validator:
         """추출된 데이터의 신뢰도 점수 계산 (0.0 ~ 1.0)"""
         scores = []
         
-        # 각 필드별 점수
-        if extracted_data['business_number']:
+        # 각 필드별 점수 (한글 필드명과 영문 필드명 모두 지원)
+        business_number = extracted_data.get('사업자등록번호') or extracted_data.get('business_number', '')
+        if business_number and str(business_number).strip():
             scores.append(0.3)  # 사업자등록번호는 중요하므로 높은 가중치
-        if extracted_data['store_name']:
+        
+        store_name = extracted_data.get('상호') or extracted_data.get('store_name', '')
+        if store_name and str(store_name).strip():
             scores.append(0.25)
-        if extracted_data['representative']:
+        
+        representative = extracted_data.get('대표명') or extracted_data.get('representative', '')
+        if representative and str(representative).strip():
             scores.append(0.2)
-        if extracted_data['address']:
+        
+        address = extracted_data.get('사업장주소') or extracted_data.get('address', '')
+        if address and str(address).strip():
             scores.append(0.15)
-        if extracted_data['email']:
+        
+        email = extracted_data.get('사업자이메일') or extracted_data.get('email', '')
+        if email and str(email).strip():
             scores.append(0.1)
         
         return sum(scores) if scores else 0.0
@@ -54,12 +63,37 @@ class Validator:
     def validate_vat_ratio(self, recipient: Dict[str, Any]) -> bool:
         """부가세 비율 검증: 공급가액 × 0.1 = 부가세 (5% 허용 오차)"""
         try:
-            supply_amount = recipient.get('공급가액', 0)
-            vat_amount = recipient.get('부가세', 0)
+            # 값 추출 및 숫자 변환
+            supply_amount_raw = recipient.get('공급가액') or recipient.get('dad_amount', 0)
+            vat_amount_raw = recipient.get('부가세') or recipient.get('mom_amount', 0)
             
-            if not supply_amount or not vat_amount:
+            # 숫자로 변환 (문자열, None 등 처리)
+            try:
+                supply_amount = float(supply_amount_raw) if supply_amount_raw else 0.0
+            except (ValueError, TypeError):
+                supply_amount = 0.0
+            
+            try:
+                vat_amount = float(vat_amount_raw) if vat_amount_raw else 0.0
+            except (ValueError, TypeError):
+                vat_amount = 0.0
+            
+            # 공급가액과 부가세가 모두 0이면 검증 통과 (금액 정보가 없는 경우)
+            if supply_amount == 0.0 and vat_amount == 0.0:
+                self.logger.debug("💰 부가세 비율 검증: 금액 정보 없음 - 통과")
+                return True
+            
+            # 공급가액만 있고 부가세가 없으면 검증 실패
+            if supply_amount > 0 and vat_amount == 0:
+                self.logger.warning(f"💰 부가세 누락: 공급가액={supply_amount}, 부가세=0")
                 return False
             
+            # 부가세만 있고 공급가액이 없으면 검증 실패
+            if vat_amount > 0 and supply_amount == 0:
+                self.logger.warning(f"💰 공급가액 누락: 공급가액=0, 부가세={vat_amount}")
+                return False
+            
+            # 둘 다 있으면 비율 검증
             expected_vat = supply_amount * 0.1
             tolerance = expected_vat * 0.05  # 5% 허용 오차
             
@@ -72,6 +106,8 @@ class Validator:
             
         except Exception as e:
             self.logger.error(f"부가세 비율 검증 오류: {str(e)}")
+            import traceback
+            self.logger.error(f"부가세 비율 검증 오류 상세: {traceback.format_exc()}")
             return False
 
     def validate_recipient(self, recipient: Dict[str, Any], guideline: Dict[str, Any]) -> bool:
@@ -93,6 +129,10 @@ class Validator:
                           if isinstance(value, str) and value.strip())
         
         confidence_threshold = guideline.get('confidence_threshold', 0.3)
+        
+        # confidence가 없으면 자동 계산
+        if 'confidence' not in recipient:
+            recipient['confidence'] = self.calculate_confidence(recipient)
         
         is_valid = valid_fields >= min_valid_fields and recipient.get('confidence', 0) >= confidence_threshold
         

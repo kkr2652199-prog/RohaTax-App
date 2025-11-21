@@ -191,3 +191,24 @@ class IntelligentFeatures:
         except Exception as e:
             self.logger.warning(f"템플릿 감지 오류: {e}")
             return "unknown_type"
+
+    def enhance_recipients(self, recipients: List[Dict[str, Any]], stats: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """
+        공급받는자 데이터 향상 처리
+        
+        Args:
+            recipients: 공급받는자 리스트
+            stats: 통계 정보 (선택사항)
+            
+        Returns:
+            향상된 공급받는자 리스트
+        """
+        try:
+            # 현재는 단순히 입력받은 recipients를 그대로 반환
+            # 향후 이메일 자동 보정 등의 기능을 추가할 수 있음
+            self.logger.debug(f"공급받는자 향상 처리: {len(recipients)}건")
+            return recipients
+            
+        except Exception as e:
+            self.logger.error(f"공급받는자 향상 처리 오류: {str(e)}")
+            return recipients
