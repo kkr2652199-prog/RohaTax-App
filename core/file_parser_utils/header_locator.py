@@ -512,13 +512,27 @@ class HeaderLocator:
                 return 0.0
 
             max_dad_amount = 0.0
+            # 숫자 변환기 (실패 시 0.0 반환)
             converter = number_parser or default_number_parser
 
             for family in families:
-                dad_amount = converter(family.get('공급가액', 0))
-                mom_amount = converter(family.get('부가세', 0))
+                # [수정 1] 키 호환성: 한글('공급가액') 없으면 영문('dad_amount') 사용
+                raw_dad = family.get('공급가액')
+                if not raw_dad:
+                    raw_dad = family.get('dad_amount', 0)
+                
+                # [수정 2] 엄마 값도 마찬가지 (근데 없어도 됨)
+                raw_mom = family.get('부가세')
+                if not raw_mom:
+                    raw_mom = family.get('mom_amount', 0)
+                
+                try:
+                    dad_amount = converter(raw_dad)
+                except:
+                    continue  # 변환 실패하면 다음 행
 
-                if dad_amount > 0 and mom_amount > 0:
+                # [수정 3] 핵심: 엄마가 0이어도, 아빠가 크면 왕으로 인정!
+                if dad_amount > 0:  # (and mom_amount > 0 조건 삭제함)
                     if dad_amount > max_dad_amount:
                         max_dad_amount = dad_amount
 

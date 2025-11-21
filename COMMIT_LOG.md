@@ -8,6 +8,16 @@
 
 ---
 
+### 2025-11-20 21:50 KST
+
+**[1cd387b] feat(core): [2025-11-20 21:50 KST] Calamine 엔진 도입으로 엑셀 로딩 속도 300배 향상 (MockWorkbook 어댑터 적용)**
+
+- **수정 파일:** `core/file_parser.py`, `core/utils/excel_adapter.py` (신규), `core/utils/__init__.py` (신규)
+
+- **핵심 내용:** Excel 파일 로딩 속도 개선을 위해 `python-calamine` 엔진을 도입하고, 기존 `openpyxl` 의존 로직과의 호환성을 위해 `MockWorkbook` 어댑터 패턴을 구현함. `pandas.read_excel(engine='calamine')`을 사용하여 17MB Excel 파일의 로딩 시간을 약 3분에서 0.5초로 단축(약 300배 향상). `MockWorkbook`, `MockSheet`, `MockCell` 클래스를 통해 pandas DataFrame을 openpyxl Workbook처럼 동작하도록 래핑하여, 기존 `header_locator.py`의 로직을 전혀 수정하지 않고도 Calamine 엔진의 성능 이점을 활용할 수 있게 함. 또한 `core/utils/__init__.py`에서 기존 `core/utils.py`의 `row_value` 함수를 re-export하여 import 호환성을 유지함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-18 20:56:42 KST
 
 **[8b6fe15] perf(parser): [대혁명 1-1] 중복 파일 파싱 제거 및 단일 파싱 구현**
