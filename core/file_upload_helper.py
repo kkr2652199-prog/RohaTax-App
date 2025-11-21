@@ -87,19 +87,27 @@ def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -
             logger.warning("파일 파싱 실패 또는 데이터 없음")
             return (0, parsed_data if parsed_data else {})
         
-        # 실제 템플릿에 기입될 건수 계산
-        # recipients는 검열/필터링 후 최종적으로 템플릿에 기입되는 데이터
-        recipient_extractor = RecipientExtractor()
-        recipients = recipient_extractor.extract_recipients(parsed_data)
+        # [The Architect Fix] 토큰 계산 시 강제 통합 수행
+        from core.file_parser_utils.industry_rules import IndustryRules
         
-        # 실제 템플릿 기입 건수 = 검열/필터링 후 남은 데이터 건수
-        actual_template_count = len(recipients)
+        rules = IndustryRules()
+        raw_families = parsed_data.get('families', [])
+        
+        if raw_families:
+            # 통합된 건수 계산 (227건)
+            merged_families = rules.merge_family_data(raw_families)
+            template_count = len(merged_families)
+        else:
+            # 데이터 없음 (0건)
+            recipient_extractor = RecipientExtractor()
+            recipients = recipient_extractor.extract_recipients(parsed_data)
+            template_count = len(recipients)
         
         logger.info(f"검열 전 건수: {parsed_data.get('total_rows', 0)}건")
-        logger.info(f"실제 템플릿 기입 건수: {actual_template_count}건")
+        logger.info(f"실제 템플릿 기입 건수(토큰 차감): {template_count}건")
         logger.info(f"파싱된 데이터 반환 (재사용 준비 완료)")
         
-        return (actual_template_count, parsed_data)
+        return (template_count, parsed_data)
         
     except Exception as e:
         logger.error(f"템플릿 건수 계산 및 파싱 중 오류 발생: {str(e)}")
