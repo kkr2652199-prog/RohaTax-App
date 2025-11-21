@@ -9,6 +9,12 @@ import logging
 import re
 from typing import Any, Callable, Dict, List, Optional
 
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
 
 class IndustryRules:
     """업종별 후처리 규칙 적용기."""
@@ -90,12 +96,125 @@ class IndustryRules:
         return None
 
     def merge_family_data(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """중복 가족 데이터를 통합한다."""
+        """중복 가족 데이터를 통합한다. (Pandas 기반 구현)"""
+        
+        # Pandas 사용 불가 시 legacy 함수로 fallback
+        if not PANDAS_AVAILABLE:
+            self.logger.warning("Pandas 미설치 - Legacy 함수 사용")
+            return self._merge_family_data_legacy(families)
+        
+        try:
+            if not families:
+                return []
+            
+            self.logger.info("가족 통합 시작 (Pandas): %d개 정보", len(families))
+            
+            # 1. DataFrame 변환
+            df = pd.DataFrame(families)
+            
+            # 2. 그룹핑 키 생성 (우선순위: 사업자번호 > 대표자명 > 금액)
+            def create_group_key(row):
+                biz = str(row.get('business_number', '')).strip() if pd.notna(row.get('business_number')) else ''
+                if biz:
+                    return biz
+                
+                rep = str(row.get('representative', '')).strip() if pd.notna(row.get('representative')) else ''
+                if rep:
+                    return f"rep_{rep}"
+                
+                dad = self._to_number(row.get('dad_amount', 0))
+                return f"amount_{dad}"
+            
+            df['group_key'] = df.apply(create_group_key, axis=1)
+            
+            # 3. 그룹 크기 확인
+            group_sizes = df.groupby('group_key').size()
+            single_groups = group_sizes[group_sizes == 1].index
+            multi_groups = group_sizes[group_sizes > 1].index
+            
+            # 4. 단일 그룹 처리 (원본 유지)
+            single_df = df[df['group_key'].isin(single_groups)].copy()
+            
+            # 5. 다중 그룹 통합
+            def max_by_length(series):
+                """가장 긴 문자열 선택"""
+                non_null = series.dropna().astype(str)
+                if len(non_null) == 0:
+                    return ''
+                # 빈 문자열 제외
+                non_empty = non_null[non_null.str.len() > 0]
+                if len(non_empty) == 0:
+                    return ''
+                return non_empty.loc[non_empty.str.len().idxmax()]
+            
+            # 금액 필드: 합산 (숫자 변환 후)
+            def sum_amounts(series):
+                """금액 합산 (숫자 변환 포함)"""
+                total = 0.0
+                for val in series:
+                    total += self._to_number(val)
+                return total
+            
+            # 다중 그룹만 처리
+            if len(multi_groups) > 0:
+                multi_df = df[df['group_key'].isin(multi_groups)]
+                
+                # Aggregation 딕셔너리 구성
+                agg_dict = {
+                    'dad_amount': sum_amounts,
+                    'mom_amount': sum_amounts,
+                }
+                
+                # 문자열 필드: 가장 긴 것 선택
+                string_fields = ['business_number', 'representative', 'address', 'email', 'store_name']
+                for field in string_fields:
+                    if field in multi_df.columns:
+                        agg_dict[field] = max_by_length
+                
+                # 그룹핑 및 통합
+                merged_multi = multi_df.groupby('group_key').agg(agg_dict).reset_index()
+                
+                # integration_count 추가
+                merged_multi['integration_count'] = group_sizes[multi_groups].values
+                
+                # 결과 병합
+                if len(single_groups) > 0:
+                    result_df = pd.concat([single_df, merged_multi], ignore_index=True)
+                else:
+                    result_df = merged_multi
+            else:
+                # 다중 그룹이 없으면 단일 그룹만 반환
+                result_df = single_df
+            
+            # 6. Dict 리스트로 변환
+            result = result_df.to_dict('records')
+            
+            # 7. integration_count가 없는 경우 추가 (단일 그룹)
+            for record in result:
+                if 'integration_count' not in record:
+                    record['integration_count'] = 1
+            
+            self.logger.info("가족 통합 결과 (Pandas): %d개 → %d개", len(families), len(result))
+            
+            # 로깅 (단일/다중 그룹)
+            for key in single_groups:
+                self.logger.info("단일 가족 유지: %s", key)
+            for key in multi_groups:
+                self.logger.info("가족 통합 완료: %s (%d개 → 1개)", key, group_sizes[key])
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Pandas 통합 중 오류 발생 - Legacy 함수로 fallback: {str(e)}")
+            return self._merge_family_data_legacy(families)
+    
+    def _merge_family_data_legacy(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """중복 가족 데이터를 통합한다. (Legacy 구현 - 비상용)"""
 
         if not families:
             return []
 
-        self.logger.info("가족 통합 시작: %d개 정보", len(families))
+        self.logger.info("가족 통합 시작 (Legacy): %d개 정보", len(families))
 
         family_groups: Dict[str, List[Dict[str, Any]]] = {}
         for family in families:
@@ -122,7 +241,7 @@ class IndustryRules:
                 merged_families.append(merged)
                 self.logger.info("가족 통합 완료: %s (%d개 → 1개)", key, len(group))
 
-        self.logger.info("가족 통합 결과: %d개 → %d개", len(families), len(merged_families))
+        self.logger.info("가족 통합 결과 (Legacy): %d개 → %d개", len(families), len(merged_families))
         return merged_families
 
     def merge_families_by_business_number(
