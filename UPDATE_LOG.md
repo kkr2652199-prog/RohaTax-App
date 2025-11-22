@@ -1,5 +1,94 @@
 # 업데이트 로그 (Update Log)
 
+## 2025-11-22 19:38 KST
+
+### 작업: `feat: Pricing Plan Tuner UI`
+
+**작전명**: 상품 관리 UI 전면 개편 - 요금제 튜닝 패널
+
+#### 변경 사항
+
+1. **데이터 초기화 및 시딩**
+   - `scripts/seed_products.py` 생성: 3가지 고정 요금제 초기 데이터 삽입
+   - `product_packages` 테이블 초기화 후 고정 데이터 삽입
+     - Standard (ID: 1): 가격 500원, 토큰 1개 (기준 단가)
+     - Premium (ID: 2): 가격 25,000원, 토큰 100개 (할인 패키지)
+     - Gold (ID: 3): 가격 50,000원, 토큰 무제한(-1) (무제한권)
+
+2. **UI 전면 개편: 리스트 방식 → 카드형 설정 패널**
+   - `templates/admin/tabs/product_management.html` 완전 재작성 (177줄)
+   - 기존 리스트/추가 버튼/모달 모두 제거
+   - 3개 카드 레이아웃 구현:
+     - **카드 1 (Standard)**: 기준 단가 입력 필드 + 저장 버튼
+     - **카드 2 (Premium)**: 토큰 개수, 판매 가격, 할인율(자동계산) + ON/OFF 스위치 + 저장 버튼
+     - **카드 3 (Gold)**: 월 이용료 입력 필드 + ON/OFF 스위치 + 저장 버튼
+
+3. **JS 로직 전면 재구성**
+   - `static/js/admin/product.js` 완전 재작성 (351줄)
+   - `loadProducts()`: 리스트 렌더링 제거 → 3개 상품(ID: 1, 2, 3) 개별 조회하여 각 카드 입력창에 값 채우기
+   - `updateProduct()`: 각 카드의 저장 버튼으로 PATCH 요청 (추가/삭제 로직 제거)
+   - Premium 할인율 실시간 계산 기능 추가 (`calculatePremiumDiscount()`)
+   - 변수명 충돌 해결: `currentPage` → `currentProductPage`, `currentStatusFilter` → `currentProductStatusFilter`
+
+4. **CSS 스타일 추가**
+   - `static/css/admin.css`에 `.pricing-card` 스타일 추가
+   - 호버 효과 및 카드 디자인 적용
+
+#### 파일 구조
+
+```
+database/migrations/
+└── 003_create_product_packages.sql - 상품 패키지 테이블 스키마
+
+core/product/
+├── __init__.py
+├── schemas.py (80줄) - Pydantic 모델
+└── service.py (323줄) - Service Layer 비즈니스 로직
+
+routes/admin/
+└── product_api.py (211줄) - RESTful API 엔드포인트
+
+templates/admin/tabs/
+└── product_management.html (177줄) - 요금제 튜닝 패널 UI
+
+static/js/admin/
+└── product.js (351줄) - 요금제 관리 프론트엔드 로직
+
+static/css/
+└── admin.css - 요금제 카드 스타일 추가
+
+scripts/
+└── seed_products.py (106줄) - 초기 데이터 시딩 스크립트
+```
+
+#### 기술 스택
+
+- **Pydantic**: 데이터 검증 및 직렬화
+- **Service Layer Pattern**: 비즈니스 로직 분리
+- **Type Hints**: Python 3.9+ 스타일 타입 힌트
+- **Bootstrap Grid**: 반응형 카드 레이아웃
+- **실시간 계산**: Premium 할인율 자동 계산
+
+#### UX 개선
+
+- **직관성 강화**: 리스트 방식 → 카드형 설정 패널로 변경
+- **즉시 반영**: 숫자만 바꾸고 저장하면 즉시 요금 정책 변경
+- **자동 계산**: Premium 할인율 실시간 자동 계산 및 표시
+- **ON/OFF 스위치**: Premium/Gold 판매 중지 기능
+
+#### 검증 완료
+
+- ✅ `product_packages` 테이블 초기화 및 3개 고정 데이터 삽입 완료
+- ✅ 요금제 튜닝 패널 UI 렌더링 완료
+- ✅ 각 카드 입력창에 데이터 자동 채우기 확인
+- ✅ 저장 버튼 클릭 시 PATCH 요청 정상 작동
+- ✅ Premium 할인율 실시간 계산 기능 작동 확인
+- ✅ ON/OFF 스위치 기능 작동 확인
+- ✅ 변수명 충돌 해결 (JS 에러 없음)
+- ✅ 브라우저 콘솔 로그 정상 (에러 없음)
+
+---
+
 ## 2025-11-22 18:03 KST
 
 ### 작업: `feat: Payment Management System v1.0`

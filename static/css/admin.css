@@ -806,3 +806,41 @@
             color: var(--primary);
             font-weight: 600;
         }
+        
+        /* 요금제 관리 카드 스타일 */
+        .pricing-card {
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pricing-card .card-header {
+            padding: 1.25rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .pricing-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .pricing-card .form-label {
+            font-weight: 600;
+            color: var(--strong);
+            margin-bottom: 0.5rem;
+        }
+        
+        .pricing-card .alert {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        
+        .pricing-card .form-check-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }

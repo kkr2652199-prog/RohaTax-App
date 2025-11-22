@@ -10,3 +10,4 @@ from . import settings_api  # noqa: F401
 from . import activity_log_api  # noqa: F401
 from . import stats_api  # noqa: F401
 from . import payment_api  # noqa: F401
+from . import product_api  # noqa: F401
