@@ -695,3 +695,114 @@
                 font-size: 1rem;
             }
         }
+
+        /* ============================================
+           결제 관리 대시보드 스타일 (금융 앱 스타일)
+           ============================================ */
+        
+        /* KPI 카드 스타일 */
+        .payment-kpi-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .payment-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .payment-kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        /* 결제 상태 배지 */
+        .payment-status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .payment-status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .payment-status-completed {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .payment-status-failed {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .payment-status-cancelled {
+            background: #E5E7EB;
+            color: #374151;
+        }
+        
+        /* 최신 결제 피드 스타일 */
+        .payment-feed-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+        }
+        
+        .payment-feed-item:hover {
+            background: #F9FAFB;
+        }
+        
+        .payment-feed-item:last-child {
+            border-bottom: none;
+        }
+        
+        .payment-feed-amount {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        /* 거래 장부 테이블 스타일 */
+        #paymentLedgerTable {
+            font-size: 0.875rem;
+        }
+        
+        #paymentLedgerTable thead th {
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        
+        #paymentLedgerTable tbody tr {
+            transition: background 0.2s ease;
+        }
+        
+        #paymentLedgerTable tbody tr:hover {
+            background: #F9FAFB;
+        }
+        
+        /* 금액 표시 스타일 */
+        .payment-amount {
+            font-weight: 600;
+            color: var(--strong);
+        }
+        
+        .payment-token {
+            color: var(--primary);
+            font-weight: 600;
+        }

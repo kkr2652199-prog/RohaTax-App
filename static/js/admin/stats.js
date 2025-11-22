@@ -7,23 +7,26 @@
  * - 3가지 차트: 일일 토큰 사용량 (Line), 활동 유형 분포 (Doughnut), 시간대별 트래픽 (Bar)
  */
 
-// CSRF 토큰 함수 (admin.html에서 정의된 전역 함수 사용)
-const getCSRFToken = () => {
-    if (typeof csrfToken === 'function') {
-        return csrfToken();
-    }
-    // 폴백: 직접 메타 태그에서 읽기
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') || '' : '';
-};
+// CSRF 토큰 함수 (전역 함수가 없을 때만 선언)
+if (typeof window.getCSRFToken === 'undefined') {
+    window.getCSRFToken = function() {
+        if (typeof csrfToken === 'function') {
+            return csrfToken();
+        }
+        // 폴백: 직접 메타 태그에서 읽기
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') || '' : '';
+    };
+}
 
 // 차트 인스턴스 저장
 let dailyTokenUsageChart = null;
 let activityDistributionChart = null;
 let hourlyTrafficChart = null;
 
-// 앱 테마 색상 (Green/Mint 계열)
-const themeColors = {
+// 앱 테마 색상 (전역 변수가 없을 때만 선언)
+if (typeof window.themeColors === 'undefined') {
+    window.themeColors = {
     primary: '#10B981',
     primaryDark: '#059669',
     primaryLight: '#34D399',
@@ -44,7 +47,10 @@ const themeColors = {
         '#065F46', // Dark Green
         '#047857', // Medium Green
     ]
-};
+    };
+}
+
+// themeColors는 window.themeColors로 직접 사용
 
 /**
  * 상세 통계 로드
@@ -56,7 +62,7 @@ async function loadStats() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': getCSRFToken()
+                'X-CSRF-Token': window.window.getCSRFToken()
             },
             credentials: 'include'
         });
@@ -99,22 +105,22 @@ function updateStatsContent(data) {
     const statsCardsHtml = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
             <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: ${themeColors.primary};">
+                <div style="font-size: 1.5rem; font-weight: 700; color: ${window.themeColors.primary};">
                     ${data.daily_token_usage ? data.daily_token_usage.reduce((sum, item) => sum + item.usage, 0) : 0}
                 </div>
-                <div style="font-size: 0.8rem; color: ${themeColors.textMuted};">최근 7일 토큰 사용량</div>
+                <div style="font-size: 0.8rem; color: ${window.themeColors.textMuted};">최근 7일 토큰 사용량</div>
             </div>
             <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: ${themeColors.primary};">
+                <div style="font-size: 1.5rem; font-weight: 700; color: ${window.themeColors.primary};">
                     ${data.activity_distribution ? data.activity_distribution.reduce((sum, item) => sum + item.count, 0) : 0}
                 </div>
-                <div style="font-size: 0.8rem; color: ${themeColors.textMuted};">최근 30일 활동 건수</div>
+                <div style="font-size: 0.8rem; color: ${window.themeColors.textMuted};">최근 30일 활동 건수</div>
             </div>
             <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: ${themeColors.primary};">
+                <div style="font-size: 1.5rem; font-weight: 700; color: ${window.themeColors.primary};">
                     ${data.hourly_traffic ? data.hourly_traffic.reduce((sum, item) => sum + item.count, 0) : 0}
                 </div>
-                <div style="font-size: 0.8rem; color: ${themeColors.textMuted};">최근 24시간 활동 건수</div>
+                <div style="font-size: 0.8rem; color: ${window.themeColors.textMuted};">최근 24시간 활동 건수</div>
             </div>
         </div>
     `;
@@ -174,12 +180,12 @@ function renderDailyTokenUsageChart(data) {
             datasets: [{
                 label: '토큰 사용량',
                 data: usageData,
-                borderColor: themeColors.primary,
-                backgroundColor: themeColors.background,
+                borderColor: window.themeColors.primary,
+                backgroundColor: window.themeColors.background,
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: themeColors.primary,
+                pointBackgroundColor: window.themeColors.primary,
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 5,
@@ -194,7 +200,7 @@ function renderDailyTokenUsageChart(data) {
                     display: true,
                     position: 'top',
                     labels: {
-                        color: themeColors.text,
+                        color: window.themeColors.text,
                         font: {
                             size: 12,
                             weight: '500'
@@ -205,7 +211,7 @@ function renderDailyTokenUsageChart(data) {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#ffffff',
                     bodyColor: '#ffffff',
-                    borderColor: themeColors.primary,
+                    borderColor: window.themeColors.primary,
                     borderWidth: 1,
                     padding: 12,
                     displayColors: true
@@ -215,11 +221,11 @@ function renderDailyTokenUsageChart(data) {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: themeColors.border,
+                        color: window.themeColors.border,
                         drawBorder: false
                     },
                     ticks: {
-                        color: themeColors.textMuted,
+                        color: window.themeColors.textMuted,
                         font: {
                             size: 11
                         }
@@ -230,7 +236,7 @@ function renderDailyTokenUsageChart(data) {
                         display: false
                     },
                     ticks: {
-                        color: themeColors.textMuted,
+                        color: window.themeColors.textMuted,
                         font: {
                             size: 11
                         }
@@ -254,7 +260,7 @@ function renderActivityDistributionChart(data) {
     
     // 색상 할당 (데이터가 많으면 색상 반복)
     const backgroundColors = counts.map((_, index) => 
-        themeColors.chartColors[index % themeColors.chartColors.length]
+        window.themeColors.chartColors[index % window.themeColors.chartColors.length]
     );
     
     activityDistributionChart = new Chart(ctx, {
@@ -277,7 +283,7 @@ function renderActivityDistributionChart(data) {
                     display: true,
                     position: 'right',
                     labels: {
-                        color: themeColors.text,
+                        color: window.themeColors.text,
                         font: {
                             size: 11
                         },
@@ -290,7 +296,7 @@ function renderActivityDistributionChart(data) {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#ffffff',
                     bodyColor: '#ffffff',
-                    borderColor: themeColors.primary,
+                    borderColor: window.themeColors.primary,
                     borderWidth: 1,
                     padding: 12,
                     callbacks: {
@@ -326,10 +332,10 @@ function renderHourlyTrafficChart(data) {
             datasets: [{
                 label: '활동 건수',
                 data: counts,
-                backgroundColor: themeColors.chartColors.map((color, index) => 
-                    index < counts.length ? color : themeColors.primary
+                backgroundColor: window.themeColors.chartColors.map((color, index) => 
+                    index < counts.length ? color : window.themeColors.primary
                 ),
-                borderColor: themeColors.primaryDark,
+                borderColor: window.themeColors.primaryDark,
                 borderWidth: 1,
                 borderRadius: 6,
                 borderSkipped: false
@@ -346,7 +352,7 @@ function renderHourlyTrafficChart(data) {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#ffffff',
                     bodyColor: '#ffffff',
-                    borderColor: themeColors.primary,
+                    borderColor: window.themeColors.primary,
                     borderWidth: 1,
                     padding: 12,
                     callbacks: {
@@ -360,11 +366,11 @@ function renderHourlyTrafficChart(data) {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: themeColors.border,
+                        color: window.themeColors.border,
                         drawBorder: false
                     },
                     ticks: {
-                        color: themeColors.textMuted,
+                        color: window.themeColors.textMuted,
                         font: {
                             size: 11
                         },
@@ -376,7 +382,7 @@ function renderHourlyTrafficChart(data) {
                         display: false
                     },
                     ticks: {
-                        color: themeColors.textMuted,
+                        color: window.themeColors.textMuted,
                         font: {
                             size: 10
                         },
