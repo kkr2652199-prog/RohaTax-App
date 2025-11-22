@@ -221,7 +221,10 @@ from routes.admin import admin_bp
 from routes.admin.activity_log_api import activity_log_bp
 from routes.ops import ops_bp
 from routes.api_modules.admin_api import admin_api_bp
-from routes.api_modules.user_api import user_api_bp
+# 기존 user_api (비상시 롤백용으로 보존)
+# from routes.api_modules.user_api import user_api_bp
+# 신형 엔진 (user_api_v2)
+from routes.api_modules.user_api_v2 import user_api_v2_bp
 from routes.conversion_modules.gold_customers_routes import gold_customers_bp  # noop-reload
 from routes.conversion_modules.security_routes import security_bp
 from routes.conversion_modules.guideline_routes import guideline_bp
@@ -255,8 +258,12 @@ if 'ops' not in app.blueprints:
     app.register_blueprint(ops_bp)
 if 'admin_api' not in app.blueprints:
     app.register_blueprint(admin_api_bp)
-if 'user_api' not in app.blueprints:
-    app.register_blueprint(user_api_bp)
+# 기존 user_api (비상시 롤백용으로 보존)
+# if 'user_api' not in app.blueprints:
+#     app.register_blueprint(user_api_bp)
+# 신형 엔진 (user_api_v2)
+if 'user_api_v2' not in app.blueprints:
+    app.register_blueprint(user_api_v2_bp)
 if 'gold_customers' not in app.blueprints:
     app.register_blueprint(gold_customers_bp)
 if 'security' not in app.blueprints:
