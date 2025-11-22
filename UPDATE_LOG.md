@@ -1,5 +1,73 @@
 # 업데이트 로그 (Update Log)
 
+## 2025-11-22 15:55 KST
+
+### 작업: `feat: Admin Dashboard Stats & UI Upgrade`
+
+**작전명**: 차트의 마법사 - 시각화 상황실로 업그레이드
+
+#### 변경 사항
+
+1. **Chart.js 도입 및 시각화 구현**
+   - 일일 토큰 사용량 (Line Chart): 최근 7일간 날짜별 토큰 사용량
+   - 활동 유형 분포 (Doughnut Chart): 최근 30일간 활동 유형별 분포
+   - 시간대별 트래픽 (Bar Chart): 최근 24시간 시간대별 활동 건수
+   - Green/Mint 테마 색상 적용
+   - 반응형 디자인 지원
+
+2. **UI 개선: Full-Width 레이아웃**
+   - 통계 섹션을 '통합 관제실'과 동일한 전체 너비 레이아웃으로 확장
+   - 메인 차트(일일 토큰 사용량): 전체 너비, 높이 400px
+   - 하단 차트(활동 유형/트래픽): 50:50 배치, 각각 높이 300px
+   - 컨테이너 최대 너비 확장 (1600px)
+
+3. **Bug Fix: CSRF 토큰 누락 해결**
+   - 통계 탭 클릭 시 로그아웃되는 문제 해결
+   - `stats.js` API 호출에 `X-CSRF-Token` 헤더 추가
+   - 에러 처리 개선 (401/403 에러 시 로그아웃 처리 방지)
+
+4. **Backend: 통계 집계 API 구축**
+   - `routes/admin/stats_api.py` 생성
+   - SQL `GROUP BY`를 활용한 성능 최적화
+   - 빈 날짜/시간대 0으로 채우기 처리
+   - `/admin/api/dashboard-stats` 엔드포인트 제공
+
+#### 파일 구조
+
+```
+routes/admin/
+└── stats_api.py (182줄) - 통계 데이터 집계 API
+
+static/js/admin/
+└── stats.js (396줄) - Chart.js 시각화 로직
+
+templates/admin.html
+└── 통계 섹션 레이아웃 개선
+
+static/css/admin.css
+└── 차트 레이아웃 및 Full-Width 스타일 추가
+```
+
+#### 성능 개선
+
+- **SQL 최적화**: `GROUP BY`를 활용한 데이터베이스 레벨 집계
+- **인덱스 활용**: `idx_token_history_created_at`, `idx_activity_logs_timestamp` 활용
+- **빈 데이터 처리**: Python 레벨에서 0으로 채우기로 차트 연속성 보장
+
+#### 보안 강화
+
+- **CSRF 보호**: 모든 관리자 API 호출에 CSRF 토큰 포함
+- **인증 검증**: `ensure_admin_for_json()`을 통한 관리자 권한 확인
+
+#### 검증 완료
+
+- ✅ Chart.js 차트 3개 정상 렌더링
+- ✅ Full-Width 레이아웃 적용 완료
+- ✅ 로그아웃 버그 해결 확인
+- ✅ 반응형 디자인 작동 확인
+
+---
+
 ## 2025-11-22 14:28 KST
 
 ### 작업: `refactor: user_api` 엔진 교체 완료 (v1 -> v2)
