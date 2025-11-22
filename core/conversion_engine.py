@@ -81,7 +81,8 @@ class ConversionEngine:
                     guidelines: Dict = None,
                     issue_date: str = None,
                     file_name: str = None,
-                    user_info: Dict[str, Any] = None) -> Dict[str, Any]:
+                    user_info: Dict[str, Any] = None,
+                    parsed_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         전체 변환 프로세스 실행
         """
@@ -119,11 +120,17 @@ class ConversionEngine:
 
             self.logger.info("명확한 데이터 전달 구조 적용 시작")
             
-            conversion_log.append("1단계: 파일 파싱 시작")
-            self.logger.info("[CONVERSION] 1단계: 파일 파싱 시작")
-            parsed_data = self.file_parser.parse_file(uploaded_file_path)
+            # 대혁명 1단계: 파싱된 데이터 재사용 (단일 파싱)
+            if parsed_data is not None:
+                conversion_log.append("1단계: 파싱된 데이터 재사용 (단일 파싱)")
+                self.logger.info("[CONVERSION] 1단계: 파싱된 데이터 재사용 (대혁명 1단계 적용)")
+                self.logger.info(f"[CONVERSION] 재사용된 파싱 데이터: {parsed_data.get('total_rows', 0)}행")
+            else:
+                conversion_log.append("1단계: 파일 파싱 시작 (하위 호환성)")
+                self.logger.info("[CONVERSION] 1단계: 파일 파싱 시작 (parsed_data 미제공, 하위 호환성 모드)")
+                parsed_data = self.file_parser.parse_file(uploaded_file_path)
             
-            if parsed_data['parsing_status'] != 'success':
+            if parsed_data.get('parsing_status') != 'success':
                 self.logger.error(
                     "[CONVERSION] 파일 파싱 실패: %s",
                     parsed_data.get('error_message', '알 수 없는 오류'),
@@ -133,8 +140,8 @@ class ConversionEngine:
                     conversion_log,
                 )
             
-            conversion_log.append(f"파일 파싱 완료: {parsed_data['total_rows']}행")
-            self.logger.info(f"[CONVERSION] 파일 파싱 완료: {parsed_data['total_rows']}행")
+            conversion_log.append(f"파일 파싱 완료: {parsed_data.get('total_rows', 0)}행")
+            self.logger.info(f"[CONVERSION] 파일 파싱 완료: {parsed_data.get('total_rows', 0)}행")
             
             conversion_log.append("2단계: 업종별 절대지침 적용 시작")
             self.logger.info("[CONVERSION] 2단계: 업종별 절대지침 적용 시작")

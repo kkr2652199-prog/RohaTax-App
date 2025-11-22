@@ -9,6 +9,14 @@ import logging
 import re
 from typing import Any, Callable, Dict, List, Optional
 
+try:
+    import pandas as pd
+    import numpy as np
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    np = None
+
 
 class IndustryRules:
     """업종별 후처리 규칙 적용기."""
@@ -90,12 +98,97 @@ class IndustryRules:
         return None
 
     def merge_family_data(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """중복 가족 데이터를 통합한다."""
+        """
+        중복 가족 데이터를 통합한다. [Pandas Jet Engine Version]
+        
+        - 기존 로직 100% 준수 (키 우선순위: Biz > Rep > Amount)
+        - 벡터화 연산(Vectorized Operation)으로 성능 극대화
+        """
+        if not families:
+            return []
+
+        # PANDAS_AVAILABLE 플래그 확인 (안전장치)
+        if not PANDAS_AVAILABLE:
+            self.logger.warning("Pandas 모듈을 찾을 수 없어 Legacy 방식으로 처리합니다.")
+            return self._merge_family_data_legacy(families)
+
+        try:
+            # 1. 데이터프레임 생성
+            df = pd.DataFrame(families)
+            
+            # 빈 문자열/공백 처리 (NaN으로 변환하여 벡터 연산 용이하게)
+            str_cols = ['business_number', 'representative', 'address', 'email', 'store_name']
+            for col in str_cols:
+                if col in df.columns:
+                    df[col] = df[col].astype(str).str.strip().replace('', np.nan)
+
+            # 숫자형 컬럼 처리
+            num_cols = ['dad_amount', 'mom_amount']
+            for col in num_cols:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                else:
+                    df[col] = 0
+
+            # 2. 그룹핑 키 생성 (Vectorized: Biz > Rep > Amount)
+            # combine_first를 사용하여 우선순위 적용
+            key_biz = df['business_number']
+            
+            key_rep = 'rep_' + df['representative'].fillna('')
+            key_rep = key_rep.where(df['representative'].notna(), np.nan)
+            
+            key_amt = 'amount_' + df['dad_amount'].astype(str)
+            
+            df['group_key'] = key_biz.combine_first(key_rep).combine_first(key_amt)
+
+            # 3. 집계 로직 (문자열: Max Length, 숫자: Sum)
+            def get_longest_str(series):
+                valid = series.dropna()
+                if valid.empty: 
+                    return ""
+                # 길이가 가장 긴 값의 인덱스를 찾아 반환
+                return valid.loc[valid.str.len().idxmax()]
+
+            agg_rules = {
+                'dad_amount': 'sum',
+                'mom_amount': 'sum',
+                'business_number': get_longest_str,
+                'representative': get_longest_str,
+                'address': get_longest_str,
+                'email': get_longest_str,
+                'store_name': get_longest_str,
+            }
+            
+            # 실제 존재하는 컬럼만 집계 규칙에 포함
+            final_agg = {k: v for k, v in agg_rules.items() if k in df.columns}
+            
+            # 4. 그룹핑 실행
+            grouped = df.groupby('group_key', as_index=False).agg(final_agg)
+            
+            # 5. 그룹 크기 계산 및 integration_count 추가
+            group_sizes = df.groupby('group_key').size()
+            grouped['integration_count'] = grouped['group_key'].map(group_sizes).fillna(1).astype(int)
+            
+            # group_key 컬럼 제거 (최종 결과에는 필요 없음)
+            if 'group_key' in grouped.columns:
+                grouped = grouped.drop(columns=['group_key'])
+            
+            self.logger.info(f"가족 통합 완료: {len(families)} -> {len(grouped)} (Pandas Engine)")
+            return grouped.to_dict('records')
+
+        except Exception as e:
+            self.logger.error(f"Pandas 통합 중 오류 발생, Legacy 방식으로 전환: {str(e)}")
+            import traceback
+            self.logger.error(f"상세 오류: {traceback.format_exc()}")
+            return self._merge_family_data_legacy(families)
+    
+    def _merge_family_data_legacy(self, families: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """중복 가족 데이터를 통합한다. (Legacy 구현 - 비상용)"""
 
         if not families:
             return []
 
-        self.logger.info("가족 통합 시작: %d개 정보", len(families))
+        self.logger.info("가족 통합 시작 (Legacy): %d개 정보", len(families))
 
         family_groups: Dict[str, List[Dict[str, Any]]] = {}
         for family in families:
@@ -122,7 +215,7 @@ class IndustryRules:
                 merged_families.append(merged)
                 self.logger.info("가족 통합 완료: %s (%d개 → 1개)", key, len(group))
 
-        self.logger.info("가족 통합 결과: %d개 → %d개", len(families), len(merged_families))
+        self.logger.info("가족 통합 결과 (Legacy): %d개 → %d개", len(families), len(merged_families))
         return merged_families
 
     def merge_families_by_business_number(

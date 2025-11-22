@@ -8,6 +8,54 @@
 
 ---
 
+### 2025-11-21 16:36 KST
+
+**[76c47f2] feat(core): [2025-11-21 16:36 KST] 제트 엔진(Calamine+Pandas) 도입 완료 및 토큰 계산 로직 정상화 (5분 -> 27초)**
+
+- **수정 파일:** `core/file_parser_utils/industry_rules.py`, `PANDAS_CONVERSION_DESIGN.md` (신규)
+
+- **핵심 내용:** 
+  1. **Pandas 기반 가족 통합 로직 리팩토링**: 기존 Python 리스트/반복문 기반의 `merge_family_data` 함수를 Pandas DataFrame의 `groupby().agg()` 기능을 활용하여 완전히 재구현함. 입력 데이터를 `pd.DataFrame`으로 변환한 후, 그룹핑 키(사업자번호 > 대표자명 > 금액 우선순위)를 생성하고, `groupby().agg()`로 금액 필드는 합산, 문자열 필드는 가장 긴 값을 선택하는 방식으로 통합함. 단일 그룹과 다중 그룹을 분리 처리하여 성능을 최적화하고, Pandas 사용 불가 시 Legacy 함수로 자동 fallback하는 안전장치를 포함함. 처리 시간이 대폭 단축되어 1799개 데이터를 0.57초 내에 287개로 통합하는 성능을 달성함.
+  
+  2. **토큰 계산 로직 정상화**: 1순위 시트(월 정산서)는 이미 통합된 데이터이므로 가족 통합을 생략하지만, 이로 인해 토큰 계산 시 원본 건수(1462건)가 그대로 사용되어 과다 차감되는 문제를 해결하기 위해 `calculate_count_and_parse` 함수에서 토큰 계산 시에는 강제로 `IndustryRules().merge_family_data()`를 호출하여 통합된 건수(227건)를 사용하도록 수정함. `parsed_data` 객체 자체는 수정하지 않고 원본을 유지하여, 실제 변환 로직에는 영향을 주지 않으면서도 토큰 계산의 정확성을 확보함.
+  
+  3. **Calamine 엔진 통합**: Excel 파일 로딩 속도를 300배 향상시킨 Calamine 엔진이 정상 작동 중이며, Pandas 기반 가족 통합과 함께 "제트 엔진"으로 작동하여 전체 변환 프로세스의 성능을 극대화함. 최신 변환 기록에서 227건을 27.12초에 처리하는 성능을 달성함(초당 8.40건/초).
+
+- **성능 개선:**
+  - 가족 통합 처리 시간: 약 0.57초 (1799개 → 287개)
+  - 전체 변환 시간: 27.12초 (227건 처리)
+  - 초당 처리 건수: 8.40건/초
+
+- **기술적 특징:**
+  - Pandas `groupby().agg()` 활용으로 코드 간결화 및 성능 향상
+  - Legacy 함수 fallback 메커니즘으로 안정성 확보
+  - 토큰 계산 시 강제 통합으로 정확성 확보
+  - Calamine 엔진과의 시너지로 전체 프로세스 최적화
+
+'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
+### 2025-11-21 16:00 KST
+
+**[08f7863] fix(core): [2025-11-21 16:00 KST] 1순위 시트 토큰 과다 차감 오류 수정 (계산 시 강제 통합 적용)**
+
+- **수정 파일:** `core/file_upload_helper.py`
+
+- **핵심 내용:** 1순위 시트(월 정산서)는 이미 통합된 데이터이므로 가족 통합을 생략하지만, 이로 인해 토큰 계산 시 원본 건수(1462건)가 그대로 사용되어 과다 차감되는 문제가 발생함. 이를 해결하기 위해 `calculate_count_and_parse` 함수에서 토큰 계산 시에는 강제로 `IndustryRules().merge_family_data()`를 호출하여 통합된 건수(227건)를 사용하도록 수정함. `parsed_data` 객체 자체는 수정하지 않고 원본을 유지하여, 실제 변환 로직에는 영향을 주지 않으면서도 토큰 계산의 정확성을 확보함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
+### 2025-11-20 21:50 KST
+
+**[1cd387b] feat(core): [2025-11-20 21:50 KST] Calamine 엔진 도입으로 엑셀 로딩 속도 300배 향상 (MockWorkbook 어댑터 적용)**
+
+- **수정 파일:** `core/file_parser.py`, `core/utils/excel_adapter.py` (신규), `core/utils/__init__.py` (신규)
+
+- **핵심 내용:** Excel 파일 로딩 속도 개선을 위해 `python-calamine` 엔진을 도입하고, 기존 `openpyxl` 의존 로직과의 호환성을 위해 `MockWorkbook` 어댑터 패턴을 구현함. `pandas.read_excel(engine='calamine')`을 사용하여 17MB Excel 파일의 로딩 시간을 약 3분에서 0.5초로 단축(약 300배 향상). `MockWorkbook`, `MockSheet`, `MockCell` 클래스를 통해 pandas DataFrame을 openpyxl Workbook처럼 동작하도록 래핑하여, 기존 `header_locator.py`의 로직을 전혀 수정하지 않고도 Calamine 엔진의 성능 이점을 활용할 수 있게 함. 또한 `core/utils/__init__.py`에서 기존 `core/utils.py`의 `row_value` 함수를 re-export하여 import 호환성을 유지함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
 ### 2025-11-18 21:31:00 KST
 
 **[5eb8e0a] perf(parser): [대혁명 1-2] 1순위 시트 탐색 시 조기 종료 로직 추가**
@@ -15,6 +63,16 @@
 - **수정 파일:** `core/file_parser_utils/header_locator.py`
 
 - **핵심 내용:** 1순위 시트 판단 조건을 유연하게 변경하고(5개 매칭 or 4개 매칭+가족), 압도적인 1순위 시트(total_amount >= 1,000,000) 발견 시 즉시 탐색을 종료하는 '보안관' 로직을 추가함. 이를 통해, 명백한 '월 정산서' 형태의 파일 처리 속도를 획기적으로 개선하고, 불필요한 시스템 자원 낭비를 방지함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
+
+---
+
+### 2025-11-18 20:56:42 KST
+
+**[8b6fe15] perf(parser): [대혁명 1-1] 중복 파일 파싱 제거 및 단일 파싱 구현**
+
+- **수정 파일:** `core/file_upload_helper.py`, `routes/conversion_modules/conversion_engine_routes.py`, `core/conversion_engine.py`
+
+- **핵심 내용:** 화이트보드 작전에서 설계한 이상적 흐름도의 Phase 1을 구현. `calculate_template_count` 함수를 `calculate_count_and_parse`로 변경하여 템플릿 건수와 파싱된 데이터를 튜플로 반환하도록 수정. `start_conversion`에서 파싱된 데이터를 `convert_file`에 직접 전달하여 중복 파싱을 완전히 제거. `convert_file` 함수는 `parsed_data`를 선택적 인자로 받아 재사용하거나, 미제공 시 하위 호환성을 위해 기존 로직을 실행. 이로써 파일은 단 한 번만 파싱되고, 그 결과가 템플릿 건수 계산과 변환 프로세스 모두에서 재사용되어 구조적 낭비를 제거함. 'Executor 자동 점검' 및 'Commander 최종 검증'을 통해 기능적 회귀가 없음을 확인함.
 
 ---
 
@@ -669,4 +727,14 @@
   - 분리 과정에서 발견된 '비활성화 저장 불가' 버그를 수정함. (원인: unchecked checkbox가 FormData에 포함되지 않음)
   - .checked 속성을 명시적으로 확인하여 '1'/'0' 값을 전송하도록 로직을 개선함
   - 기능적 회귀가 없음을 '인간 검증'으로 확인함
+
+- **[bcfc0f0] feat(core): [2025-11-21 21:32 KST] 제트 엔진(Calamine+Pandas) 도입 완료 및 토큰 계산 로직 정상화 (5분 -> 27초)**
+
+  - **제트 엔진 도입**: python-calamine 라이브러리를 사용하여 Excel 파싱 성능 대폭 개선 (5분 -> 27초)
+  - **Pandas 통합**: 가족 통합 로직을 Pandas 기반으로 리팩토링하여 성능 및 안정성 향상
+  - **토큰 계산 버그 수정**: 1순위 시트에서도 토큰 계산 시 강제 통합을 수행하도록 수정
+  - **검증 로직 개선**: `validate_vat_ratio` 메서드의 `or` 연산자 문제 수정 (0 값 처리 개선)
+  - **IntelligentFeatures 확장**: `enhance_recipients` 메서드 추가로 파이프라인 호환성 확보
+  - **타입 안전성 강화**: 부가세 비율 검증 시 명시적 타입 변환 및 에러 처리 개선
+  - **성능 최적화**: Pandas groupby/agg를 활용한 대량 데이터 처리 효율화
 

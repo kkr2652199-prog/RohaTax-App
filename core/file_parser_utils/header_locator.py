@@ -282,11 +282,25 @@ class HeaderLocator:
                 matched_fields = sheet_result.get('matched_fields', 0)
                 families = sheet_result.get('families', [])
 
-                if matched_fields >= 5 and families:
+                # 대혁명 2단계: 현명한 왕의 법률 - 더 유연한 조건
+                if matched_fields >= 5 or (matched_fields >= 4 and families):
                     max_dad_with_mom = self._get_max_dad_with_mom_same_row(
                         sheet_result,
                         number_parser,
                     )
+
+                    # 대혁명 2단계: 보안관 임명 - 압도적인 1순위 시트 발견 시 즉시 종료
+                    if max_dad_with_mom >= 1_000_000:
+                        best_sheet = sheet_result
+                        best_sheet['max_dad_amount'] = max_dad_with_mom
+                        best_sheet['priority'] = '1순위'
+                        
+                        self.logger.info(
+                            "👑 왕을 발견했습니다: '%s' (아빠값: %s원). 즉시 수색을 종료합니다.",
+                            sheet_name,
+                            f"{max_dad_with_mom:,.0f}",
+                        )
+                        return best_sheet
 
                     if (
                         max_dad_with_mom > max_dad_amount
@@ -498,13 +512,27 @@ class HeaderLocator:
                 return 0.0
 
             max_dad_amount = 0.0
+            # 숫자 변환기 (실패 시 0.0 반환)
             converter = number_parser or default_number_parser
 
             for family in families:
-                dad_amount = converter(family.get('공급가액', 0))
-                mom_amount = converter(family.get('부가세', 0))
+                # [수정 1] 키 호환성: 한글('공급가액') 없으면 영문('dad_amount') 사용
+                raw_dad = family.get('공급가액')
+                if not raw_dad:
+                    raw_dad = family.get('dad_amount', 0)
+                
+                # [수정 2] 엄마 값도 마찬가지 (근데 없어도 됨)
+                raw_mom = family.get('부가세')
+                if not raw_mom:
+                    raw_mom = family.get('mom_amount', 0)
+                
+                try:
+                    dad_amount = converter(raw_dad)
+                except:
+                    continue  # 변환 실패하면 다음 행
 
-                if dad_amount > 0 and mom_amount > 0:
+                # [수정 3] 핵심: 엄마가 0이어도, 아빠가 크면 왕으로 인정!
+                if dad_amount > 0:  # (and mom_amount > 0 조건 삭제함)
                     if dad_amount > max_dad_amount:
                         max_dad_amount = dad_amount
 

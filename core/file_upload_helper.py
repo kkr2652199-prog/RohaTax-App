@@ -57,23 +57,26 @@ def cleanup_temp_file(file_path: str):
     except Exception as e:
         logger.warning(f"임시 파일 정리 실패: {str(e)}")
 
-def calculate_template_count(file_path: str, industry_type: str = 'delivery') -> int:
+def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -> tuple[int, Dict[str, Any]]:
     """
-    파일에서 템플릿 건수(공급받는자 수) 계산
+    파일에서 템플릿 건수(공급받는자 수) 계산 및 파싱 데이터 반환
     
     핵심: 검열 건수(72)가 아닌 실제 템플릿에 기입된 건수(53)만 카운트
+    대혁명 1단계: 단일 파싱 구현 - 파싱 결과를 재사용하기 위해 튜플로 반환
     
     Args:
         file_path: 파일 경로
         industry_type: 업종 타입 (기본값: 'delivery', 현재는 사용 안함)
         
     Returns:
-        int: 실제 템플릿 기입 건수 (검열/필터링/가족 통합 후)
+        tuple[int, Dict[str, Any]]: (실제 템플릿 기입 건수, 파싱된 데이터)
+        - 건수: 검열/필터링/가족 통합 후 최종적으로 템플릿에 기입되는 데이터 건수
+        - 파싱된 데이터: 재사용을 위한 완전한 파싱 결과
     """
     try:
-        logger.info(f"템플릿 건수 계산 시작: 파일={os.path.basename(file_path)}, 업종={industry_type}")
+        logger.info(f"템플릿 건수 계산 및 파싱 시작: 파일={os.path.basename(file_path)}, 업종={industry_type}")
         
-        # 파일 파싱
+        # 파일 파싱 (단 한 번만 실행)
         from core.file_parser import FileParser
         from core.recipient_extractor import RecipientExtractor
         
@@ -82,21 +85,30 @@ def calculate_template_count(file_path: str, industry_type: str = 'delivery') ->
         
         if not parsed_data or parsed_data.get('parsing_status') != 'success':
             logger.warning("파일 파싱 실패 또는 데이터 없음")
-            return 0
+            return (0, parsed_data if parsed_data else {})
         
-        # 실제 템플릿에 기입될 건수 계산
-        # recipients는 검열/필터링 후 최종적으로 템플릿에 기입되는 데이터
-        recipient_extractor = RecipientExtractor()
-        recipients = recipient_extractor.extract_recipients(parsed_data)
+        # [The Architect Fix] 토큰 계산 시 강제 통합 수행
+        from core.file_parser_utils.industry_rules import IndustryRules
         
-        # 실제 템플릿 기입 건수 = 검열/필터링 후 남은 데이터 건수
-        actual_template_count = len(recipients)
+        rules = IndustryRules()
+        raw_families = parsed_data.get('families', [])
+        
+        if raw_families:
+            # 통합된 건수 계산 (227건)
+            merged_families = rules.merge_family_data(raw_families)
+            template_count = len(merged_families)
+        else:
+            # 데이터 없음 (0건)
+            recipient_extractor = RecipientExtractor()
+            recipients = recipient_extractor.extract_recipients(parsed_data)
+            template_count = len(recipients)
         
         logger.info(f"검열 전 건수: {parsed_data.get('total_rows', 0)}건")
-        logger.info(f"실제 템플릿 기입 건수: {actual_template_count}건")
+        logger.info(f"실제 템플릿 기입 건수(토큰 차감): {template_count}건")
+        logger.info(f"파싱된 데이터 반환 (재사용 준비 완료)")
         
-        return actual_template_count
+        return (template_count, parsed_data)
         
     except Exception as e:
-        logger.error(f"템플릿 건수 계산 중 오류 발생: {str(e)}")
-        return 0
+        logger.error(f"템플릿 건수 계산 및 파싱 중 오류 발생: {str(e)}")
+        return (0, {})
