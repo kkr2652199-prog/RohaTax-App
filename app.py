@@ -63,7 +63,26 @@ def init_file_management():
         # Python 3.14 Template Strings 사용
         print(f"File management system initialization failed: {e}")
 
-app = Flask(__name__)
+# [워크트리 규칙 준수] 메인 서버 전용 Flask 앱 초기화
+# 메인 프로젝트 디렉토리에서만 실행되도록 명시적으로 경로 지정
+app_dir = os.path.dirname(os.path.abspath(__file__))
+template_dir = os.path.join(app_dir, "templates")
+static_dir = os.path.join(app_dir, "static")
+
+# [검증] homepage1 디렉토리가 아닌지 확인
+if "homepage1" in app_dir.replace("\\", "/").split("/"):
+    raise RuntimeError(f"[워크트리 규칙 위반] 메인 서버(app.py)는 homepage1 디렉토리에서 실행되면 안 됩니다. 현재 경로: {app_dir}")
+
+print(f"[워크트리 확인] 메인 서버 앱 디렉토리: {app_dir}")
+print(f"[워크트리 확인] 템플릿 디렉토리: {template_dir}")
+print(f"[워크트리 확인] Static 디렉토리: {static_dir}")
+
+app = Flask(
+    __name__,
+    template_folder=template_dir,  # 메인 프로젝트의 templates 명시
+    static_folder=static_dir,       # 메인 프로젝트의 static 명시
+    static_url_path='/static'       # URL 경로 명시
+)
 # 전역 텍스트 주입
 @app.context_processor
 def inject_text():
