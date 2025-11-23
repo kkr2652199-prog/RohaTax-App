@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
 from core.db import get_conn_optimized as get_conn
@@ -260,9 +260,89 @@ class PaymentService:
                         elif product_id == 3:  # Gold
                             # Gold 구매 시: 항상 gold-vip로 변경 (최고 등급)
                             new_plan_type = 'gold-vip'
-                        
-                        # 등급 업데이트
-                        if new_plan_type and new_plan_type != current_plan_type:
+                            
+                            # Gold 구매 시 기간 연장 로직
+                            # 현재 subscription_end_date 조회
+                            subscription_row = conn.execute(
+                                """
+                                SELECT subscription_end_date
+                                FROM users
+                                WHERE id = ?
+                                """,
+                                (user_id,)
+                            ).fetchone()
+                            
+                            current_end_date = subscription_row['subscription_end_date'] if subscription_row else None
+                            
+                            # 기간 연장 계산
+                            from datetime import datetime, timedelta
+                            
+                            # SQLite의 datetime('now', 'localtime')와 일치하도록 현재 시간 조회
+                            now_row = conn.execute("SELECT datetime('now', 'localtime') as now_time").fetchone()
+                            now_str = now_row['now_time'] if now_row else None
+                            
+                            if now_str:
+                                # SQLite datetime 형식: 'YYYY-MM-DD HH:MM:SS'
+                                now = datetime.strptime(now_str, '%Y-%m-%d %H:%M:%S')
+                            else:
+                                # 폴백: Python datetime.now() 사용
+                                now = datetime.now()
+                            
+                            if current_end_date:
+                                try:
+                                    # 문자열을 datetime으로 변환
+                                    if isinstance(current_end_date, str):
+                                        current_end = datetime.strptime(current_end_date, '%Y-%m-%d %H:%M:%S')
+                                    else:
+                                        current_end = current_end_date
+                                    
+                                    # 만료일이 아직 남아있으면 기존 만료일 + 30일
+                                    if current_end > now:
+                                        new_end_date = current_end + timedelta(days=30)
+                                        self.logger.info(
+                                            f"Gold 구독 기간 연장: 기존 만료일 {current_end.strftime('%Y-%m-%d %H:%M:%S')} "
+                                            f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
+                                        )
+                                    else:
+                                        # 만료일이 지났으면 오늘 + 30일
+                                        new_end_date = now + timedelta(days=30)
+                                        self.logger.info(
+                                            f"Gold 구독 신규 설정: 오늘 {now.strftime('%Y-%m-%d %H:%M:%S')} "
+                                            f"→ 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
+                                        )
+                                except Exception as e:
+                                    self.logger.warning(f"subscription_end_date 파싱 오류: {str(e)}, 오늘 + 30일로 설정")
+                                    new_end_date = now + timedelta(days=30)
+                            else:
+                                # subscription_end_date가 없으면 오늘 + 30일
+                                new_end_date = now + timedelta(days=30)
+                                self.logger.info(
+                                    f"Gold 구독 신규 설정: 오늘 {now.strftime('%Y-%m-%d %H:%M:%S')} "
+                                    f"→ 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
+                                )
+                            
+                            # subscription_end_date 업데이트 (등급 업데이트와 함께)
+                            update_cursor = conn.execute(
+                                """
+                                UPDATE users
+                                SET plan_type = ?, subscription_end_date = ?, updated_at = datetime('now', 'localtime')
+                                WHERE id = ?
+                                """,
+                                (new_plan_type, new_end_date.strftime('%Y-%m-%d %H:%M:%S'), user_id)
+                            )
+                            rows_affected = update_cursor.rowcount
+                            if rows_affected == 0:
+                                self.logger.warning(
+                                    f"등급 및 구독 기간 업데이트 실패: 사용자 ID {user_id}"
+                                )
+                            else:
+                                self.logger.info(
+                                    f"사용자 ID {user_id}의 등급이 '{current_plan_type}'에서 '{new_plan_type}'로 변경되었습니다 "
+                                    f"(상품: {product_name}, product_id: {product_id}, 결제 ID: {payment_id}) "
+                                    f"구독 만료일: {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (결제 연동)"
+                                )
+                        elif new_plan_type and new_plan_type != current_plan_type:
+                            # Gold가 아닌 다른 상품의 등급 업데이트
                             update_cursor = conn.execute(
                                 """
                                 UPDATE users
@@ -704,6 +784,49 @@ class PaymentService:
                 conn.rollback()
                 raise e
     
+    def delete_payment(self, payment_id: int) -> None:
+        """
+        결제 기록 삭제 (Hard Delete)
+        
+        Args:
+            payment_id: 삭제할 결제 ID
+            
+        Raises:
+            ValueError: 결제를 찾을 수 없거나 삭제할 수 없는 상태
+        """
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # 결제 정보 조회
+            payment_row = conn.execute(
+                """
+                SELECT id, status
+                FROM payment_history
+                WHERE id = ?
+                """,
+                (payment_id,)
+            ).fetchone()
+            
+            if not payment_row:
+                raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
+            
+            # 삭제 가능한 상태인지 확인
+            status_str = payment_row['status']
+            if status_str not in [PaymentStatus.CANCELLED.value, PaymentStatus.FAILED.value]:
+                raise ValueError(f"삭제할 수 없는 결제 상태입니다: {status_str} (취소/환불 또는 실패 상태만 삭제 가능)")
+            
+            # 결제 기록 삭제
+            cursor = conn.execute(
+                "DELETE FROM payment_history WHERE id = ?",
+                (payment_id,)
+            )
+            
+            if cursor.rowcount == 0:
+                raise ValueError(f"결제 삭제에 실패했습니다: ID {payment_id}")
+            
+            conn.commit()
+            self.logger.info(f"결제 기록 삭제 완료: ID {payment_id}")
+    
     def get_payments_by_user_id(
         self, 
         user_id: int, 
@@ -827,8 +950,10 @@ class PaymentService:
         self,
         page: int = 1,
         per_page: int = 20,
-        status: Optional[PaymentStatus] = None,
-        user_id: Optional[int] = None
+        status: Optional[Union[PaymentStatus, str]] = None,
+        user_id: Optional[int] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         전체 결제 목록 조회 (관리자용)
@@ -838,34 +963,68 @@ class PaymentService:
             per_page: 페이지당 항목 수
             status: 결제 상태 필터 (선택사항)
             user_id: 사용자 ID 필터 (선택사항)
+            start_date: 시작 날짜 (YYYY-MM-DD 형식, 선택사항)
+            end_date: 종료 날짜 (YYYY-MM-DD 형식, 선택사항)
             
         Returns:
             Dict: 결제 목록, 페이징 정보, KPI 통계
         """
+        # datetime 모듈 import (함수 내부에서 사용)
+        from datetime import datetime, timedelta
+        
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
             
-            # WHERE 조건 구성
-            where_conditions = []
+            # WHERE 조건 구성 (JOIN 쿼리용과 COUNT 쿼리용 분리)
+            where_conditions = []  # JOIN 쿼리용 (ph. 접두사 포함)
+            count_where_conditions = []  # COUNT 쿼리용 (ph. 접두사 없음)
             params = []
             
             if status:
-                where_conditions.append("status = ?")
-                # status가 Enum이면 .value를, 문자열이면 그대로 사용
+                # JOIN 쿼리용 (ph. 붙임)
+                where_conditions.append("ph.status = ?")
+                # COUNT 쿼리용 (ph. 뺌 - 중요!)
+                count_where_conditions.append("status = ?")
+                
+                # status를 문자열로 변환 (Enum이면 .value, 문자열이면 그대로 사용)
                 status_value = status.value if isinstance(status, PaymentStatus) else str(status)
                 params.append(status_value)
             
             if user_id:
-                where_conditions.append("user_id = ?")
+                where_conditions.append("ph.user_id = ?")
+                count_where_conditions.append("user_id = ?")
                 params.append(user_id)
             
+            # 날짜 필터 추가 (빈 문자열 체크)
+            if start_date and start_date.strip():
+                where_conditions.append("DATE(ph.created_at) >= ?")
+                count_where_conditions.append("DATE(created_at) >= ?")
+                params.append(start_date.strip())
+            
+            if end_date and end_date.strip():
+                where_conditions.append("DATE(ph.created_at) <= ?")
+                count_where_conditions.append("DATE(created_at) <= ?")
+                params.append(end_date.strip())
+            
+            # WHERE 절 구성 (JOIN 쿼리용 - ph. 접두사 포함)
             where_clause = ""
             if where_conditions:
                 where_clause = "WHERE " + " AND ".join(where_conditions)
             
-            # 전체 개수 조회
+            # COUNT 쿼리용 WHERE 절 (ph. 접두사 없음)
+            count_where_clause = ""
+            if count_where_conditions:
+                count_where_clause = "WHERE " + " AND ".join(count_where_conditions)
+            
+            # 디버그: 실제 실행되는 SQL 확인
+            count_sql = f"SELECT COUNT(*) as total FROM payment_history {count_where_clause}"
+            self.logger.debug(f"COUNT 쿼리 SQL: {count_sql}")
+            self.logger.debug(f"COUNT 쿼리 파라미터: {params}")
+            self.logger.debug(f"count_where_conditions: {count_where_conditions}")
+            
+            # 전체 개수 조회 (JOIN 없이, 테이블명 직접 사용)
             total_row = conn.execute(
-                f"SELECT COUNT(*) as total FROM payment_history {where_clause}",
+                count_sql,
                 tuple(params)
             ).fetchone()
             total = total_row['total'] if total_row else 0
@@ -873,13 +1032,25 @@ class PaymentService:
             # 페이징 계산
             offset = (page - 1) * per_page
             
-            # 결제 목록 조회
+            # 결제 목록 조회 (유저 정보 JOIN)
             rows = conn.execute(
                 f"""
-                SELECT id, user_id, order_id, amount, token_amount, status, pg_provider, created_at, updated_at
-                FROM payment_history
+                SELECT 
+                    ph.id, 
+                    ph.user_id, 
+                    ph.order_id, 
+                    ph.amount, 
+                    ph.token_amount, 
+                    ph.status, 
+                    ph.pg_provider, 
+                    ph.created_at, 
+                    ph.updated_at,
+                    u.username,
+                    u.email
+                FROM payment_history ph
+                LEFT JOIN users u ON ph.user_id = u.id
                 {where_clause}
-                ORDER BY created_at DESC
+                ORDER BY ph.created_at DESC
                 LIMIT ? OFFSET ?
                 """,
                 tuple(params + [per_page, offset])
@@ -900,79 +1071,161 @@ class PaymentService:
                         updated_at=row['updated_at']
                     )
                     # Pydantic v1/v2 호환성: .dict() 또는 .model_dump() 사용
-                    if hasattr(payment_obj, 'model_dump'):
-                        payments.append(payment_obj.model_dump())
-                    else:
-                        payments.append(payment_obj.model_dump())
+                    payment_dict = payment_obj.model_dump() if hasattr(payment_obj, 'model_dump') else payment_obj.model_dump()
+                    # 유저 정보 추가 (sqlite3.Row는 딕셔너리처럼 접근, NULL 처리)
+                    # sqlite3.Row는 NULL 값을 None으로 반환하므로 안전하게 처리
+                    try:
+                        username = row['username']
+                        payment_dict['user_name'] = username if username is not None else ''
+                    except (KeyError, TypeError, IndexError):
+                        payment_dict['user_name'] = ''
+                    try:
+                        email = row['email']
+                        payment_dict['user_email'] = email if email is not None else ''
+                    except (KeyError, TypeError, IndexError):
+                        payment_dict['user_email'] = ''
+                    payments.append(payment_dict)
                 except Exception as e:
                     self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
                     continue
             
-            # KPI 통계 계산 (필터와 무관하게 전체 데이터 기준)
-            # 오늘 매출 (completed 상태만)
-            today_revenue_row = conn.execute(
-                """
+            # KPI 통계 계산 (기간 필터 적용)
+            # 기간 필터 조건 구성 (KPI 통계용)
+            kpi_where_conditions = []
+            kpi_params = []
+            
+            # 빈 문자열 체크 및 None 변환
+            if start_date and start_date.strip():
+                kpi_where_conditions.append("DATE(created_at) >= ?")
+                kpi_params.append(start_date.strip())
+            
+            if end_date and end_date.strip():
+                kpi_where_conditions.append("DATE(created_at) <= ?")
+                kpi_params.append(end_date.strip())
+            
+            kpi_where_clause = ""
+            if kpi_where_conditions:
+                kpi_where_clause = "WHERE " + " AND ".join(kpi_where_conditions)
+            
+            # 기간 내 매출 (completed 상태만)
+            # WHERE 조건 동적 구성
+            revenue_where_conditions = kpi_where_conditions.copy() if kpi_where_conditions else []
+            revenue_where_conditions.append("status = 'completed'")
+            revenue_where_clause = "WHERE " + " AND ".join(revenue_where_conditions) if revenue_where_conditions else ""
+            
+            period_revenue_row = conn.execute(
+                f"""
                 SELECT COALESCE(SUM(amount), 0) as revenue
                 FROM payment_history
-                WHERE strftime('%Y-%m-%d', created_at) = strftime('%Y-%m-%d', 'now', 'localtime')
-                AND status = 'completed'
-                """
+                {revenue_where_clause}
+                """,
+                tuple(kpi_params)
             ).fetchone()
-            today_revenue = today_revenue_row['revenue'] if today_revenue_row else 0
+            period_revenue = period_revenue_row['revenue'] if period_revenue_row else 0
             
-            # 이번 달 매출 (completed 상태만)
-            month_revenue_row = conn.execute(
-                """
-                SELECT COALESCE(SUM(amount), 0) as revenue
-                FROM payment_history
-                WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now', 'localtime')
-                AND status = 'completed'
-                """
-            ).fetchone()
-            month_revenue = month_revenue_row['revenue'] if month_revenue_row else 0
-            
-            # 오늘 결제 건수
-            today_count_row = conn.execute(
-                """
+            # 기간 내 결제 건수
+            period_count_row = conn.execute(
+                f"""
                 SELECT COUNT(*) as count
                 FROM payment_history
-                WHERE strftime('%Y-%m-%d', created_at) = strftime('%Y-%m-%d', 'now', 'localtime')
-                """
+                {kpi_where_clause}
+                """,
+                tuple(kpi_params)
             ).fetchone()
-            today_count = today_count_row['count'] if today_count_row else 0
+            period_count = period_count_row['count'] if period_count_row else 0
             
-            # 환불 요청 (cancelled 상태)
+            # 기간 내 환불 요청 (cancelled 상태)
+            refund_where_conditions = kpi_where_conditions.copy() if kpi_where_conditions else []
+            refund_where_conditions.append("status = 'cancelled'")
+            refund_where_clause = "WHERE " + " AND ".join(refund_where_conditions) if refund_where_conditions else ""
+            
             refund_count_row = conn.execute(
-                """
+                f"""
                 SELECT COUNT(*) as count
                 FROM payment_history
-                WHERE status = 'cancelled'
-                """
+                {refund_where_clause}
+                """,
+                tuple(kpi_params)
             ).fetchone()
             refund_count = refund_count_row['count'] if refund_count_row else 0
             
-            # 최근 7일간 매출 추이 (completed 상태만)
-            daily_revenue_rows = conn.execute(
-                """
-                SELECT 
-                    strftime('%Y-%m-%d', created_at) as date,
-                    COALESCE(SUM(amount), 0) as revenue
-                FROM payment_history
-                WHERE created_at >= datetime('now', '-7 days', 'localtime')
-                AND status = 'completed'
-                GROUP BY strftime('%Y-%m-%d', created_at)
-                ORDER BY date ASC
-                """
-            ).fetchall()
+            # 상태별 건수 계산 (배지용)
+            status_counts = {}
+            for status_val in ['completed', 'pending', 'cancelled', 'failed']:
+                status_where_conditions = kpi_where_conditions.copy() if kpi_where_conditions else []
+                status_where_conditions.append("status = ?")
+                status_where_clause = "WHERE " + " AND ".join(status_where_conditions) if status_where_conditions else ""
+                
+                status_count_row = conn.execute(
+                    f"""
+                    SELECT COUNT(*) as count
+                    FROM payment_history
+                    {status_where_clause}
+                    """,
+                    tuple(kpi_params + [status_val])
+                ).fetchone()
+                status_counts[status_val] = status_count_row['count'] if status_count_row else 0
             
-            # 최근 5건 결제 (최신순)
+            # 전체 건수 (기간 필터만 적용)
+            all_count_row = conn.execute(
+                f"""
+                SELECT COUNT(*) as count
+                FROM payment_history
+                {kpi_where_clause}
+                """,
+                tuple(kpi_params)
+            ).fetchone()
+            status_counts['all'] = all_count_row['count'] if all_count_row else 0
+            
+            # 기간 내 매출 추이 (completed 상태만, 최대 30일)
+            # 날짜 범위가 지정되지 않으면 최근 7일, 지정되면 해당 기간
+            if start_date and end_date:
+                # 지정된 기간 사용
+                trend_where_conditions = kpi_where_conditions.copy() if kpi_where_conditions else []
+                trend_where_conditions.append("status = 'completed'")
+                trend_where_clause = "WHERE " + " AND ".join(trend_where_conditions) if trend_where_conditions else ""
+                
+                daily_revenue_rows = conn.execute(
+                    f"""
+                    SELECT 
+                        strftime('%Y-%m-%d', created_at) as date,
+                        COALESCE(SUM(amount), 0) as revenue
+                    FROM payment_history
+                    {trend_where_clause}
+                    GROUP BY strftime('%Y-%m-%d', created_at)
+                    ORDER BY date ASC
+                    """,
+                    tuple(kpi_params)
+                ).fetchall()
+            else:
+                # 기본값: 최근 7일
+                daily_revenue_rows = conn.execute(
+                    """
+                    SELECT 
+                        strftime('%Y-%m-%d', created_at) as date,
+                        COALESCE(SUM(amount), 0) as revenue
+                    FROM payment_history
+                    WHERE created_at >= datetime('now', '-7 days', 'localtime')
+                    AND status = 'completed'
+                    GROUP BY strftime('%Y-%m-%d', created_at)
+                    ORDER BY date ASC
+                    """
+                ).fetchall()
+            
+            # 기간 내 최근 5건 결제 (최신순)
+            # JOIN 없이 payment_history만 사용하므로 ph. 접두사 제거된 WHERE 절 사용
+            latest_payments_where_clause = count_where_clause if count_where_clause else ""
+            latest_payments_params = params.copy() if params else []
+            
             latest_payments_rows = conn.execute(
-                """
+                f"""
                 SELECT id, user_id, order_id, amount, token_amount, status, pg_provider, created_at, updated_at
                 FROM payment_history
+                {latest_payments_where_clause}
                 ORDER BY created_at DESC
                 LIMIT 5
-                """
+                """,
+                tuple(latest_payments_params)
             ).fetchall()
             
             latest_payments = []
@@ -998,24 +1251,47 @@ class PaymentService:
                     self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
                     continue
             
-            # 일별 매출 추이 데이터 구성 (최근 7일, 없는 날은 0으로)
+            # 일별 매출 추이 데이터 구성
             daily_revenue_trend = []
-            for i in range(6, -1, -1):
-                date = datetime.now()
-                date = date.replace(day=date.day - i)
-                date_str = date.strftime('%Y-%m-%d')
+            
+            if start_date and end_date:
+                # 지정된 기간의 모든 날짜 포함
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                current = start
                 
-                # 해당 날짜의 매출 찾기
-                revenue = 0
-                for row in daily_revenue_rows:
-                    if row['date'] == date_str:
-                        revenue = row['revenue']
-                        break
-                
-                daily_revenue_trend.append({
-                    'date': date_str,
-                    'revenue': revenue
-                })
+                while current <= end:
+                    date_str = current.strftime('%Y-%m-%d')
+                    # 해당 날짜의 매출 찾기
+                    revenue = 0
+                    for row in daily_revenue_rows:
+                        if row['date'] == date_str:
+                            revenue = row['revenue']
+                            break
+                    
+                    daily_revenue_trend.append({
+                        'date': date_str,
+                        'revenue': revenue
+                    })
+                    current += timedelta(days=1)
+            else:
+                # 기본값: 최근 7일
+                for i in range(6, -1, -1):
+                    date = datetime.now()
+                    date = date.replace(day=date.day - i)
+                    date_str = date.strftime('%Y-%m-%d')
+                    
+                    # 해당 날짜의 매출 찾기
+                    revenue = 0
+                    for row in daily_revenue_rows:
+                        if row['date'] == date_str:
+                            revenue = row['revenue']
+                            break
+                    
+                    daily_revenue_trend.append({
+                        'date': date_str,
+                        'revenue': revenue
+                    })
             
             return {
                 'payments': payments,
@@ -1023,11 +1299,11 @@ class PaymentService:
                 'page': page,
                 'per_page': per_page,
                 'kpi_stats': {
-                    'today_revenue': today_revenue,
-                    'month_revenue': month_revenue,
-                    'today_payment_count': today_count,
+                    'period_revenue': period_revenue,  # 기간 내 매출
+                    'period_payment_count': period_count,  # 기간 내 결제 건수
                     'refund_requests': refund_count
                 },
+                'status_counts': status_counts,  # 상태별 건수 (배지용)
                 'daily_revenue_trend': daily_revenue_trend,
                 'latest_payments': latest_payments  # 이미 dict로 변환됨
             }

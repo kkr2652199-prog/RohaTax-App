@@ -89,6 +89,21 @@ def login_post():
     user = row
     # Clear any previous session to avoid privilege leakage across accounts
     session.clear()
+    
+    # Gold 구독 만료 확인 및 강등 처리
+    from core.subscription_utils import check_and_revoke_expired_subscription
+    check_and_revoke_expired_subscription(user['id'])
+    
+    # 만료 체크 후 최신 사용자 정보 다시 조회 (강등되었을 수 있음)
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        updated_user = conn.execute(
+            "SELECT id, username, is_admin, plan_type FROM users WHERE id = ?",
+            (user['id'],)
+        ).fetchone()
+        if updated_user:
+            user = updated_user
+    
     session['user_id'] = user['id']
     session['username'] = user['username']
     session['is_admin'] = int(user['is_admin'] or 0)

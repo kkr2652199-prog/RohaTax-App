@@ -20,6 +20,9 @@ let revenueChart = null;
 // 현재 페이지 상태
 let currentPage = 1;
 let currentStatusFilter = '';
+let currentStartDate = null;
+let currentEndDate = null;
+let currentPeriod = 'all'; // 'today', 'week', 'month', 'all'
 
 // 테마 색상 (전역 변수가 없을 때만 선언)
 if (typeof window.themeColors === 'undefined') {
@@ -50,27 +53,94 @@ function formatNumber(num) {
 }
 
 /**
- * 결제 상태에 따른 배지 HTML 생성
+ * 날짜 계산 함수 (순수 JS)
+ */
+function getDateRange(period) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let startDate = null;
+    let endDate = new Date(today);
+    endDate.setHours(23, 59, 59, 999);
+    
+    switch(period) {
+        case 'today':
+            startDate = new Date(today);
+            break;
+        case 'week':
+            // 이번 주 월요일부터 오늘까지
+            const dayOfWeek = today.getDay();
+            const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // 월요일로 조정
+            startDate = new Date(today);
+            startDate.setDate(diff);
+            startDate.setHours(0, 0, 0, 0);
+            break;
+        case 'month':
+            // 이번 달 1일부터 오늘까지
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            break;
+        case 'all':
+        default:
+            startDate = null;
+            endDate = null;
+            break;
+    }
+    
+    return {
+        start: startDate ? startDate.toISOString().split('T')[0] : null,
+        end: endDate ? endDate.toISOString().split('T')[0] : null
+    };
+}
+
+/**
+ * 날짜 범위를 YYYY-MM-DD 형식으로 변환
+ */
+function formatDateForAPI(date) {
+    if (!date) return null;
+    if (typeof date === 'string') return date;
+    return date.toISOString().split('T')[0];
+}
+
+/**
+ * 상품 아이콘 및 색상 HTML 생성
+ */
+function getProductBadge(tokenAmount) {
+    if (tokenAmount === -1) {
+        // Gold
+        return '<span class="badge rounded-pill" style="background: linear-gradient(135deg, #FCD34D 0%, #FBBF24 100%); color: #78350F;"><i class="bi bi-star-fill"></i> Gold</span>';
+    } else if (tokenAmount >= 100) {
+        // Premium
+        return '<span class="badge rounded-pill" style="background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%); color: white;"><i class="bi bi-star"></i> Premium</span>';
+    } else {
+        // Standard
+        return '<span class="badge rounded-pill" style="background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); color: white;"><i class="bi bi-circle-fill"></i> Standard</span>';
+    }
+}
+
+/**
+ * 결제 상태에 따른 Pill Badge HTML 생성
  */
 function getStatusBadge(status) {
     const statusMap = {
-        'pending': { text: '대기중', class: 'payment-status-pending' },
-        'completed': { text: '완료', class: 'payment-status-completed' },
-        'failed': { text: '실패', class: 'payment-status-failed' },
-        'cancelled': { text: '취소', class: 'payment-status-cancelled' }
+        'pending': { text: '대기중', class: 'bg-warning text-dark' },
+        'completed': { text: '완료', class: 'bg-success' },
+        'failed': { text: '실패', class: 'bg-danger' },
+        'cancelled': { text: '취소', class: 'bg-secondary' }
     };
     
-    const statusInfo = statusMap[status.toLowerCase()] || { text: status, class: 'payment-status-pending' };
-    return `<span class="payment-status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+    const statusInfo = statusMap[status.toLowerCase()] || { text: status, class: 'bg-secondary' };
+    return `<span class="badge rounded-pill ${statusInfo.class}">${statusInfo.text}</span>`;
 }
 
 /**
  * 결제 목록 로드
  */
-async function loadPayments(page = 1, status = '') {
+async function loadPayments(page = 1, status = '', startDate = null, endDate = null) {
     try {
         currentPage = page;
         currentStatusFilter = status;
+        currentStartDate = startDate;
+        currentEndDate = endDate;
         
         // 로딩 표시
         const tbody = document.getElementById('paymentLedgerBody');
@@ -84,6 +154,17 @@ async function loadPayments(page = 1, status = '') {
         
         if (status) {
             params.append('status', status);
+        }
+        
+        // 날짜 파라미터 추가 (null이 아닐 때만)
+        const formattedStartDate = formatDateForAPI(startDate);
+        if (formattedStartDate) {
+            params.append('start_date', formattedStartDate);
+        }
+        
+        const formattedEndDate = formatDateForAPI(endDate);
+        if (formattedEndDate) {
+            params.append('end_date', formattedEndDate);
         }
         
         const response = await fetch(`/admin/api/payments?${params.toString()}`, {
@@ -168,13 +249,21 @@ function renderPaymentTable(data) {
     try {
         tbody.innerHTML = payments.map(payment => {
             console.log('[renderPaymentTable] payment:', payment);
+            
+            // 유저 정보 표시 (이름과 이메일)
+            const userName = payment.user_name || `유저 #${payment.user_id || 'N/A'}`;
+            const userEmail = payment.user_email || '';
+            const userDisplay = userEmail 
+                ? `<div class="fw-semibold">${userName}</div><div class="text-muted small">${userEmail}</div>`
+                : `<div class="fw-semibold">${userName}</div>`;
+            
             return `
                 <tr>
                     <td><code class="text-primary">${payment.order_id || 'N/A'}</code></td>
-                    <td>${payment.user_id || 'N/A'}</td>
-                    <td>토큰 ${formatNumber(payment.token_amount || 0)}개</td>
-                    <td class="text-end payment-amount">${formatCurrency(payment.amount || 0)}</td>
-                    <td class="payment-token">${formatNumber(payment.token_amount || 0)}</td>
+                    <td>${userDisplay}</td>
+                    <td>${getProductBadge(payment.token_amount || 0)}</td>
+                    <td class="text-end payment-amount fw-bold">${formatCurrency(payment.amount || 0)}</td>
+                    <td class="payment-token">${payment.token_amount === -1 ? '<span class="text-warning">무제한</span>' : formatNumber(payment.token_amount || 0) + '개'}</td>
                     <td>${getStatusBadge(payment.status || 'pending')}</td>
                     <td><small class="text-muted">${payment.pg_provider || '-'}</small></td>
                     <td><small class="text-muted">${formatDateTime(payment.created_at || '')}</small></td>
@@ -185,6 +274,11 @@ function renderPaymentTable(data) {
                         ${payment.status === 'pending' ? `
                             <button class="btn btn-sm btn-outline-success" onclick="updatePaymentStatus(${payment.id || 0}, 'completed')" title="완료 처리">
                                 <i class="bi bi-check-circle"></i>
+                            </button>
+                        ` : ''}
+                        ${(payment.status === 'cancelled' || payment.status === 'failed') ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePayment(${payment.id || 0})" title="기록 삭제">
+                                <i class="bi bi-trash"></i>
                             </button>
                         ` : ''}
                     </td>
@@ -209,27 +303,20 @@ function updateKPICards(data) {
     console.log('[updateKPICards] kpiStats:', kpiStats);
     
     // KPI 카드 업데이트
-    const todayRevenueEl = document.getElementById('todayRevenue');
-    const monthRevenueEl = document.getElementById('monthRevenue');
-    const todayCountEl = document.getElementById('todayCount');
+    const periodRevenueEl = document.getElementById('periodRevenue');
+    const periodCountEl = document.getElementById('periodCount');
     const refundCountEl = document.getElementById('refundCount');
     
-    if (todayRevenueEl) {
-        todayRevenueEl.textContent = formatCurrency(kpiStats.today_revenue || 0);
+    if (periodRevenueEl) {
+        periodRevenueEl.textContent = formatCurrency(kpiStats.period_revenue || 0);
     } else {
-        console.error('[updateKPICards] todayRevenue element not found');
+        console.error('[updateKPICards] periodRevenue element not found');
     }
     
-    if (monthRevenueEl) {
-        monthRevenueEl.textContent = formatCurrency(kpiStats.month_revenue || 0);
+    if (periodCountEl) {
+        periodCountEl.textContent = `${formatNumber(kpiStats.period_payment_count || 0)}건`;
     } else {
-        console.error('[updateKPICards] monthRevenue element not found');
-    }
-    
-    if (todayCountEl) {
-        todayCountEl.textContent = `${formatNumber(kpiStats.today_payment_count || 0)}건`;
-    } else {
-        console.error('[updateKPICards] todayCount element not found');
+        console.error('[updateKPICards] periodCount element not found');
     }
     
     if (refundCountEl) {
@@ -237,6 +324,23 @@ function updateKPICards(data) {
     } else {
         console.error('[updateKPICards] refundCount element not found');
     }
+    
+    // 상태별 건수 계산 및 배지 업데이트 (백엔드에서 제공하는 status_counts 사용)
+    const statusCounts = data.status_counts || {
+        'all': data.total || 0,
+        'completed': 0,
+        'pending': 0,
+        'cancelled': 0,
+        'failed': 0
+    };
+    
+    // 전체 건수는 total 사용 (status_counts에 없을 경우)
+    if (!statusCounts.all && data.total !== undefined) {
+        statusCounts.all = data.total;
+    }
+    
+    // 배지 업데이트
+    updateStatusBadges(statusCounts);
     
     // 매출 추이 차트 업데이트 (API에서 제공하는 daily_revenue_trend 사용)
     if (data.daily_revenue_trend) {
@@ -271,7 +375,7 @@ function updateRecentPaymentsFeed(payments) {
                 </div>
                 <div class="text-end">
                     <div class="payment-feed-amount">${formatCurrency(payment.amount)}</div>
-                    <div class="text-muted" style="font-size: 0.7rem;">${formatNumber(payment.token_amount)} 토큰</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">${payment.token_amount === -1 ? '<span class="text-warning">♾️ 무제한</span>' : formatNumber(payment.token_amount) + ' 토큰'}</div>
                 </div>
             </div>
             <div class="d-flex justify-content-between align-items-center">
@@ -474,7 +578,7 @@ function renderPagination(data) {
     
     // 이전 버튼
     if (page > 1) {
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadPayments(${page - 1}, '${currentStatusFilter}'); return false;">이전</a></li>`;
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="currentPage = ${page - 1}; refreshPaymentData(); return false;">이전</a></li>`;
     }
     
     // 페이지 번호 버튼
@@ -482,7 +586,7 @@ function renderPagination(data) {
     const endPage = Math.min(totalPages, page + 2);
     
     if (startPage > 1) {
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadPayments(1, '${currentStatusFilter}'); return false;">1</a></li>`;
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="currentPage = 1; refreshPaymentData(); return false;">1</a></li>`;
         if (startPage > 2) {
             paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
         }
@@ -490,19 +594,19 @@ function renderPagination(data) {
     
     for (let i = startPage; i <= endPage; i++) {
         const active = i === page ? 'active' : '';
-        paginationHTML += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadPayments(${i}, '${currentStatusFilter}'); return false;">${i}</a></li>`;
+        paginationHTML += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="currentPage = ${i}; refreshPaymentData(); return false;">${i}</a></li>`;
     }
     
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
         }
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadPayments(${totalPages}, '${currentStatusFilter}'); return false;">${totalPages}</a></li>`;
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="currentPage = ${totalPages}; refreshPaymentData(); return false;">${totalPages}</a></li>`;
     }
     
     // 다음 버튼
     if (page < totalPages) {
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadPayments(${page + 1}, '${currentStatusFilter}'); return false;">다음</a></li>`;
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="currentPage = ${page + 1}; refreshPaymentData(); return false;">다음</a></li>`;
     }
     
     pagination.innerHTML = paginationHTML;
@@ -593,11 +697,13 @@ async function viewPaymentDetail(paymentId) {
         
         // 상품 정보 조회 (상품명 가져오기)
         let productName = '알 수 없음';
+        let isGoldProduct = false;
         try {
             // payment_history에는 product_id가 없으므로, order_id나 다른 방법으로 추론
             // 일단 토큰 양으로 표시
             if (payment.token_amount === -1) {
                 productName = 'Gold (무제한)';
+                isGoldProduct = true;
             } else if (payment.token_amount >= 100) {
                 productName = 'Premium';
             } else {
@@ -607,99 +713,138 @@ async function viewPaymentDetail(paymentId) {
             console.warn('[viewPaymentDetail] 상품 정보 조회 실패:', e);
         }
         
-        // 상세 정보 렌더링
+        // Gold 상품인 경우 사용자의 구독 종료일 조회
+        let subscriptionInfo = '';
+        if (isGoldProduct) {
+            try {
+                const userResponse = await fetch(`/admin/api/users/${payment.user_id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': window.getCSRFToken()
+                    },
+                    credentials: 'include'
+                });
+                if (userResponse.ok) {
+                    const userResult = await userResponse.json();
+                    if (userResult.success && userResult.data && userResult.data.subscription_end_date) {
+                        const endDate = new Date(userResult.data.subscription_end_date);
+                        subscriptionInfo = `
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
+                                <td style="padding: 0.5rem 0;">
+                                    <strong>30일</strong><br>
+                                    <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (e) {
+                console.warn('[viewPaymentDetail] 구독 정보 조회 실패:', e);
+            }
+        }
+        
+        // 유저 이메일 조회
+        let userEmail = '';
+        try {
+            const userResponse = await fetch(`/admin/api/users/${payment.user_id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': window.getCSRFToken()
+                },
+                credentials: 'include'
+            });
+            if (userResponse.ok) {
+                const userResult = await userResponse.json();
+                if (userResult.success && userResult.data) {
+                    userEmail = userResult.data.email || '';
+                }
+            }
+        } catch (e) {
+            console.warn('[viewPaymentDetail] 유저 이메일 조회 실패:', e);
+        }
+        
+        // 영수증 스타일 상세 정보 렌더링
+        const paymentDate = payment.created_at ? new Date(payment.created_at) : new Date();
+        const formattedDate = paymentDate.toLocaleDateString('ko-KR', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
         contentEl.innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">주문번호</h6>
-                            <p class="mb-0 fw-bold"><code>${payment.order_id || 'N/A'}</code></p>
-                        </div>
-                    </div>
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <!-- 영수증 정보 테이블 -->
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">주문번호</td>
+                            <td style="padding: 0.5rem 0;"><code class="text-primary fw-bold">${payment.order_id || 'N/A'}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상품명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${productName}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제일시</td>
+                            <td style="padding: 0.5rem 0;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제수단</td>
+                            <td style="padding: 0.5rem 0;">${payment.pg_provider || '수동 결제'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상태</td>
+                            <td style="padding: 0.5rem 0;">${getStatusBadge(payment.status || 'pending')}</td>
+                        </tr>
+                        ${subscriptionInfo}
+                    </tbody>
+                </table>
+                
+                <!-- 구분선 -->
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <!-- 총액 -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">₩ ${(payment.amount || 0).toLocaleString()}</span>
                 </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">유저명</h6>
-                            <p class="mb-0 fw-bold">${userName}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">상품명</h6>
-                            <p class="mb-0 fw-bold">${productName}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">결제 금액</h6>
-                            <p class="mb-0 fw-bold text-primary">${formatCurrency(payment.amount || 0)}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">토큰 수량</h6>
-                            <p class="mb-0 fw-bold">
-                                ${payment.token_amount === -1 ? '무제한' : formatNumber(payment.token_amount || 0) + '개'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">결제 상태</h6>
-                            <p class="mb-0">${getStatusBadge(payment.status || 'pending')}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">PG사</h6>
-                            <p class="mb-0">${payment.pg_provider || '-'}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">결제 일시</h6>
-                            <p class="mb-0">${formatDateTime(payment.created_at || '')}</p>
-                        </div>
-                    </div>
-                </div>
-                ${payment.updated_at ? `
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-muted mb-2 small">수정 일시</h6>
-                            <p class="mb-0">${formatDateTime(payment.updated_at)}</p>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
             </div>
         `;
         
         // 결제 취소 버튼 (completed 상태인 경우만)
+        // 삭제 버튼 (cancelled 또는 failed 상태인 경우만)
         if (payment.status === 'completed') {
             footerEl.innerHTML = `
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                <button type="button" class="btn btn-danger" onclick="cancelPayment(${payment.id})">
-                    <i class="bi bi-x-circle"></i> 결제 취소
-                </button>
+                <div class="w-100 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-danger" onclick="cancelPayment(${payment.id})">
+                        <i class="bi bi-x-circle"></i> 결제 취소
+                    </button>
+                </div>
+            `;
+        } else if (payment.status === 'cancelled' || payment.status === 'failed') {
+            footerEl.innerHTML = `
+                <div class="w-100 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-danger" onclick="deletePayment(${payment.id})">
+                        <i class="bi bi-trash"></i> 기록 삭제
+                    </button>
+                </div>
             `;
         } else {
             footerEl.innerHTML = `
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                <div class="w-100 d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
             `;
         }
         
@@ -716,6 +861,56 @@ async function viewPaymentDetail(paymentId) {
         footerEl.innerHTML = `
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
         `;
+    }
+}
+
+/**
+ * 결제 기록 삭제
+ */
+async function deletePayment(paymentId) {
+    // 확인 창
+    if (!confirm('정말 이 결제 기록을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    
+    try {
+        console.log('[deletePayment] 결제 삭제 시작:', paymentId);
+        
+        const response = await fetch(`/admin/api/payments/${paymentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `결제 삭제 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[deletePayment] API 응답:', result);
+        
+        if (result.success) {
+            // 모달 닫기 (열려있다면)
+            const modal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            alert('결제 기록이 성공적으로 삭제되었습니다.');
+            
+            // 테이블 새로고침
+            refreshPaymentData();
+        } else {
+            throw new Error(result.message || '결제 삭제에 실패했습니다.');
+        }
+        
+    } catch (error) {
+        console.error('[deletePayment] 오류:', error);
+        alert(`결제 삭제 중 오류가 발생했습니다: ${error.message}`);
     }
 }
 
@@ -797,7 +992,7 @@ async function updatePaymentStatus(paymentId, newStatus) {
         const result = await response.json();
         if (result.success) {
             alert('결제 상태가 업데이트되었습니다.');
-            loadPayments(currentPage, currentStatusFilter);
+            refreshPaymentData();
         }
         
     } catch (error) {
@@ -807,26 +1002,139 @@ async function updatePaymentStatus(paymentId, newStatus) {
 }
 
 /**
+ * 상태별 건수 배지 업데이트
+ */
+function updateStatusBadges(statusCounts) {
+    const badges = {
+        'all': document.getElementById('badge-all'),
+        'completed': document.getElementById('badge-completed'),
+        'pending': document.getElementById('badge-pending'),
+        'cancelled': document.getElementById('badge-cancelled'),
+        'failed': document.getElementById('badge-failed')
+    };
+    
+    for (const [status, badgeEl] of Object.entries(badges)) {
+        if (badgeEl) {
+            badgeEl.textContent = statusCounts[status] || 0;
+        }
+    }
+}
+
+/**
+ * 기간 버튼 클릭 이벤트 처리
+ */
+function handlePeriodButtonClick(period) {
+    currentPeriod = period;
+    
+    // 모든 버튼에서 active 클래스 제거
+    document.querySelectorAll('#periodButtonGroup button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 클릭된 버튼에 active 클래스 추가
+    const clickedButton = document.querySelector(`#periodButtonGroup button[data-period="${period}"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+    
+    // 날짜 범위 계산
+    const dateRange = getDateRange(period);
+    currentStartDate = dateRange.start;
+    currentEndDate = dateRange.end;
+    
+    // Date Picker 업데이트
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (startDateInput) {
+        startDateInput.value = dateRange.start || '';
+    }
+    if (endDateInput) {
+        endDateInput.value = dateRange.end || '';
+    }
+    
+    // 데이터 새로고침
+    refreshPaymentData();
+}
+
+/**
+ * Date Picker 변경 이벤트 처리
+ */
+function handleDatePickerChange() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (startDateInput && endDateInput) {
+        currentStartDate = startDateInput.value || null;
+        currentEndDate = endDateInput.value || null;
+        
+        // 수동 날짜 선택 시 기간 버튼 active 제거
+        if (currentStartDate || currentEndDate) {
+            document.querySelectorAll('#periodButtonGroup button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            currentPeriod = 'custom';
+        }
+        
+        // 데이터 새로고침
+        refreshPaymentData();
+    }
+}
+
+/**
+ * 상태 탭 클릭 이벤트 처리
+ */
+function handleStatusTabClick(status) {
+    currentStatusFilter = status;
+    currentPage = 1;
+    refreshPaymentData();
+}
+
+/**
+ * 결제 데이터 전체 새로고침 (KPI, 차트, 리스트 모두)
+ */
+function refreshPaymentData() {
+    loadPayments(currentPage, currentStatusFilter, currentStartDate, currentEndDate);
+}
+
+/**
  * 결제 관리 탭 초기화
  */
 function initPaymentManagement() {
     console.log('[initPaymentManagement] 함수 호출됨');
     
-    // 상태 필터 변경 이벤트
-    const statusFilter = document.getElementById('paymentStatusFilter');
-    if (statusFilter) {
-        console.log('[initPaymentManagement] 상태 필터 요소 찾음');
-        statusFilter.addEventListener('change', (e) => {
-            console.log('[initPaymentManagement] 상태 필터 변경:', e.target.value);
-            loadPayments(1, e.target.value);
+    // 기간 버튼 클릭 이벤트
+    document.querySelectorAll('#periodButtonGroup button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const period = e.target.dataset.period;
+            handlePeriodButtonClick(period);
         });
-    } else {
-        console.error('[initPaymentManagement] paymentStatusFilter 요소를 찾을 수 없음');
+    });
+    
+    // Date Picker 변경 이벤트
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', handleDatePickerChange);
     }
     
-    // 초기 데이터 로드
+    if (endDateInput) {
+        endDateInput.addEventListener('change', handleDatePickerChange);
+    }
+    
+    // 상태 탭 클릭 이벤트
+    document.querySelectorAll('#paymentStatusTabs button[data-status]').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const status = e.target.dataset.status || '';
+            handleStatusTabClick(status);
+        });
+    });
+    
+    // 초기 데이터 로드 (전체 기간)
     console.log('[initPaymentManagement] 초기 데이터 로드 시작');
-    loadPayments(1, '');
+    currentPeriod = 'all';
+    refreshPaymentData();
 }
 
 /**
@@ -1031,7 +1339,7 @@ async function submitCreatePayment() {
             alert('결제가 성공적으로 생성되었습니다.');
             
             // 테이블 새로고침
-            loadPayments(currentPage, currentStatusFilter);
+            refreshPaymentData();
         } else {
             throw new Error(result.message || '결제 생성에 실패했습니다.');
         }
@@ -1044,12 +1352,14 @@ async function submitCreatePayment() {
 
 // 전역 함수로 노출
 window.loadPayments = loadPayments;
+window.refreshPaymentData = refreshPaymentData;
 window.viewPaymentDetail = viewPaymentDetail;
 window.updatePaymentStatus = updatePaymentStatus;
 window.initPaymentManagement = initPaymentManagement;
 window.openCreatePaymentModal = openCreatePaymentModal;
 window.submitCreatePayment = submitCreatePayment;
 window.cancelPayment = cancelPayment;
+window.deletePayment = deletePayment;
 
 console.log('[payment.js] 모듈 로드 완료, 전역 함수 등록됨');
 

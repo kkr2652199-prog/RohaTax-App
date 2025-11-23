@@ -41,6 +41,20 @@ def fetch_dashboard_stats():
     return success('ok', data=stats)
 
 
+@admin_bp.route('/admin/api/users/<int:user_id>', methods=['GET'])
+def get_user_by_id(user_id: int):
+    """특정 사용자 정보를 조회한다."""
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+    
+    try:
+        user = user_service.get_user_by_id(user_id)
+        return success('ok', data=user)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
+
+
 @admin_bp.route('/admin/api/users/<int:user_id>', methods=['PUT'])
 def update_user_email(user_id: int):
     """특정 사용자의 이메일 정보를 수정한다."""
@@ -228,6 +242,27 @@ def change_user_plan(user_id: int):
     except UserServiceError as exc:
         return _handle_service_error(exc)
 
+    return success(message)
+
+
+@admin_bp.route('/admin/api/users/<int:user_id>/subscription', methods=['PATCH'])
+def update_user_subscription(user_id: int):
+    """사용자의 Gold 구독 종료일을 수정한다."""
+    admin_user_id, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+    
+    data = request.get_json(silent=True) or {}
+    subscription_end_date = data.get('subscription_end_date')
+    
+    if not subscription_end_date:
+        return error('subscription_end_date는 필수입니다', status=400)
+    
+    try:
+        message = user_service.update_user_subscription(user_id, subscription_end_date, admin_user_id)
+    except UserServiceError as exc:
+        return _handle_service_error(exc)
+    
     return success(message)
 
 

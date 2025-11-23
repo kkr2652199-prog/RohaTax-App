@@ -139,20 +139,17 @@ function renderUsers(users){
                                 </div>
                                 <div class="detail-row">
                                     <span class="detail-label">사용량:</span>
-                                    <div class="usage-progress">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="text-muted">${u.used_count || 0}/${u.monthly_limit || 50}</small>
-                                            <small class="text-muted">${Math.round(((u.used_count || 0) / (u.monthly_limit || 50)) * 100)}%</small>
+                                    <div class="usage-info">
+                                        ${(u.plan_type === 'gold-vip' || u.plan_type === 'gold') ? `
+                                        <div class="text-muted small">
+                                            <span class="fw-bold text-primary">누적 사용량: ${u.tokens_used || 0} 토큰</span>
                                         </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar ${(u.used_count || 0) >= (u.monthly_limit || 50) ? 'bg-danger' : (u.used_count || 0) >= (u.monthly_limit || 50) * 0.8 ? 'bg-warning' : 'bg-success'}" 
-                                                 role="progressbar" 
-                                                 style="width: ${Math.min(((u.used_count || 0) / (u.monthly_limit || 50)) * 100, 100)}%"
-                                                 aria-valuenow="${u.used_count || 0}" 
-                                                 aria-valuemin="0" 
-                                                 aria-valuemax="${u.monthly_limit || 50}">
-                                            </div>
+                                        ` : `
+                                        <div class="text-muted small">
+                                            <span class="fw-bold text-success">잔여 토큰: ${(u.token_balance || 0) - (u.tokens_used || 0)}</span> / 
+                                            <span class="fw-bold text-info">누적 사용: ${u.tokens_used || 0}</span>
                                         </div>
+                                        `}
                                     </div>
                                 </div>
                             </div>
@@ -171,27 +168,38 @@ function renderUsers(users){
                                     <span class="badge ${u.is_active ? 'bg-success' : 'bg-danger'}">${u.is_active ? '활성' : '비활성'}</span>
                                 </div>
                             </div>
+                            ${(u.plan_type === 'gold-vip' || u.plan_type === 'gold') ? `
                             <div class="detail-section">
-                                <h6><i class="bi bi-clock-history"></i> 토큰 사용 및 변환 상세 내역</h6>
-                                <div class="conversion-history" id="conversion-history-${u.id}">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>변환 시간</th>
-                                                    <th>사용 토큰</th>
-                                                    <th>변환 파일명</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="conversion-table-${u.id}">
-                                                <tr>
-                                                    <td colspan="3" class="text-center text-muted">변환 이력을 불러오는 중...</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                <h6><i class="bi bi-clock-history"></i> 이용 기간 (Gold 구독)</h6>
+                                <div class="detail-row">
+                                    <span class="detail-label">시작일:</span>
+                                    <span class="detail-value">${u.gold_payment_start_date ? new Date(u.gold_payment_start_date).toLocaleDateString('ko-KR') + ' ' + new Date(u.gold_payment_start_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '기록 없음'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">종료일:</span>
+                                    <span class="detail-value d-flex align-items-center gap-2">
+                                        <span id="subscription-end-date-${u.id}" data-original-date="${u.subscription_end_date || ''}">${u.subscription_end_date ? new Date(u.subscription_end_date).toLocaleDateString('ko-KR') + ' ' + new Date(u.subscription_end_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '미설정'}</span>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editSubscriptionEndDate(${u.id}, '${u.username}', '${u.subscription_end_date || ''}')" title="종료일 수정">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                                ${u.subscription_end_date ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">남은 기간:</span>
+                                    <div class="subscription-progress mt-2">
+                                        ${renderSubscriptionProgress(u.subscription_end_date, u.gold_payment_start_date)}
                                     </div>
                                 </div>
+                                ` : ''}
+                                <div class="detail-row">
+                                    <span class="detail-label">D-Day:</span>
+                                    <span class="detail-value">
+                                        ${calculateDDay(u.subscription_end_date)}
+                                    </span>
+                                </div>
                             </div>
+                            ` : ''}
                             <div class="detail-section">
                                 <h6><i class="bi bi-gear"></i> 관리 액션</h6>
                                 <div class="d-flex gap-2 flex-wrap">
@@ -228,10 +236,6 @@ function renderUsers(users){
             ${accordionItems}
         </div>
     `;
-
-    users.forEach(user => {
-        loadUserConversionHistory(user.id);
-    });
 }
 
 /**
@@ -520,6 +524,233 @@ window.deleteUser = deleteUser;
 window.restoreUser = restoreUser;
 window.purgeUser = purgeUser;
 window.changeUserPlan = changeUserPlan;
+
+/**
+ * 구독 기간 프로그레스 바 렌더링
+ * @param {string|null} endDate - 종료일 (ISO 문자열)
+ * @param {string|null} startDate - 시작일 (ISO 문자열)
+ * @returns {string} 프로그레스 바 HTML
+ */
+function renderSubscriptionProgress(endDate, startDate) {
+    if (!endDate) {
+        return '<div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary" style="width: 0%">미설정</div></div>';
+    }
+    
+    try {
+        const end = new Date(endDate);
+        const start = startDate ? new Date(startDate) : new Date();
+        const now = new Date();
+        
+        if (Number.isNaN(end.getTime()) || Number.isNaN(start.getTime())) {
+            return '<div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary" style="width: 0%">계산 오류</div></div>';
+        }
+        
+        const totalMs = end.getTime() - start.getTime();
+        const elapsedMs = now.getTime() - start.getTime();
+        const remainingMs = end.getTime() - now.getTime();
+        
+        if (totalMs <= 0) {
+            return '<div class="progress" style="height: 20px;"><div class="progress-bar bg-danger" style="width: 100%">만료됨</div></div>';
+        }
+        
+        const progressPercent = Math.min(Math.max((elapsedMs / totalMs) * 100, 0), 100);
+        
+        // 일 단위 차이 계산 (시간을 0시 0분 0초로 맞춰서 정확한 일 수 계산)
+        const endDateOnly = new Date(end);
+        endDateOnly.setHours(0, 0, 0, 0);
+        const nowDateOnly = new Date(now);
+        nowDateOnly.setHours(0, 0, 0, 0);
+        const remainingDays = Math.round((endDateOnly.getTime() - nowDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+        
+        let progressColor = 'bg-success';
+        let progressText = '';
+        
+        if (remainingDays < 0) {
+            progressColor = 'bg-danger';
+            progressText = '만료됨';
+        } else if (remainingDays <= 7) {
+            progressColor = 'bg-warning';
+            progressText = `D-${remainingDays} (${Math.round(progressPercent)}% 경과)`;
+        } else {
+            progressText = `D-${remainingDays} (${Math.round(progressPercent)}% 경과)`;
+        }
+        
+        return `
+            <div class="progress" style="height: 24px;">
+                <div class="progress-bar ${progressColor} progress-bar-striped progress-bar-animated" 
+                     role="progressbar" 
+                     style="width: ${progressPercent}%"
+                     aria-valuenow="${Math.round(progressPercent)}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    <small class="fw-bold">${progressText}</small>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        return '<div class="progress" style="height: 20px;"><div class="progress-bar bg-secondary" style="width: 0%">계산 오류</div></div>';
+    }
+}
+
+/**
+ * D-Day 계산 함수
+ * @param {string|null} endDate - 종료일 (ISO 문자열 또는 null)
+ * @returns {string} D-Day 문자열
+ */
+function calculateDDay(endDate) {
+    if (!endDate) {
+        return '<span class="badge bg-secondary">미설정</span>';
+    }
+    
+    try {
+        // 종료일을 날짜만 비교하도록 시간을 0시 0분 0초로 설정
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+        
+        // 오늘 날짜를 시간을 0시 0분 0초로 설정
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
+        // 일 단위 차이 계산 (밀리초 → 일)
+        const diffTime = end.getTime() - now.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) {
+            return '<span class="badge bg-danger">만료됨</span>';
+        } else if (diffDays === 0) {
+            return '<span class="badge bg-warning text-dark">D-Day</span>';
+        } else if (diffDays <= 7) {
+            return `<span class="badge bg-warning text-dark">D-${diffDays}</span>`;
+        } else {
+            return `<span class="badge bg-success">D-${diffDays}</span>`;
+        }
+    } catch (e) {
+        return '<span class="badge bg-secondary">계산 오류</span>';
+    }
+}
+
+/**
+ * 구독 종료일 수정
+ * @param {number} userId - 사용자 ID
+ * @param {string} username - 사용자명
+ * @param {string} currentEndDateISO - 현재 종료일 (ISO 형식 문자열 또는 빈 문자열)
+ */
+async function editSubscriptionEndDate(userId, username, currentEndDateISO) {
+    // 현재 종료일을 표시용으로 포맷팅
+    let currentEndDateDisplay = '미설정';
+    let defaultDateInput = '';
+    
+    if (currentEndDateISO && currentEndDateISO.trim()) {
+        try {
+            const currentDate = new Date(currentEndDateISO);
+            if (!isNaN(currentDate.getTime())) {
+                currentEndDateDisplay = currentDate.toLocaleDateString('ko-KR') + ' ' + 
+                                       currentDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+                // YYYY-MM-DD HH:MM 형식으로 변환 (prompt 기본값용)
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const hour = String(currentDate.getHours()).padStart(2, '0');
+                const minute = String(currentDate.getMinutes()).padStart(2, '0');
+                defaultDateInput = `${year}-${month}-${day} ${hour}:${minute}`;
+            }
+        } catch (e) {
+            console.warn('현재 종료일 파싱 실패:', e);
+        }
+    }
+    
+    // 날짜 입력 받기 (YYYY-MM-DD HH:MM 형식)
+    let dateInput = prompt(
+        `${username}의 Gold 구독 종료일을 입력하세요.\n\n형식: YYYY-MM-DD HH:MM\n예: 2025-12-31 23:59\n\n현재 종료일: ${currentEndDateDisplay}`,
+        defaultDateInput
+    );
+    
+    if (!dateInput || !dateInput.trim()) {
+        return;
+    }
+    
+    // 날짜 형식 검증 및 변환
+    let formattedDate;
+    try {
+        // YYYY-MM-DD HH:MM 형식을 datetime으로 변환
+        const dateTimeStr = dateInput.trim();
+        const [datePart, timePart] = dateTimeStr.split(' ');
+        
+        if (!datePart || !timePart) {
+            throw new Error('날짜 형식이 올바르지 않습니다.');
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute] = timePart.split(':');
+        
+        if (!year || !month || !day || !hour || !minute) {
+            throw new Error('날짜 형식이 올바르지 않습니다.');
+        }
+        
+        // 숫자 검증
+        if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+            throw new Error('날짜는 숫자로만 입력해주세요.');
+        }
+        
+        // YYYY-MM-DD HH:MM:SS 형식으로 변환
+        formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+        
+        // 유효한 날짜인지 확인
+        const testDate = new Date(formattedDate);
+        if (isNaN(testDate.getTime())) {
+            throw new Error('유효하지 않은 날짜입니다.');
+        }
+    } catch (e) {
+        alert('날짜 형식이 올바르지 않습니다. YYYY-MM-DD HH:MM 형식으로 입력해주세요.\n예: 2025-12-31 23:59\n\n오류: ' + e.message);
+        return;
+    }
+    
+    if (!confirm(`종료일을 "${formattedDate}"로 변경하시겠습니까?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/api/users/${userId}/subscription`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken()
+            },
+            body: JSON.stringify({
+                subscription_end_date: formattedDate
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: '서버 오류가 발생했습니다.' }));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('구독 종료일이 성공적으로 변경되었습니다.');
+            loadUsers(); // 목록 새로고침
+        } else {
+            alert('구독 종료일 변경 실패: ' + (result.error || '알 수 없는 오류'));
+        }
+    } catch (error) {
+        console.error('구독 종료일 변경 오류:', error);
+        alert('구독 종료일 변경 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'));
+    }
+}
+
+// CSRF 토큰 함수 (admin.html에 정의되어 있지만 안전을 위해 여기서도 정의)
+if (typeof csrfToken === 'undefined') {
+    function csrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') || '' : '';
+    }
+    window.csrfToken = csrfToken;
+}
+
+// 전역 스코프에 함수 노출
+window.editSubscriptionEndDate = editSubscriptionEndDate;
+window.calculateDDay = calculateDDay;
 
 
 

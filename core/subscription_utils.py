@@ -128,22 +128,142 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
         return subscription
 
 
-def is_unlimited_user(user_id: int) -> bool:
+def check_and_revoke_expired_subscription(user_id: int) -> bool:
     """
-    사용자가 무제한 토큰 사용 가능한지 확인
+    사용자의 Gold 구독 만료일을 확인하고, 만료된 경우 등급을 강등하는 함수
     
     Args:
         user_id: 사용자 ID
         
     Returns:
-        bool: 무제한 사용 가능 여부 (Gold VIP만 True)
+        bool: 만료되어 강등되었으면 True, 아니면 False
     """
     try:
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            user_row = conn.execute(
+                """
+                SELECT id, plan_type, subscription_end_date
+                FROM users
+                WHERE id = ? AND is_deleted = 0
+                """,
+                (user_id,)
+            ).fetchone()
+            
+            if not user_row:
+                return False
+            
+            plan_type = user_row['plan_type'] or 'free'
+            subscription_end_date = user_row['subscription_end_date']
+            
+            # Gold 등급이 아니면 체크 불필요
+            if plan_type not in ['gold', 'gold-vip']:
+                return False
+            
+            # subscription_end_date가 없으면 만료로 간주하지 않음 (레거시 데이터)
+            if not subscription_end_date:
+                return False
+            
+            # 만료일 확인
+            now = datetime.now()
+            try:
+                if isinstance(subscription_end_date, str):
+                    end_date = datetime.strptime(subscription_end_date, '%Y-%m-%d %H:%M:%S')
+                else:
+                    end_date = subscription_end_date
+                
+                # 만료일이 지났으면 강등
+                if now > end_date:
+                    # 등급을 free로 강등
+                    conn.execute(
+                        """
+                        UPDATE users
+                        SET plan_type = 'free', subscription_end_date = NULL, updated_at = datetime('now', 'localtime')
+                        WHERE id = ?
+                        """,
+                        (user_id,)
+                    )
+                    conn.commit()
+                    
+                    # activity_logs에 기록
+                    from core.activity_service import record_activity
+                    record_activity(
+                        user_id=user_id,
+                        activity_type='GRADE_CHANGE',
+                        details=f"Gold 구독 기간 만료로 등급이 'free'로 하락되었습니다. (만료일: {subscription_end_date})",
+                        token_change=0,
+                        ip_address='System'
+                    )
+                    
+                    logger.info(
+                        f"사용자 ID {user_id}의 Gold 구독이 만료되어 등급이 'free'로 강등되었습니다. "
+                        f"(만료일: {subscription_end_date})"
+                    )
+                    return True
+                    
+            except Exception as e:
+                logger.error(f"만료일 파싱 오류 (user_id: {user_id}): {str(e)}")
+                return False
+            
+            return False
+            
+    except Exception as e:
+        logger.error(f"구독 만료 확인 중 오류: {str(e)}")
+        return False
+
+
+def is_unlimited_user(user_id: int) -> bool:
+    """
+    사용자가 무제한 토큰 사용 가능한지 확인
+    (만료일 체크 포함)
+    
+    Args:
+        user_id: 사용자 ID
+        
+    Returns:
+        bool: 무제한 사용 가능 여부 (Gold VIP만 True, 만료되지 않은 경우만)
+    """
+    try:
+        # 먼저 만료 확인 및 강등 처리
+        check_and_revoke_expired_subscription(user_id)
+        
         subscription = get_user_subscription(user_id)
         print(f"[DEBUG | GHOST_HUNT] User ID: {user_id}, Subscription Data from get_user_subscription: {subscription}")
 
         if not subscription:
             return False
+        
+        # Gold VIP이고 만료되지 않은 경우만 True
+        plan_type = subscription.get('plan_type', 'free')
+        if plan_type not in ['gold', 'gold-vip']:
+            return False
+        
+        # subscription_end_date 확인 (추가 안전장치)
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            user_row = conn.execute(
+                """
+                SELECT subscription_end_date
+                FROM users
+                WHERE id = ? AND is_deleted = 0
+                """,
+                (user_id,)
+            ).fetchone()
+            
+            if user_row and user_row['subscription_end_date']:
+                try:
+                    end_date_str = user_row['subscription_end_date']
+                    if isinstance(end_date_str, str):
+                        end_date = datetime.strptime(end_date_str, '%Y-%m-%d %H:%M:%S')
+                    else:
+                        end_date = end_date_str
+                    
+                    # 만료일이 지났으면 False
+                    if datetime.now() > end_date:
+                        return False
+                except Exception:
+                    # 파싱 오류 시 안전하게 False 반환
+                    return False
         
         return bool(subscription.get('is_unlimited'))
         

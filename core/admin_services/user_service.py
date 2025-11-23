@@ -5,7 +5,9 @@ from __future__ import annotations
 import os
 import shutil
 import sqlite3
+import logging
 from typing import Dict, List
+from datetime import datetime
 
 from core.db import get_conn_optimized as get_conn
 from core.user_profile_service import user_profile_service
@@ -19,6 +21,54 @@ BASE_USERS_DIR = os.path.join(ROUTES_DIR, 'user_data')
 
 class UserServiceError(Exception):
     """일반 사용자 서비스 예외."""
+
+
+def get_user_by_id(user_id: int) -> Dict:
+    """
+    특정 사용자 정보를 조회합니다.
+    
+    Args:
+        user_id: 사용자 ID
+        
+    Returns:
+        Dict: 사용자 정보
+        
+    Raises:
+        UserServiceError: 사용자를 찾을 수 없을 때
+    """
+    user_data = user_profile_service.get_user_profile_data(user_id)
+    if not user_data:
+        raise UserServiceError(f"사용자를 찾을 수 없습니다: ID {user_id}")
+    
+    # subscription_end_date 및 가장 최근 Gold 결제일 포함 확인
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT subscription_end_date FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+        
+        if row:
+            user_data['subscription_end_date'] = row['subscription_end_date']
+        
+        # 가장 최근 Gold 상품 결제일 조회 (token_amount = -1)
+        gold_payment = conn.execute(
+            """
+            SELECT created_at
+            FROM payment_history
+            WHERE user_id = ? AND token_amount = -1 AND status = 'completed'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        ).fetchone()
+        
+        if gold_payment:
+            user_data['gold_payment_start_date'] = gold_payment['created_at']
+        else:
+            user_data['gold_payment_start_date'] = None
+    
+    return user_data
 
 
 def fetch_general_users() -> List[Dict]:
@@ -204,6 +254,128 @@ def restore_user(user_id: int, admin_user_id: int) -> None:
         
         # 트랜잭션 커밋
         conn.commit()
+
+
+def update_user_subscription(user_id: int, subscription_end_date: str, admin_user_id: int) -> str:
+    """
+    사용자의 Gold 구독 종료일을 수정합니다.
+    
+    Args:
+        user_id: 사용자 ID
+        subscription_end_date: 새로운 종료일 (YYYY-MM-DD HH:MM:SS 형식)
+        admin_user_id: 관리자 ID
+        
+    Returns:
+        str: 성공 메시지
+        
+    Raises:
+        UserServiceError: 사용자를 찾을 수 없거나 오류 발생 시
+    """
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 사용자 존재 확인 및 현재 정보 조회
+        user_row = conn.execute(
+            """
+            SELECT id, username, plan_type, subscription_end_date
+            FROM users
+            WHERE id = ? AND COALESCE(is_deleted, 0) = 0
+            """,
+            (user_id,)
+        ).fetchone()
+        
+        if not user_row:
+            raise UserServiceError(f"사용자를 찾을 수 없습니다: ID {user_id}")
+        
+        username = user_row['username']
+        current_plan_type = user_row['plan_type'] or 'free'
+        old_end_date = user_row['subscription_end_date']
+        
+        # Gold 등급이 아니면 경고
+        if current_plan_type not in ['gold', 'gold-vip']:
+            raise UserServiceError(f"Gold 등급 사용자만 구독 기간을 수정할 수 있습니다. 현재 등급: {current_plan_type}")
+        
+        # subscription_end_date 업데이트
+        cursor.execute(
+            """
+            UPDATE users
+            SET subscription_end_date = ?, updated_at = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (subscription_end_date, user_id)
+        )
+        
+        if cursor.rowcount == 0:
+            raise UserServiceError("구독 종료일 업데이트에 실패했습니다.")
+        
+        # 만료 체크 로직 즉시 실행
+        from core.subscription_utils import check_and_revoke_expired_subscription
+        
+        # 만료일 파싱
+        try:
+            end_date_obj = datetime.strptime(subscription_end_date, '%Y-%m-%d %H:%M:%S')
+            today = datetime.now()
+            
+            # 만료되었는지 확인
+            if end_date_obj < today:
+                # 만료된 경우 강등 처리
+                check_and_revoke_expired_subscription(user_id)
+                # 강등 후 최신 등급 조회
+                updated_user = conn.execute(
+                    "SELECT plan_type FROM users WHERE id = ?",
+                    (user_id,)
+                ).fetchone()
+                new_plan_type = updated_user['plan_type'] if updated_user else current_plan_type
+                grade_changed = new_plan_type != current_plan_type
+            else:
+                # 만료되지 않은 경우 등급 유지 또는 복구
+                if current_plan_type != 'gold-vip':
+                    # 만료되지 않았는데 등급이 gold-vip가 아니면 복구
+                    cursor.execute(
+                        "UPDATE users SET plan_type = 'gold-vip', updated_at = datetime('now', 'localtime') WHERE id = ?",
+                        (user_id,)
+                    )
+                    new_plan_type = 'gold-vip'
+                    grade_changed = True
+                else:
+                    new_plan_type = current_plan_type
+                    grade_changed = False
+        except Exception as e:
+            # 날짜 파싱 실패 시 로그만 남기고 계속 진행
+            logging.getLogger(__name__).warning(f"구독 종료일 파싱 실패: {str(e)}")
+            new_plan_type = current_plan_type
+            grade_changed = False
+        
+        # activity_logs에 기록
+        activity_data = {
+            'user_id': user_id,
+            'performed_by_id': admin_user_id,
+            'performed_by_type': 'ADMIN',
+            'activity_type': 'GRADE_CHANGE' if grade_changed else 'SUBSCRIPTION_UPDATE',
+            'details': {
+                'reason': f'관리자 수동 기간 변경: {old_end_date or "미설정"} → {subscription_end_date} (관리자 수동)' + 
+                         (f' / 등급 변경: {current_plan_type} → {new_plan_type}' if grade_changed else ''),
+                'old_subscription_end_date': old_end_date,
+                'new_subscription_end_date': subscription_end_date
+            },
+            'token_change': 0,
+            'potential_cost': 0,
+            'token_balance_before': None,
+            'token_balance_after': None,
+            'user_plan_snapshot': new_plan_type
+        }
+        
+        record_activity(cursor, activity_data)
+        
+        # 트랜잭션 커밋
+        conn.commit()
+        
+        message = f"사용자 {username}의 Gold 구독 종료일이 {subscription_end_date}로 변경되었습니다."
+        if grade_changed:
+            message += f" 등급이 {current_plan_type}에서 {new_plan_type}로 변경되었습니다."
+        
+        return message
 
 
 def purge_user(user_id: int, admin_user_id: int) -> str:

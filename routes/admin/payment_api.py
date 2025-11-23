@@ -6,6 +6,7 @@ Jet Engine 기반 최신 기술 스택 적용
 import logging
 import sqlite3
 from typing import Optional
+from datetime import datetime
 from flask import request, jsonify
 from pydantic import ValidationError
 
@@ -44,12 +45,33 @@ def get_payments():
         per_page = request.args.get('per_page', 20, type=int)
         status_str = request.args.get('status', None, type=str)
         user_id = request.args.get('user_id', None, type=int)
+        start_date = request.args.get('start_date', None, type=str)
+        end_date = request.args.get('end_date', None, type=str)
         
         # 유효성 검증
         if page < 1:
             return error('페이지 번호는 1 이상이어야 합니다', status=400)
         if per_page < 1 or per_page > 100:
             return error('페이지당 항목 수는 1~100 사이여야 합니다', status=400)
+        
+        # 날짜 파라미터 정리 (빈 문자열을 None으로 변환)
+        if start_date and start_date.strip() == '':
+            start_date = None
+        if end_date and end_date.strip() == '':
+            end_date = None
+        
+        # 날짜 형식 검증 (None이 아닐 때만)
+        if start_date:
+            try:
+                datetime.strptime(start_date, '%Y-%m-%d')
+            except ValueError:
+                return error('시작 날짜 형식이 올바르지 않습니다 (YYYY-MM-DD 형식)', status=400)
+        
+        if end_date:
+            try:
+                datetime.strptime(end_date, '%Y-%m-%d')
+            except ValueError:
+                return error('종료 날짜 형식이 올바르지 않습니다 (YYYY-MM-DD 형식)', status=400)
         
         # Status 파싱
         status = None
@@ -64,7 +86,9 @@ def get_payments():
             page=page,
             per_page=per_page,
             status=status,
-            user_id=user_id
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date
         )
         
         return success('ok', data=result)
@@ -320,4 +344,44 @@ def get_payment_by_order_id(order_id: str):
     except Exception as e:
         logger.error(f"결제 조회 중 오류: {str(e)}")
         return error(f'결제 조회 중 오류가 발생했습니다: {str(e)}', status=500)
+
+
+@admin_bp.route('/admin/api/payments/<int:payment_id>', methods=['DELETE'])
+def delete_payment(payment_id: int):
+    """
+    결제 기록 삭제 (관리자용)
+    
+    Path Parameters:
+        payment_id: 삭제할 결제 ID
+        
+    조건:
+        - status가 'cancelled' 또는 'failed'인 경우만 삭제 가능
+    """
+    # 관리자 인증 확인
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+    
+    try:
+        # 결제 정보 조회
+        payment = payment_service.get_payment_by_id(payment_id)
+        
+        if not payment:
+            return error(f'결제를 찾을 수 없습니다: {payment_id}', status=404)
+        
+        # 삭제 가능한 상태인지 확인
+        if payment.status not in ['cancelled', 'failed']:
+            return error('취소/환불 또는 실패 상태인 결제만 삭제할 수 있습니다.', status=400)
+        
+        # 결제 삭제 서비스 호출
+        payment_service.delete_payment(payment_id)
+        
+        return success('결제 기록이 성공적으로 삭제되었습니다', status=200)
+        
+    except ValueError as e:
+        logger.warning(f"결제 삭제 실패: {str(e)}")
+        return error(str(e), status=400)
+    except Exception as e:
+        logger.error(f"결제 삭제 중 오류: {str(e)}")
+        return error(f'결제 삭제 중 오류가 발생했습니다: {str(e)}', status=500)
 
