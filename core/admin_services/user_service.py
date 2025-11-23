@@ -363,7 +363,7 @@ def change_user_plan(user_id: int, plan_type: str, admin_user_id: int) -> str:
             'details': {
                 'from_plan': previous_plan,
                 'to_plan': plan_type,
-                'reason': '관리자에 의한 변경'
+                'reason': '관리자에 의한 변경 (관리자 수동)'
             },
             'token_change': 0,  # 등급 변경 자체는 토큰 변화 없음
             'potential_cost': 0,

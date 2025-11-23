@@ -66,6 +66,25 @@ class PaymentResponse(BaseModel):
         orm_mode = True
 
 
+class PaymentCreateManual(BaseModel):
+    """수동 결제 생성 요청 스키마 (요금제 기반)"""
+    user_id: int = Field(..., gt=0, description="사용자 ID")
+    product_id: int = Field(..., gt=0, description="상품 ID")
+    quantity: int = Field(1, gt=0, description="수량 (Standard일 경우만 사용, 기본값: 1)")
+    status: PaymentStatus = Field(PaymentStatus.COMPLETED, description="결제 상태 (기본값: completed)")
+    
+    @validator('quantity')
+    def validate_quantity(cls, v):
+        """수량 검증"""
+        if v <= 0:
+            raise ValueError('수량은 1 이상이어야 합니다')
+        return v
+    
+    class Config:
+        """Pydantic 설정"""
+        use_enum_values = True
+
+
 class PaymentListResponse(BaseModel):
     """결제 목록 응답 스키마"""
     payments: list[PaymentResponse] = Field(..., description="결제 목록")

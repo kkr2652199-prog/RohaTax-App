@@ -70,7 +70,7 @@ def grant_tokens(user_id: int, amount: int, admin_user_id: int) -> None:
             'activity_type': 'TOKEN_GRANT_BY_ADMIN',
             'details': {
                 'granted_amount': amount,
-                'reason': '관리자에 의한 수동 지급'
+                'reason': '관리자에 의한 수동 지급 (관리자 수동)'
             },
             'token_change': amount,  # 지급은 양수
             'potential_cost': 0,     # 비용이 아니므로 0
@@ -125,7 +125,7 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
             'performed_by_type': 'ADMIN',
             'activity_type': 'TOKEN_RESET_BY_ADMIN',
             'details': {
-                'reason': '관리자에 의한 토큰 초기화',
+                'reason': '관리자에 의한 토큰 초기화 (관리자 수동)',
                 'reset_balance': token_balance_before,
                 'reset_used': tokens_used_before
             },

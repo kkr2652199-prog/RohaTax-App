@@ -1,5 +1,104 @@
 # 업데이트 로그 (Update Log)
 
+## 2025-11-23 13:55 KST
+
+### 작업: `feat: Complete Payment & Refund System`
+
+**커밋 해시**: `7f74233`
+
+**작전명**: 결제 시스템 완전 정복 - 생성, 지급, 등급 변경, 취소, 복구, 로그 완벽 구현
+
+#### 변경 사항
+
+1. **결제 시스템 완성**
+   - 수동 결제 생성 시 토큰 지급 및 등급 자동 변경 구현
+   - 상품 ID에 따른 등급 매핑 로직 (Standard → vip, Premium → premium-vip, Gold → gold-vip)
+   - 등급 강등 방지 로직 (이미 높은 등급이면 변경하지 않음)
+   - 트랜잭션 처리 및 예외 처리 완료
+
+2. **환불 시스템 구축**
+   - 결제 취소 시 토큰 회수 로직 구현
+   - 등급 원상복구 시스템 (`previous_plan_type` 컬럼 활용)
+   - 마이그레이션 004: `payment_history` 테이블에 `previous_plan_type` 컬럼 추가
+   - 결제 생성 시 이전 등급 저장, 취소 시 원래 등급으로 복구
+
+3. **로그 고도화**
+   - 통합 관제실에 `(결제 자동)`, `(관리자 수동)`, `(결제 취소/환불)` 태그 적용
+   - `PAYMENT_CANCEL` 타입 `activity_logs` 기록 추가
+   - 토큰 잔액 동기화: 토큰 차감 후 최신 잔액 재조회하여 정확한 값 저장
+   - 한글화 및 배지 적용: 활동 유형을 직관적인 한글과 아이콘으로 표시
+   - 태그 강조: `(결제 자동)`, `(관리자 수동)` 등 태그를 배지로 강조 표시
+
+4. **안정성 강화**
+   - Enum 처리 버그 수정 (`status.value` 접근 오류 해결)
+   - 변수 스코프 문제 해결 (`user_row` 초기화)
+   - Flask 응답 형식 수정 (튜플 반환 오류 해결)
+   - DB 컬럼 누락 문제 해결 (`updated_at` 컬럼 추가)
+   - 등급 매핑 버그 수정 (Gold 결제 시 `gold-vip`로 정확히 변경)
+
+#### 파일 구조
+
+```
+database/migrations/
+└── 004_add_previous_plan_type.sql - 이전 등급 저장 컬럼 추가
+
+core/payment/
+├── schemas.py - PaymentCreateManual 스키마 추가
+└── service.py (1035줄) - 결제 생성, 취소, 등급 변경, 로그 기록 로직
+
+routes/admin/
+└── payment_api.py - 수동 결제 생성, 결제 취소 API 엔드포인트
+
+templates/admin/tabs/
+└── payment_management.html - 결제 생성 모달, 결제 상세 모달, 취소 버튼
+
+static/js/admin/
+├── payment.js - 결제 생성, 상세 보기, 취소 로직
+└── activity_log.js - 한글화, 배지, 태그 강조 기능
+
+scripts/
+├── reset_payments.py - 결제 내역 초기화 스크립트
+└── run_migration_004.py - 마이그레이션 004 실행 스크립트
+```
+
+#### 핵심 기능
+
+1. **수동 결제 생성**
+   - 관리자가 사용자 ID, 상품, 수량 선택하여 결제 생성
+   - 자동 토큰 지급 및 등급 변경
+   - `activity_logs`에 `TOKEN_CHARGE` 기록 (태그: `(결제 자동)`)
+
+2. **결제 취소 및 환불**
+   - 결제 취소 시 토큰 회수 및 등급 원상복구
+   - `previous_plan_type`을 활용한 정확한 등급 복구
+   - `activity_logs`에 `PAYMENT_CANCEL` 기록 (태그: `(결제 취소/환불)`)
+   - 토큰 잔액 동기화: 차감 후 최신 잔액 재조회
+
+3. **통합 관제실 개선**
+   - 활동 유형 한글화 (예: `TOKEN_CHARGE` → `💰 결제/충전`)
+   - 색상별 배지 적용 (결제: 녹색, 취소: 회색, 관리자 지급: 파란색)
+   - 태그 강조 표시 (배지로 강조)
+
+#### 기술 스택
+
+- **트랜잭션 처리**: SQLite 트랜잭션으로 데이터 일관성 보장
+- **Enum 처리**: PaymentStatus Enum 안전 처리
+- **마이그레이션**: SQLite ALTER TABLE로 스키마 확장
+- **Activity Logs**: 중앙화된 활동 로깅 시스템
+
+#### 검증 완료
+
+- ✅ 수동 결제 생성 시 토큰 지급 및 등급 변경 정상 작동
+- ✅ Gold 결제 시 `gold-vip` 등급으로 정확히 변경
+- ✅ 결제 취소 시 토큰 회수 정상 작동
+- ✅ 결제 취소 시 등급 원상복구 정상 작동
+- ✅ 통합 관제실에 결제/취소 로그 정확히 표시
+- ✅ 토큰 잔액 동기화 정확히 작동
+- ✅ 한글화 및 배지 적용 완료
+- ✅ 태그 강조 표시 완료
+
+---
+
 ## 2025-11-22 19:38 KST
 
 ### 작업: `feat: Pricing Plan Tuner UI`

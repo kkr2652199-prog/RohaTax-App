@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 from core.db import get_conn_optimized as get_conn
+from core.activity_service import record_activity
 from .schemas import PaymentCreate, PaymentResponse, PaymentStatus
 
 logger = logging.getLogger(__name__)
@@ -24,61 +25,360 @@ class PaymentService:
         """PaymentService 초기화"""
         self.logger = logger
     
-    def create_payment(self, payment_data: PaymentCreate) -> PaymentResponse:
+    def _safe_parse_payment_status(self, status_value: str, context: str = "") -> PaymentStatus:
         """
-        결제 생성
+        PaymentStatus 안전 변환 헬퍼 함수
         
         Args:
-            payment_data: 결제 생성 데이터
+            status_value: DB에서 가져온 status 값 (문자열)
+            context: 로깅용 컨텍스트 정보 (예: "Payment ID: 123")
+            
+        Returns:
+            PaymentStatus: 변환된 Enum 값 (실패 시 PENDING 반환)
+        """
+        try:
+            return PaymentStatus(status_value)
+        except ValueError:
+            # DB 값이 Enum에 없으면 로깅 후 기본값(PENDING) 사용
+            self.logger.warning(
+                f"Unknown payment status in DB: '{status_value}' {context}. "
+                f"Using default status: PENDING"
+            )
+            return PaymentStatus.PENDING
+    
+    def create_payment(
+        self, 
+        user_id: int, 
+        product_id: int, 
+        quantity: int = 1,
+        admin_user_id: int = 1,
+        status: PaymentStatus = PaymentStatus.COMPLETED
+    ) -> PaymentResponse:
+        """
+        결제 생성 (요금제 기반 수동 결제)
+        
+        Args:
+            user_id: 사용자 ID
+            product_id: 상품 ID
+            quantity: 수량 (Standard일 경우만 사용, 기본값: 1)
+            admin_user_id: 관리자 ID (토큰 지급 기록용)
+            status: 결제 상태 (기본값: completed)
             
         Returns:
             PaymentResponse: 생성된 결제 정보
             
         Raises:
-            ValueError: 주문 ID 중복 또는 유효하지 않은 데이터
+            ValueError: 유효하지 않은 데이터 또는 상품을 찾을 수 없음
         """
         try:
             with get_conn() as conn:
                 conn.row_factory = sqlite3.Row
                 
-                # 주문 ID 중복 확인
-                existing = conn.execute(
-                    "SELECT id FROM payment_history WHERE order_id = ?",
-                    (payment_data.order_id,)
-                ).fetchone()
+                # 트랜잭션 시작
+                conn.execute("BEGIN TRANSACTION")
                 
-                if existing:
-                    raise ValueError(f"이미 존재하는 주문 ID입니다: {payment_data.order_id}")
+                # 변수 초기화 (스코프 문제 해결)
+                user_row = None
                 
-                # 결제 생성
-                cursor = conn.execute(
-                    """
-                    INSERT INTO payment_history 
-                    (user_id, order_id, amount, token_amount, status, pg_provider, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
-                    """,
-                    (
-                        payment_data.user_id,
-                        payment_data.order_id,
-                        payment_data.amount,
-                        payment_data.token_amount,
-                        payment_data.status.value,
-                        payment_data.pg_provider,
+                try:
+                    # 1. 상품 정보 조회
+                    product_row = conn.execute(
+                        """
+                        SELECT id, name, price, token_amount, is_active
+                        FROM product_packages
+                        WHERE id = ?
+                        """,
+                        (product_id,)
+                    ).fetchone()
+                    
+                    if not product_row:
+                        raise ValueError(f"상품을 찾을 수 없습니다: ID {product_id}")
+                    
+                    if not product_row['is_active']:
+                        raise ValueError(f"판매 중지된 상품입니다: {product_row['name']}")
+                    
+                    product_name = product_row['name']
+                    product_price = product_row['price']
+                    product_token_amount = product_row['token_amount']
+                    
+                    # 2. 금액 및 토큰 계산
+                    # Standard (ID: 1)인 경우: 가격 × 수량
+                    # Premium/Gold인 경우: 가격 그대로
+                    if product_id == 1:  # Standard
+                        total_amount = product_price * quantity
+                        total_token_amount = quantity  # Standard는 토큰 1개
+                    else:
+                        total_amount = product_price
+                        if product_token_amount == -1:  # Gold (무제한)
+                            total_token_amount = -1
+                        else:  # Premium
+                            total_token_amount = product_token_amount
+                    
+                    # 3. 주문 ID 생성 (ORD-YYYYMMDD-HHMMSS-XXXX 형식)
+                    from datetime import datetime
+                    now = datetime.now()
+                    order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}"
+                    
+                    # 주문 ID 중복 확인 (거의 없지만 안전장치)
+                    existing = conn.execute(
+                        "SELECT id FROM payment_history WHERE order_id = ?",
+                        (order_id,)
+                    ).fetchone()
+                    
+                    if existing:
+                        # 중복 시 타임스탬프 추가
+                        order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}-{now.microsecond:06d}"
+                    
+                    # 4. 사용자 현재 등급 조회 (이전 등급 저장용)
+                    # status가 Enum이면 .value를, 문자열이면 그대로 사용하여 비교
+                    status_str = status.value if isinstance(status, PaymentStatus) else str(status)
+                    previous_plan_type = None
+                    
+                    if status_str == PaymentStatus.COMPLETED.value:
+                        # 등급 업데이트가 발생할 수 있는 경우에만 이전 등급 저장
+                        user_row_for_plan = conn.execute(
+                            """
+                            SELECT plan_type
+                            FROM users
+                            WHERE id = ?
+                            """,
+                            (user_id,)
+                        ).fetchone()
+                        
+                        if user_row_for_plan:
+                            previous_plan_type = user_row_for_plan['plan_type'] or 'free'
+                    
+                    # 5. 결제 기록 생성
+                    # status가 Enum이면 .value를, 문자열이면 그대로 사용
+                    status_value = status.value if isinstance(status, PaymentStatus) else str(status)
+                    cursor = conn.execute(
+                        """
+                        INSERT INTO payment_history 
+                        (user_id, order_id, amount, token_amount, status, pg_provider, previous_plan_type, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+                        """,
+                        (
+                            user_id,
+                            order_id,
+                            total_amount,
+                            total_token_amount,
+                            status_value,
+                            'manual',  # 수동 결제
+                            previous_plan_type,  # 이전 등급 저장
+                        )
                     )
-                )
-                
-                conn.commit()
-                payment_id = cursor.lastrowid
-                
-                # 생성된 결제 정보 조회
-                return self.get_payment_by_id(payment_id)
+                    
+                    payment_id = cursor.lastrowid
+                    
+                    # 변수 초기화 (activity_logs 기록용)
+                    token_balance_before = None
+                    token_balance_after = None
+                    user_row = None
+                    new_plan_type = None  # 등급 업데이트용 변수 초기화
+                    
+                    # 6. 토큰 지급 (status가 'completed'인 경우만)
+                    # Gold 상품(-1)은 무제한이므로 토큰 지급 로직을 건너뛰지만, 등급 업데이트는 필요
+                    if status_str == PaymentStatus.COMPLETED.value and total_token_amount > 0:
+                        # 사용자 정보 조회
+                        user_row = conn.execute(
+                            """
+                            SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type
+                            FROM users
+                            WHERE id = ?
+                            """,
+                            (user_id,)
+                        ).fetchone()
+                        
+                        if not user_row:
+                            raise ValueError(f"사용자를 찾을 수 없습니다: ID {user_id}")
+                        
+                        token_balance_before = user_row['token_balance'] or 0
+                        token_balance_after = token_balance_before + total_token_amount
+                        
+                        # token_balance 업데이트
+                        conn.execute(
+                            """
+                            UPDATE users
+                            SET token_balance = ?
+                            WHERE id = ?
+                            """,
+                            (token_balance_after, user_id)
+                        )
+                        
+                        # token_history에 기록 (change_type: 'grant' 또는 'CHARGE')
+                        import json
+                        meta = json.dumps({
+                            'payment_id': payment_id,
+                            'order_id': order_id,
+                            'product_id': product_id,
+                            'product_name': product_name,
+                            'quantity': quantity if product_id == 1 else 1,
+                            'tag': '(결제 연동)'
+                        }, ensure_ascii=False)
+                        
+                        conn.execute(
+                            """
+                            INSERT INTO token_history 
+                            (user_id, changed_by, amount, change_type, meta, created_at)
+                            VALUES (?, ?, ?, 'grant', ?, datetime('now', 'localtime'))
+                            """,
+                            (
+                                user_id,
+                                admin_user_id,
+                                total_token_amount,
+                                meta
+                            )
+                        )
+                    
+                    # 7. 등급 업데이트 (status가 'completed'인 경우만)
+                    if status_str == PaymentStatus.COMPLETED.value:
+                        # user_row가 없으면 조회 (토큰 지급 조건이 맞지 않았을 경우, 예: Gold 무제한)
+                        if user_row is None:
+                            user_row = conn.execute(
+                                """
+                                SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type
+                                FROM users
+                                WHERE id = ?
+                                """,
+                                (user_id,)
+                            ).fetchone()
+                            
+                            if not user_row:
+                                raise ValueError(f"사용자를 찾을 수 없습니다: ID {user_id}")
+                        
+                        current_plan_type = user_row['plan_type'] or 'free'
+                        
+                        # 상품 ID에 따른 등급 매핑
+                        if product_id == 1:  # Standard
+                            # Standard 구매 시: vip로 변경 (단, 이미 premium-vip나 gold-vip면 변경하지 않음)
+                            if current_plan_type not in ['premium-vip', 'gold-vip']:
+                                new_plan_type = 'vip'
+                        elif product_id == 2:  # Premium
+                            # Premium 구매 시: premium-vip로 변경 (단, 이미 gold-vip면 변경하지 않음)
+                            if current_plan_type != 'gold-vip':
+                                new_plan_type = 'premium-vip'
+                        elif product_id == 3:  # Gold
+                            # Gold 구매 시: 항상 gold-vip로 변경 (최고 등급)
+                            new_plan_type = 'gold-vip'
+                        
+                        # 등급 업데이트
+                        if new_plan_type and new_plan_type != current_plan_type:
+                            update_cursor = conn.execute(
+                                """
+                                UPDATE users
+                                SET plan_type = ?, updated_at = datetime('now', 'localtime')
+                                WHERE id = ?
+                                """,
+                                (new_plan_type, user_id)
+                            )
+                            rows_affected = update_cursor.rowcount
+                            if rows_affected == 0:
+                                self.logger.warning(
+                                    f"등급 업데이트 실패: 사용자 ID {user_id}의 등급을 '{current_plan_type}'에서 '{new_plan_type}'로 변경하려 했으나 업데이트된 행이 없습니다."
+                                )
+                            else:
+                                self.logger.info(
+                                    f"사용자 ID {user_id}의 등급이 '{current_plan_type}'에서 '{new_plan_type}'로 변경되었습니다 "
+                                    f"(상품: {product_name}, product_id: {product_id}, 결제 ID: {payment_id}) (결제 연동)"
+                                )
+                        elif new_plan_type is None:
+                            self.logger.warning(
+                                f"등급 업데이트 스킵: 상품 ID {product_id} ({product_name})에 대한 등급 매핑이 없습니다."
+                            )
+                        elif new_plan_type == current_plan_type:
+                            self.logger.info(
+                                f"등급 업데이트 스킵: 사용자 ID {user_id}의 등급이 이미 '{current_plan_type}'입니다."
+                            )
+                    
+                    # 7. activity_logs에 기록 (결제 완료 시)
+                    if status_str == PaymentStatus.COMPLETED.value:
+                        # user_row가 없으면 조회
+                        if user_row is None:
+                            user_row = conn.execute(
+                                """
+                                SELECT username, COALESCE(token_balance, 0) AS token_balance, plan_type
+                                FROM users
+                                WHERE id = ?
+                                """,
+                                (user_id,)
+                            ).fetchone()
+                        
+                        if user_row:
+                            # token_balance_after가 없으면 현재 잔액 사용
+                            if token_balance_after is None:
+                                token_balance_after = user_row['token_balance'] or 0
+                            
+                            # token_balance_before가 없으면 계산
+                            if token_balance_before is None:
+                                if total_token_amount > 0:
+                                    token_balance_before = token_balance_after - total_token_amount
+                                else:
+                                    token_balance_before = token_balance_after
+                            
+                            # 등급 업데이트가 실행된 경우 업데이트된 등급 사용, 아니면 현재 등급 사용
+                            # 등급 업데이트가 실행되었다면 new_plan_type 사용, 아니면 DB에서 최신 등급 조회
+                            if new_plan_type:
+                                plan_type = new_plan_type
+                            else:
+                                # 등급 업데이트가 실행되지 않았거나, 이미 업데이트된 경우 최신 등급 조회
+                                latest_user = conn.execute(
+                                    "SELECT plan_type FROM users WHERE id = ?",
+                                    (user_id,)
+                                ).fetchone()
+                                plan_type = latest_user['plan_type'] if latest_user else (user_row['plan_type'] or 'free')
+                            
+                            # activity_logs에 기록
+                            activity_data = {
+                                'user_id': user_id,
+                                'performed_by_id': admin_user_id,  # 관리자가 결제를 생성했으므로
+                                'performed_by_type': 'ADMIN',
+                                'activity_type': 'TOKEN_CHARGE',  # 토큰 충전
+                                'details': {
+                                    'payment_id': payment_id,
+                                    'order_id': order_id,
+                                    'product_id': product_id,
+                                    'product_name': product_name,
+                                    'amount': total_amount,
+                                    'token_amount': total_token_amount,
+                                    'message': f"{product_name} 결제 완료 (주문번호: {order_id}) - (결제 자동)"
+                                },
+                                'token_change': total_token_amount if total_token_amount > 0 else 0,
+                                'potential_cost': 0,
+                                'token_balance_before': token_balance_before,
+                                'token_balance_after': token_balance_after,
+                                'user_plan_snapshot': plan_type
+                            }
+                            
+                            # 디버깅용 로그
+                            self.logger.info(
+                                f"activity_logs 기록: 사용자 ID {user_id}, 상품: {product_name} (ID: {product_id}), "
+                                f"등급 스냅샷: {plan_type}, new_plan_type: {new_plan_type} (결제 연동)"
+                            )
+                            
+                            # record_activity 호출 (cursor는 conn.cursor()로 얻어야 함)
+                            cursor = conn.cursor()
+                            record_activity(cursor, activity_data)
+                    
+                    # 트랜잭션 커밋
+                    conn.commit()
+                    
+                    # 생성된 결제 정보 조회
+                    return self.get_payment_by_id(payment_id)
+                    
+                except Exception as e:
+                    # 트랜잭션 롤백
+                    conn.rollback()
+                    raise e
                 
         except sqlite3.IntegrityError as e:
             self.logger.error(f"결제 생성 중 DB 제약 조건 위반: {str(e)}")
-            raise ValueError(f"결제 생성 실패: 주문 ID가 이미 존재합니다")
+            raise ValueError("결제 생성 실패: 데이터베이스 제약 조건 위반")
+        except ValueError as e:
+            # ValueError는 그대로 전달
+            raise
         except Exception as e:
             self.logger.error(f"결제 생성 중 오류: {str(e)}")
-            raise
+            raise ValueError("결제 생성 중 오류가 발생했습니다: " + str(e))
     
     def get_payment_by_id(self, payment_id: int) -> PaymentResponse:
         """
@@ -107,13 +407,16 @@ class PaymentService:
             if not row:
                 raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
             
+            # PaymentStatus 안전 변환
+            status_enum = self._safe_parse_payment_status(row['status'], f"(Payment ID: {payment_id})")
+            
             return PaymentResponse(
                 id=row['id'],
                 user_id=row['user_id'],
                 order_id=row['order_id'],
                 amount=row['amount'],
                 token_amount=row['token_amount'],
-                status=PaymentStatus(row['status']),
+                status=status_enum,
                 pg_provider=row['pg_provider'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at']
@@ -143,17 +446,263 @@ class PaymentService:
             if not row:
                 return None
             
+            # PaymentStatus 안전 변환
+            status_enum = self._safe_parse_payment_status(row['status'], f"(Order ID: {order_id})")
+            
             return PaymentResponse(
                 id=row['id'],
                 user_id=row['user_id'],
                 order_id=row['order_id'],
                 amount=row['amount'],
                 token_amount=row['token_amount'],
-                status=PaymentStatus(row['status']),
+                status=status_enum,
                 pg_provider=row['pg_provider'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at']
             )
+    
+    def cancel_payment(self, payment_id: int, admin_user_id: int) -> PaymentResponse:
+        """
+        결제 취소 (토큰 회수 포함)
+        
+        Args:
+            payment_id: 결제 ID
+            admin_user_id: 관리자 ID (취소 처리자)
+            
+        Returns:
+            PaymentResponse: 취소된 결제 정보
+            
+        Raises:
+            ValueError: 결제를 찾을 수 없거나 취소할 수 없는 상태
+        """
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # 트랜잭션 시작
+            conn.execute("BEGIN TRANSACTION")
+            
+            try:
+                # 1. 결제 정보 조회 (previous_plan_type 포함)
+                payment_row = conn.execute(
+                    """
+                    SELECT id, user_id, order_id, amount, token_amount, status, previous_plan_type
+                    FROM payment_history
+                    WHERE id = ?
+                    """,
+                    (payment_id,)
+                ).fetchone()
+                
+                if not payment_row:
+                    raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
+                
+                # 2. 상태 확인 (completed인 경우만 취소 가능)
+                status_str = payment_row['status']
+                if status_str != PaymentStatus.COMPLETED.value:
+                    raise ValueError(f"취소할 수 없는 결제 상태입니다: {status_str}")
+                
+                # 3. 토큰 회수 (token_amount > 0인 경우만)
+                token_amount = payment_row['token_amount'] or 0
+                user_id = payment_row['user_id']
+                previous_plan_type = payment_row['previous_plan_type']
+                
+                # 변수 초기화 (등급 복구 로직에서 사용)
+                token_balance_before = None
+                token_balance_after = None
+                
+                if token_amount > 0:
+                    # 사용자 현재 토큰 잔액 조회
+                    user_row = conn.execute(
+                        """
+                        SELECT COALESCE(token_balance, 0) AS token_balance
+                        FROM users
+                        WHERE id = ?
+                        """,
+                        (user_id,)
+                    ).fetchone()
+                    
+                    if not user_row:
+                        raise ValueError(f"사용자를 찾을 수 없습니다: ID {user_id}")
+                    
+                    token_balance_before = user_row['token_balance'] or 0
+                    token_balance_after = max(0, token_balance_before - token_amount)  # 음수 방지
+                    
+                    # token_balance 업데이트
+                    conn.execute(
+                        """
+                        UPDATE users
+                        SET token_balance = ?, updated_at = datetime('now', 'localtime')
+                        WHERE id = ?
+                        """,
+                        (token_balance_after, user_id)
+                    )
+                    
+                    # 토큰 차감 후 최신 잔액 재조회 (통합 관제실 동기화를 위해)
+                    updated_user_row = conn.execute(
+                        """
+                        SELECT COALESCE(token_balance, 0) AS token_balance
+                        FROM users
+                        WHERE id = ?
+                        """,
+                        (user_id,)
+                    ).fetchone()
+                    
+                    if updated_user_row:
+                        # 실제 DB에 저장된 최신 잔액 사용
+                        token_balance_after = updated_user_row['token_balance'] or 0
+                    
+                    # token_history에 REFUND 기록
+                    import json
+                    meta = json.dumps({
+                        'payment_id': payment_id,
+                        'order_id': payment_row['order_id'],
+                        'refund_amount': token_amount,
+                        'tag': '(결제 취소/환불)'
+                    }, ensure_ascii=False)
+                    
+                    conn.execute(
+                        """
+                        INSERT INTO token_history 
+                        (user_id, changed_by, amount, change_type, meta, created_at)
+                        VALUES (?, ?, ?, 'REFUND', ?, datetime('now', 'localtime'))
+                        """,
+                        (
+                            user_id,
+                            admin_user_id,
+                            -token_amount,  # 음수로 기록 (회수)
+                            meta
+                        )
+                    )
+                    
+                    self.logger.info(
+                        f"결제 취소로 인한 토큰 회수: 사용자 ID {user_id}, "
+                        f"회수량 {token_amount}토큰 (이전: {token_balance_before}, 이후: {token_balance_after}) (결제 취소/환불)"
+                    )
+                
+                # 4. 등급 원상복구 (previous_plan_type이 있는 경우만)
+                if previous_plan_type:
+                    # 사용자 현재 등급 조회
+                    user_row_for_grade = conn.execute(
+                        """
+                        SELECT plan_type
+                        FROM users
+                        WHERE id = ?
+                        """,
+                        (user_id,)
+                    ).fetchone()
+                    
+                    if user_row_for_grade:
+                        current_plan_type = user_row_for_grade['plan_type'] or 'free'
+                        
+                        # 이전 등급으로 복구 (현재 등급이 이전 등급과 다른 경우만)
+                        if current_plan_type != previous_plan_type:
+                            conn.execute(
+                                """
+                                UPDATE users
+                                SET plan_type = ?, updated_at = datetime('now', 'localtime')
+                                WHERE id = ?
+                                """,
+                                (previous_plan_type, user_id)
+                            )
+                            
+                            self.logger.info(
+                                f"결제 취소로 인한 등급 원상복구: 사용자 ID {user_id}, "
+                                f"등급 '{current_plan_type}' -> '{previous_plan_type}' (결제 취소/환불)"
+                            )
+                            
+                            # activity_logs에 등급 복구 기록
+                            from core.activity_service import record_activity
+                            activity_data = {
+                                'user_id': user_id,
+                                'performed_by_id': admin_user_id,
+                                'performed_by_type': 'ADMIN',
+                                'activity_type': 'GRADE_CHANGE_BY_ADMIN',
+                                'details': {
+                                    'from_plan': current_plan_type,
+                                    'to_plan': previous_plan_type,
+                                    'reason': f'결제 취소로 인한 등급 원상복구 (결제 ID: {payment_id}) (결제 취소/환불)'
+                                },
+                                'token_change': 0,
+                                'potential_cost': 0,
+                                'token_balance_before': token_balance_before if token_amount > 0 else None,
+                                'token_balance_after': token_balance_after if token_amount > 0 else None,
+                                'user_plan_snapshot': previous_plan_type
+                            }
+                            
+                            cursor = conn.cursor()
+                            record_activity(cursor, activity_data)
+                
+                # 5. 결제 상태를 cancelled로 변경
+                conn.execute(
+                    """
+                    UPDATE payment_history
+                    SET status = ?, updated_at = datetime('now', 'localtime')
+                    WHERE id = ?
+                    """,
+                    (PaymentStatus.CANCELLED.value, payment_id)
+                )
+                
+                # 6. activity_logs에 PAYMENT_CANCEL 기록 (통합 관제실 동기화)
+                # 사용자 최신 정보 조회 (토큰 잔액, 등급)
+                final_user_row = conn.execute(
+                    """
+                    SELECT COALESCE(token_balance, 0) AS token_balance, plan_type
+                    FROM users
+                    WHERE id = ?
+                    """,
+                    (user_id,)
+                ).fetchone()
+                
+                if final_user_row:
+                    # 최종 토큰 잔액 (토큰 회수 후 또는 원래 잔액)
+                    final_token_balance = final_user_row['token_balance'] or 0
+                    final_plan_type = final_user_row['plan_type'] or 'free'
+                    
+                    # 토큰 회수가 있었던 경우 token_balance_before/after 사용, 없었던 경우 현재 잔액 사용
+                    if token_amount > 0:
+                        log_token_balance_before = token_balance_before
+                        log_token_balance_after = token_balance_after
+                    else:
+                        # 토큰 회수가 없었던 경우 (예: Gold 무제한)
+                        log_token_balance_before = final_token_balance
+                        log_token_balance_after = final_token_balance
+                    
+                    from core.activity_service import record_activity
+                    activity_data = {
+                        'user_id': user_id,
+                        'performed_by_id': admin_user_id,
+                        'performed_by_type': 'ADMIN',
+                        'activity_type': 'PAYMENT_CANCEL',
+                        'details': {
+                            'payment_id': payment_id,
+                            'order_id': payment_row['order_id'],
+                            'refund_token_amount': token_amount if token_amount > 0 else 0,
+                            'message': f"결제 취소 (주문번호: {payment_row['order_id']}) - (결제 취소/환불)"
+                        },
+                        'token_change': -token_amount if token_amount > 0 else 0,  # 음수로 기록 (회수)
+                        'potential_cost': 0,
+                        'token_balance_before': log_token_balance_before,
+                        'token_balance_after': log_token_balance_after,  # 최신 잔액 사용
+                        'user_plan_snapshot': final_plan_type
+                    }
+                    
+                    cursor = conn.cursor()
+                    record_activity(cursor, activity_data)
+                    
+                    self.logger.info(
+                        f"결제 취소 activity_logs 기록: 사용자 ID {user_id}, "
+                        f"토큰 잔액 {log_token_balance_before} -> {log_token_balance_after} (결제 취소/환불)"
+                    )
+                
+                # 트랜잭션 커밋
+                conn.commit()
+                
+                # 취소된 결제 정보 반환
+                return self.get_payment_by_id(payment_id)
+                
+            except Exception as e:
+                # 트랜잭션 롤백
+                conn.rollback()
+                raise e
     
     def get_payments_by_user_id(
         self, 
@@ -189,7 +738,9 @@ class PaymentService:
             
             if status:
                 where_clause += " AND status = ?"
-                params.append(status.value)
+                # status가 Enum이면 .value를, 문자열이면 그대로 사용
+                status_value = status.value if isinstance(status, PaymentStatus) else str(status)
+                params.append(status_value)
             
             # 전체 개수 조회
             total_row = conn.execute(
@@ -220,11 +771,11 @@ class PaymentService:
                     order_id=row['order_id'],
                     amount=row['amount'],
                     token_amount=row['token_amount'],
-                    status=PaymentStatus(row['status']),
+                    status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
                     pg_provider=row['pg_provider'],
                     created_at=row['created_at'],
                     updated_at=row['updated_at']
-                ).dict()  # JSON 직렬화를 위해 dict로 변환
+                ).model_dump()  # JSON 직렬화를 위해 dict로 변환
                 for row in rows
             ]
             
@@ -254,13 +805,15 @@ class PaymentService:
             ValueError: 결제를 찾을 수 없음
         """
         with get_conn() as conn:
+            # status가 Enum이면 .value를, 문자열이면 그대로 사용
+            status_value = status.value if isinstance(status, PaymentStatus) else str(status)
             cursor = conn.execute(
                 """
                 UPDATE payment_history
                 SET status = ?, updated_at = datetime('now', 'localtime')
                 WHERE id = ?
                 """,
-                (status.value, payment_id)
+                (status_value, payment_id)
             )
             
             if cursor.rowcount == 0:
@@ -298,7 +851,9 @@ class PaymentService:
             
             if status:
                 where_conditions.append("status = ?")
-                params.append(status.value)
+                # status가 Enum이면 .value를, 문자열이면 그대로 사용
+                status_value = status.value if isinstance(status, PaymentStatus) else str(status)
+                params.append(status_value)
             
             if user_id:
                 where_conditions.append("user_id = ?")
@@ -339,7 +894,7 @@ class PaymentService:
                         order_id=row['order_id'],
                         amount=row['amount'],
                         token_amount=row['token_amount'],
-                        status=PaymentStatus(row['status']),
+                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
                         pg_provider=row['pg_provider'],
                         created_at=row['created_at'],
                         updated_at=row['updated_at']
@@ -348,15 +903,12 @@ class PaymentService:
                     if hasattr(payment_obj, 'model_dump'):
                         payments.append(payment_obj.model_dump())
                     else:
-                        payments.append(payment_obj.dict())
+                        payments.append(payment_obj.model_dump())
                 except Exception as e:
                     self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
                     continue
             
             # KPI 통계 계산 (필터와 무관하게 전체 데이터 기준)
-            today = datetime.now().strftime('%Y-%m-%d')
-            month_start = datetime.now().replace(day=1).strftime('%Y-%m-%d')
-            
             # 오늘 매출 (completed 상태만)
             today_revenue_row = conn.execute(
                 """
@@ -432,7 +984,7 @@ class PaymentService:
                         order_id=row['order_id'],
                         amount=row['amount'],
                         token_amount=row['token_amount'],
-                        status=PaymentStatus(row['status']),
+                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
                         pg_provider=row['pg_provider'],
                         created_at=row['created_at'],
                         updated_at=row['updated_at']
@@ -441,7 +993,7 @@ class PaymentService:
                     if hasattr(payment_obj, 'model_dump'):
                         latest_payments.append(payment_obj.model_dump())
                     else:
-                        latest_payments.append(payment_obj.dict())
+                        latest_payments.append(payment_obj.model_dump())
                 except Exception as e:
                     self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
                     continue

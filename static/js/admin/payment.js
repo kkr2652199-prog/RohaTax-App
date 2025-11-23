@@ -90,7 +90,7 @@ async function loadPayments(page = 1, status = '') {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': getCSRFToken()
+                'X-CSRF-Token': window.getCSRFToken()
             },
             credentials: 'include'
         });
@@ -525,9 +525,248 @@ function formatDateTime(dateTimeStr) {
 /**
  * 결제 상세보기
  */
-function viewPaymentDetail(paymentId) {
-    // TODO: 모달 또는 상세 페이지로 이동 (2단계에서 구현 예정)
-    alert(`결제 상세보기: ID ${paymentId}\n\n상세보기 기능은 2단계에서 구현 예정입니다.`);
+async function viewPaymentDetail(paymentId) {
+    try {
+        console.log('[viewPaymentDetail] 결제 상세 정보 로드 시작:', paymentId);
+        
+        // 모달 열기
+        const modal = new bootstrap.Modal(document.getElementById('paymentDetailModal'));
+        modal.show();
+        
+        // 로딩 표시
+        const contentEl = document.getElementById('paymentDetailContent');
+        const footerEl = document.getElementById('paymentDetailFooter');
+        contentEl.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">결제 정보를 불러오는 중...</p>
+            </div>
+        `;
+        footerEl.innerHTML = '';
+        
+        // API 호출
+        const response = await fetch(`/admin/api/payments/${paymentId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `결제 정보 조회 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[viewPaymentDetail] API 응답:', result);
+        
+        if (!result.success || !result.data) {
+            throw new Error('결제 정보를 불러올 수 없습니다.');
+        }
+        
+        const payment = result.data;
+        
+        // 유저 정보 조회 (유저명 가져오기)
+        let userName = `유저 #${payment.user_id}`;
+        try {
+            const userResponse = await fetch(`/admin/api/users/${payment.user_id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': window.getCSRFToken()
+                },
+                credentials: 'include'
+            });
+            if (userResponse.ok) {
+                const userResult = await userResponse.json();
+                if (userResult.success && userResult.data) {
+                    userName = userResult.data.username || userName;
+                }
+            }
+        } catch (e) {
+            console.warn('[viewPaymentDetail] 유저 정보 조회 실패:', e);
+        }
+        
+        // 상품 정보 조회 (상품명 가져오기)
+        let productName = '알 수 없음';
+        try {
+            // payment_history에는 product_id가 없으므로, order_id나 다른 방법으로 추론
+            // 일단 토큰 양으로 표시
+            if (payment.token_amount === -1) {
+                productName = 'Gold (무제한)';
+            } else if (payment.token_amount >= 100) {
+                productName = 'Premium';
+            } else {
+                productName = 'Standard';
+            }
+        } catch (e) {
+            console.warn('[viewPaymentDetail] 상품 정보 조회 실패:', e);
+        }
+        
+        // 상세 정보 렌더링
+        contentEl.innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">주문번호</h6>
+                            <p class="mb-0 fw-bold"><code>${payment.order_id || 'N/A'}</code></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">유저명</h6>
+                            <p class="mb-0 fw-bold">${userName}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">상품명</h6>
+                            <p class="mb-0 fw-bold">${productName}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">결제 금액</h6>
+                            <p class="mb-0 fw-bold text-primary">${formatCurrency(payment.amount || 0)}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">토큰 수량</h6>
+                            <p class="mb-0 fw-bold">
+                                ${payment.token_amount === -1 ? '무제한' : formatNumber(payment.token_amount || 0) + '개'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">결제 상태</h6>
+                            <p class="mb-0">${getStatusBadge(payment.status || 'pending')}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">PG사</h6>
+                            <p class="mb-0">${payment.pg_provider || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">결제 일시</h6>
+                            <p class="mb-0">${formatDateTime(payment.created_at || '')}</p>
+                        </div>
+                    </div>
+                </div>
+                ${payment.updated_at ? `
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2 small">수정 일시</h6>
+                            <p class="mb-0">${formatDateTime(payment.updated_at)}</p>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        // 결제 취소 버튼 (completed 상태인 경우만)
+        if (payment.status === 'completed') {
+            footerEl.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-danger" onclick="cancelPayment(${payment.id})">
+                    <i class="bi bi-x-circle"></i> 결제 취소
+                </button>
+            `;
+        } else {
+            footerEl.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('[viewPaymentDetail] 오류:', error);
+        const contentEl = document.getElementById('paymentDetailContent');
+        contentEl.innerHTML = `
+            <div class="alert alert-danger">
+                <h6 class="alert-heading">오류 발생</h6>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+        const footerEl = document.getElementById('paymentDetailFooter');
+        footerEl.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        `;
+    }
+}
+
+/**
+ * 결제 취소
+ */
+async function cancelPayment(paymentId) {
+    // 확인 창
+    if (!confirm('정말 취소하시겠습니까?\n\n토큰이 회수됩니다.')) {
+        return;
+    }
+    
+    try {
+        console.log('[cancelPayment] 결제 취소 시작:', paymentId);
+        
+        const response = await fetch(`/admin/api/payments/${paymentId}/cancel`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `결제 취소 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[cancelPayment] API 응답:', result);
+        
+        if (result.success) {
+            // 모달 닫기
+            const modal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            alert('결제가 성공적으로 취소되었습니다.\n토큰이 회수되었습니다.');
+            
+            // 테이블 새로고침
+            loadPayments(currentPage, currentStatusFilter);
+        } else {
+            throw new Error(result.message || '결제 취소에 실패했습니다.');
+        }
+        
+    } catch (error) {
+        console.error('[cancelPayment] 오류:', error);
+        alert(`결제 취소 중 오류가 발생했습니다: ${error.message}`);
+    }
 }
 
 /**
@@ -543,7 +782,7 @@ async function updatePaymentStatus(paymentId, newStatus) {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': getCSRFToken()
+                'X-CSRF-Token': window.getCSRFToken()
             },
             credentials: 'include',
             body: JSON.stringify({ status: newStatus })
@@ -590,11 +829,227 @@ function initPaymentManagement() {
     loadPayments(1, '');
 }
 
+/**
+ * 결제 생성 모달 열기
+ */
+async function openCreatePaymentModal() {
+    console.log('[openCreatePaymentModal] 모달 열기');
+    
+    // 폼 초기화
+    document.getElementById('createPaymentForm').reset();
+    document.getElementById('expectedPaymentAmount').textContent = '상품을 선택하면 예상 결제액이 표시됩니다.';
+    document.getElementById('quantityFieldContainer').style.display = 'none';
+    
+    // 상품 목록 로드
+    await loadProductsForPayment();
+    
+    // 모달 표시
+    const modal = new bootstrap.Modal(document.getElementById('createPaymentModal'));
+    modal.show();
+    
+    // 상품 선택 이벤트 리스너 등록
+    const productSelect = document.getElementById('createPaymentProductId');
+    productSelect.addEventListener('change', calculateExpectedAmount);
+    
+    // 수량 입력 이벤트 리스너 등록 (Standard일 경우만)
+    const quantityInput = document.getElementById('createPaymentQuantity');
+    quantityInput.addEventListener('input', calculateExpectedAmount);
+}
+
+/**
+ * 결제 생성용 상품 목록 로드
+ */
+async function loadProductsForPayment() {
+    try {
+        console.log('[loadProductsForPayment] 상품 목록 로드 시작');
+        
+        const response = await fetch('/admin/api/products?is_active=true', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`상품 목록 조회 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[loadProductsForPayment] API 응답:', result);
+        
+        if (!result.success || !result.data || !result.data.products) {
+            throw new Error('상품 목록 데이터 형식이 올바르지 않습니다');
+        }
+        
+        const products = result.data.products;
+        const productSelect = document.getElementById('createPaymentProductId');
+        
+        // 기존 옵션 제거 (첫 번째 옵션 제외)
+        while (productSelect.options.length > 1) {
+            productSelect.remove(1);
+        }
+        
+        // 상품 옵션 추가
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            
+            // 상품명 및 가격 표시
+            let displayText = product.name;
+            if (product.token_amount === -1) {
+                displayText += ` (무제한, ${formatCurrency(product.price)})`;
+            } else {
+                displayText += ` (${formatNumber(product.token_amount)}토큰, ${formatCurrency(product.price)})`;
+            }
+            
+            option.textContent = displayText;
+            option.dataset.price = product.price;
+            option.dataset.tokenAmount = product.token_amount;
+            option.dataset.productId = product.id;
+            
+            productSelect.appendChild(option);
+        });
+        
+        console.log('[loadProductsForPayment] 상품 목록 로드 완료:', products.length, '개');
+        
+    } catch (error) {
+        console.error('[loadProductsForPayment] 오류:', error);
+        alert(`상품 목록을 불러오는 데 실패했습니다: ${error.message}`);
+    }
+}
+
+/**
+ * 예상 결제액 계산 및 표시
+ */
+function calculateExpectedAmount() {
+    const productSelect = document.getElementById('createPaymentProductId');
+    const quantityInput = document.getElementById('createPaymentQuantity');
+    const quantityFieldContainer = document.getElementById('quantityFieldContainer');
+    const expectedAmountEl = document.getElementById('expectedPaymentAmount');
+    
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    
+    if (!selectedOption || !selectedOption.value) {
+        expectedAmountEl.textContent = '상품을 선택하면 예상 결제액이 표시됩니다.';
+        quantityFieldContainer.style.display = 'none';
+        return;
+    }
+    
+    const productId = parseInt(selectedOption.value);
+    const productPrice = parseInt(selectedOption.dataset.price || 0);
+    const tokenAmount = parseInt(selectedOption.dataset.tokenAmount || 0);
+    
+    // Standard (ID: 1)인 경우 수량 입력 필드 표시
+    if (productId === 1) {
+        quantityFieldContainer.style.display = 'block';
+        const quantity = parseInt(quantityInput.value) || 1;
+        const totalAmount = productPrice * quantity;
+        const totalTokens = quantity;
+        
+        expectedAmountEl.innerHTML = `
+            <strong>${formatCurrency(totalAmount)}</strong> (${formatNumber(totalTokens)}토큰)
+        `;
+    } else {
+        quantityFieldContainer.style.display = 'none';
+        quantityInput.value = 1;
+        
+        if (tokenAmount === -1) {
+            expectedAmountEl.innerHTML = `
+                <strong>${formatCurrency(productPrice)}</strong> (무제한 토큰)
+            `;
+        } else {
+            expectedAmountEl.innerHTML = `
+                <strong>${formatCurrency(productPrice)}</strong> (${formatNumber(tokenAmount)}토큰)
+            `;
+        }
+    }
+}
+
+/**
+ * 결제 생성 제출
+ */
+async function submitCreatePayment() {
+    try {
+        console.log('[submitCreatePayment] 결제 생성 시작');
+        
+        const userId = parseInt(document.getElementById('createPaymentUserId').value);
+        const productId = parseInt(document.getElementById('createPaymentProductId').value);
+        const quantity = parseInt(document.getElementById('createPaymentQuantity').value) || 1;
+        
+        // 유효성 검사
+        if (!userId || userId <= 0) {
+            alert('유효한 유저 ID를 입력해주세요.');
+            return;
+        }
+        
+        if (!productId || productId <= 0) {
+            alert('상품을 선택해주세요.');
+            return;
+        }
+        
+        // Standard가 아닌 경우 수량은 무시됨 (1로 고정)
+        const finalQuantity = (productId === 1) ? quantity : 1;
+        
+        if (finalQuantity <= 0) {
+            alert('수량은 1 이상이어야 합니다.');
+            return;
+        }
+        
+        // API 호출
+        const response = await fetch('/admin/api/payments-manual/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                product_id: productId,
+                quantity: finalQuantity,
+                status: 'completed'
+            }),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `결제 생성 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[submitCreatePayment] API 응답:', result);
+        
+        if (result.success) {
+            // 모달 닫기
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createPaymentModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            alert('결제가 성공적으로 생성되었습니다.');
+            
+            // 테이블 새로고침
+            loadPayments(currentPage, currentStatusFilter);
+        } else {
+            throw new Error(result.message || '결제 생성에 실패했습니다.');
+        }
+        
+    } catch (error) {
+        console.error('[submitCreatePayment] 오류:', error);
+        alert(`결제 생성 중 오류가 발생했습니다: ${error.message}`);
+    }
+}
+
 // 전역 함수로 노출
 window.loadPayments = loadPayments;
 window.viewPaymentDetail = viewPaymentDetail;
 window.updatePaymentStatus = updatePaymentStatus;
 window.initPaymentManagement = initPaymentManagement;
+window.openCreatePaymentModal = openCreatePaymentModal;
+window.submitCreatePayment = submitCreatePayment;
+window.cancelPayment = cancelPayment;
 
 console.log('[payment.js] 모듈 로드 완료, 전역 함수 등록됨');
 

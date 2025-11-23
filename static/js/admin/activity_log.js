@@ -52,18 +52,78 @@ async function loadActivityLogs(page = 1, limit = 50) {
             return;
         }
 
-        // [신규] 활동 유형 번역 사전
-        const activityTypeKorean = {
-            'FILE_CONVERT': '파일 변환',
-            'TOKEN_PURCHASE': '토큰 구매',
-            'TOKEN_GRANT_BY_ADMIN': '토큰 지급 (관리자)',
-            'TOKEN_RESET_BY_ADMIN': '토큰 초기화 (관리자)',
-            'GRADE_CHANGE_BY_ADMIN': '등급 변경 (관리자)',
-            'USER_SOFT_DELETE_BY_ADMIN': '계정 비활성화 (관리자)',
-            'USER_RESTORE_BY_ADMIN': '계정 복구 (관리자)',
-            'USER_PURGE_BY_ADMIN': '계정 영구 삭제 (관리자)',
-            // 추후 다른 활동 유형이 추가될 수 있음
-        };
+        /**
+         * 활동 유형 한글 번역 및 아이콘 매핑
+         * @param {string} activityType - 활동 유형 코드
+         * @returns {string} 한글 번역 및 아이콘
+         */
+        function getActivityTypeLabel(activityType) {
+            const typeMap = {
+                'TOKEN_CHARGE': '💰 결제/충전',
+                'PAYMENT_CANCEL': '↩️ 결제 취소',
+                'GRADE_CHANGE': '👑 등급 변경',
+                'GRADE_CHANGE_BY_ADMIN': '👑 등급 변경',
+                'TOKEN_GRANT_BY_ADMIN': '🎁 관리자 지급',
+                'FILE_CONVERT': '📂 파일 변환',
+                'TOKEN_PURCHASE': '💰 토큰 구매',
+                'TOKEN_RESET_BY_ADMIN': '🔄 토큰 초기화',
+                'USER_SOFT_DELETE_BY_ADMIN': '🚫 계정 비활성화',
+                'USER_RESTORE_BY_ADMIN': '✅ 계정 복구',
+                'USER_PURGE_BY_ADMIN': '🗑️ 계정 영구 삭제',
+            };
+            return typeMap[activityType] || activityType;
+        }
+
+        /**
+         * 활동 유형별 배지 스타일 반환
+         * @param {string} activityType - 활동 유형 코드
+         * @returns {string} Bootstrap 배지 클래스
+         */
+        function renderActivityTypeBadge(activityType) {
+            const badgeMap = {
+                'TOKEN_CHARGE': 'bg-success',           // 결제/충전: 녹색
+                'PAYMENT_CANCEL': 'bg-secondary',       // 취소: 회색
+                'GRADE_CHANGE': 'bg-warning text-dark', // 등급 변경: 노란색
+                'GRADE_CHANGE_BY_ADMIN': 'bg-warning text-dark',
+                'TOKEN_GRANT_BY_ADMIN': 'bg-info',      // 관리자 지급: 파란색
+                'FILE_CONVERT': 'bg-primary',           // 파일 변환: 기본 파랑
+                'TOKEN_PURCHASE': 'bg-success',
+                'TOKEN_RESET_BY_ADMIN': 'bg-danger',
+                'USER_SOFT_DELETE_BY_ADMIN': 'bg-secondary',
+                'USER_RESTORE_BY_ADMIN': 'bg-success',
+                'USER_PURGE_BY_ADMIN': 'bg-danger',
+            };
+            return badgeMap[activityType] || 'bg-secondary';
+        }
+
+        /**
+         * 상세 내용에서 태그 강조 처리
+         * @param {string} detailsSummary - 상세 내용 요약
+         * @returns {string} 태그가 강조된 HTML
+         */
+        function highlightTags(detailsSummary) {
+            if (!detailsSummary) return detailsSummary;
+            
+            // "(결제 자동)" 또는 "(결제 연동)" 태그 강조
+            let highlighted = detailsSummary.replace(
+                /\(결제\s*(자동|연동)\)/g,
+                '<span class="badge bg-success text-white fw-bold">(결제 자동)</span>'
+            );
+            
+            // "(결제 취소/환불)" 태그 강조
+            highlighted = highlighted.replace(
+                /\(결제\s*취소\/환불\)/g,
+                '<span class="badge bg-secondary text-white fw-bold">(결제 취소/환불)</span>'
+            );
+            
+            // "(관리자 수동)" 태그 강조
+            highlighted = highlighted.replace(
+                /\(관리자\s*수동\)/g,
+                '<span class="badge bg-info text-white fw-bold">(관리자 수동)</span>'
+            );
+            
+            return highlighted;
+        }
 
         const tableRows = logs.map(log => {
             const timestamp = new Date(log.timestamp).toLocaleString('ko-KR', { hour12: false });
@@ -81,14 +141,37 @@ async function loadActivityLogs(page = 1, limit = 50) {
                 case 'FILE_CONVERT':
                     detailsSummary = `${details.filename} (${details.extracted_rows}건)`;
                     break;
+                case 'TOKEN_CHARGE':
+                    // 결제 관련 상세 정보
+                    if (details.message) {
+                        detailsSummary = details.message;
+                    } else if (details.product_name) {
+                        detailsSummary = `${details.product_name} 결제 완료 (주문번호: ${details.order_id || 'N/A'})`;
+                    } else {
+                        detailsSummary = `토큰 ${details.token_amount || log.token_change}개 충전`;
+                    }
+                    break;
+                case 'PAYMENT_CANCEL':
+                    detailsSummary = details.message || `결제 취소 (환불: ${details.refund_amount || 0}토큰)`;
+                    break;
+                case 'GRADE_CHANGE':
                 case 'GRADE_CHANGE_BY_ADMIN':
-                    detailsSummary = `[${details.from_plan}] → [${details.to_plan}]`;
+                    detailsSummary = `[${details.from_plan || 'N/A'}] → [${details.to_plan || 'N/A'}]`;
+                    if (details.reason) {
+                        detailsSummary += ` ${details.reason}`;
+                    }
                     break;
                 case 'TOKEN_GRANT_BY_ADMIN':
                     detailsSummary = `${details.granted_amount} 토큰 지급`;
+                    if (details.reason) {
+                        detailsSummary += ` ${details.reason}`;
+                    }
                     break;
                 case 'TOKEN_RESET_BY_ADMIN':
                     detailsSummary = `잔액 ${details.reset_balance} → 0`;
+                    if (details.reason) {
+                        detailsSummary += ` ${details.reason}`;
+                    }
                     break;
                 case 'USER_SOFT_DELETE_BY_ADMIN':
                 case 'USER_RESTORE_BY_ADMIN':
@@ -100,6 +183,9 @@ async function loadActivityLogs(page = 1, limit = 50) {
                 default:
                     detailsSummary = '상세 정보 없음';
             }
+            
+            // 태그 강조 적용
+            detailsSummary = highlightTags(detailsSummary);
 
             // 3. '복식부기' 로직 (충전량, 사용량 분리)
             let chargeDisplay = '';
@@ -120,7 +206,8 @@ async function loadActivityLogs(page = 1, limit = 50) {
                 }
             }
             
-            const translatedActivityType = activityTypeKorean[log.activity_type] || log.activity_type;
+            const translatedActivityType = getActivityTypeLabel(log.activity_type);
+            const badgeClass = renderActivityTypeBadge(log.activity_type);
             // --- 데이터 가공 로직 종료 ---
 
             return `
@@ -128,7 +215,7 @@ async function loadActivityLogs(page = 1, limit = 50) {
                     <td class="small">${timestamp}</td>
                     <td>${adminDisplay}</td>
                     <td>${log.target_username}</td>
-                    <td>${translatedActivityType}</td>
+                    <td><span class="badge ${badgeClass}">${translatedActivityType}</span></td>
                     <td>${detailsSummary}</td>
                     <td><span class="badge ${isUnlimited ? 'bg-warning text-dark' : 'bg-success'}">${log.user_plan_snapshot}</span></td>
                     <td class="text-muted">${log.token_balance_before !== null ? log.token_balance_before : '-'}</td>

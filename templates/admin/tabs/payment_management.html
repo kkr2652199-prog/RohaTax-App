@@ -105,6 +105,9 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold">거래 장부</h5>
                 <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success" onclick="openCreatePaymentModal()">
+                        <i class="bi bi-plus-circle"></i> 결제 생성
+                    </button>
                     <select id="paymentStatusFilter" class="form-select form-select-sm" style="width: auto;" title="결제 상태 필터">
                         <option value="">전체 상태</option>
                         <option value="pending">대기중</option>
@@ -158,3 +161,94 @@
         </div>
     </div>
 </section>
+
+<!-- 결제 상세보기 모달 -->
+<div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-labelledby="paymentDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentDetailModalLabel">결제 상세 정보</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentDetailContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">결제 정보를 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="paymentDetailFooter">
+                <!-- 결제 취소 버튼이 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 결제 생성 모달 -->
+<div class="modal fade" id="createPaymentModal" tabindex="-1" aria-labelledby="createPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPaymentModalLabel">결제 생성</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPaymentForm">
+                    <div class="mb-3">
+                        <label for="createPaymentUserId" class="form-label">유저 ID <span class="text-danger">*</span></label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="createPaymentUserId" 
+                            name="user_id" 
+                            min="1" 
+                            required
+                            placeholder="사용자 ID를 입력하세요"
+                        >
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="createPaymentProductId" class="form-label">상품 선택 <span class="text-danger">*</span></label>
+                        <select 
+                            class="form-select" 
+                            id="createPaymentProductId" 
+                            name="product_id" 
+                            required
+                        >
+                            <option value="">상품을 선택하세요</option>
+                            <!-- 상품 목록이 여기에 동적으로 추가됨 -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="quantityFieldContainer" style="display: none;">
+                        <label for="createPaymentQuantity" class="form-label">수량 <span class="text-danger">*</span></label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="createPaymentQuantity" 
+                            name="quantity" 
+                            min="1" 
+                            value="1"
+                            placeholder="수량을 입력하세요"
+                        >
+                        <small class="text-muted">Standard 상품만 수량 입력이 가능합니다.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">예상 결제액</label>
+                        <div class="alert alert-info mb-0" id="expectedPaymentAmount">
+                            상품을 선택하면 예상 결제액이 표시됩니다.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreatePayment()">생성</button>
+            </div>
+        </div>
+    </div>
+</div>
