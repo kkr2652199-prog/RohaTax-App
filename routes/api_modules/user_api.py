@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, session
 from core.db import get_conn_optimized as get_conn
+from core.token_service import get_token_status_from_activity_log
 import sqlite3
 import json
 from datetime import datetime
@@ -212,33 +213,15 @@ def get_token_status():
             if not user:
                 return jsonify({'error': '사용자 정보를 찾을 수 없습니다'}), 404
             
-            # 표준 법률: activity_logs 기반 토큰 계산 (가장 최근 리셋 이후만)
-            summary = conn.execute(
-                """
-                WITH last_reset AS (
-                    -- 1. 가장 최근의 TOKEN_RESET_BY_ADMIN 이벤트의 timestamp를 찾는다.
-                    SELECT MAX(timestamp) as reset_time
-                    FROM activity_logs
-                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
-                      AND COALESCE(is_deleted, 0) = 0
-                )
-                SELECT
-                    -- 2. 해당 리셋 시간 이후의 모든 로그만을 대상으로 집계한다.
-                    -- 단, TOKEN_RESET_BY_ADMIN의 token_change는 사용량 계산에서 제외한다.
-                    COALESCE(SUM(CASE WHEN al.token_change > 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN al.token_change ELSE 0 END), 0) as total_charged,
-                    COALESCE(SUM(CASE WHEN al.token_change < 0 AND al.activity_type != 'TOKEN_RESET_BY_ADMIN' THEN ABS(al.token_change) ELSE 0 END), 0) as total_used
-                FROM activity_logs al, last_reset lr
-                WHERE al.user_id = ?
-                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
-                  AND COALESCE(al.is_deleted, 0) = 0
-                """,
-                (user_id, user_id)
-            ).fetchone()
+            # 표준 법률: activity_logs 기반 토큰 계산 (중앙은행 함수 사용)
+            token_status = get_token_status_from_activity_log(user_id)
+            if not token_status:
+                return jsonify({'error': '토큰 상태를 확인할 수 없습니다'}), 500
             
-            # 표준 법률에 따라 계산된 토큰 값
-            total_tokens = summary['total_charged']
-            used_tokens = summary['total_used']
-            available_tokens = total_tokens - used_tokens
+            # 중앙은행 함수로부터 계산된 토큰 값
+            total_tokens = token_status['token_balance']
+            used_tokens = token_status['tokens_used']
+            available_tokens = token_status['available_tokens']
             
             # 토큰 사용률 계산
             usage_percentage = (used_tokens / total_tokens * 100) if total_tokens > 0 else 0

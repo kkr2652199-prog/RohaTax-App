@@ -36,7 +36,7 @@ class Settings:
     if ENVIRONMENT == "production" and DEBUG:
         print("⚠️  WARNING: DEBUG mode is enabled in production. This is a security risk!")
     
-    PORT: int = int(get_env("PORT", "5001"))
+    PORT: int = int(get_env("PORT", "5000"))  # 본진(RohaTax) 기본 포트: 5000
     HOST: str = get_env("HOST", "127.0.0.1")
     
     # 데이터베이스 설정

@@ -8,7 +8,7 @@ from functools import wraps
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.security import generate_csrf_token
-from core.token_service import get_user_token_status
+from core.token_service import get_user_token_status, calculate_available_tokens
 from ..utils.auth import ensure_login_for_json
 import time
 import os
@@ -72,8 +72,8 @@ def use_token():
             )
             conn.commit()
         
-        # 업데이트된 잔액 반환
-        remaining_tokens = token_status['token_balance'] - new_tokens_used
+        # 업데이트된 잔액 반환 (중앙은행 함수 사용)
+        remaining_tokens = calculate_available_tokens(token_status['token_balance'], new_tokens_used)
         
         logger.info(f"토큰 사용 성공 - 사용: {tokens_to_use}개, 남은 잔액: {remaining_tokens}개")
         

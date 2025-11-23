@@ -66,12 +66,12 @@ echo Installing required packages...
 
 echo.
 echo Starting server...
-echo Server Address: http://localhost:5001
+echo Server Address: http://localhost:5000
 echo Stop Server: Ctrl+C
 echo ================================
 
 REM Start server
-set PORT=5001
+set PORT=5000
 "%PYTHON_PATH%" app.py
 
 if %ERRORLEVEL% NEQ 0 (

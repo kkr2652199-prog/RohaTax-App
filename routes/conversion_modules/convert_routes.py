@@ -10,6 +10,7 @@ from core.responses import success, error
 from core.data_bus import validate_convert_start, normalize_convert_start, SCHEMA_VERSION
 from core.conversion_engine import ConversionEngine
 from core.security import generate_csrf_token
+from core.token_service import get_token_status_from_user_table
 from datetime import datetime
 from core.token_log_schema import make_token_log, DEFAULT_TOKEN_COSTS
 from core.token_logger import write_token_log
@@ -98,15 +99,17 @@ def start_conversion():
             (session['user_id'],)
         ).fetchone()
 
-        if not user:
+        # 토큰 상태 조회 (중앙은행 함수 사용)
+        token_status = get_token_status_from_user_table(session['user_id'])
+        if not token_status:
             return error('사용자를 찾을 수 없습니다', status=404)
 
         # 토큰 확인 및 사용 1회
-        available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
+        available_tokens = token_status['available_tokens']
         if available_tokens < 1:
             return error('토큰이 부족합니다', status=400)
 
-        new_tokens_used = (user['tokens_used'] or 0) + 1
+        new_tokens_used = token_status['tokens_used'] + 1
         conn.execute(
             "UPDATE users SET tokens_used = ? WHERE id = ?",
             (new_tokens_used, session['user_id'])

@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional
 
 from core.db import get_conn_optimized as get_conn
 from core.subscription_utils import get_plan_display_label
+from core.token_service import calculate_available_tokens
 import os
 import json
 
@@ -120,7 +121,7 @@ class TokenDeductionProcessor:
                 plan_display = get_plan_display_label(plan_type)
                 token_balance = user['token_balance'] or 0
                 current_used = user['tokens_used'] or 0
-                available_before = token_balance - current_used
+                available_before = calculate_available_tokens(token_balance, current_used)
 
                 actual_usage = 0 if is_unlimited else int(max(0, usage_amount))
 
@@ -133,7 +134,7 @@ class TokenDeductionProcessor:
                     )
 
                 new_used = current_used + actual_usage
-                available_after = token_balance - new_used if not is_unlimited else available_before
+                available_after = calculate_available_tokens(token_balance, new_used) if not is_unlimited else available_before
 
                 if not is_unlimited and actual_usage > 0:
                     try:

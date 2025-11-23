@@ -18,6 +18,7 @@ from datetime import datetime
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.conversion_engine import ConversionEngine
+from core.token_service import calculate_available_tokens
 from core.subscription_utils import get_user_subscription, is_unlimited_user
 from core.file_upload_helper import save_uploaded_file, cleanup_temp_file, calculate_count_and_parse
 from core.token_deduction_processor import TokenDeductionProcessor
@@ -255,10 +256,13 @@ def start_conversion():
         session['last_conversion_result'] = conversion_result
         session['last_file_name'] = file_name  # 다운로드 파일명 저장
         
+        # 토큰 페이로드 구성 (중앙은행 함수 사용)
+        token_balance_fallback = user['token_balance'] or 0
+        tokens_used_fallback = user['tokens_used'] or 0
         tokens_payload = {
-            'total_granted': token_result.get('total_granted', user['token_balance'] or 0),
-            'total_used': token_result.get('tokens_used_after', user['tokens_used'] or 0),
-            'available_tokens': token_result.get('available_tokens_after', (user['token_balance'] or 0) - (user['tokens_used'] or 0)),
+            'total_granted': token_result.get('total_granted', token_balance_fallback),
+            'total_used': token_result.get('tokens_used_after', tokens_used_fallback),
+            'available_tokens': token_result.get('available_tokens_after', calculate_available_tokens(token_balance_fallback, tokens_used_fallback)),
             'templates_created': token_result.get('recipient_count', 0)
         }
 

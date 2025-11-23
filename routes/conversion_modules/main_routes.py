@@ -8,6 +8,7 @@ import os
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.utils import row_value
+from core.token_service import get_token_status_from_user_table
 
 main_bp = Blueprint('main', __name__)
 
@@ -22,24 +23,20 @@ def conversion():
         return redirect(url_for('registration.register'))
     
     # 토큰 잔액 확인 (지급된 토큰 - 사용한 토큰)
-    with get_conn() as conn:
-        user = conn.execute(
-            "SELECT token_balance, COALESCE(tokens_used, 0) as tokens_used FROM users WHERE id = ?", 
-            (session['user_id'],)
-        ).fetchone()
-        
-        if not user:
-            print(f"❌ 사용자 ID {session['user_id']}를 찾을 수 없음 - 로그인 페이지로 리다이렉트")
-            return redirect(url_for('auth.login'))
-        
-        # 사용 가능한 토큰 = 지급된 토큰 - 사용한 토큰
-        available_tokens = (user['token_balance'] or 0) - (user['tokens_used'] or 0)
-        print(f"✅ 사용자 인증 성공 - 사용 가능한 토큰: {available_tokens}")
-        
-        return render_template('conversion.html', 
-                             available_tokens=available_tokens,
-                             total_tokens=user['token_balance'] or 0,
-                             used_tokens=user['tokens_used'] or 0)
+    # 토큰 상태 조회 (중앙은행 함수 사용)
+    token_status = get_token_status_from_user_table(session['user_id'])
+    
+    if not token_status:
+        print(f"❌ 사용자 ID {session['user_id']}를 찾을 수 없음 - 로그인 페이지로 리다이렉트")
+        return redirect(url_for('auth.login'))
+    
+    available_tokens = token_status['available_tokens']
+    print(f"✅ 사용자 인증 성공 - 사용 가능한 토큰: {available_tokens}")
+    
+    return render_template('conversion.html', 
+                         available_tokens=available_tokens,
+                         total_tokens=token_status['token_balance'],
+                         used_tokens=token_status['tokens_used'])
 
 
 @main_bp.route('/conversion/admin-token')
