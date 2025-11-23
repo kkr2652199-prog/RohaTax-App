@@ -305,7 +305,7 @@
             const btnApplyFilters = document.getElementById('btn-apply-filters');
             if (btnApplyFilters) {
                 btnApplyFilters.addEventListener('click', () => {
-                    loadActivityLogs(); // 첫 페이지부터 검색
+                    loadActivityLogs(1, 50); // 필터 적용 시 첫 페이지부터 검색
                 });
             }
         });

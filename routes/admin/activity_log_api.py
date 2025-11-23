@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Blueprint, jsonify, request
 
-from ..utils.auth import ensure_login_for_json
+from ..utils.auth import ensure_admin_for_json
 from core.db import get_conn
 
 
@@ -14,8 +14,8 @@ def get_activity_logs():
     """
     activity_logs 테이블의 데이터를 필터링 및 페이지네이션하여 조회합니다.
     """
-    user_id, guard_response = ensure_login_for_json()
-    if not user_id:
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
         return guard_response
 
     # --- [수정 1] 프론트엔드로부터 검색 파라미터 수신 ---
@@ -103,4 +103,54 @@ def get_activity_logs():
 
     except Exception as e:
         print(f"활동 로그 조회 중 오류 발생: {e}")
+        return jsonify({"success": False, "error": "서버 내부 오류가 발생했습니다."}), 500
+
+
+@activity_log_bp.route('/activity-logs/<int:log_id>', methods=['DELETE'])
+def delete_activity_log(log_id: int):
+    """
+    활동 로그 삭제 (Hard Delete - 영구 삭제)
+    
+    Path Parameters:
+        log_id: 삭제할 로그 ID
+    """
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+    
+    try:
+        with get_conn() as conn:
+            # 로그 존재 확인
+            log_row = conn.execute(
+                "SELECT id FROM activity_logs WHERE id = ?",
+                (log_id,)
+            ).fetchone()
+            
+            if not log_row:
+                return jsonify({
+                    "success": False,
+                    "error": f"활동 로그를 찾을 수 없습니다: ID {log_id}"
+                }), 404
+            
+            # Hard Delete (영구 삭제)
+            cursor = conn.execute(
+                "DELETE FROM activity_logs WHERE id = ?",
+                (log_id,)
+            )
+            
+            if cursor.rowcount == 0:
+                return jsonify({
+                    "success": False,
+                    "error": f"활동 로그 삭제에 실패했습니다: ID {log_id}"
+                }), 500
+            
+            conn.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "활동 로그가 성공적으로 삭제되었습니다."
+            }), 200
+            
+    except Exception as e:
+        print(f"활동 로그 삭제 중 오류 발생: {e}")
         return jsonify({"success": False, "error": "서버 내부 오류가 발생했습니다."}), 500
