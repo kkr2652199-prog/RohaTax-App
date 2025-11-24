@@ -8,6 +8,102 @@
 
 ---
 
+## [2025-11-24 17:10:18 KST] (해시: aeef284)
+
+**작업명:** Final Cleanup & Log Consolidation
+
+- 통합 관제실 및 결제 내역 테스트 데이터 전량 삭제 (초기화)
+
+- `COMMIT_LOG.md` 통합 및 역사 정리 완료
+
+- 유저 완전 삭제 기능(Foreign Key 해결) 정상화 확인
+
+---
+
+## [2025-11-24 16:48:41 KST] (작업 중)
+
+**작업명:** 통합 관제실 로그 상세화 및 완전 삭제 기능 정상화
+
+- **통합 관제실 로그 상세화**: `PROFILE_UPDATE` 활동 로그에 변경된 필드와 값(JSON)을 정확히 기록하도록 개선. `activity_log.js`에서 프로필 수정 상세 정보를 "프로필 수정: 전화번호, 이메일" 형태로 표시하도록 수정. `admin.html`의 필터 목록에 `PROFILE_UPDATE`, `PAYMENT_CANCEL`, `TOKEN_GRANT_BY_ADMIN` 옵션 추가.
+
+- **완전 삭제 기능 정상화**: `purge_user` 함수에서 Foreign Key 제약 조건 오류를 해결하기 위해 삭제 순서를 정확히 조정 (payment_history → token_history → activity_logs → email_verification_attempts → users). Foreign Key 제약 조건을 일시적으로 비활성화하는 안전장치 추가. JS 오류 수정 (csrfToken 중복 선언 문제 해결, 에러 핸들링 개선).
+
+- **테스트 로그 초기화**: `activity_logs`와 `token_history` 테이블의 모든 테스트 데이터 삭제 (302건, 484건). SQLite 시퀀스 초기화. `scripts/reset_all_logs.py` 스크립트 생성.
+
+---
+
+## [2025-11-24 10:59:47 KST] (해시: 0005bae)
+
+**작업명:** feat: modernize myhome ui with card list and korean localization
+
+- 마이홈 UI를 카드 리스트 형식으로 현대화하고 한국어 현지화 적용
+
+---
+
+## [2025-11-23 20:25:51 KST] (해시: 5bbb185)
+
+**작업명:** chore: remove unused files and scripts
+
+- 사용하지 않는 파일 및 스크립트 제거
+
+---
+
+## [2025-11-23 18:13:39 KST] (해시: 13874e2)
+
+**작업명:** feat: finalize admin payment and monitoring system with enhanced logging
+
+- 관리자 결제 및 모니터링 시스템 완성, 로깅 강화
+
+---
+
+## [2025-11-23 17:40:19 KST] (해시: ecd99f9)
+
+**작업명:** feat: finalize payment management system with enhanced UI and stability
+
+- 결제 관리 시스템 완성, UI 개선 및 안정성 향상
+
+---
+
+## [2025-11-23 14:02:29 KST] (해시: 1e491cc)
+
+**작업명:** feat: complete payment system with refund and logging logic
+
+- 환불 및 로깅 로직을 포함한 결제 시스템 완성
+
+---
+
+## [2025-11-22 19:43:42 KST] (해시: 7a63e0a)
+
+**작업명:** docs: add commit hash to UPDATE_LOG.md
+
+- UPDATE_LOG.md에 커밋 해시 추가
+
+---
+
+## [2025-11-22 19:39:43 KST] (해시: 3f03aee)
+
+**작업명:** feat: implement pricing plan tuner dashboard
+
+- 가격 플랜 튜너 대시보드 구현
+
+---
+
+## [2025-11-22 18:06:41 KST] (해시: 17322f9)
+
+**작업명:** feat: implement payment management dashboard with modern stack
+
+- 현대적 스택을 사용한 결제 관리 대시보드 구현
+
+---
+
+## [2025-11-22 15:56:31 KST] (해시: f1e9e73)
+
+**작업명:** feat: implement admin dashboard charts and improve layout
+
+- 관리자 대시보드 차트 구현 및 레이아웃 개선
+
+---
+
 ### 2025-11-22 14:29 KST
 
 **[012eadb] refactor: user_api v2 engine deployment (security enhancement and structure improvement)**

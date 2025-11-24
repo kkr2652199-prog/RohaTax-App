@@ -1,5 +1,116 @@
 # 업데이트 로그 (Update Log)
 
+## 2025-11-24 10:58 KST
+
+### 작업: `feat: MyHome V2 UI Modernization`
+
+**커밋 해시**: `[커밋 후 업데이트]`
+
+**작전명**: 마이홈 V2 UI 개선 사항 커밋
+
+#### 변경 사항
+
+1. **UI 전면 개편: 테이블 방식 폐기 -> 카드형 리스트 도입**
+   - `<table>`, `<thead>`, `<tbody>` 태그 완전 제거
+   - `<div class="activity-list">`와 `<div class="activity-item">` 구조로 변경
+   - Flexbox 기반 카드 디자인 적용
+   - 좌측: 아이콘 (동그라미, 그라데이션 배경)
+   - 중앙: 상세 정보(굵은 글씨) + 메타 정보(작은 회색 글씨)
+   - 우측: 토큰 변화량(초록색/빨간색 강조)
+   - 엑셀 표 느낌 완전 제거, 모바일 앱 스타일로 변경
+
+2. **한글화: 활동 유형 및 상세 정보(`details`)를 유저 친화적인 한글 문장으로 파싱**
+   - `translateActivityType` 함수 강화: `USER_LOGIN`, `USER_RESTORE_BY_ADMIN`, `USER_SOFT_DELETE_BY_ADMIN` 등 추가
+   - `parseDetails` 함수 개선: JSON 파싱 실패 시에도 원본 텍스트 정리
+   - 필드명 다양성 대응: `log.activity_type || log.type || log.log_type`
+   - JSON 구조 제거: `{'message': ...}` 형태를 한글 문장으로 변환
+   - 결제 로그: `product_name`, `amount`만 표시
+   - 파일 변환 로그: `filename`, `extracted_rows`만 표시
+   - 관리자 지급 로그: `reason`, `amount`만 표시
+
+3. **디자인 강화: 그라데이션 카드, 모던 입력 폼, 반응형 레이아웃 적용**
+   - 다이내믹 히어로 카드: 상단 토큰 현황 카드에 그라데이션 애니메이션 추가
+   - 카운팅 애니메이션: 숫자가 로딩될 때 0부터 목표 숫자까지 CountUp
+   - 타임라인 스타일: 활동 내역 리스트 왼쪽에 수직선과 동그라미 점 배치
+   - 인터랙티브 입력 폼: `input` 요소에 focus 시 테두리 색상 변경 및 그림자 효과
+   - 반응형 디자인: 모바일에서도 절대 깨지지 않는 레이아웃
+
+4. **안전성: `profile_v2` 신규 파일 생성으로 기존 로직 보호**
+   - `templates/profile_v2.html`: HTML 구조만 포함
+   - `static/css/profile_v2.css`: 모든 스타일 분리
+   - `static/js/profile_v2.js`: 모든 JavaScript 로직 분리
+   - 기존 `profile_edit.html` 보존 (롤백 가능)
+
+#### 파일 구조
+
+```
+homepage1/
+├── templates/
+│   ├── profile_edit.html (기존 파일 보존)
+│   └── profile_v2.html (신규 파일)
+├── static/
+│   ├── css/
+│   │   └── profile_v2.css (신규 파일)
+│   └── js/
+│       └── profile_v2.js (신규 파일)
+└── routes/
+    └── home_modules/
+        └── profile_routes.py (수정: profile_v2.html 렌더링)
+```
+
+#### 통계
+
+- **신규 파일**: 3개 (profile_v2.html, profile_v2.css, profile_v2.js)
+- **수정 파일**: 1개 (profile_routes.py)
+- **코드 라인**: 약 1,200줄 (HTML: 266줄, CSS: 1,366줄, JS: 1,237줄)
+
+#### 검증 완료
+
+- ✅ 테이블 구조 완전 제거
+- ✅ 카드형 리스트 정상 작동
+- ✅ 한글화 로직 적용 완료
+- ✅ 반응형 디자인 적용 완료
+- ✅ 기존 로직 보호 (profile_edit.html 보존)
+
+---
+
+## 2025-11-23 20:30 KST
+
+### 작업: `chore: remove unused files and scripts`
+
+**커밋 해시**: `5bbb18517962efe7734cdd4ebd8d737c7b88d66ef`
+
+**작전명**: 대청소 실행 - 불필요한 파일 제거
+
+#### 변경 사항
+
+1. **불필요한 파일 제거 (20개)**
+   - 백업 파일: `routes/conversion.py.backup`
+   - 사용되지 않는 라우트: `routes/conversion_new.py`, `routes/analytics.py`
+   - 임시/테스트 파일: `commit_msg.txt`, `test_token_api_browser.js`
+   - 체크 스크립트 (8개): `check_*.py` 파일들
+   - 유틸리티 스크립트 (7개): 일회성 마이그레이션/복구 스크립트들
+   - 데이터베이스 백업: `database/app_backup_before_activity_logs_20251116_161614.db`
+
+2. **삭제 후보 리스트 작성**
+   - `DELETION_CANDIDATES.md` 파일 생성
+   - 삭제 사유 및 확인 방법 명시
+
+#### 통계
+
+- **삭제된 파일**: 20개
+- **삭제된 코드**: 2,629줄
+- **추가된 문서**: 89줄 (DELETION_CANDIDATES.md)
+- **순 감소**: 2,540줄
+
+#### 검증 완료
+
+- ✅ Git 상태 확인 완료
+- ✅ 불필요한 파일 제거 완료
+- ✅ 프로젝트 경량화 완료
+
+---
+
 ## 2025-01-XX XX:XX KST
 
 ### 작업: `feat: Finalize Admin Payment & Monitoring System`
