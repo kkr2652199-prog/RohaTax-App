@@ -259,11 +259,15 @@ def update_user_subscription(user_id: int):
         return error('subscription_end_date는 필수입니다', status=400)
     
     try:
-        message = user_service.update_user_subscription(user_id, subscription_end_date, admin_user_id)
+        result = user_service.update_user_subscription(user_id, subscription_end_date, admin_user_id)
+        # result는 Dict: {'message': ..., 'grade_changed': ..., 'old_plan_type': ..., 'new_plan_type': ...}
+        return success(result['message'], data={
+            'grade_changed': result['grade_changed'],
+            'old_plan_type': result['old_plan_type'],
+            'new_plan_type': result['new_plan_type']
+        })
     except UserServiceError as exc:
         return _handle_service_error(exc)
-    
-    return success(message)
 
 
 def _handle_service_error(exc: UserServiceError):

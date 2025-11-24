@@ -129,6 +129,34 @@ class PaymentService:
                         # 중복 시 타임스탬프 추가
                         order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}-{now.microsecond:06d}"
                     
+                    # 3-1. 중복 결제 방지: 같은 사용자, 같은 상품, 같은 시간대(5초 이내) 중복 생성 방지
+                    # (더블 클릭으로 인한 중복 요청 방지)
+                    # payment_history 테이블에는 product_id가 없으므로, token_amount와 amount로 추론
+                    # Gold(-1), Premium(>=100), Standard(1) 구분 가능
+                    recent_payment = conn.execute(
+                        """
+                        SELECT id, order_id, created_at, token_amount, amount
+                        FROM payment_history
+                        WHERE user_id = ? AND token_amount = ? AND amount = ? AND status = 'completed'
+                        AND datetime(created_at) > datetime('now', '-5 seconds', 'localtime')
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                        """,
+                        (user_id, total_token_amount, total_amount)
+                    ).fetchone()
+                    
+                    if recent_payment:
+                        # 최근 5초 이내에 동일한 결제가 있으면 중복 요청으로 간주
+                        self.logger.warning(
+                            f"중복 결제 요청 감지: 사용자 ID {user_id}, 상품 ID {product_id}, "
+                            f"최근 결제 ID {recent_payment['id']} (주문번호: {recent_payment['order_id']})"
+                        )
+                        raise ValueError(
+                            f"최근 5초 이내에 동일한 결제가 생성되었습니다. "
+                            f"주문번호: {recent_payment['order_id']}. "
+                            f"중복 요청을 방지하기 위해 잠시 후 다시 시도해주세요."
+                        )
+                    
                     # 4. 사용자 현재 등급 조회 (이전 등급 저장용)
                     # status가 Enum이면 .value를, 문자열이면 그대로 사용하여 비교
                     status_str = status.value if isinstance(status, PaymentStatus) else str(status)
@@ -262,7 +290,46 @@ class PaymentService:
                             new_plan_type = 'gold-vip'
                             
                             # Gold 구매 시 기간 연장 로직
-                            # 현재 subscription_end_date 조회
+                            # **결제일 기준으로 정확히 30일만 연장** (기존 만료일과 무관하게)
+                            from datetime import datetime, timedelta
+                            
+                            # 결제일을 기준으로 계산 (payment_history의 created_at 사용)
+                            # 주문 ID에서 날짜/시간 추출 또는 현재 시간 사용
+                            # 주문 ID 형식: ORD-YYYYMMDD-HHMMSS-XXXX
+                            payment_created_at = None
+                            payment_row = conn.execute(
+                                """
+                                SELECT created_at
+                                FROM payment_history
+                                WHERE id = ?
+                                """,
+                                (payment_id,)
+                            ).fetchone()
+                            
+                            if payment_row and payment_row['created_at']:
+                                try:
+                                    # payment_history의 created_at 사용 (실제 결제 시점)
+                                    payment_created_at_str = payment_row['created_at']
+                                    if isinstance(payment_created_at_str, str):
+                                        payment_created_at = datetime.strptime(payment_created_at_str, '%Y-%m-%d %H:%M:%S')
+                                    else:
+                                        payment_created_at = payment_created_at_str
+                                except Exception as e:
+                                    self.logger.warning(f"결제일 파싱 오류: {str(e)}, 현재 시간 사용")
+                            
+                            # 결제일을 찾지 못했으면 현재 시간 사용
+                            if payment_created_at is None:
+                                now_row = conn.execute("SELECT datetime('now', 'localtime') as now_time").fetchone()
+                                now_str = now_row['now_time'] if now_row else None
+                                if now_str:
+                                    payment_created_at = datetime.strptime(now_str, '%Y-%m-%d %H:%M:%S')
+                                else:
+                                    payment_created_at = datetime.now()
+                            
+                            # 결제일 기준으로 정확히 30일 연장
+                            new_end_date = payment_created_at + timedelta(days=30)
+                            
+                            # 기존 만료일 조회 (로깅용)
                             subscription_row = conn.execute(
                                 """
                                 SELECT subscription_end_date
@@ -274,50 +341,26 @@ class PaymentService:
                             
                             current_end_date = subscription_row['subscription_end_date'] if subscription_row else None
                             
-                            # 기간 연장 계산
-                            from datetime import datetime, timedelta
-                            
-                            # SQLite의 datetime('now', 'localtime')와 일치하도록 현재 시간 조회
-                            now_row = conn.execute("SELECT datetime('now', 'localtime') as now_time").fetchone()
-                            now_str = now_row['now_time'] if now_row else None
-                            
-                            if now_str:
-                                # SQLite datetime 형식: 'YYYY-MM-DD HH:MM:SS'
-                                now = datetime.strptime(now_str, '%Y-%m-%d %H:%M:%S')
-                            else:
-                                # 폴백: Python datetime.now() 사용
-                                now = datetime.now()
-                            
                             if current_end_date:
                                 try:
-                                    # 문자열을 datetime으로 변환
                                     if isinstance(current_end_date, str):
                                         current_end = datetime.strptime(current_end_date, '%Y-%m-%d %H:%M:%S')
                                     else:
                                         current_end = current_end_date
                                     
-                                    # 만료일이 아직 남아있으면 기존 만료일 + 30일
-                                    if current_end > now:
-                                        new_end_date = current_end + timedelta(days=30)
-                                        self.logger.info(
-                                            f"Gold 구독 기간 연장: 기존 만료일 {current_end.strftime('%Y-%m-%d %H:%M:%S')} "
-                                            f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
-                                        )
-                                    else:
-                                        # 만료일이 지났으면 오늘 + 30일
-                                        new_end_date = now + timedelta(days=30)
-                                        self.logger.info(
-                                            f"Gold 구독 신규 설정: 오늘 {now.strftime('%Y-%m-%d %H:%M:%S')} "
-                                            f"→ 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
-                                        )
+                                    self.logger.info(
+                                        f"Gold 구독 기간 연장: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
+                                        f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일) "
+                                        f"[기존 만료일: {current_end.strftime('%Y-%m-%d %H:%M:%S')}]"
+                                    )
                                 except Exception as e:
-                                    self.logger.warning(f"subscription_end_date 파싱 오류: {str(e)}, 오늘 + 30일로 설정")
-                                    new_end_date = now + timedelta(days=30)
+                                    self.logger.info(
+                                        f"Gold 구독 기간 연장: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
+                                        f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
+                                    )
                             else:
-                                # subscription_end_date가 없으면 오늘 + 30일
-                                new_end_date = now + timedelta(days=30)
                                 self.logger.info(
-                                    f"Gold 구독 신규 설정: 오늘 {now.strftime('%Y-%m-%d %H:%M:%S')} "
+                                    f"Gold 구독 신규 설정: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
                                     f"→ 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
                                 )
                             

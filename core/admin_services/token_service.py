@@ -99,7 +99,7 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
 
         # 1. 초기화 전 사용자 정보 조회
         user_row = conn.execute(
-            "SELECT username, COALESCE(token_balance, 0) AS token_balance, COALESCE(tokens_used, 0) AS tokens_used, plan_type FROM users WHERE id = ?",
+            "SELECT username, COALESCE(token_balance, 0) AS token_balance, COALESCE(tokens_used, 0) AS tokens_used, plan_type, subscription_end_date FROM users WHERE id = ?",
             (user_id,)
         ).fetchone()
         
@@ -108,32 +108,40 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
 
         token_balance_before = user_row['token_balance'] or 0
         tokens_used_before = user_row['tokens_used'] or 0
-        plan_type = user_row['plan_type'] or 'free'
+        plan_type_before = user_row['plan_type'] or 'free'
+        subscription_end_date_before = user_row['subscription_end_date']
         
-        # 2. 토큰 관련 필드 초기화
+        # 2. 완전 초기화: 토큰, 등급, 구독 기간 모두 초기화
         conn.execute(
-            "UPDATE users SET token_balance = 0, tokens_used = 0 WHERE id = ?",
+            "UPDATE users SET token_balance = 0, tokens_used = 0, plan_type = 'free', subscription_end_date = NULL, updated_at = datetime('now', 'localtime') WHERE id = ?",
             (user_id,),
         )
         
         # --- [수정] 새로운 'activity_logs'에 기록 ---
         # 낡은 token_history 기록 로직은 제거합니다.
         
+        # 등급 변경 여부 확인
+        grade_changed = plan_type_before != 'free'
+        
         activity_data = {
             'user_id': user_id,
             'performed_by_id': admin_user_id,
             'performed_by_type': 'ADMIN',
-            'activity_type': 'TOKEN_RESET_BY_ADMIN',
+            'activity_type': 'GRADE_CHANGE' if grade_changed else 'TOKEN_RESET_BY_ADMIN',
             'details': {
-                'reason': '관리자에 의한 토큰 초기화 (관리자 수동)',
+                'reason': '관리자에 의한 완전 초기화 (토큰, 등급, 구독 기간 모두 초기화)',
                 'reset_balance': token_balance_before,
-                'reset_used': tokens_used_before
+                'reset_used': tokens_used_before,
+                'old_plan_type': plan_type_before,
+                'new_plan_type': 'free',
+                'old_subscription_end_date': subscription_end_date_before,
+                'new_subscription_end_date': None
             },
             'token_change': token_balance_before * -1,  # 보유 토큰을 0으로 만드는 변화량
             'potential_cost': 0,
             'token_balance_before': token_balance_before,
             'token_balance_after': 0,  # 초기화 후 잔액은 0
-            'user_plan_snapshot': plan_type
+            'user_plan_snapshot': 'free'  # 초기화 후 등급은 free
         }
         
         # 범용 기록 함수 호출

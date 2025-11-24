@@ -256,7 +256,7 @@ def restore_user(user_id: int, admin_user_id: int) -> None:
         conn.commit()
 
 
-def update_user_subscription(user_id: int, subscription_end_date: str, admin_user_id: int) -> str:
+def update_user_subscription(user_id: int, subscription_end_date: str, admin_user_id: int) -> Dict:
     """
     사용자의 Gold 구독 종료일을 수정합니다.
     
@@ -266,7 +266,12 @@ def update_user_subscription(user_id: int, subscription_end_date: str, admin_use
         admin_user_id: 관리자 ID
         
     Returns:
-        str: 성공 메시지
+        Dict: {
+            'message': 성공 메시지,
+            'grade_changed': 등급 변경 여부 (bool),
+            'old_plan_type': 이전 등급,
+            'new_plan_type': 새 등급
+        }
         
     Raises:
         UserServiceError: 사용자를 찾을 수 없거나 오류 발생 시
@@ -375,7 +380,13 @@ def update_user_subscription(user_id: int, subscription_end_date: str, admin_use
         if grade_changed:
             message += f" 등급이 {current_plan_type}에서 {new_plan_type}로 변경되었습니다."
         
-        return message
+        # 강등 여부를 포함한 Dict 반환
+        return {
+            'message': message,
+            'grade_changed': grade_changed,
+            'old_plan_type': current_plan_type,
+            'new_plan_type': new_plan_type
+        }
 
 
 def purge_user(user_id: int, admin_user_id: int) -> str:
@@ -417,14 +428,54 @@ def purge_user(user_id: int, admin_user_id: int) -> str:
         
         record_activity(cursor, activity_data)
         
-        # 관련 데이터 삭제
+        # Foreign Key 제약 조건을 일시적으로 비활성화 (안전장치)
+        cursor.execute("PRAGMA foreign_keys = OFF")
+        
+        # 관련 데이터 삭제 (순서 중요: Foreign Key 의존성 순서대로)
         try:
+            # 1. payment_history (결제 기록)
+            cursor.execute("DELETE FROM payment_history WHERE user_id = ?", (user_id,))
+            
+            # 2. token_history (토큰 기록)
             cursor.execute("DELETE FROM token_history WHERE user_id = ?", (user_id,))
+            
+            # 3. activity_logs (활동 로그 - 해당 사용자 관련 로그만 삭제)
+            # 주의: activity_logs는 ON DELETE SET NULL이지만, 해당 사용자의 로그는 삭제
+            cursor.execute("DELETE FROM activity_logs WHERE user_id = ?", (user_id,))
+            
+            # 4. email_verification_attempts (이메일 인증 시도 기록)
+            # 테이블이 존재하는 경우에만 삭제
+            try:
+                cursor.execute("DELETE FROM email_verification_attempts WHERE user_id = ?", (user_id,))
+            except Exception:
+                pass  # 테이블이 없을 수 있음
+            
+            # 5. password_reset_tokens (비밀번호 재설정 토큰)
+            cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+            
+            # 6. user_subscriptions (구독 정보)
+            cursor.execute("DELETE FROM user_subscriptions WHERE user_id = ?", (user_id,))
+            
+            # 7. gold_customers (Gold 고객 정보)
+            cursor.execute("DELETE FROM gold_customers WHERE user_id = ?", (user_id,))
+            
+            # 8. validation_logs (검증 로그)
+            cursor.execute("DELETE FROM validation_logs WHERE user_id = ?", (user_id,))
+            
+            # 9. usage_logs (사용 로그)
             cursor.execute("DELETE FROM usage_logs WHERE user_id = ?", (user_id,))
+            
+            # 10. conversion_logs (변환 로그)
             cursor.execute("DELETE FROM conversion_logs WHERE user_id = ?", (user_id,))
-        except Exception:
-            pass
-
+            
+        except Exception as e:
+            # Foreign Key 제약 조건 다시 활성화
+            cursor.execute("PRAGMA foreign_keys = ON")
+            raise Exception(f"관련 데이터 삭제 중 오류 발생: {str(e)}")
+        
+        # Foreign Key 제약 조건 다시 활성화
+        cursor.execute("PRAGMA foreign_keys = ON")
+        
         # 실제 사용자 삭제 실행
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()

@@ -37,10 +37,11 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     """
     사용자가 입력한 비밀번호와 저장된 해시를 비교 검증
+    bcrypt와 pbkdf2 형식을 모두 지원합니다.
     
     Args:
         password: 사용자가 입력한 평문 비밀번호
-        hashed: 데이터베이스에 저장된 bcrypt 해시값
+        hashed: 데이터베이스에 저장된 해시값 (bcrypt 또는 pbkdf2)
         
     Returns:
         bool: 비밀번호 일치 여부 (True: 일치, False: 불일치)
@@ -53,15 +54,24 @@ def verify_password(password: str, hashed: str) -> bool:
         False
     """
     try:
-        # 이미 해시된 비밀번호인지 확인 (마이그레이션 지원)
-        if not hashed.startswith('$2b$') and not hashed.startswith('$2a$'):
-            # 평문 비밀번호인 경우 (구버전 데이터)
-            logger.warning("평문 비밀번호 감지: 마이그레이션이 필요할 수 있습니다")
-            # 평문 직접 비교 (하위 호환성)
-            return password == hashed
+        # bcrypt 형식 확인
+        if hashed.startswith('$2b$') or hashed.startswith('$2a$'):
+            return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
         
-        # bcrypt 해시 검증
-        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+        # pbkdf2 형식 확인 (salt:hash 형식)
+        if ':' in hashed:
+            import hashlib
+            try:
+                salt, stored_hash = hashed.split(':', 1)
+                password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+                return password_hash.hex() == stored_hash
+            except Exception as e:
+                logger.warning(f"pbkdf2 검증 실패: {str(e)}")
+                return False
+        
+        # 평문 비밀번호인 경우 (구버전 데이터)
+        logger.warning("평문 비밀번호 감지: 마이그레이션이 필요할 수 있습니다")
+        return password == hashed
     except Exception as e:
         logger.error(f"비밀번호 검증 실패: {str(e)}")
         return False

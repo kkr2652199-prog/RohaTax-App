@@ -340,10 +340,11 @@ async function resetTokens(userId, username) {
         
         const result = await response.json();
         if (result.success) {
-            alert('토큰 사용량이 초기화되었습니다.');
-            loadUsers();
+            // 완전 초기화로 인해 등급이 변경되었을 수 있으므로 페이지 새로고침
+            alert('토큰, 등급, 구독 기간이 모두 초기화되었습니다.');
+            window.location.reload();
         } else {
-            alert('토큰 초기화 실패: ' + result.error);
+            alert('초기화 실패: ' + result.error);
         }
     } catch (error) {
         alert('토큰 초기화 중 오류가 발생했습니다.');
@@ -453,11 +454,20 @@ async function restoreUser(userId, username){
 async function purgeUser(userId, username){
     if(!confirm(`${username}을(를) 완전삭제 하시겠습니까? 이 작업은 DB와 파일에서 모두 제거되며 되돌릴 수 없습니다.`)) return;
     try{
+        // CSRF 토큰 안전하게 가져오기 (중복 선언 방지)
+        const getCSRFToken = () => {
+            if (typeof csrfToken === 'function') {
+                return csrfToken();
+            }
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') || '' : '';
+        };
+        
         const res = await fetch(`/admin/api/users/${userId}/purge`,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json',
-                'X-CSRF-Token': csrfToken()
+                'X-CSRF-Token': getCSRFToken()
             }
         });
         const result = await res.json();
@@ -468,7 +478,8 @@ async function purgeUser(userId, username){
             alert('완전삭제 실패: ' + (result.error || '알 수 없는 오류'));
         }
     }catch(err){
-        alert('완전삭제 처리 중 오류가 발생했습니다');
+        console.error('완전삭제 처리 중 오류:', err);
+        alert('완전삭제 처리 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
     }
 }
 
@@ -732,8 +743,18 @@ async function editSubscriptionEndDate(userId, username, currentEndDateISO) {
         
         const result = await response.json();
         if (result.success) {
-            alert('구독 종료일이 성공적으로 변경되었습니다.');
-            loadUsers(); // 목록 새로고침
+            const gradeChanged = result.data && result.data.grade_changed;
+            const newPlanType = result.data && result.data.new_plan_type;
+            
+            if (gradeChanged) {
+                // 등급이 변경된 경우 페이지 새로고침 (가장 확실한 방법)
+                alert(`구독 종료일이 변경되었습니다.\n등급이 ${result.data.old_plan_type}에서 ${newPlanType}로 변경되었습니다.`);
+                window.location.reload();
+            } else {
+                // 등급 변경이 없는 경우 목록만 새로고침
+                alert('구독 종료일이 성공적으로 변경되었습니다.');
+                loadUsers(); // 목록 새로고침
+            }
         } else {
             alert('구독 종료일 변경 실패: ' + (result.error || '알 수 없는 오류'));
         }

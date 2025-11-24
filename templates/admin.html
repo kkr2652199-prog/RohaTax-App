@@ -58,6 +58,10 @@
                             <label for="filter-activity-type" class="form-label fw-bold small">활동 유형</label>
                             <select id="filter-activity-type" class="form-select form-select-sm">
                                 <option value="">-- 전체 --</option>
+                                <option value="USER_LOGIN">🔑 로그인</option>
+                                <option value="PROFILE_UPDATE">📝 프로필 수정</option>
+                                <option value="TOKEN_CHARGE">💰 결제/충전</option>
+                                <option value="PAYMENT_CANCEL">↩️ 결제 취소</option>
                                 <option value="FILE_CONVERT">파일 변환</option>
                                 <option value="GRADE_CHANGE_BY_ADMIN">등급 변경</option>
                                 <option value="TOKEN_GRANT_BY_ADMIN">토큰 지급</option>
@@ -330,7 +334,7 @@
     <script src="{{ url_for('static', filename='js/admin/admin_management.js') }}"></script>
     
     <!-- Admin Activity Log JS -->
-    <script src="{{ url_for('static', filename='js/admin/activity_log.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/activity_log.js') }}?v={{ timestamp }}"></script>
     
            <!-- Admin Email Settings JS -->
            <script src="{{ url_for('static', filename='js/admin/email_settings.js') }}"></script>

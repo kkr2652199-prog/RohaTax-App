@@ -729,15 +729,44 @@ async function viewPaymentDetail(paymentId) {
                     const userResult = await userResponse.json();
                     if (userResult.success && userResult.data && userResult.data.subscription_end_date) {
                         const endDate = new Date(userResult.data.subscription_end_date);
-                        subscriptionInfo = `
-                            <tr>
-                                <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
-                                <td style="padding: 0.5rem 0;">
-                                    <strong>30일</strong><br>
-                                    <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
-                                </td>
-                            </tr>
-                        `;
+                        const paymentDate = payment.created_at ? new Date(payment.created_at) : new Date();
+                        
+                        // 실제 구독 기간 계산 (결제일 ~ 만료일)
+                        const diffTime = endDate.getTime() - paymentDate.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        // 콘솔 로그 (디버깅용)
+                        console.log('[viewPaymentDetail] 구독 기간 계산:', {
+                            paymentDate: paymentDate.toISOString(),
+                            endDate: endDate.toISOString(),
+                            diffDays: diffDays,
+                            diffTime: diffTime,
+                            expectedDays: 30
+                        });
+                        
+                        // 만료일이 결제일보다 미래인지 확인
+                        if (diffDays > 0) {
+                            subscriptionInfo = `
+                                <tr>
+                                    <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
+                                    <td style="padding: 0.5rem 0;">
+                                        <strong>${diffDays}일</strong><br>
+                                        <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                                        ${diffDays !== 30 ? `<br><small class="text-warning">⚠️ 예상 기간(30일)과 다릅니다. (차이: ${diffDays - 30}일)</small>` : ''}
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            subscriptionInfo = `
+                                <tr>
+                                    <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
+                                    <td style="padding: 0.5rem 0;">
+                                        <strong class="text-danger">만료됨</strong><br>
+                                        <small class="text-muted">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                                    </td>
+                                </tr>
+                            `;
+                        }
                     }
                 }
             } catch (e) {
@@ -1275,11 +1304,31 @@ function calculateExpectedAmount() {
     }
 }
 
+// 결제 생성 중복 요청 방지 플래그
+let isSubmittingPayment = false;
+
 /**
  * 결제 생성 제출
  */
 async function submitCreatePayment() {
+    // 더블 클릭 방지: 이미 제출 중이면 무시
+    if (isSubmittingPayment) {
+        console.log('[submitCreatePayment] 이미 제출 중입니다. 중복 요청 무시');
+        return;
+    }
+    
+    // 생성 버튼 요소 찾기
+    const submitButton = document.querySelector('#createPaymentModal .modal-footer button.btn-primary');
+    const originalButtonText = submitButton ? submitButton.textContent : '생성';
+    
     try {
+        // 제출 시작: 플래그 설정 및 버튼 비활성화
+        isSubmittingPayment = true;
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>처리 중...';
+        }
+        
         console.log('[submitCreatePayment] 결제 생성 시작');
         
         const userId = parseInt(document.getElementById('createPaymentUserId').value);
@@ -1347,6 +1396,13 @@ async function submitCreatePayment() {
     } catch (error) {
         console.error('[submitCreatePayment] 오류:', error);
         alert(`결제 생성 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
+        // 제출 완료: 플래그 해제 및 버튼 활성화
+        isSubmittingPayment = false;
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
     }
 }
 

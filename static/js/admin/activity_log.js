@@ -76,6 +76,8 @@ async function loadActivityLogs(page = 1, limit = 50) {
                 'USER_SOFT_DELETE_BY_ADMIN': '🚫 계정 비활성화',
                 'USER_RESTORE_BY_ADMIN': '✅ 계정 복구',
                 'USER_PURGE_BY_ADMIN': '🗑️ 계정 영구 삭제',
+                'USER_LOGIN': '🔑 로그인',
+                'PROFILE_UPDATE': '✏️ 프로필 수정',
             };
             return typeMap[activityType] || activityType;
         }
@@ -98,6 +100,8 @@ async function loadActivityLogs(page = 1, limit = 50) {
                 'USER_SOFT_DELETE_BY_ADMIN': 'bg-secondary',
                 'USER_RESTORE_BY_ADMIN': 'bg-success',
                 'USER_PURGE_BY_ADMIN': 'bg-danger',
+                'USER_LOGIN': 'bg-info',                // 로그인: 파란색
+                'PROFILE_UPDATE': 'bg-primary',          // 프로필 수정: 기본 파랑
             };
             return badgeMap[activityType] || 'bg-secondary';
         }
@@ -185,6 +189,47 @@ async function loadActivityLogs(page = 1, limit = 50) {
                     break;
                 case 'USER_PURGE_BY_ADMIN':
                     detailsSummary = details.purged_username || details.reason || '상세 정보 없음';
+                    break;
+                case 'PROFILE_UPDATE':
+                    // 프로필 수정 상세 정보 처리
+                    if (details.changed_fields_kr && Array.isArray(details.changed_fields_kr) && details.changed_fields_kr.length > 0) {
+                        // 한글 필드명이 있는 경우
+                        if (details.changed_fields_kr.length === 1) {
+                            detailsSummary = `프로필 수정: ${details.changed_fields_kr[0]}`;
+                        } else if (details.changed_fields_kr.length <= 3) {
+                            // 2-3개 필드: 모두 표시
+                            detailsSummary = `프로필 수정: ${details.changed_fields_kr.join(', ')}`;
+                        } else {
+                            // 4개 이상: 첫 번째 필드 + 외 N건
+                            const remaining = details.changed_fields_kr.length - 1;
+                            detailsSummary = `프로필 수정: ${details.changed_fields_kr[0]} 외 ${remaining}건`;
+                        }
+                    } else if (details.changed_fields && Array.isArray(details.changed_fields) && details.changed_fields.length > 0) {
+                        // 한글 필드명이 없고 영문 필드명만 있는 경우 (폴백)
+                        const fieldNamesKr = {
+                            'company_name': '회사명',
+                            'representative_name': '대표자명',
+                            'phone': '전화번호',
+                            'email': '이메일',
+                            'address': '주소',
+                            'business_type': '업태',
+                            'business_category': '종목'
+                        };
+                        const translatedFields = details.changed_fields.map(field => fieldNamesKr[field] || field);
+                        if (translatedFields.length === 1) {
+                            detailsSummary = `프로필 수정: ${translatedFields[0]}`;
+                        } else if (translatedFields.length <= 3) {
+                            detailsSummary = `프로필 수정: ${translatedFields.join(', ')}`;
+                        } else {
+                            const remaining = translatedFields.length - 1;
+                            detailsSummary = `프로필 수정: ${translatedFields[0]} 외 ${remaining}건`;
+                        }
+                    } else if (details.action) {
+                        // action만 있는 경우
+                        detailsSummary = details.action;
+                    } else {
+                        detailsSummary = '프로필 수정';
+                    }
                     break;
                 default:
                     detailsSummary = '상세 정보 없음';

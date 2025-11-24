@@ -73,15 +73,194 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (validateAllFields()) {
         console.log('✅ 유효성 검사 통과');
-        if (confirmBtn) confirmBtn.style.display = 'inline-block';
-        if (previewBtn) previewBtn.style.display = 'none';
-        console.log('📤 폼 제출 시작');
-        form.submit();
+        // AJAX로 저장
+        saveProfile();
       } else {
         console.log('❌ 유효성 검사 실패');
-        alert('입력 정보를 다시 확인해주세요.');
+        showToast('입력 정보를 다시 확인해주세요.', 'error');
       }
     });
+  }
+  
+  // AJAX로 프로필 저장하는 함수
+  async function saveProfile() {
+    if (!validateAllFields()) {
+      showToast('입력 정보를 다시 확인해주세요.', 'error');
+      return;
+    }
+    
+    const data = {
+      company_name: document.getElementById('company_name')?.value || '',
+      representative_name: document.getElementById('representative_name')?.value || '',
+      phone: document.getElementById('phone')?.value || '',
+      email: document.getElementById('email')?.value || '',
+      address: document.getElementById('address')?.value || '',
+      business_type: document.getElementById('business_type')?.value || '',
+      business_category: document.getElementById('business_category')?.value || ''
+    };
+    
+    if (!data.company_name || !data.representative_name || !data.phone || !data.email || 
+        !data.business_type || !data.business_category) {
+      showToast('모든 필수 항목을 입력해주세요.', 'error');
+      return;
+    }
+    
+    // CSRF 토큰 가져오기
+    let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+      csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+    }
+    if (!csrfToken) {
+      csrfToken = document.querySelector('input[type="hidden"][name="csrf_token"]')?.value;
+    }
+    
+    if (!csrfToken) {
+      showToast('보안 토큰을 찾을 수 없습니다. 페이지를 새로고침해주세요.', 'error');
+      console.error('CSRF Token not found. Check meta tag or hidden input.');
+      return;
+    }
+    
+    try {
+      const requestBody = {
+        ...data,
+        csrf_token: csrfToken
+      };
+      
+      const response = await fetch('/profile/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      const contentType = response.headers.get('content-type');
+      let result;
+      
+      const responseText = await response.text();
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          console.error('JSON 파싱 오류:', e, '응답 텍스트:', responseText);
+          result = { success: false, message: responseText || '저장에 실패했습니다' };
+        }
+      } else {
+        // JSON이 아닌 응답 (예: 리다이렉트된 HTML) 처리
+        console.error('서버 응답 오류: JSON이 아닌 응답 수신', responseText.substring(0, 200));
+        showToast('서버 응답 오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
+        return;
+      }
+      
+      if (response.ok && result.success) {
+        showToast(result.message || '저장되었습니다', 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        let errorMsg = '저장에 실패했습니다. 다시 시도해주세요.';
+        if (result) {
+          if (typeof result === 'string') {
+            errorMsg = result;
+          } else if (result.message) {
+            errorMsg = result.message;
+          } else if (result.error) {
+            errorMsg = result.error;
+          } else if (result.errors && Array.isArray(result.errors)) {
+            errorMsg = result.errors.join(', ');
+          } else if (result.errors && typeof result.errors === 'object') {
+            errorMsg = Object.values(result.errors).flat().join(', ');
+          }
+        }
+        showToast(errorMsg, 'error');
+        console.error('저장 실패:', result, 'Response status:', response.status);
+      }
+    } catch (error) {
+      console.error('네트워크 오류:', error);
+      showToast('네트워크 오류가 발생했습니다.', 'error');
+    }
+  }
+  
+  // 토스트 알림 표시 함수
+  function showToast(message, type = 'info') {
+    // 기존 토스트 제거
+    const existingToast = document.getElementById('toast-notification');
+    if (existingToast) {
+      existingToast.remove();
+    }
+    
+    // 새 토스트 생성
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      z-index: 10000;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      animation: slideInRight 0.3s ease-out;
+      max-width: 400px;
+      word-wrap: break-word;
+    `;
+    
+    if (type === 'success') {
+      toast.style.background = 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(5, 150, 105) 100%)';
+    } else if (type === 'error') {
+      toast.style.background = 'linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 100%)';
+    } else {
+      toast.style.background = 'linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%)';
+    }
+    
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+      toast.style.animation = 'slideOutRight 0.3s ease-out';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+  
+  // CSS 애니메이션 추가
+  if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOutRight {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
   
   function validateField(field) {
@@ -195,48 +374,98 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function showPreview() {
     console.log('📋 미리보기 표시 시작');
-    const currentData = {
-      company_name: document.getElementById('company_name').value.trim(),
-      representative_name: document.getElementById('representative_name').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      business_type: document.getElementById('business_type').value.trim(),
-      business_category: document.getElementById('business_category').value.trim()
-    };
     
-    const changesHTML = Object.keys(currentData).map(key => {
-      const oldValue = originalData[key] || '-';
-      const newValue = currentData[key] || '-';
-      const isChanged = oldValue !== newValue;
+    try {
+      // 안전하게 요소 가져오기 (null 체크)
+      const companyNameEl = document.getElementById('company_name');
+      const representativeNameEl = document.getElementById('representative_name');
+      const phoneEl = document.getElementById('phone');
+      const emailEl = document.getElementById('email');
+      const addressEl = document.getElementById('address');
+      const businessTypeEl = document.getElementById('business_type');
+      const businessCategoryEl = document.getElementById('business_category');
       
-      return `
-        <div class="preview-item ${isChanged ? 'changed' : 'unchanged'}">
-          <span class="preview-label">${getFieldLabel(key)}</span>
-          <div class="preview-value">
-            ${isChanged ? `<span class="preview-value old">${oldValue}</span>` : ''}
-            <span class="preview-value ${isChanged ? 'new' : ''}">${newValue}</span>
+      // 필수 요소 확인
+      if (!companyNameEl || !representativeNameEl || !phoneEl || !emailEl || !businessTypeEl || !businessCategoryEl) {
+        console.error('❌ 필수 입력 필드를 찾을 수 없습니다.');
+        alert('입력 필드를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+        return;
+      }
+      
+      const currentData = {
+        company_name: (companyNameEl.value || '').trim(),
+        representative_name: (representativeNameEl.value || '').trim(),
+        phone: (phoneEl.value || '').trim(),
+        email: (emailEl.value || '').trim(),
+        address: (addressEl ? (addressEl.value || '').trim() : ''), // address는 선택 필드
+        business_type: (businessTypeEl.value || '').trim(),
+        business_category: (businessCategoryEl.value || '').trim()
+      };
+      
+      // originalData가 정의되지 않은 경우 처리
+      const safeOriginalData = (typeof originalData !== 'undefined') ? originalData : {};
+      
+      const changesHTML = Object.keys(currentData).map(key => {
+        const oldValue = (safeOriginalData[key] || '').trim() || '-';
+        const newValue = (currentData[key] || '').trim() || '-';
+        const isChanged = oldValue !== newValue;
+        
+        // XSS 방지를 위한 이스케이프 처리
+        const escapeHtml = (text) => {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        };
+        
+        return `
+          <div class="preview-item ${isChanged ? 'changed' : 'unchanged'}">
+            <span class="preview-label">${escapeHtml(getFieldLabel(key))}</span>
+            <div class="preview-value">
+              ${isChanged ? `<span class="preview-value old">${escapeHtml(oldValue)}</span>` : ''}
+              <span class="preview-value ${isChanged ? 'new' : ''}">${escapeHtml(newValue)}</span>
+            </div>
           </div>
-        </div>
-      `;
-    }).join('');
-    
-    const previewChangesEl = document.getElementById('preview-changes');
-    if (previewChangesEl) previewChangesEl.innerHTML = changesHTML;
-    
-    const finalHTML = Object.keys(currentData).map(key => {
-      return `
-        <div class="preview-item">
-          <span class="preview-label">${getFieldLabel(key)}</span>
-          <span class="preview-value">${currentData[key] || '-'}</span>
-        </div>
-      `;
-    }).join('');
-    
-    const previewFinalEl = document.getElementById('preview-final');
-    if (previewFinalEl) previewFinalEl.innerHTML = finalHTML;
-    
-    if (previewModal) previewModal.style.display = 'block';
+        `;
+      }).join('');
+      
+      const previewChangesEl = document.getElementById('preview-changes');
+      if (previewChangesEl) {
+        previewChangesEl.innerHTML = changesHTML;
+      } else {
+        console.error('❌ preview-changes 요소를 찾을 수 없습니다.');
+      }
+      
+      const finalHTML = Object.keys(currentData).map(key => {
+        const escapeHtml = (text) => {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        };
+        return `
+          <div class="preview-item">
+            <span class="preview-label">${escapeHtml(getFieldLabel(key))}</span>
+            <span class="preview-value">${escapeHtml((currentData[key] || '').trim() || '-')}</span>
+          </div>
+        `;
+      }).join('');
+      
+      const previewFinalEl = document.getElementById('preview-final');
+      if (previewFinalEl) {
+        previewFinalEl.innerHTML = finalHTML;
+      } else {
+        console.error('❌ preview-final 요소를 찾을 수 없습니다.');
+      }
+      
+      if (previewModal) {
+        previewModal.style.display = 'block';
+      } else {
+        console.error('❌ preview-modal 요소를 찾을 수 없습니다.');
+        alert('미리보기 모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+      }
+    } catch (error) {
+      console.error('❌ 미리보기 표시 중 오류 발생:', error);
+      alert('미리보기 표시 중 오류가 발생했습니다: ' + error.message);
+    }
   }
   
   function getFieldLabel(fieldName) {
@@ -257,22 +486,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (previewModal) previewModal.style.display = 'none';
   }
   
-  // 폼 제출 시 전체 검증
+  // 폼 제출 시 전체 검증 (AJAX로 처리하므로 기본 제출 방지)
   form.addEventListener('submit', function(e) {
     console.log('📋 폼 제출 이벤트 발생');
+    e.preventDefault(); // 기본 폼 제출 방지
     
-    if (confirmBtn && confirmBtn.style.display === 'inline-block') {
-      console.log('✅ 확인 버튼이 표시됨 - 제출 허용');
-      return true;
-    }
-    
-    console.log('🔍 일반 제출 - 유효성 검사 수행');
-    if (!validateAllFields()) {
-      console.log('❌ 유효성 검사 실패 - 제출 차단');
-      e.preventDefault();
-      alert('입력 정보를 다시 확인해주세요.');
+    // AJAX로 저장
+    if (validateAllFields()) {
+      console.log('✅ 유효성 검사 통과 - AJAX 저장 시작');
+      saveProfile();
     } else {
-      console.log('✅ 유효성 검사 통과 - 제출 허용');
+      console.log('❌ 유효성 검사 실패 - 제출 차단');
+      showToast('입력 정보를 다시 확인해주세요.', 'error');
     }
   });
 });

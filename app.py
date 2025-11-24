@@ -86,10 +86,12 @@ app = Flask(
 # 전역 텍스트 주입
 @app.context_processor
 def inject_text():
+    from datetime import datetime
     return {
         'text': CONTENT_CACHE,
         't': get_text,
-        'csrf_token': generate_csrf_token
+        'csrf_token': generate_csrf_token,
+        'timestamp': int(datetime.now().timestamp())  # 캐시 무력화용 타임스탬프
     }
 
 # 기본 로깅 초기화
