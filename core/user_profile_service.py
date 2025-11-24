@@ -32,8 +32,8 @@ class UserProfileService:
                 # 기본 사용자 정보 조회
                 user = conn.execute("""
                     SELECT id, username, email, company_name, business_number, 
-                           representative_name, phone, address, plan_type, 
-                           monthly_limit, used_count, is_active, created_at, 
+                           representative_name, phone, address, business_type, business_category, 
+                           plan_type, monthly_limit, used_count, is_active, created_at, 
                            COALESCE(token_balance, 0) AS token_balance, 
                            COALESCE(tokens_used, 0) AS tokens_used, 
                            COALESCE(approval_status, 'pending') AS approval_status,
@@ -104,8 +104,8 @@ class UserProfileService:
                 # 모든 활성 사용자 조회
                 users = conn.execute("""
                     SELECT id, username, email, company_name, business_number, 
-                           representative_name, phone, address, plan_type, 
-                           monthly_limit, used_count, is_active, created_at, 
+                           representative_name, phone, address, business_type, business_category, 
+                           plan_type, monthly_limit, used_count, is_active, created_at, 
                            COALESCE(token_balance, 0) AS token_balance, 
                            COALESCE(tokens_used, 0) AS tokens_used, 
                            COALESCE(approval_status, 'pending') AS approval_status,

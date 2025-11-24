@@ -113,6 +113,10 @@ function renderUsers(users){
                                     <span class="detail-label">종목:</span>
                                     <span class="detail-value">${u.business_category || '종목 없음'}</span>
                                 </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">주소:</span>
+                                    <span class="detail-value">${u.address || '주소 없음'}</span>
+                                </div>
                             </div>
                             <div class="detail-section">
                                 <h6><i class="bi bi-credit-card"></i> 플랜 및 토큰</h6>
