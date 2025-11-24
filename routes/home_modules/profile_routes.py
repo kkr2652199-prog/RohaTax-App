@@ -33,7 +33,7 @@ def profile_edit():
             return redirect(url_for('auth.login'))
     
     token = generate_csrf_token()
-    return render_template('profile_edit.html', user=user, csrf_token=token)
+    return render_template('profile_v2.html', user=user, csrf_token=token)
 
 
 @profile_bp.route('/profile/update', methods=['POST'])
