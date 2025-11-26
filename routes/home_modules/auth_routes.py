@@ -148,6 +148,42 @@ def login_post():
 
 @auth_bp.route('/logout')
 def logout():
+    logger = logging.getLogger(__name__)
+    
+    # 로그아웃 전에 사용자 ID 저장 (세션 클리어 전)
+    user_id = session.get('user_id')
+    
+    # 활동 로그 기록: 사용자 로그아웃
+    if user_id:
+        try:
+            with get_conn() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO activity_logs (
+                        user_id, timestamp, performed_by_id, performed_by_type, 
+                        activity_type, details, token_change, potential_cost, 
+                        token_balance_before, token_balance_after, user_plan_snapshot, is_deleted
+                    ) VALUES (?, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        user_id,  # user_id
+                        user_id,  # performed_by_id (자신이 로그아웃)
+                        'USER',  # performed_by_type
+                        'USER_LOGOUT',  # activity_type
+                        json.dumps({'message': 'User logged out successfully'}, ensure_ascii=False),  # details
+                        0,  # token_change
+                        0,  # potential_cost
+                        None,  # token_balance_before
+                        None,  # token_balance_after
+                        None,  # user_plan_snapshot
+                        0  # is_deleted
+                    )
+                )
+                conn.commit()
+        except Exception as e:
+            logger.error(f"로그아웃 활동 로그 기록 실패: {str(e)}")
+            # 로그 기록 실패해도 로그아웃은 계속 진행
+    
     session.clear()
     flash('로그아웃되었습니다', 'info')
     return redirect(url_for('home.home'))

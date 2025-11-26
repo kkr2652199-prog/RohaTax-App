@@ -170,7 +170,8 @@ def create_user_api_blueprint() -> Blueprint:
                     user_id=session['user_id']
                 )
             
-            return success(data=response.dict())
+            # response.data를 직접 전달 (중첩 구조 방지)
+            return success(data=response.data.dict())
             
         except ValueError as e:
             return error(str(e), status=404)
@@ -186,13 +187,34 @@ def create_user_api_blueprint() -> Blueprint:
         
         try:
             # DB 연결 주입
+            page = request.args.get('page', 1, type=int)
+            limit = request.args.get('limit', 10, type=int)
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+            activity_type = request.args.get('type')
+            current_user_id = session['user_id']
             with get_conn() as conn:
                 response = service.get_activity_logs(
                     conn=conn,
-                    user_id=session['user_id']
+                    user_id=current_user_id,
+                    page=page,
+                    limit=limit,
+                    start_date=start_date,
+                    end_date=end_date,
+                    activity_type=activity_type
                 )
             
-            return success(data=response.dict())
+            logs = response['data'].get('logs', [])
+            try:
+                log_count = len(logs) if isinstance(logs, list) else 0
+            except TypeError:
+                log_count = 0
+            
+            print(f"[DEBUG] 요청한 user_id: {current_user_id}")
+            print(f"[DEBUG] 파라미터: page={page}, limit={limit}, start={start_date}, end={end_date}, type={activity_type}")
+            print(f"[DEBUG] 조회된 데이터 개수: {log_count}")
+            
+            return success(data=response['data'])
             
         except Exception as e:
             logger.error(f"활동 로그 조회 오류: {str(e)}", exc_info=True)

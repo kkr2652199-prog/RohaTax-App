@@ -346,8 +346,13 @@ class UserRepository:
     def get_activity_logs(
         self,
         conn: sqlite3.Connection,
-        user_id: int
-    ) -> List[sqlite3.Row]:
+        user_id: int,
+        page: int,
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        activity_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         활동 로그 조회 (가장 최근 리셋 이후)
         
@@ -356,17 +361,35 @@ class UserRepository:
             user_id: 사용자 ID
         
         Returns:
-            List[sqlite3.Row]: 활동 로그 리스트
+            Dict[str, Any]: 활동 로그 및 전체 개수
         """
         try:
-            logs = conn.execute(
-                """
-                WITH last_reset AS (
-                    SELECT MAX(timestamp) as reset_time
-                    FROM activity_logs
-                    WHERE user_id = ? AND activity_type = 'TOKEN_RESET_BY_ADMIN'
-                      AND COALESCE(is_deleted, 0) = 0
-                )
+            def normalize_start(value: Optional[str]) -> Optional[str]:
+                if not value:
+                    return None
+                value = value.strip()
+                if not value:
+                    return None
+                value = value.replace('T', ' ')
+                if ' ' not in value:
+                    value = f"{value} 00:00:00"
+                return value
+
+            def normalize_end(value: Optional[str]) -> Optional[str]:
+                if not value:
+                    return None
+                value = value.strip()
+                if not value:
+                    return None
+                value = value.replace('T', ' ')
+                if ' ' not in value:
+                    value = f"{value} 23:59:59"
+                return value
+
+            start_date = normalize_start(start_date)
+            end_date = normalize_end(end_date)
+
+            base_query = """
                 SELECT
                     al.id,
                     al.timestamp,
@@ -376,17 +399,68 @@ class UserRepository:
                     al.token_change,
                     al.token_balance_before,
                     al.token_balance_after
-                FROM activity_logs al, last_reset lr
+                FROM activity_logs al
                 WHERE al.user_id = ?
-                  AND (lr.reset_time IS NULL OR al.timestamp >= lr.reset_time)
                   AND COALESCE(al.is_deleted, 0) = 0
-                ORDER BY al.timestamp ASC
-                """,
-                (user_id, user_id)
-            ).fetchall()
-            
-            self.logger.debug(f"활동 로그 조회 완료: user_id={user_id}, count={len(logs)}")
-            return logs
+            """
+            params: List[Any] = [user_id]
+
+            if start_date:
+                base_query += " AND al.timestamp >= ?"
+                params.append(start_date)
+
+            if end_date:
+                base_query += " AND al.timestamp <= ?"
+                params.append(end_date)
+
+            if activity_type and activity_type.lower() not in ['all', '전체', '']:
+                if ',' in activity_type:
+                    types = [t.strip() for t in activity_type.split(',')]
+                    placeholders = ','.join(['?'] * len(types))
+                    base_query += f" AND al.activity_type IN ({placeholders})"
+                    params.extend(types)
+                else:
+                    base_query += " AND al.activity_type = ?"
+                    params.append(activity_type)
+
+            base_query += " ORDER BY al.timestamp DESC"
+
+            offset = max(page - 1, 0) * limit
+
+            paged_query = f"{base_query} LIMIT ? OFFSET ?"
+            paged_params = params + [limit, offset]
+
+            cursor = conn.execute(paged_query, tuple(paged_params))
+            logs = cursor.fetchall()
+
+            count_query = "SELECT COUNT(al.id) FROM activity_logs al WHERE al.user_id = ? AND COALESCE(al.is_deleted, 0) = 0"
+            count_params: List[Any] = [user_id]
+
+            if start_date:
+                count_query += " AND al.timestamp >= ?"
+                count_params.append(start_date)
+
+            if end_date:
+                count_query += " AND al.timestamp <= ?"
+                count_params.append(end_date)
+
+            if activity_type and activity_type.lower() not in ['all', '전체', '']:
+                if ',' in activity_type:
+                    types = [t.strip() for t in activity_type.split(',')]
+                    placeholders = ','.join(['?'] * len(types))
+                    count_query += f" AND al.activity_type IN ({placeholders})"
+                    count_params.extend(types)
+                else:
+                    count_query += " AND al.activity_type = ?"
+                    count_params.append(activity_type)
+
+            total_count = conn.execute(count_query, tuple(count_params)).fetchone()[0]
+
+            self.logger.debug(f"활동 로그 조회 완료: user_id={user_id}, count={len(logs)}, total={total_count}")
+            return {
+                'logs': logs,
+                'total_count': total_count
+            }
         except Exception as e:
             self.logger.error(f"활동 로그 조회 오류: {str(e)}")
             raise

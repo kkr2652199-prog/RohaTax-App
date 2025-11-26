@@ -405,8 +405,13 @@ class UserService:
     def get_activity_logs(
         self,
         conn: sqlite3.Connection,
-        user_id: int
-    ) -> ActivityLogsResponse:
+        user_id: int,
+        page: int,
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        activity_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         활동 로그 조회
         
@@ -415,9 +420,19 @@ class UserService:
             user_id: 사용자 ID
         
         Returns:
-            ActivityLogsResponse: 활동 로그 응답
+            Dict[str, Any]: 활동 로그 및 페이지네이션 정보
         """
-        logs = self.repository.get_activity_logs(conn, user_id)
+        repo_result = self.repository.get_activity_logs(
+            conn=conn,
+            user_id=user_id,
+            page=page,
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+            activity_type=activity_type
+        )
+        logs = repo_result.get('logs', [])
+        total_count = repo_result.get('total_count', 0)
         
         # 결과 변환 및 번역 적용
         result_logs = []
@@ -445,12 +460,22 @@ class UserService:
                 token_balance_after=log_dict.get('token_balance_after'),
                 activity_type_korean=activity_type_korean,
                 details_summary=details_summary
-            ))
+            ).dict())
         
-        return ActivityLogsResponse(
-            success=True,
-            data=result_logs
-        )
+        total_pages = (total_count + limit - 1) // limit if limit > 0 else 0
+
+        return {
+            'success': True,
+            'data': {
+                'logs': result_logs,
+                'pagination': {
+                    'current_page': page,
+                    'items_per_page': limit,
+                    'total_pages': total_pages,
+                    'total_count': total_count
+                }
+            }
+        }
     
     def _summarize_details(self, activity_type: str, details_str: Optional[str]) -> str:
         """

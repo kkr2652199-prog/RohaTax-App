@@ -13,6 +13,15 @@ activity_log_bp = Blueprint('activity_log_api', __name__, url_prefix='/admin/api
 def get_activity_logs():
     """
     activity_logs 테이블의 데이터를 필터링 및 페이지네이션하여 조회합니다.
+    
+    Query Parameters:
+        page: 페이지 번호 (기본값: 1)
+        limit: 페이지당 항목 수 (기본값: 50)
+        start_date: 시작 날짜
+        end_date: 종료 날짜
+        activity_type: 활동 유형 (단일)
+        category: 카테고리 ('FINANCIAL', 'ACTIVITY', 'SECURITY')
+        user_search: 사용자명 검색
     """
     _, guard_response = ensure_admin_for_json()
     if guard_response is not None:
@@ -24,8 +33,25 @@ def get_activity_logs():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     activity_type = request.args.get('activity_type')
+    category = request.args.get('category', '').upper()  # 카테고리 파라미터 추가
     user_search = request.args.get('user_search')
     offset = (page - 1) * limit
+
+    # 카테고리별 활동 유형 매핑 (백엔드에서 정의)
+    CATEGORY_TYPE_MAP = {
+        'FINANCIAL': [
+            'TOKEN_CHARGE', 'TOKEN_USE', 'TOKEN_GRANT_BY_ADMIN', 
+            'TOKEN_RESET_BY_ADMIN', 'TOKEN_PURCHASE', 'PAYMENT_CANCEL',
+            'GRADE_CHANGE', 'GRADE_CHANGE_BY_ADMIN', 'SUBSCRIPTION_UPDATE'
+        ],
+        'ACTIVITY': [
+            'USER_LOGIN', 'USER_LOGOUT', 'FILE_CONVERT', 'PROFILE_UPDATE'
+        ],
+        'SECURITY': [
+            'USER_SOFT_DELETE_BY_ADMIN', 'USER_RESTORE_BY_ADMIN', 
+            'USER_PURGE_BY_ADMIN'
+        ]
+    }
 
     try:
         with get_conn() as conn:
@@ -53,9 +79,43 @@ def get_activity_logs():
                 # 날짜의 끝까지 포함하도록 + ' 23:59:59' 추가
                 where_clauses.append("al.timestamp <= ?")
                 params.append(f"{end_date} 23:59:59")
+            
+            # 카테고리 및 활동 유형 필터 처리 (교집합 AND 조건)
+            valid_types = None
+            
+            # 1. 카테고리로 유효한 타입 리스트 구하기
+            if category and category in CATEGORY_TYPE_MAP:
+                valid_types = CATEGORY_TYPE_MAP[category]
+            
+            # 2. activity_type이 지정되어 있는 경우
             if activity_type:
-                where_clauses.append("al.activity_type = ?")
-                params.append(activity_type)
+                if valid_types is not None:
+                    # category와 activity_type이 모두 있는 경우: 교집합 확인
+                    if activity_type in valid_types:
+                        # activity_type이 category의 타입 리스트에 포함되면 해당 타입만 조회
+                        valid_types = [activity_type]
+                    else:
+                        # activity_type이 category의 타입 리스트에 포함되지 않으면 빈 결과 반환
+                        valid_types = []
+                else:
+                    # category가 없고 activity_type만 있는 경우: 해당 타입만 조회
+                    valid_types = [activity_type]
+            
+            # 3. 최종 valid_types 리스트를 사용하여 SQL 조건 생성
+            if valid_types is not None:
+                if len(valid_types) == 0:
+                    # 빈 리스트인 경우: 결과가 없도록 WHERE 절에 항상 false 조건 추가
+                    where_clauses.append("1 = 0")
+                elif len(valid_types) == 1:
+                    # 단일 타입인 경우: = 조건 사용
+                    where_clauses.append("al.activity_type = ?")
+                    params.append(valid_types[0])
+                else:
+                    # 여러 타입인 경우: IN 조건 사용
+                    placeholders = ','.join(['?' for _ in valid_types])
+                    where_clauses.append(f"al.activity_type IN ({placeholders})")
+                    params.extend(valid_types)
+            
             if user_search:
                 where_clauses.append("(target_user.username LIKE ? OR actor_user.username LIKE ?)")
                 params.extend([f"%{user_search}%", f"%{user_search}%"])

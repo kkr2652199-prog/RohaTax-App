@@ -37,56 +37,8 @@
                         </div>
         </section>
 
-        <!-- [최종 수정] 통합 관제실 섹션 구조 재건 -->
-        <section class="panel hidden" id="control-deck">
-            <div class="hd">The Control Deck (통합 관제실)</div>
-            
-            <!-- [수정] 두 개의 .bd를 하나로 통합 -->
-            <div class="bd">
-                <!-- 1. 관제탑 필터 UI -->
-                <div style="background-color: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;">
-            <div>
-                            <label for="filter-start-date" class="form-label fw-bold small">시작일</label>
-                            <input type="date" id="filter-start-date" class="form-control form-control-sm">
-            </div>
-                        <div>
-                            <label for="filter-end-date" class="form-label fw-bold small">종료일</label>
-                            <input type="date" id="filter-end-date" class="form-control form-control-sm">
-            </div>
-                        <div>
-                            <label for="filter-activity-type" class="form-label fw-bold small">활동 유형</label>
-                            <select id="filter-activity-type" class="form-select form-select-sm">
-                                <option value="">-- 전체 --</option>
-                                <option value="USER_LOGIN">🔑 로그인</option>
-                                <option value="PROFILE_UPDATE">📝 프로필 수정</option>
-                                <option value="TOKEN_CHARGE">💰 결제/충전</option>
-                                <option value="PAYMENT_CANCEL">↩️ 결제 취소</option>
-                                <option value="FILE_CONVERT">파일 변환</option>
-                                <option value="GRADE_CHANGE_BY_ADMIN">등급 변경</option>
-                                <option value="TOKEN_GRANT_BY_ADMIN">토큰 지급</option>
-                                <option value="TOKEN_RESET_BY_ADMIN">토큰 초기화</option>
-                                <option value="USER_SOFT_DELETE_BY_ADMIN">계정 비활성화</option>
-                                <option value="USER_RESTORE_BY_ADMIN">계정 복구</option>
-                                <option value="USER_PURGE_BY_ADMIN">계정 영구삭제</option>
-                            </select>
-        </div>
-                        <div>
-                            <label for="filter-user-search" class="form-label fw-bold small">사용자 검색</label>
-                            <input type="text" id="filter-user-search" class="form-control form-control-sm" placeholder="사용자 이름...">
-                </div>
-                        <div>
-                            <button id="btn-apply-filters" class="btn btn-primary btn-sm">검색</button>
-            </div>
-                </div>
-            </div>
-            
-                <!-- 2. 데이터 표시 영역 -->
-                <div id="control-deck-content">
-                    <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다.</p>
-            </div>
-                </div>
-        </section>
+        <!-- 통합 관제실 섹션 (모듈화된 구조) -->
+        {% include 'admin/tabs/activity_log.html' %}
 
         <!-- 통계 섹션: 전체 너비 사용 -->
         <section class="panel hidden" id="stats" style="margin-top: 16px;">

@@ -1177,6 +1177,18 @@ async function openCreatePaymentModal() {
     document.getElementById('expectedPaymentAmount').textContent = '상품을 선택하면 예상 결제액이 표시됩니다.';
     document.getElementById('quantityFieldContainer').style.display = 'none';
     
+    // 사용자 검색 관련 초기화
+    selectedUser = null;
+    const searchInput = document.getElementById('paymentUserSearch');
+    const hiddenInput = document.getElementById('createPaymentUserId');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+    hideUserSearchResults();
+    
     // 상품 목록 로드
     await loadProductsForPayment();
     
@@ -1191,6 +1203,34 @@ async function openCreatePaymentModal() {
     // 수량 입력 이벤트 리스너 등록 (Standard일 경우만)
     const quantityInput = document.getElementById('createPaymentQuantity');
     quantityInput.addEventListener('input', calculateExpectedAmount);
+    
+    // 사용자 검색 입력 이벤트 리스너 등록 (Debounce 적용)
+    if (searchInput) {
+        // 기존 이벤트 리스너 제거 후 새로 등록 (중복 방지)
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        
+        newSearchInput.addEventListener('keyup', debounce((e) => {
+            const query = e.target.value.trim();
+            if (query.length >= 1) {
+                searchUsersForPayment(query);
+            } else {
+                hideUserSearchResults();
+                selectedUser = null;
+                if (hiddenInput) {
+                    hiddenInput.value = '';
+                }
+            }
+        }, 300));
+        
+        // 검색창 외부 클릭 시 결과 숨기기
+        document.addEventListener('click', (e) => {
+            if (!newSearchInput.contains(e.target) && 
+                !document.getElementById('paymentUserSearchResults')?.contains(e.target)) {
+                hideUserSearchResults();
+            }
+        });
+    }
 }
 
 /**
@@ -1307,6 +1347,151 @@ function calculateExpectedAmount() {
 // 결제 생성 중복 요청 방지 플래그
 let isSubmittingPayment = false;
 
+// 사용자 검색 관련 변수
+let userSearchTimeout = null;
+let selectedUser = null;
+
+/**
+ * Debounce 함수
+ */
+function debounce(func, wait) {
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(userSearchTimeout);
+            func(...args);
+        };
+        clearTimeout(userSearchTimeout);
+        userSearchTimeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * 사용자 검색 API 호출
+ */
+async function searchUsersForPayment(searchQuery) {
+    try {
+        if (!searchQuery || searchQuery.trim().length < 1) {
+            hideUserSearchResults();
+            return;
+        }
+        
+        console.log('[searchUsersForPayment] 검색 시작:', searchQuery);
+        
+        const response = await fetch(`/admin/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`사용자 검색 실패: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('[searchUsersForPayment] API 응답:', result);
+        
+        if (result.success && result.data && result.data.users) {
+            renderUserSearchResults(result.data.users);
+        } else {
+            hideUserSearchResults();
+        }
+        
+    } catch (error) {
+        console.error('[searchUsersForPayment] 오류:', error);
+        hideUserSearchResults();
+    }
+}
+
+/**
+ * 사용자 검색 결과 렌더링
+ */
+function renderUserSearchResults(users) {
+    const resultsContainer = document.getElementById('paymentUserSearchResults');
+    if (!resultsContainer) return;
+    
+    if (users.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="list-group-item text-muted text-center">
+                검색 결과가 없습니다.
+            </div>
+        `;
+        resultsContainer.style.display = 'block';
+        return;
+    }
+    
+    resultsContainer.innerHTML = users.map(user => {
+        const planBadge = user.plan_type === 'gold-vip' ? '<span class="badge bg-warning text-dark ms-2">Gold</span>' :
+                         user.plan_type === 'premium-vip' ? '<span class="badge bg-info ms-2">Premium</span>' :
+                         user.plan_type === 'vip' ? '<span class="badge bg-success ms-2">VIP</span>' : '';
+        
+        return `
+            <a href="#" class="list-group-item list-group-item-action" data-user-id="${user.id}" data-username="${user.username}" data-email="${user.email || ''}">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${user.username} ${planBadge}</h6>
+                        <p class="mb-1 text-muted small">${user.email || '이메일 없음'}</p>
+                        ${user.company_name ? `<small class="text-muted">${user.company_name}</small>` : ''}
+                    </div>
+                    <small class="text-muted">ID: ${user.id}</small>
+                </div>
+            </a>
+        `;
+    }).join('');
+    
+    resultsContainer.style.display = 'block';
+    
+    // 클릭 이벤트 리스너 추가
+    resultsContainer.querySelectorAll('a[data-user-id]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectUserForPayment(
+                parseInt(item.dataset.userId),
+                item.dataset.username,
+                item.dataset.email
+            );
+        });
+    });
+}
+
+/**
+ * 사용자 검색 결과 숨기기
+ */
+function hideUserSearchResults() {
+    const resultsContainer = document.getElementById('paymentUserSearchResults');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+}
+
+/**
+ * 사용자 선택 처리
+ */
+function selectUserForPayment(userId, username, email) {
+    console.log('[selectUserForPayment] 사용자 선택:', { userId, username, email });
+    
+    selectedUser = { id: userId, username, email };
+    
+    // 검색창에 사용자명 표시
+    const searchInput = document.getElementById('paymentUserSearch');
+    if (searchInput) {
+        searchInput.value = `${username}${email ? ` (${email})` : ''}`;
+    }
+    
+    // Hidden input에 ID 저장
+    const hiddenInput = document.getElementById('createPaymentUserId');
+    if (hiddenInput) {
+        hiddenInput.value = userId;
+    }
+    
+    // 검색 결과 숨기기
+    hideUserSearchResults();
+    
+    console.log('[selectUserForPayment] 사용자 선택 완료:', selectedUser);
+}
+
 /**
  * 결제 생성 제출
  */
@@ -1331,13 +1516,15 @@ async function submitCreatePayment() {
         
         console.log('[submitCreatePayment] 결제 생성 시작');
         
-        const userId = parseInt(document.getElementById('createPaymentUserId').value);
+        // Hidden input에서 user_id 가져오기 (검색으로 선택된 사용자)
+        const userIdInput = document.getElementById('createPaymentUserId');
+        const userId = userIdInput ? parseInt(userIdInput.value) : null;
         const productId = parseInt(document.getElementById('createPaymentProductId').value);
         const quantity = parseInt(document.getElementById('createPaymentQuantity').value) || 1;
         
         // 유효성 검사
-        if (!userId || userId <= 0) {
-            alert('유효한 유저 ID를 입력해주세요.');
+        if (!userId || userId <= 0 || isNaN(userId)) {
+            alert('유저를 검색하여 선택해주세요.');
             return;
         }
         

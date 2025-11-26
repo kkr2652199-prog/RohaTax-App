@@ -24,6 +24,91 @@ logger = logging.getLogger(__name__)
 payment_service = PaymentService()
 
 
+@admin_bp.route('/admin/api/users/search', methods=['GET'])
+def search_users():
+    """
+    사용자 검색 API (결제 생성용)
+    
+    Query Parameters:
+        q: 검색어 (username, email, id 중 하나라도 포함하면 결과 반환)
+        limit: 최대 결과 수 (기본값: 10)
+    
+    Returns:
+        JSON: 검색된 사용자 목록 [{ "id": 4, "username": "tlschs25", "email": "..." }, ...]
+    """
+    # 관리자 인증 확인
+    _, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+    
+    try:
+        # Query 파라미터 파싱
+        search_query = request.args.get('q', '').strip()
+        limit = request.args.get('limit', 10, type=int)
+        
+        # 검색어 유효성 검증
+        if not search_query:
+            return success('ok', data={'users': []})
+        
+        if limit < 1 or limit > 20:
+            limit = 10
+        
+        # 사용자 검색 쿼리 (username, email, id로 검색)
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # 숫자로 변환 가능한 경우 ID 검색도 포함
+            try:
+                search_id = int(search_query)
+                id_condition = f"OR id = {search_id}"
+            except ValueError:
+                id_condition = ""
+            
+            # 검색 쿼리 실행
+            users = conn.execute(
+                f"""
+                SELECT id, username, email, company_name, COALESCE(plan_type, 'free') AS plan_type
+                FROM users
+                WHERE (username LIKE ? OR email LIKE ? {id_condition})
+                AND COALESCE(is_deleted, 0) = 0
+                ORDER BY 
+                    CASE 
+                        WHEN id = ? THEN 1
+                        WHEN username LIKE ? THEN 2
+                        WHEN email LIKE ? THEN 3
+                        ELSE 4
+                    END,
+                    username ASC
+                LIMIT ?
+                """,
+                (
+                    f'%{search_query}%',
+                    f'%{search_query}%',
+                    search_id if 'search_id' in locals() and id_condition else None,
+                    f'{search_query}%',
+                    f'{search_query}%',
+                    limit
+                )
+            ).fetchall()
+            
+            # 결과 포맷팅
+            result_users = []
+            for user in users:
+                result_users.append({
+                    'id': user['id'],
+                    'username': user['username'],
+                    'email': user['email'] or '',
+                    'company_name': user['company_name'] or '',
+                    'plan_type': user['plan_type']
+                })
+            
+            return success('ok', data={'users': result_users})
+        
+    except Exception as e:
+        logger.error(f"사용자 검색 중 오류: {str(e)}")
+        return error(f'사용자 검색 중 오류가 발생했습니다: {str(e)}', status=500)
+
+
 @admin_bp.route('/admin/api/payments', methods=['GET'])
 def get_payments():
     """
