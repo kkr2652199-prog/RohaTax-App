@@ -46,14 +46,14 @@
                 <!-- 1. 관제탑 필터 UI -->
                 <div style="background-color: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                     <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;">
-                        <div>
+            <div>
                             <label for="filter-start-date" class="form-label fw-bold small">시작일</label>
                             <input type="date" id="filter-start-date" class="form-control form-control-sm">
-                        </div>
+            </div>
                         <div>
                             <label for="filter-end-date" class="form-label fw-bold small">종료일</label>
                             <input type="date" id="filter-end-date" class="form-control form-control-sm">
-                    </div>
+            </div>
                         <div>
                             <label for="filter-activity-type" class="form-label fw-bold small">활동 유형</label>
                             <select id="filter-activity-type" class="form-select form-select-sm">
@@ -70,22 +70,22 @@
                                 <option value="USER_RESTORE_BY_ADMIN">계정 복구</option>
                                 <option value="USER_PURGE_BY_ADMIN">계정 영구삭제</option>
                             </select>
-                </div>
+        </div>
                         <div>
                             <label for="filter-user-search" class="form-label fw-bold small">사용자 검색</label>
                             <input type="text" id="filter-user-search" class="form-control form-control-sm" placeholder="사용자 이름...">
-        </div>
+                </div>
                         <div>
                             <button id="btn-apply-filters" class="btn btn-primary btn-sm">검색</button>
-                        </div>
             </div>
+                </div>
             </div>
             
                 <!-- 2. 데이터 표시 영역 -->
                 <div id="control-deck-content">
                     <p class="muted">활동 로그 데이터가 여기에 표시될 예정입니다.</p>
-                </div>
             </div>
+                </div>
         </section>
 
         <!-- 통계 섹션: 전체 너비 사용 -->
@@ -95,28 +95,28 @@
                 <!-- 통계 카드 영역 (기존 숫자 카드들) -->
                 <div id="statsCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     <p class="muted">통계를 불러오는 중...</p>
-                </div>
-                
+        </div>
+
                 <!-- 차트 영역 -->
                 <div id="chartsContainer" style="display: none;">
                     <!-- Hero Chart: 일일 토큰 사용량 (전체 너비) -->
                     <div class="chart-card chart-hero">
                         <h3 class="chart-title">일일 토큰 사용량 (최근 7일)</h3>
                         <canvas id="dailyTokenUsageChart"></canvas>
-                    </div>
-                    
+        </div>
+
                     <!-- Sub Charts: 활동 유형 분포 & 시간대별 트래픽 (50:50) -->
                     <div class="charts-grid-sub">
                         <div class="chart-card">
                             <h3 class="chart-title">활동 유형 분포 (최근 30일)</h3>
                             <canvas id="activityDistributionChart"></canvas>
-                        </div>
-                        
+        </div>
+
                         <div class="chart-card">
                             <h3 class="chart-title">시간대별 트래픽 (최근 24시간)</h3>
                             <canvas id="hourlyTrafficChart"></canvas>
-                        </div>
-                    </div>
+            </div>
+            </div>
                 </div>
             </div>
         </section>
@@ -342,7 +342,7 @@
            <!-- Admin Payment Management JS -->
            <script src="{{ url_for('static', filename='js/admin/payment.js') }}"></script>
            <script src="{{ url_for('static', filename='js/admin/product.js') }}"></script>
-           
-           <!-- Bootstrap JS -->
-           <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
