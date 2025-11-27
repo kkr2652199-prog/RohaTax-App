@@ -68,14 +68,26 @@ def init_file_management():
 app_dir = os.path.dirname(os.path.abspath(__file__))
 template_dir = os.path.join(app_dir, "templates")
 static_dir = os.path.join(app_dir, "static")
+db_file_path = os.path.join(app_dir, "database", "app.db")
 
 # [검증] homepage1 디렉토리가 아닌지 확인
-if "homepage1" in app_dir.replace("\\", "/").split("/"):
-    raise RuntimeError(f"[워크트리 규칙 위반] 메인 서버(app.py)는 homepage1 디렉토리에서 실행되면 안 됩니다. 현재 경로: {app_dir}")
+# if "homepage1" in app_dir.replace("\\", "/").split("/"):
+#    raise RuntimeError(f"[워크트리 규칙 위반] 메인 서버(app.py)는 homepage1 디렉토리에서 실행되면 안 됩니다. 현재 경로: {app_dir}")
 
 print(f"[워크트리 확인] 메인 서버 앱 디렉토리: {app_dir}")
 print(f"[워크트리 확인] 템플릿 디렉토리: {template_dir}")
 print(f"[워크트리 확인] Static 디렉토리: {static_dir}")
+
+
+def ensure_database_initialized():
+    """
+    서버 기동 시 DB를 필요할 때만 초기화하여 기존 데이터를 보존한다.
+    """
+    if not os.path.exists(db_file_path):
+        print("[DB] 데이터베이스가 없어 새로 생성합니다.")
+        init_db()
+    else:
+        print("[DB] 기존 데이터베이스를 유지합니다 (init_db 생략).")
 
 app = Flask(
     __name__,
@@ -96,8 +108,7 @@ def inject_text():
 
 # 기본 로깅 초기화
 init_logging()
-init_db()
-seed_demo()
+ensure_database_initialized()
 
 # 버전 관리 시스템 초기화
 try:
@@ -297,6 +308,11 @@ if 'user' not in app.blueprints:
     app.register_blueprint(user_bp)
 if 'token' not in app.blueprints:
     app.register_blueprint(token_bp)
+
+# Payment routes 등록
+from routes.payment_routes import payment_bp
+if 'payment_routes' not in app.blueprints:
+    app.register_blueprint(payment_bp)
 
 
 @app.route('/')

@@ -22,6 +22,9 @@ export default [
         ...globals.browser,
         ...globals.node,
         console: 'readonly',
+        csrfToken: 'readonly',
+        Chart: 'readonly',
+        bootstrap: 'readonly',
       },
     },
     rules: {

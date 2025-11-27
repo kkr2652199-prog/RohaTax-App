@@ -85,7 +85,7 @@ class PaymentService:
                     product_row = conn.execute(
                         """
                         SELECT id, name, price, token_amount, is_active
-                        FROM product_packages
+                        FROM products
                         WHERE id = ?
                         """,
                         (product_id,)

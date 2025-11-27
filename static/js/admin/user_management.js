@@ -9,6 +9,13 @@
  * - 사용자 플랜 변경
  */
 
+// 전역 csrfToken 함수가 없다면 안전하게 정의
+if (typeof csrfToken !== 'function') {
+    window.csrfToken = function() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    };
+}
+
 /**
  * 사용자 목록 로드
  * API를 통해 사용자 목록을 가져와 renderUsers() 함수로 렌더링합니다.

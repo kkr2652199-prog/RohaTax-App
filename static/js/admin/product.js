@@ -18,53 +18,86 @@ if (typeof window.getCSRFToken === 'undefined') {
 let productData = {
     standard: null,  // ID: 1
     premium: null,   // ID: 2
-    gold: null       // ID: 3
+    gold: null,      // ID: 3
+    event: null,     // type 'event'
+    periodEvent: null // type 'event_period'
 };
 
 /**
- * 상품 데이터 로드 (3개 고정 요금제)
+ * dataset에 상품 ID가 없는 경우 사용자에게 안내하고 동작을 중단한다.
+ */
+function resolveProductId(element, label = '상품') {
+    if (!element) {
+        alert(`${label} 요소를 찾을 수 없습니다. 페이지를 새로고침해주세요.`);
+        return null;
+    }
+    
+    const rawId = element.dataset ? element.dataset.productId : undefined;
+    const productId = Number.parseInt(rawId);
+    
+    if (!Number.isInteger(productId)) {
+        alert(`${label} 데이터가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.`);
+        return null;
+    }
+    
+    return productId;
+}
+
+/**
+ * 상품 데이터 로드 (동적 전체 조회)
  */
 async function loadProducts() {
     console.log('[loadProducts] 요금제 데이터 로드 시작');
     
     try {
-        // 3개 상품을 개별적으로 조회
-        const productIds = [1, 2, 3];
-        const promises = productIds.map(id => 
-            fetch(`/admin/api/products/${id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': window.getCSRFToken()
-                },
-                credentials: 'include'
-            }).then(res => res.json())
-        );
-        
-        const results = await Promise.all(promises);
-        
-        // 각 상품 데이터 저장 및 UI 업데이트
-        results.forEach((result, index) => {
-            const productId = productIds[index];
-            if (result.success && result.data) {
-                const product = result.data;
-                
-                if (productId === 1) {
-                    productData.standard = product;
-                    updateStandardCard(product);
-                } else if (productId === 2) {
-                    productData.premium = product;
-                    updatePremiumCard(product);
-                } else if (productId === 3) {
-                    productData.gold = product;
-                    updateGoldCard(product);
-                }
-            } else {
-                console.warn(`[loadProducts] 상품 ID ${productId} 로드 실패:`, result);
-            }
+        const response = await fetch(`/admin/api/products?per_page=100`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.getCSRFToken()
+            },
+            credentials: 'include'
         });
         
-        console.log('[loadProducts] 요금제 데이터 로드 완료', productData);
+        const result = await response.json();
+        
+        if (result.success && result.data && Array.isArray(result.data.products)) {
+            const products = result.data.products;
+            console.log('[DEBUG] 서버 응답 전체:', products);
+            if (products.length === 0) {
+                console.warn('[loadProducts] 상품 데이터 없음');
+                return;
+            }
+            
+            products.forEach(product => {
+                const normalizedType = (product.type || '').toLowerCase();
+                const normalizedName = (product.name || '').trim().toLowerCase();
+
+                if (
+                    normalizedType === 'basic' ||
+                    normalizedName === 'basic' ||
+                    normalizedName === 'standard'
+                ) {
+                    productData.standard = product;
+                    updateStandardCard(product);
+                } else if (normalizedType === 'package' || normalizedName === 'premium package' || normalizedName === 'premium') {
+                    productData.premium = product;
+                    updatePremiumCard(product);
+                } else if (normalizedType === 'subscription' || normalizedName === 'gold membership' || normalizedName === 'gold') {
+                    productData.gold = product;
+                    updateGoldCard(product);
+                } else if (normalizedType === 'event' || normalizedName === 'welcome event') {
+                    productData.event = product;
+                    updateEventCard(product);
+                } else if (normalizedType === 'event_period' || normalizedType === 'event-period' || normalizedName === 'welcome period event') {
+                    productData.periodEvent = product;
+                    updatePeriodEventCard(product);
+                }
+            });
+            console.log('[loadProducts] 요금제 데이터 로드 완료', productData);
+        } else {
+            console.warn('[loadProducts] 상품 목록 응답이 유효하지 않습니다.', result);
+        }
         
     } catch (error) {
         console.error('[loadProducts] 요금제 데이터 로드 오류:', error);
@@ -76,6 +109,9 @@ async function loadProducts() {
  * Standard 카드 업데이트
  */
 function updateStandardCard(product) {
+    const form = document.getElementById('standardForm');
+    if (form) form.dataset.productId = product.id;
+
     const priceInput = document.getElementById('standardPrice');
     if (priceInput) {
         priceInput.value = product.price || 500;
@@ -113,6 +149,46 @@ function updateGoldCard(product) {
     
     if (priceInput) {
         priceInput.value = product.price || 50000;
+    }
+    if (toggle) {
+        toggle.checked = product.is_active !== false;
+    }
+}
+
+function updateEventCard(product) {
+    const form = document.getElementById('eventForm');
+    if (form) form.dataset.productId = product.id;
+
+    const toggle = document.getElementById('eventToggle');
+    if (toggle) toggle.dataset.productId = product.id;
+
+    const tokenInput = document.getElementById('eventTokenAmount');
+    if (tokenInput) {
+        const tokenValue = Number.isInteger(product.token_amount) && product.token_amount > 0
+            ? product.token_amount
+            : 50;
+        tokenInput.value = tokenValue;
+        tokenInput.setAttribute('value', tokenValue);
+    }
+    if (toggle) {
+        toggle.checked = product.is_active !== false;
+    }
+}
+
+function updatePeriodEventCard(product) {
+    const form = document.getElementById('periodEventForm');
+    if (form) form.dataset.productId = product.id;
+
+    const toggle = document.getElementById('periodEventToggle');
+    if (toggle) toggle.dataset.productId = product.id;
+
+    const durationInput = document.getElementById('periodDuration');
+    if (durationInput) {
+        const durationValue = Number.isInteger(product.duration_days) && product.duration_days > 0
+            ? product.duration_days
+            : 3;
+        durationInput.value = durationValue;
+        durationInput.setAttribute('value', durationValue);
     }
     if (toggle) {
         toggle.checked = product.is_active !== false;
@@ -182,7 +258,10 @@ async function updateProduct(productId, productData) {
 async function handleStandardSubmit(event) {
     event.preventDefault();
     const form = event.target;
-    const productId = parseInt(form.dataset.productId);
+    const productId = resolveProductId(form, '기준 단가');
+    if (productId === null) {
+        return;
+    }
     
     const price = parseFloat(document.getElementById('standardPrice').value);
     if (isNaN(price) || price < 0) {
@@ -206,7 +285,10 @@ async function handleStandardSubmit(event) {
 async function handlePremiumSubmit(event) {
     event.preventDefault();
     const form = event.target;
-    const productId = parseInt(form.dataset.productId);
+    const productId = resolveProductId(form, '할인 패키지');
+    if (productId === null) {
+        return;
+    }
     
     const tokenAmount = parseInt(document.getElementById('premiumTokenAmount').value);
     const price = parseFloat(document.getElementById('premiumPrice').value);
@@ -239,7 +321,10 @@ async function handlePremiumSubmit(event) {
 async function handleGoldSubmit(event) {
     event.preventDefault();
     const form = event.target;
-    const productId = parseInt(form.dataset.productId);
+    const productId = resolveProductId(form, '무제한권');
+    if (productId === null) {
+        return;
+    }
     
     const price = parseFloat(document.getElementById('goldPrice').value);
     const isActive = document.getElementById('goldToggle').checked;
@@ -262,31 +347,144 @@ async function handleGoldSubmit(event) {
 }
 
 /**
+ * Token Event 폼 제출 처리
+ */
+async function handleEventSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const productId = resolveProductId(form, '토큰 이벤트');
+    if (productId === null) {
+        return;
+    }
+    
+    const tokenAmount = parseInt(document.getElementById('eventTokenAmount').value);
+    const isActive = document.getElementById('eventToggle').checked;
+    
+    if (isNaN(tokenAmount) || tokenAmount < 1) {
+        alert('올바른 토큰 개수를 입력해주세요.');
+        return;
+    }
+    
+    const productData = {
+        token_amount: tokenAmount,
+        price: 0,
+        is_active: isActive
+    };
+    
+    const success = await updateProduct(productId, productData);
+    if (success) {
+        alert('이벤트 혜택 정보가 저장되었습니다.');
+    }
+}
+
+/**
+ * Period Event 폼 제출 처리
+ */
+async function handlePeriodEventSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const productId = resolveProductId(form, '기간 이벤트');
+    if (productId === null) {
+        return;
+    }
+    
+    const durationDays = parseInt(document.getElementById('periodDuration').value);
+    const isActive = document.getElementById('periodEventToggle').checked;
+    
+    if (isNaN(durationDays) || durationDays < 1) {
+        alert('올바른 기간(일)을 입력해주세요.');
+        return;
+    }
+    
+    const productData = {
+        duration_days: durationDays,
+        price: 0,
+        token_amount: 0,
+        is_active: isActive
+    };
+    
+    const success = await updateProduct(productId, productData);
+    if (success) {
+        alert('기간제 이벤트 정보가 저장되었습니다.');
+    }
+}
+
+/**
+ * Token Event 토글 처리
+ */
+async function handleEventToggle(event) {
+    const productId = resolveProductId(event.target, '토큰 이벤트');
+    if (productId === null) {
+        event.target.checked = !event.target.checked;
+        return;
+    }
+    const isActive = event.target.checked;
+    
+    const productData = { is_active: isActive };
+    const success = await updateProduct(productId, productData);
+    if (!success) {
+        event.target.checked = !isActive;
+    }
+}
+
+/**
+ * Period Event 토글 처리
+ */
+async function handlePeriodEventToggle(event) {
+    const productId = resolveProductId(event.target, '기간 이벤트');
+    if (productId === null) {
+        event.target.checked = !event.target.checked;
+        return;
+    }
+    const isActive = event.target.checked;
+    
+    const productData = { is_active: isActive };
+    const success = await updateProduct(productId, productData);
+    if (!success) {
+        event.target.checked = !isActive;
+    }
+}
+
+/**
  * Premium 토글 처리
  */
 async function handlePremiumToggle(event) {
-    const productId = parseInt(event.target.dataset.productId);
+    const productId = resolveProductId(event.target, '할인 패키지');
+    if (productId === null) {
+        event.target.checked = !event.target.checked;
+        return;
+    }
     const isActive = event.target.checked;
     
     const productData = {
         is_active: isActive
     };
     
-    await updateProduct(productId, productData);
+    const success = await updateProduct(productId, productData);
+    if (!success) {
+        event.target.checked = !isActive;
+    }
 }
 
 /**
  * Gold 토글 처리
  */
 async function handleGoldToggle(event) {
-    const productId = parseInt(event.target.dataset.productId);
+    const productId = resolveProductId(event.target, '무제한권');
+    if (productId === null) {
+        event.target.checked = !event.target.checked;
+        return;
+    }
     const isActive = event.target.checked;
     
     const productData = {
         is_active: isActive
     };
     
-    await updateProduct(productId, productData);
+    const success = await updateProduct(productId, productData);
+    if (!success) {
+        event.target.checked = !isActive;
+    }
 }
 
 /**
@@ -321,6 +519,26 @@ function initProductManagement() {
     const goldToggle = document.getElementById('goldToggle');
     if (goldToggle) {
         goldToggle.addEventListener('change', handleGoldToggle);
+    }
+
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.addEventListener('submit', handleEventSubmit);
+    }
+
+    const periodEventForm = document.getElementById('periodEventForm');
+    if (periodEventForm) {
+        periodEventForm.addEventListener('submit', handlePeriodEventSubmit);
+    }
+
+    const eventToggle = document.getElementById('eventToggle');
+    if (eventToggle) {
+        eventToggle.addEventListener('change', handleEventToggle);
+    }
+
+    const periodEventToggle = document.getElementById('periodEventToggle');
+    if (periodEventToggle) {
+        periodEventToggle.addEventListener('change', handlePeriodEventToggle);
     }
     
     // Premium 할인율 실시간 계산

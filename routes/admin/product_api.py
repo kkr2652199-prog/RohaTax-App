@@ -15,6 +15,88 @@ import logging
 logger = logging.getLogger(__name__)
 product_service = ProductService()
 
+DEFAULT_PRODUCTS = [
+    {
+        'name': 'Standard',
+        'description': '기본 토큰 상품',
+        'price': 500,
+        'token_amount': 1,
+        'type': 'basic',
+        'vat_included': False,
+        'duration_days': None,
+        'is_active': True,
+    },
+    {
+        'name': 'Premium Package',
+        'description': '할인 패키지',
+        'price': 25000,
+        'token_amount': 100,
+        'type': 'package',
+        'vat_included': False,
+        'duration_days': None,
+        'is_active': True,
+    },
+    {
+        'name': 'Gold Membership',
+        'description': '무제한 이용권',
+        'price': 70000,
+        'token_amount': -1,
+        'type': 'subscription',
+        'vat_included': False,
+        'duration_days': None,
+        'is_active': True,
+    },
+    {
+        'name': 'Welcome Event',
+        'description': '신규 가입자를 위한 무료 토큰 혜택',
+        'price': 0,
+        'token_amount': 50,
+        'type': 'event',
+        'vat_included': True,
+        'duration_days': None,
+        'is_active': False,
+    },
+    {
+        'name': 'Welcome Period Event',
+        'description': '신규 가입자를 위한 기간제 혜택',
+        'price': 0,
+        'token_amount': 0,
+        'type': 'event_period',
+        'vat_included': True,
+        'duration_days': 3,
+        'is_active': False,
+    },
+]
+
+
+def ensure_default_products(existing_products: list[dict]) -> None:
+    """
+    기본 상품 5종이 존재하지 않으면 자동으로 복구한다.
+    """
+    existing_names = {
+        (product.get('name') or '').strip().lower()
+        for product in existing_products
+    }
+
+    created_names = []
+
+    for default_product in DEFAULT_PRODUCTS:
+        normalized_name = default_product['name'].strip().lower()
+        if normalized_name in existing_names:
+            continue
+
+        try:
+            product_service.create_product(ProductCreate(**default_product))
+            created_names.append(default_product['name'])
+        except Exception as exc:
+            logger.error(f"기본 상품 '{default_product['name']}' 복구 중 오류: {exc}")
+
+    if created_names:
+        logger.info(
+            "상품 데이터가 유실되어 기본 상품을 복구했습니다: %s",
+            ', '.join(created_names)
+        )
+
 
 @admin_bp.route('/admin/api/products', methods=['GET'])
 def get_products():
@@ -43,7 +125,23 @@ def get_products():
             elif is_active_param.lower() == 'false':
                 is_active = False
         
-        # 상품 목록 조회
+        # 전체 상품을 한 번 조회하여 유실 여부 확인
+        all_products_snapshot = product_service.get_all_products(
+            page=1,
+            per_page=1000,
+            is_active=None
+        )
+
+        if all_products_snapshot.get('total', 0) < 5:
+            ensure_default_products(all_products_snapshot.get('products', []))
+            # 복구 후 다시 전체 스냅샷 갱신
+            all_products_snapshot = product_service.get_all_products(
+                page=1,
+                per_page=1000,
+                is_active=None
+            )
+
+        # 클라이언트 요청 기준으로 다시 조회
         result = product_service.get_all_products(
             page=page,
             per_page=per_page,

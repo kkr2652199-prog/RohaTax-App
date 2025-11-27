@@ -67,7 +67,7 @@ function getDateRange(period) {
         case 'today':
             startDate = new Date(today);
             break;
-        case 'week':
+        case 'week': {
             // 이번 주 월요일부터 오늘까지
             const dayOfWeek = today.getDay();
             const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // 월요일로 조정
@@ -75,6 +75,7 @@ function getDateRange(period) {
             startDate.setDate(diff);
             startDate.setHours(0, 0, 0, 0);
             break;
+        }
         case 'month':
             // 이번 달 1일부터 오늘까지
             startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -1261,35 +1262,96 @@ async function loadProductsForPayment() {
         }
         
         const products = result.data.products;
+        console.log('[DEBUG] API 원본 데이터:', products);
         const productSelect = document.getElementById('createPaymentProductId');
-        
+
+        // 허용된 타입만 유지하고 최신(가장 큰 ID)만 선택
+        const allowedTypes = ['basic', 'package', 'subscription', 'event', 'event_period'];
+        const preferredOrder = ['basic', 'package', 'subscription', 'event', 'event_period'];
+        const latestByType = {};
+        const nameTypeMap = {
+            'standard': 'basic',
+            'basic': 'basic',
+            'premium package': 'package',
+            'premium': 'package',
+            'gold membership': 'subscription',
+            'gold': 'subscription',
+            'welcome event': 'event',
+            'welcome period event': 'event_period'
+        };
+
+        const hasBetterData = (type, existing, candidate) => {
+            if (!existing) return true;
+
+            if (type === 'event_period') {
+                const existingDuration = Number(existing.duration_days || 0);
+                const candidateDuration = Number(candidate.duration_days || 0);
+                if (candidateDuration > 0 && existingDuration === 0) return true;
+                if (candidateDuration === 0 && existingDuration > 0) return false;
+            }
+
+            if (type === 'event') {
+                const existingTokens = Number(existing.token_amount || 0);
+                const candidateTokens = Number(candidate.token_amount || 0);
+                if (candidateTokens > 0 && existingTokens === 0) return true;
+                if (candidateTokens === 0 && existingTokens > 0) return false;
+            }
+
+            return (candidate.id || 0) > (existing.id || 0);
+        };
+
+        products.forEach(product => {
+            const normalizedType = (product.type || '').trim().toLowerCase();
+            const normalizedName = (product.name || '').trim().toLowerCase();
+            const mappedType = nameTypeMap[normalizedType] || nameTypeMap[normalizedName] || normalizedType;
+
+            if (!allowedTypes.includes(mappedType)) return;
+            const current = latestByType[mappedType];
+            if (hasBetterData(mappedType, current, product)) {
+                latestByType[mappedType] = product;
+            }
+        });
+
+        const curatedProducts = preferredOrder
+            .map(type => latestByType[type])
+            .filter(Boolean);
+
         // 기존 옵션 제거 (첫 번째 옵션 제외)
         while (productSelect.options.length > 1) {
             productSelect.remove(1);
         }
-        
-        // 상품 옵션 추가
-        products.forEach(product => {
+
+        const displayLabel = {
+            basic: product => `[일반] 기준 단가 (1개당 ${formatCurrency(product.price || 0)})`,
+            package: product => `[할인] 프리미엄 (${formatNumber(product.token_amount || 0)}개/${formatCurrency(product.price || 0)})`,
+            subscription: product => `[구독] 무제한권 (월 ${formatCurrency(product.price || 0)})`,
+            event: product => `[이벤트] 웰컴 토큰 (${formatNumber(product.token_amount || 0)}토큰/${formatCurrency(product.price || 0)})`,
+            event_period: product => `[이벤트] 무료 체험 (${product.duration_days || 0}일/${formatCurrency(product.price || 0)})`
+        };
+
+        curatedProducts.forEach(product => {
             const option = document.createElement('option');
             option.value = product.id;
-            
-            // 상품명 및 가격 표시
-            let displayText = product.name;
-            if (product.token_amount === -1) {
-                displayText += ` (무제한, ${formatCurrency(product.price)})`;
-            } else {
-                displayText += ` (${formatNumber(product.token_amount)}토큰, ${formatCurrency(product.price)})`;
-            }
-            
-            option.textContent = displayText;
+
+            const normalizedType = (product.type || '').trim().toLowerCase();
+            const normalizedName = (product.name || '').trim().toLowerCase();
+            const mappedType = nameTypeMap[normalizedType] || nameTypeMap[normalizedName] || normalizedType;
+            const labelBuilder = displayLabel[mappedType];
+            option.textContent = labelBuilder
+                ? labelBuilder(product)
+                : `${product.name} (${formatCurrency(product.price || 0)})`;
             option.dataset.price = product.price;
             option.dataset.tokenAmount = product.token_amount;
+            option.dataset.durationDays = product.duration_days || 0;
             option.dataset.productId = product.id;
-            
+
             productSelect.appendChild(option);
         });
-        
-        console.log('[loadProductsForPayment] 상품 목록 로드 완료:', products.length, '개');
+
+        console.log(
+            `[loadProductsForPayment] 상품 목록 로드 완료: 전체 ${products.length}개 중 매핑 ${curatedProducts.length}개`,
+            curatedProducts
+        );
         
     } catch (error) {
         console.error('[loadProductsForPayment] 오류:', error);
