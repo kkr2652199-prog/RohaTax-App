@@ -1,5 +1,18 @@
 # RohaTax Absolute Rules (v1.0)
 
+## 0. 서버 실행 규칙 (Server Execution)
+
+### 0.1 포트 구분
+- **본진 (5000번 포트)**: `start_server_5000.bat` (프로젝트 루트)
+- **전초기지 (5001번 포트)**: `start_server_5001.bat` (homepage1 폴더)
+
+### 0.2 실행 원칙
+- ✅ **단독 실행**: 한 번에 하나의 서버만 실행 (포트 충돌 방지)
+- ✅ **명확한 구분**: 파일명으로 포트 번호를 명시
+- ❌ **혼동 금지**: `start_server_simple.bat` 같은 모호한 이름 사용 금지
+
+---
+
 ## 1. 상품 및 결제 (Products & Payments)
 
 ### 1.1 테이블 구조
