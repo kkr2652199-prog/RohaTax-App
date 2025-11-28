@@ -287,7 +287,10 @@
         
         // Input 필드에서 수량 가져오기
         const quantityInput = document.getElementById('modalQuantityInput');
-        if (quantityInput && !quantityInput.closest('.hidden')) {
+        const isQuantityInputVisible = quantityInput && !quantityInput.closest('.hidden');
+        
+        if (isQuantityInputVisible) {
+            // 수량 입력창이 보이는 경우 (basic 타입)
             const inputValue = quantityInput.value.trim();
             if (inputValue === '' || inputValue === null || inputValue === undefined) {
                 quantity = 0;
@@ -297,10 +300,20 @@
                     quantity = 0;
                 }
             }
+        } else {
+            // 수량 입력창이 숨겨진 경우 (package, subscription, event 타입)
+            // package, subscription은 수량 1로 자동 설정
+            // event 타입은 수량 1로 설정 (이벤트 상품도 1개씩만 구매 가능)
+            if (currentProduct.type === 'package' || currentProduct.type === 'subscription' || 
+                currentProduct.type === 'event' || currentProduct.type === 'event_period') {
+                quantity = 1;
+            } else {
+                quantity = 0;
+            }
         }
 
-        // 수량 검증
-        if (quantity <= 0) {
+        // 수량 검증 (basic 타입만 수량 입력 필수)
+        if (quantity <= 0 && currentProduct.type === 'basic') {
             alert('수량을 입력해주세요.');
             if (quantityInput) {
                 quantityInput.focus();
@@ -445,7 +458,8 @@
                 // 실패 시
                 const errorMessage = data.message || '결제 처리에 실패했습니다';
                 alert(`오류: ${errorMessage}`);
-                console.error('[결제 완료 실패]', data);
+                console.error('[결제 완료 실패] 전체 응답:', JSON.stringify(data, null, 2));
+                console.error('[결제 완료 실패] 오류 메시지:', errorMessage);
             }
 
         } catch (error) {

@@ -52,7 +52,8 @@ class PaymentService:
         product_id: int, 
         quantity: int = 1,
         admin_user_id: int = 1,
-        status: PaymentStatus = PaymentStatus.COMPLETED
+        status: PaymentStatus = PaymentStatus.COMPLETED,
+        order_id: Optional[str] = None
     ) -> PaymentResponse:
         """
         결제 생성 (요금제 기반 수동 결제)
@@ -81,10 +82,10 @@ class PaymentService:
                 user_row = None
                 
                 try:
-                    # 1. 상품 정보 조회
+                    # 1. 상품 정보 조회 (type, duration_days 포함)
                     product_row = conn.execute(
                         """
-                        SELECT id, name, price, token_amount, is_active
+                        SELECT id, name, price, token_amount, type, duration_days, is_active
                         FROM products
                         WHERE id = ?
                         """,
@@ -94,40 +95,50 @@ class PaymentService:
                     if not product_row:
                         raise ValueError(f"상품을 찾을 수 없습니다: ID {product_id}")
                     
-                    if not product_row['is_active']:
-                        raise ValueError(f"판매 중지된 상품입니다: {product_row['name']}")
+                    # sqlite3.Row를 dict로 변환 (안전한 접근을 위해)
+                    product = dict(product_row)
                     
-                    product_name = product_row['name']
-                    product_price = product_row['price']
-                    product_token_amount = product_row['token_amount']
+                    if not product['is_active']:
+                        raise ValueError(f"판매 중지된 상품입니다: {product['name']}")
                     
-                    # 2. 금액 및 토큰 계산
-                    # Standard (ID: 1)인 경우: 가격 × 수량
-                    # Premium/Gold인 경우: 가격 그대로
-                    if product_id == 1:  # Standard
-                        total_amount = product_price * quantity
-                        total_token_amount = quantity  # Standard는 토큰 1개
+                    product_name = product['name']
+                    product_price = product['price']
+                    product_token_amount = product['token_amount']
+                    product_type = product.get('type') or 'basic'  # 기본값 'basic'
+                    product_duration_days = product.get('duration_days')
+                    
+                    # 2. 금액 및 토큰 계산 (수량 반영)
+                    # event_period 타입은 금액 0원, 토큰 0개
+                    if product_type == 'event_period':
+                        total_amount = 0  # 기간제 이벤트는 무료
+                        total_token_amount = 0  # 토큰 지급 없음
                     else:
-                        total_amount = product_price
+                        # 모든 상품: 가격 × 수량
+                        total_amount = product_price * quantity
+                        
+                        # 토큰 계산 (수량 반영, 단 무제한(-1)은 그대로 유지)
                         if product_token_amount == -1:  # Gold (무제한)
-                            total_token_amount = -1
-                        else:  # Premium
-                            total_token_amount = product_token_amount
+                            total_token_amount = -1  # 무제한은 수량과 무관하게 -1
+                        else:
+                            # Standard, Premium 등: 토큰 수량 × 주문 수량
+                            total_token_amount = (product_token_amount or 0) * quantity
                     
-                    # 3. 주문 ID 생성 (ORD-YYYYMMDD-HHMMSS-XXXX 형식)
+                    # 3. 주문 ID 생성 또는 사용 (order_id가 제공되면 사용, 없으면 생성)
                     from datetime import datetime
-                    now = datetime.now()
-                    order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}"
-                    
-                    # 주문 ID 중복 확인 (거의 없지만 안전장치)
-                    existing = conn.execute(
-                        "SELECT id FROM payment_history WHERE order_id = ?",
-                        (order_id,)
-                    ).fetchone()
-                    
-                    if existing:
-                        # 중복 시 타임스탬프 추가
-                        order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}-{now.microsecond:06d}"
+                    if not order_id:
+                        # order_id가 제공되지 않으면 자동 생성
+                        now = datetime.now()
+                        order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}"
+                        
+                        # 주문 ID 중복 확인 (거의 없지만 안전장치)
+                        existing = conn.execute(
+                            "SELECT id FROM payment_history WHERE order_id = ?",
+                            (order_id,)
+                        ).fetchone()
+                        
+                        if existing:
+                            # 중복 시 타임스탬프 추가
+                            order_id = f"ORD-{now.strftime('%Y%m%d-%H%M%S')}-{user_id:04d}-{now.microsecond:06d}"
                     
                     # 3-1. 중복 결제 방지: 같은 사용자, 같은 상품, 같은 시간대(5초 이내) 중복 생성 방지
                     # (더블 클릭으로 인한 중복 요청 방지)
@@ -411,6 +422,55 @@ class PaymentService:
                         elif new_plan_type == current_plan_type:
                             self.logger.info(
                                 f"등급 업데이트 스킵: 사용자 ID {user_id}의 등급이 이미 '{current_plan_type}'입니다."
+                            )
+                    
+                    # 7-1. 기간제 이벤트 처리 (event_period 타입)
+                    if status_str == PaymentStatus.COMPLETED.value and product_type == 'event_period' and product_duration_days:
+                        from datetime import timedelta
+                        
+                        # free_trial_expired_at 컬럼 확인 및 추가
+                        columns_info = conn.execute("PRAGMA table_info(users)").fetchall()
+                        columns = [row[1] for row in columns_info]
+                        if 'free_trial_expired_at' not in columns:
+                            conn.execute("ALTER TABLE users ADD COLUMN free_trial_expired_at TEXT")
+                            self.logger.info(f"users 테이블에 free_trial_expired_at 컬럼 추가 완료")
+                        
+                        # 기간 연장 계산 (현재 시간 + duration_days)
+                        now = datetime.now()
+                        expiration = now + timedelta(days=max(1, product_duration_days))
+                        expiration_iso = expiration.strftime('%Y-%m-%d %H:%M:%S')
+                        
+                        # 기존 만료일 조회 (로깅용)
+                        trial_row = conn.execute(
+                            """
+                            SELECT free_trial_expired_at
+                            FROM users
+                            WHERE id = ?
+                            """,
+                            (user_id,)
+                        ).fetchone()
+                        
+                        current_expiration = trial_row['free_trial_expired_at'] if trial_row else None
+                        
+                        # free_trial_expired_at 업데이트
+                        conn.execute(
+                            """
+                            UPDATE users
+                            SET free_trial_expired_at = ?, updated_at = datetime('now', 'localtime')
+                            WHERE id = ?
+                            """,
+                            (expiration_iso, user_id)
+                        )
+                        
+                        if current_expiration:
+                            self.logger.info(
+                                f"기간제 이벤트 기간 연장: 사용자 ID {user_id}, "
+                                f"기존 만료일 {current_expiration} → 새 만료일 {expiration_iso} (+{product_duration_days}일)"
+                            )
+                        else:
+                            self.logger.info(
+                                f"기간제 이벤트 신규 설정: 사용자 ID {user_id}, "
+                                f"만료일 {expiration_iso} (+{product_duration_days}일)"
                             )
                     
                     # 7. activity_logs에 기록 (결제 완료 시)

@@ -50,14 +50,18 @@ def create_order():
     # 2. 입력 데이터 확인
     data = request.get_json(silent=True) or {}
     product_id = data.get('product_id')
+    quantity = data.get('quantity', 1)  # 기본값 1
     
     if not product_id:
         return error('product_id는 필수입니다', status=400)
     
     try:
         product_id = int(product_id)
+        quantity = int(quantity) if quantity else 1
+        if quantity < 1:
+            return error('quantity는 1 이상이어야 합니다', status=400)
     except (ValueError, TypeError):
-        return error('product_id는 정수여야 합니다', status=400)
+        return error('product_id와 quantity는 정수여야 합니다', status=400)
     
     # 3. 상품 정보 조회
     with get_conn() as conn:
@@ -89,10 +93,11 @@ def create_order():
             logger.warning(f"사용자를 찾을 수 없음: user_id={user_id}")
             return error('사용자 정보를 찾을 수 없습니다', status=404)
         
-        # 5. 금액 및 세금 계산
-        total_amount = product['price'] or 0
+        # 5. 금액 및 세금 계산 (수량 반영)
+        unit_price = product['price'] or 0
+        total_amount = unit_price * quantity  # 수량 곱하기
         
-        # 세금 계산기 사용
+        # 세금 계산기 사용 (총액 기준)
         supply_price, vat = calculate_tax(total_amount)
         
         # 6. merchant_uid 생성: ORD-{YYYYMMDD}-{UUID4}
@@ -107,9 +112,9 @@ def create_order():
                 """
                 INSERT INTO orders (
                     user_id, merchant_uid, product_id, product_name,
-                    amount, supply_price, vat, status, created_at
+                    amount, supply_price, vat, quantity, status, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', datetime('now', 'localtime'))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready', datetime('now', 'localtime'))
                 """,
                 (
                     user_id,
@@ -118,12 +123,13 @@ def create_order():
                     product['name'],
                     total_amount,
                     supply_price,
-                    vat
+                    vat,
+                    quantity  # 수량 저장
                 )
             )
             conn.commit()
             
-            logger.info(f"주문 생성 성공: merchant_uid={merchant_uid}, user_id={user_id}, product_id={product_id}")
+            logger.info(f"주문 생성 성공: merchant_uid={merchant_uid}, user_id={user_id}, product_id={product_id}, quantity={quantity}")
             
             # 8. 응답 반환
             return success(
@@ -133,6 +139,7 @@ def create_order():
                     'amount': total_amount,
                     'supply_price': supply_price,
                     'vat': vat,
+                    'quantity': quantity,
                     'product_id': product_id,
                     'product_name': product['name'],
                     'buyer_email': user['email'] or '',
