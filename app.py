@@ -314,6 +314,16 @@ from routes.payment_routes import payment_bp
 if 'payment_routes' not in app.blueprints:
     app.register_blueprint(payment_bp)
 
+# Order API 등록
+from routes.api_modules.order_api import order_bp
+if 'order_api' not in app.blueprints:
+    app.register_blueprint(order_bp)
+
+# Payment Complete API 등록
+from routes.api_modules.payment_complete_api import payment_complete_bp
+if 'payment_complete_api' not in app.blueprints:
+    app.register_blueprint(payment_complete_bp)
+
 
 @app.route('/')
 def homepage():

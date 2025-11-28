@@ -4,7 +4,7 @@
       <ul style="list-style:none;display:flex;gap:30px;justify-content:center;margin:0;padding:0;">
         <li><a href="#home">{{ t('home.nav.home','홈') }}</a></li>
         <li><a href="#features">{{ t('home.nav.features','기능') }}</a></li>
-        <li><a href="#pricing">{{ t('home.nav.pricing','요금') }}</a></li>
+        <li><a href="/shop">{{ t('home.nav.pricing','멤버십') }}</a></li>
         <li><a href="#contact">{{ t('home.nav.contact','문의') }}</a></li>
         {% if session.get('user_id') %}
         <li><a href="/logout">로그아웃</a></li>

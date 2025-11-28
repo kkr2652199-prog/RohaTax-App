@@ -20,101 +20,22 @@ def _ensure_free_trial_column(cursor):
         cursor.execute("ALTER TABLE users ADD COLUMN free_trial_expired_at TEXT")
 
 
-@payment_bp.route('/api/payment/complete', methods=['POST'])
-def complete_payment():
-    """
-    기간제 상품 구매 시 결제 완료 처리
-    """
-    data = request.get_json(silent=True) or {}
-    user_id = data.get('user_id')
-    product_id = data.get('product_id')
-    payment_method = data.get('payment_method', 'card')
-
-    if not user_id or not product_id:
-        return error('user_id와 product_id는 필수입니다.', status=400)
-
-    try:
-        with get_conn() as conn:
-            conn.row_factory = None
-            cursor = conn.cursor()
-            cursor.execute("BEGIN TRANSACTION")
-
-            product = cursor.execute(
-                """
-                SELECT id, name, type, price, token_amount, duration_days
-                FROM products
-                WHERE id = ?
-                """,
-                (product_id,)
-            ).fetchone()
-
-            if not product:
-                cursor.execute("ROLLBACK")
-                return error(f"상품을 찾을 수 없습니다: ID {product_id}", status=404)
-
-            amount = product[3] or 0
-            token_amount = product[4] if product[4] is not None else 0
-            supply_price = amount
-            vat = 0
-            expiration_iso = None
-
-            if product[2] == 'event_period':
-                duration_days = product[5] or 0
-                amount = 0
-                supply_price = 0
-                token_amount = 0
-                expiration = datetime.now() + timedelta(days=max(1, duration_days))
-                expiration_iso = expiration.strftime('%Y-%m-%d %H:%M:%S')
-                _ensure_free_trial_column(cursor)
-                cursor.execute(
-                    """
-                    UPDATE users
-                    SET free_trial_expired_at = ?, updated_at = datetime('now', 'localtime')
-                    WHERE id = ?
-                    """,
-                    (expiration_iso, user_id)
-                )
-
-            order_uid = f"PAY-{uuid4().hex}"
-            cursor.execute(
-                """
-                INSERT INTO orders 
-                (user_id, product_id, order_uid, status, amount, token_amount, supply_price, vat, payment_method, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
-                """,
-                (
-                    user_id,
-                    product_id,
-                    order_uid,
-                    'completed',
-                    amount,
-                    token_amount,
-                    supply_price,
-                    vat,
-                    payment_method
-                )
-            )
-
-            conn.commit()
-
-            return success(
-                '기간제 상품 결제 완료',
-                data={
-                    'order_uid': order_uid,
-                    'product_id': product_id,
-                    'free_trial_expired_at': expiration_iso
-                }
-            )
-
-    except Exception as exc:
-        return error(f'결제 처리를 실패했습니다: {str(exc)}', status=500)
-
+# 결제 완료 API는 payment_complete_api.py로 이동됨
+# 중복 라우트 방지를 위해 이 함수는 제거됨
 
 @payment_bp.route('/pricing', methods=['GET'])
 def pricing():
     """
-    요금제 페이지
-    모든 상품을 조회하여 템플릿에 전달 (is_active 필터링은 템플릿에서 처리)
+    요금제 페이지 (기존 호환성 유지)
+    """
+    return shop()
+
+@payment_bp.route('/shop', methods=['GET'])
+def shop():
+    """
+    상점 페이지
+    is_active=1인 모든 상품을 조회하여 템플릿에 전달
+    이벤트 상품과 일반 상품을 구분하여 전달
     """
     try:
         with get_conn() as conn:
@@ -124,16 +45,29 @@ def pricing():
                 SELECT id, name, description, price, token_amount, duration_days, 
                        type, vat_included, is_active
                 FROM products
-                ORDER BY id
+                WHERE COALESCE(is_active, 0) = 1
+                ORDER BY 
+                    CASE 
+                        WHEN type IN ('event', 'event_period') THEN 0
+                        ELSE 1
+                    END,
+                    id
                 """
             ).fetchall()
             
             products_list = [dict(row) for row in products]
+            
+            # 이벤트 상품과 일반 상품 분리
+            event_products = [p for p in products_list if p['type'] in ['event', 'event_period']]
+            regular_products = [p for p in products_list if p['type'] not in ['event', 'event_period']]
         
-        return render_template('pricing.html', products=products_list)
+        return render_template('payment/shop.html', 
+                             products=products_list,
+                             event_products=event_products,
+                             regular_products=regular_products)
         
     except Exception as exc:
-        return error(f'요금제 페이지 로딩 실패: {str(exc)}', status=500)
+        return error(f'상점 페이지 로딩 실패: {str(exc)}', status=500)
 
 
 
