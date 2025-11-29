@@ -675,8 +675,9 @@ async function viewPaymentDetail(paymentId) {
         
         const payment = result.data;
         
-        // 유저 정보 조회 (유저명 가져오기)
+        // 유저 정보 조회 (유저명/구독/체험 정보 가져오기)
         let userName = `유저 #${payment.user_id}`;
+        let userData = null;
         try {
             const userResponse = await fetch(`/admin/api/users/${payment.user_id}`, {
                 method: 'GET',
@@ -689,7 +690,8 @@ async function viewPaymentDetail(paymentId) {
             if (userResponse.ok) {
                 const userResult = await userResponse.json();
                 if (userResult.success && userResult.data) {
-                    userName = userResult.data.username || userName;
+                    userData = userResult.data;
+                    userName = userData.username || userName;
                 }
             }
         } catch (e) {
@@ -714,64 +716,96 @@ async function viewPaymentDetail(paymentId) {
             console.warn('[viewPaymentDetail] 상품 정보 조회 실패:', e);
         }
         
-        // Gold 상품인 경우 사용자의 구독 종료일 조회
+        // Gold/체험 상품인 경우 구독/체험 정보 렌더링
         let subscriptionInfo = '';
-        if (isGoldProduct) {
+        const hasSubExpiry = userData && userData.subscription_end_date;
+        const hasTrialExpiry = userData && userData.free_trial_expired_at;
+        const isTrialProduct = !isGoldProduct && hasTrialExpiry && (payment.amount === 0) && (payment.token_amount === 0);
+        
+        if (isGoldProduct && hasSubExpiry) {
             try {
-                const userResponse = await fetch(`/admin/api/users/${payment.user_id}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': window.getCSRFToken()
-                    },
-                    credentials: 'include'
+                const endDate = new Date(userData.subscription_end_date);
+                const paymentDate = payment.created_at ? new Date(payment.created_at) : new Date();
+                
+                // 실제 구독 기간 계산 (결제일 ~ 만료일)
+                const diffTime = endDate.getTime() - paymentDate.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                const startLabel = paymentDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
                 });
-                if (userResponse.ok) {
-                    const userResult = await userResponse.json();
-                    if (userResult.success && userResult.data && userResult.data.subscription_end_date) {
-                        const endDate = new Date(userResult.data.subscription_end_date);
-                        const paymentDate = payment.created_at ? new Date(payment.created_at) : new Date();
-                        
-                        // 실제 구독 기간 계산 (결제일 ~ 만료일)
-                        const diffTime = endDate.getTime() - paymentDate.getTime();
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        
-                        // 콘솔 로그 (디버깅용)
-                        console.log('[viewPaymentDetail] 구독 기간 계산:', {
-                            paymentDate: paymentDate.toISOString(),
-                            endDate: endDate.toISOString(),
-                            diffDays: diffDays,
-                            diffTime: diffTime,
-                            expectedDays: 30
-                        });
-                        
-                        // 만료일이 결제일보다 미래인지 확인
-                        if (diffDays > 0) {
-                            subscriptionInfo = `
-                                <tr>
-                                    <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
-                                    <td style="padding: 0.5rem 0;">
-                                        <strong>${diffDays}일</strong><br>
-                                        <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
-                                        ${diffDays !== 30 ? `<br><small class="text-warning">⚠️ 예상 기간(30일)과 다릅니다. (차이: ${diffDays - 30}일)</small>` : ''}
-                                    </td>
-                                </tr>
-                            `;
-                        } else {
-                            subscriptionInfo = `
-                                <tr>
-                                    <td class="text-muted" style="padding: 0.5rem 0;">구독 기간</td>
-                                    <td style="padding: 0.5rem 0;">
-                                        <strong class="text-danger">만료됨</strong><br>
-                                        <small class="text-muted">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
-                                    </td>
-                                </tr>
-                            `;
-                        }
-                    }
+                const endLabel = endDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                
+                // 콘솔 로그 (디버깅용)
+                console.log('[viewPaymentDetail] 구독 기간 계산:', {
+                    paymentDate: paymentDate.toISOString(),
+                    endDate: endDate.toISOString(),
+                    diffDays: diffDays,
+                    diffTime: diffTime,
+                    expectedDays: 30
+                });
+                
+                if (diffDays > 0) {
+                    subscriptionInfo = `
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                            <td style="padding: 0.5rem 0;">
+                                <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
+                                <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                                ${diffDays !== 30 ? `<br><small class="text-warning">⚠️ 예상 기간(30일)과 다릅니다. (차이: ${diffDays - 30}일)</small>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    subscriptionInfo = `
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                            <td style="padding: 0.5rem 0;">
+                                <strong class="text-danger">만료됨</strong><br>
+                                <small class="text-muted">${endLabel} 기준 만료</small>
+                            </td>
+                        </tr>
+                    `;
                 }
             } catch (e) {
-                console.warn('[viewPaymentDetail] 구독 정보 조회 실패:', e);
+                console.warn('[viewPaymentDetail] 구독 정보 처리 실패:', e);
+            }
+        } else if (isTrialProduct) {
+            try {
+                const trialEnd = new Date(userData.free_trial_expired_at);
+                const paymentDate = payment.created_at ? new Date(payment.created_at) : new Date();
+
+                const diffTime = trialEnd.getTime() - paymentDate.getTime();
+                const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+                const startLabel = paymentDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const endLabel = trialEnd.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+
+                subscriptionInfo = `
+                    <tr>
+                        <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                        <td style="padding: 0.5rem 0;">
+                            <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
+                            <small class="text-muted">체험 만료일: ${endLabel} ${trialEnd.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                        </td>
+                    </tr>
+                `;
+            } catch (e) {
+                console.warn('[viewPaymentDetail] 체험 만료일 처리 실패:', e);
             }
         }
         
@@ -806,6 +840,11 @@ async function viewPaymentDetail(paymentId) {
             minute: '2-digit'
         });
         
+        const isFreePayment = (payment.amount || 0) === 0;
+        const totalDisplay = isFreePayment
+            ? '무료'
+            : `₩ ${(payment.amount || 0).toLocaleString()}`;
+
         contentEl.innerHTML = `
             <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <!-- 영수증 정보 테이블 -->
@@ -845,7 +884,7 @@ async function viewPaymentDetail(paymentId) {
                 <!-- 총액 -->
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
-                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">₩ ${(payment.amount || 0).toLocaleString()}</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
                 </div>
             </div>
         `;

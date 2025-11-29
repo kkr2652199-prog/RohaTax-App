@@ -40,23 +40,24 @@ def get_user_by_id(user_id: int) -> Dict:
     if not user_data:
         raise UserServiceError(f"사용자를 찾을 수 없습니다: ID {user_id}")
     
-    # subscription_end_date 및 가장 최근 Gold 결제일 포함 확인
+    # subscription_end_date, free_trial_expired_at 및 가장 최근 Gold 결제일 포함 확인
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute(
-            "SELECT subscription_end_date FROM users WHERE id = ?",
+            "SELECT subscription_end_date, free_trial_expired_at FROM users WHERE id = ?",
             (user_id,)
         ).fetchone()
         
         if row:
             user_data['subscription_end_date'] = row['subscription_end_date']
+            user_data['free_trial_expired_at'] = row['free_trial_expired_at']
         
-        # 가장 최근 Gold 상품 결제일 조회 (token_amount = -1)
+        # 가장 최근 Gold 상품 결제일 조회 (상품 ID 기준: 3 = 유료 Gold)
         gold_payment = conn.execute(
             """
             SELECT created_at
             FROM payment_history
-            WHERE user_id = ? AND token_amount = -1 AND status = 'completed'
+            WHERE user_id = ? AND product_id = 3 AND status = 'completed'
             ORDER BY created_at DESC
             LIMIT 1
             """,
@@ -67,6 +68,23 @@ def get_user_by_id(user_id: int) -> Dict:
             user_data['gold_payment_start_date'] = gold_payment['created_at']
         else:
             user_data['gold_payment_start_date'] = None
+
+        # 가장 최근 무료 기간제(체험) 결제일 조회 (상품 ID 기준: 5 = 기간 이벤트)
+        trial_payment = conn.execute(
+            """
+            SELECT created_at
+            FROM payment_history
+            WHERE user_id = ? AND product_id = 5 AND status = 'completed'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        ).fetchone()
+
+        if trial_payment:
+            user_data['trial_start_date'] = trial_payment['created_at']
+        else:
+            user_data['trial_start_date'] = None
     
     return user_data
 

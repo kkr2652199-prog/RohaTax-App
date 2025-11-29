@@ -99,7 +99,17 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
 
         # 1. 초기화 전 사용자 정보 조회
         user_row = conn.execute(
-            "SELECT username, COALESCE(token_balance, 0) AS token_balance, COALESCE(tokens_used, 0) AS tokens_used, plan_type, subscription_end_date FROM users WHERE id = ?",
+            """
+            SELECT 
+                username,
+                COALESCE(token_balance, 0) AS token_balance,
+                COALESCE(tokens_used, 0)   AS tokens_used,
+                plan_type,
+                subscription_end_date,
+                free_trial_expired_at
+            FROM users
+            WHERE id = ?
+            """,
             (user_id,)
         ).fetchone()
         
@@ -110,10 +120,37 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
         tokens_used_before = user_row['tokens_used'] or 0
         plan_type_before = user_row['plan_type'] or 'free'
         subscription_end_date_before = user_row['subscription_end_date']
+        free_trial_expired_at_before = user_row['free_trial_expired_at']
         
-        # 2. 완전 초기화: 토큰, 등급, 구독 기간 모두 초기화
+        # 2. 완전 초기화: 토큰, 등급, 구독 기간, 무료 체험 정보 모두 초기화
         conn.execute(
-            "UPDATE users SET token_balance = 0, tokens_used = 0, plan_type = 'free', subscription_end_date = NULL, updated_at = datetime('now', 'localtime') WHERE id = ?",
+            """
+            UPDATE users
+            SET
+                token_balance        = 0,
+                tokens_used          = 0,
+                plan_type            = 'free',
+                subscription_end_date = NULL,
+                free_trial_expired_at = NULL,
+                updated_at           = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (user_id,),
+        )
+
+        # 2-1. 무료 이벤트(1인 1회 제한) 사용 이력 초기화
+        # 기존 결제 내역은 남기되, status를 'reset_by_admin'으로 변경하여
+        # 1회 제한 체크(where status='completed')에서는 제외되도록 처리한다.
+        cursor.execute(
+            """
+            UPDATE payment_history
+            SET status = 'reset_by_admin'
+            WHERE user_id = ?
+              AND status = 'completed'
+              AND product_id IN (
+                  SELECT id FROM products WHERE COALESCE(one_time_limit, 0) = 1
+              )
+            """,
             (user_id,),
         )
         
@@ -135,7 +172,9 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
                 'old_plan_type': plan_type_before,
                 'new_plan_type': 'free',
                 'old_subscription_end_date': subscription_end_date_before,
-                'new_subscription_end_date': None
+                'new_subscription_end_date': None,
+                'old_free_trial_expired_at': free_trial_expired_at_before,
+                'new_free_trial_expired_at': None
             },
             'token_change': token_balance_before * -1,  # 보유 토큰을 0으로 만드는 변화량
             'potential_cost': 0,

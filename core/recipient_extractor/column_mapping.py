@@ -12,6 +12,8 @@ from typing import List, Optional, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
+# 제트엔진 모드: 로그 레벨 최적화 (WARNING 이상만 출력)
+logger.setLevel(logging.WARNING)
 
 class ColumnMapper:
     """동적 컬럼 매핑기"""

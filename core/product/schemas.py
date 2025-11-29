@@ -36,6 +36,17 @@ class ProductCreate(BaseModel):
         ge=0,
         description="기간제 상품 제공 일수 (없으면 None)"
     )
+    token_validity_days: Optional[int] = Field(
+        None,
+        ge=0,
+        description="토큰 유효 기간 (일 단위, 0이면 만료 없음)"
+    )
+    one_time_limit: Optional[int] = Field(
+        None,
+        ge=0,
+        le=1,
+        description="1인 1회 구매 제한 여부 (0:해제/테스트모드, 1:제한/실전모드)"
+    )
     
     @validator('name')
     def validate_name(cls, v):
@@ -77,6 +88,17 @@ class ProductUpdate(BaseModel):
         ge=0,
         description="기간제 상품 제공 일수 (없으면 None)"
     )
+    token_validity_days: Optional[int] = Field(
+        None,
+        ge=0,
+        description="토큰 유효 기간 (일 단위, 0이면 만료 없음)"
+    )
+    one_time_limit: Optional[int] = Field(
+        None,
+        ge=0,
+        le=1,
+        description="1인 1회 구매 제한 여부 (0:해제/테스트모드, 1:제한/실전모드)"
+    )
     
     @validator('name')
     def validate_name(cls, v):
@@ -117,6 +139,8 @@ class ProductResponse(BaseModel):
     type: Optional[str] = Field(None, description="상품 유형")
     vat_included: bool = Field(False, description="부가세 포함 여부")
     duration_days: Optional[int] = Field(None, description="기간제 상품 제공 일수")
+    token_validity_days: Optional[int] = Field(None, description="토큰 유효 기간 (일 단위)")
+    one_time_limit: Optional[int] = Field(None, description="1인 1회 구매 제한 여부")
     created_at: str = Field(..., description="생성 일시")
     updated_at: str = Field(..., description="업데이트 일시")
     

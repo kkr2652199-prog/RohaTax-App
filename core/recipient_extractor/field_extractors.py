@@ -15,12 +15,31 @@ from typing import Dict, List, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
+# 제트엔진 모드: 로그 레벨 최적화 (WARNING 이상만 출력)
+logger.setLevel(logging.WARNING)
 
 class FieldExtractors:
-    """개별 필드 추출기"""
+    """개별 필드 추출기 (제트엔진 모드: 정규식 사전 컴파일 최적화)"""
     
     def __init__(self):
         self.logger = logger
+        
+        # 제트엔진 모드: 정규식 패턴 사전 컴파일 및 캐싱
+        self._compiled_patterns = {
+            # 사업자등록번호 패턴
+            'non_digit': re.compile(r'[^0-9]'),
+            'business_hyphen': re.compile(r'\d{3}-?\d{2}-?\d{5}'),
+            'business_10digits': re.compile(r'\d{10}'),
+            # 한글 이름 패턴
+            'korean_name': re.compile(r'([가-힣]{2,4})'),
+            # 영문 이름 패턴
+            'english_name': re.compile(r'\b([A-Z][a-z]+)\b'),
+            # 이메일 패턴
+            'email': re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
+            'email_validation': re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+            # 숫자 추출 패턴
+            'numbers': re.compile(r'\d+\.?\d*'),
+        }
         
         # 기본 키워드들
         self.city_keywords = [
@@ -65,48 +84,43 @@ class FieldExtractors:
         return synonyms_map.get(field, [])
 
     def extract_business_number(self, text: str) -> str:
-        """사업자등록번호 추출 (숫자만 10자리) - 완전 정규화"""
+        """사업자등록번호 추출 (숫자만 10자리) - 완전 정규화 (제트엔진 모드: 컴파일된 정규식 사용)"""
         if not text:
             return ""
         
-        # 모든 숫자를 추출해서 연결
-        numbers_only = re.sub(r'[^0-9]', '', str(text))
+        # 제트엔진 모드: 컴파일된 정규식 사용
+        numbers_only = self._compiled_patterns['non_digit'].sub('', str(text))
         
         # 10자리 숫자인지 확인
         if len(numbers_only) == 10 and numbers_only.isdigit():
-            self.logger.debug(f"✅ 사업자번호 정규화 완료: '{text}' → '{numbers_only}'")
             return numbers_only
         
         # 기존 패턴들도 지원 (하위 호환성)
         # 하이픈 포함 패턴: 212-12-99909, 213-12-99908
-        pattern_with_hyphen = r'\d{3}-?\d{2}-?\d{5}'
-        match = re.search(pattern_with_hyphen, text)
+        match = self._compiled_patterns['business_hyphen'].search(text)
         if match:
             # 모든 비숫자 문자 제거
-            digits = re.sub(r'[^0-9]', '', match.group())
+            digits = self._compiled_patterns['non_digit'].sub('', match.group())
             if len(digits) == 10:
                 return digits
         
-        # 하이픈 없이 10자레 숫자 패턴
-        pattern_without_hyphen = r'\d{10}'
-        match = re.search(pattern_without_hyphen, text)
+        # 하이픈 없이 10자리 숫자 패턴
+        match = self._compiled_patterns['business_10digits'].search(text)
         if match:
             return match.group()
         
-        self.logger.debug(f"사업자번호 정규화 실패: '{text}' → 숫자만 '{numbers_only}' ({len(numbers_only)}자리)")
-        self.logger.warning(f"⚠️ 사업자번호 형식 오류: '{text}' - 표준 10자리 숫자가 아닙니다")
         return ""
 
     def extract_store_name(self, text: str, row: pd.Series, store_keywords: List[str] = None) -> str:
-        """상호명 추출 (가맹점, 업체명, 가게명 등)"""
+        """상호명 추출 (가맹점, 업체명, 가게명 등) (제트엔진 모드: 동적 패턴 컴파일)"""
         if store_keywords is None:
             store_keywords = []
             
-        # 키워드 기반 추출
+        # 키워드 기반 추출 (제트엔진 모드: 동적 패턴은 필요시에만 컴파일)
         for keyword in store_keywords:
             if keyword in text:
                 # 키워드 다음에 오는 텍스트 추출
-                pattern = f"{keyword}[:\\s]*([가-힣a-zA-Z0-9\\s]+)"
+                pattern = f"{re.escape(keyword)}[:\\s]*([가-힣a-zA-Z0-9\\s]+)"
                 match = re.search(pattern, text)
                 if match:
                     store_name = match.group(1).strip()
@@ -123,10 +137,9 @@ class FieldExtractors:
         return ""
 
     def extract_representative(self, text: str, row: pd.Series) -> str:
-        """대표자명 추출 (한글/영문)"""
-        # 한글 이름 패턴
-        korean_pattern = r'([가-힣]{2,4})'
-        matches = re.findall(korean_pattern, text)
+        """대표자명 추출 (한글/영문) (제트엔진 모드: 컴파일된 정규식 사용)"""
+        # 제트엔진 모드: 컴파일된 정규식 사용
+        matches = self._compiled_patterns['korean_name'].findall(text)
         
         for match in matches:
             # 한국 성씨 확인
@@ -134,8 +147,7 @@ class FieldExtractors:
                 return match
         
         # 영문 이름 패턴
-        english_pattern = r'\b([A-Z][a-z]+)\b'
-        matches = re.findall(english_pattern, text)
+        matches = self._compiled_patterns['english_name'].findall(text)
         
         for match in matches:
             if match in self.foreign_names:
@@ -151,12 +163,12 @@ class FieldExtractors:
         return ""
 
     def extract_address(self, text: str, row: pd.Series) -> str:
-        """사업장 주소 추출 (도로명/지번)"""
-        # 도시명 기반 주소 추출
+        """사업장 주소 추출 (도로명/지번) (제트엔진 모드: 동적 패턴 최적화)"""
+        # 도시명 기반 주소 추출 (제트엔진 모드: 동적 패턴은 필요시에만 컴파일)
         for city in self.city_keywords:
             if city in text:
                 # 도시명 다음에 오는 주소 추출
-                pattern = f"{city}[가-힣\\s\\d-]+"
+                pattern = f"{re.escape(city)}[가-힣\\s\\d-]+"
                 match = re.search(pattern, text)
                 if match:
                     address = match.group().strip()
@@ -179,10 +191,9 @@ class FieldExtractors:
         return ""
 
     def extract_email(self, text: str, row: pd.Series) -> str:
-        """이메일 추출 (한국 주요 도메인)"""
-        # 이메일 패턴
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        matches = re.findall(email_pattern, text)
+        """이메일 추출 (한국 주요 도메인) (제트엔진 모드: 컴파일된 정규식 사용)"""
+        # 제트엔진 모드: 컴파일된 정규식 사용
+        matches = self._compiled_patterns['email'].findall(text)
         
         for match in matches:
             domain = match.split('@')[1].lower()
@@ -216,9 +227,8 @@ class FieldExtractors:
                 except Exception:
                     pass
             
-            # 숫자만 추출
-            import re
-            numbers = re.findall(r'\d+\.?\d*', value_str)
+            # 제트엔진 모드: 컴파일된 정규식 사용
+            numbers = self._compiled_patterns['numbers'].findall(value_str)
             if numbers:
                 try:
                     # 정량이 큰 수의 경우 과학표기법 방지를 위해 문자열로 처리
@@ -235,10 +245,9 @@ class FieldExtractors:
             return 0
 
     def _is_valid_email_format(self, email: str) -> bool:
-        """간단한 이메일 형식 검증"""
-        import re
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        return bool(re.match(pattern, email))
+        """간단한 이메일 형식 검증 (제트엔진 모드: 컴파일된 정규식 사용)"""
+        # 제트엔진 모드: 컴파일된 정규식 사용
+        return bool(self._compiled_patterns['email_validation'].match(email))
 
     def auto_correct_email(self, email: str) -> str:
         """이메일 자동 수정 및 검증 (@ 기호 누락, 도메인 오류 자동 수정)"""

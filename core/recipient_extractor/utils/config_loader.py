@@ -1,8 +1,10 @@
-"""설정 및 키워드 로더 전담 모듈."""
+"""설정 및 키워드 로더 전담 모듈 (제트엔진 모드: JSON 로딩 캐싱 최적화)."""
 
 from typing import Dict, List
+from functools import lru_cache
 
 
+@lru_cache(maxsize=1)
 def load_keywords() -> Dict[str, List[str]]:
     """키워드 리스트를 딕셔너리 형태로 반환한다."""
     return {
@@ -34,6 +36,7 @@ def load_keywords() -> Dict[str, List[str]]:
     }
 
 
+@lru_cache(maxsize=1)
 def load_config() -> Dict[str, List[str]]:
     """설정값을 딕셔너리 형태로 반환한다."""
     return {

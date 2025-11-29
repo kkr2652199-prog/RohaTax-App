@@ -56,6 +56,8 @@ from .utils.enhancement_handler import (
 )
 
 logger = logging.getLogger(__name__)
+# 제트엔진 모드: 로그 레벨 최적화 (WARNING 이상만 출력)
+logger.setLevel(logging.WARNING)
 
 # 컬럼명 정규화 함수
 

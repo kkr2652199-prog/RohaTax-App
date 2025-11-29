@@ -210,6 +210,41 @@
                                     required
                                 >
                             </div>
+                            <div class="mb-3">
+                                <label for="eventTokenValidity" class="form-label">
+                                    <i class="bi bi-clock"></i> 유효 기간 (일)
+                                </label>
+                                <div class="input-group">
+                                    <input 
+                                        type="number" 
+                                        class="form-control" 
+                                        id="eventTokenValidity" 
+                                        name="token_validity_days" 
+                                        min="0" 
+                                        placeholder="0 = 무제한"
+                                    >
+                                    <span class="input-group-text">일</span>
+                                </div>
+                                <div class="form-text">
+                                    토큰 소멸 기간 (0 입력 시 만료 없음)
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        id="eventOneTimeLimit" 
+                                        name="one_time_limit"
+                                    >
+                                    <label class="form-check-label" for="eventOneTimeLimit">
+                                        <i class="bi bi-shield-lock"></i> 🚫 1인 1회 제한
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    ON: 실전 모드 (1회만 구매 가능), OFF: 테스트 모드 (무제한)
+                                </div>
+                            </div>
                             <div class="alert alert-light text-purple mb-3" style="color:#6f42c1; border-color:#6f42c1;">
                                 <i class="bi bi-gift"></i> 무료 토큰 이벤트
                             </div>
@@ -260,6 +295,22 @@
                                         required
                                     >
                                     <span class="input-group-text">일</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        id="periodEventOneTimeLimit" 
+                                        name="one_time_limit"
+                                    >
+                                    <label class="form-check-label" for="periodEventOneTimeLimit">
+                                        <i class="bi bi-shield-lock"></i> 🚫 1인 1회 제한
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    ON: 실전 모드 (1회만 구매 가능), OFF: 테스트 모드 (무제한)
                                 </div>
                             </div>
                             <div class="alert alert-light mb-3" style="color:#d63384; border-color:#d63384;">

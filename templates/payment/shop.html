@@ -54,10 +54,37 @@
             padding: 20px;
             border: 2px solid rgba(111, 66, 193, 0.3);
             box-shadow: 0 10px 30px rgba(111, 66, 193, 0.15);
+            position: relative;
         }
         .event-card.period {
             border-color: rgba(214, 51, 132, 0.4);
             box-shadow: 0 10px 30px rgba(214, 51, 132, 0.15);
+        }
+        .event-card.ended {
+            opacity: 0.65;
+        }
+        .event-card.ended::after {
+            content: '이벤트 종료';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.95);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .event-card.ended .btn-purchase {
+            background: #9ca3af;
+            cursor: not-allowed;
+            pointer-events: none;
+            box-shadow: none;
+        }
+        .event-card.ended h3 {
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
         }
         .event-card h3 {
             margin-top: 0;
@@ -495,7 +522,7 @@
             <p>가입 즉시 토큰 혹은 기간 혜택을 받아보세요.</p>
             <div class="event-grid">
             {% for product in event_products %}
-                <div class="event-card {{ 'period' if product.type == 'event_period' else '' }}">
+                <div class="event-card {{ 'period' if product.type == 'event_period' else '' }} {{ '' if product.is_active else 'ended' }}">
                     <div class="badge {{ 'period' if product.type == 'event_period' else 'token' }}">
                         {% if product.type == 'event_period' %}
                             ⏳ 기간 이벤트
@@ -521,7 +548,14 @@
                             data-price="{{ product.price or 0 }}"
                             data-type="{{ product.type }}"
                             data-token="{{ product.token_amount or 0 }}"
-                            data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                            data-duration="{{ product.duration_days or 0 }}"
+                            {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
+                        {% if product.is_active %}
+                            구매하기
+                        {% else %}
+                            이벤트 종료
+                        {% endif %}
+                    </button>
                 </div>
             {% endfor %}
             </div>

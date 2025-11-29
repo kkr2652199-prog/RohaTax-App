@@ -276,7 +276,11 @@
      * @returns {string} 포맷된 금액 문자열
      */
     function formatCurrency(amount) {
-        return new Intl.NumberFormat('ko-KR').format(Math.round(amount)) + '원';
+        const safeAmount = Number(amount) || 0;
+        if (safeAmount === 0) {
+            return '무료';
+        }
+        return new Intl.NumberFormat('ko-KR').format(Math.round(safeAmount)) + '원';
     }
 
     /**

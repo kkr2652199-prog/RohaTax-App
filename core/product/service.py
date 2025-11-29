@@ -24,6 +24,8 @@ PRODUCT_COLUMNS = """
     type,
     vat_included,
     duration_days,
+    token_validity_days,
+    one_time_limit,
     is_active,
     created_at,
     updated_at
@@ -41,6 +43,20 @@ class ProductService:
     # ------------------------------------------------------------------ #
     @staticmethod
     def _row_to_response(row: sqlite3.Row) -> ProductResponse:
+        """
+        sqlite3.Row → ProductResponse 변환 헬퍼
+        (Row 객체는 dict.get을 지원하지 않으므로 keys() 체크 후 인덱싱)
+        """
+        row_keys = set(row.keys())
+        
+        token_validity = None
+        if 'token_validity_days' in row_keys:
+            token_validity = row['token_validity_days']
+        
+        one_time_limit = None
+        if 'one_time_limit' in row_keys:
+            one_time_limit = row['one_time_limit']
+        
         return ProductResponse(
             id=row['id'],
             name=row['name'],
@@ -50,6 +66,8 @@ class ProductService:
             type=row['type'],
             vat_included=bool(row['vat_included']),
             duration_days=row['duration_days'],
+            token_validity_days=token_validity,
+            one_time_limit=one_time_limit,
             is_active=bool(row['is_active']),
             created_at=row['created_at'],
             updated_at=row['updated_at']
@@ -74,11 +92,13 @@ class ProductService:
                         type,
                         vat_included,
                         duration_days,
+                        token_validity_days,
+                        one_time_limit,
                         is_active,
                         created_at,
                         updated_at
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, 
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         datetime('now', 'localtime'),
                         datetime('now', 'localtime')
                     )
@@ -91,6 +111,8 @@ class ProductService:
                         product_data.type,
                         1 if product_data.vat_included else 0,
                         product_data.duration_days,
+                        product_data.token_validity_days,
+                        product_data.one_time_limit or 0,
                         1 if product_data.is_active else 0,
                     )
                 )
@@ -225,6 +247,14 @@ class ProductService:
                 if product_data.duration_days is not None:
                     update_fields.append("duration_days = ?")
                     params.append(product_data.duration_days)
+
+                if product_data.token_validity_days is not None:
+                    update_fields.append("token_validity_days = ?")
+                    params.append(product_data.token_validity_days)
+
+                if product_data.one_time_limit is not None:
+                    update_fields.append("one_time_limit = ?")
+                    params.append(product_data.one_time_limit)
 
                 if product_data.is_active is not None:
                     update_fields.append("is_active = ?")

@@ -68,7 +68,7 @@ def create_order():
         conn.row_factory = sqlite3.Row
         product = conn.execute(
             """
-            SELECT id, name, description, price, token_amount, type, is_active
+            SELECT id, name, description, price, token_amount, type, is_active, one_time_limit
             FROM products
             WHERE id = ? AND COALESCE(is_active, 0) = 1
             """,
@@ -79,10 +79,10 @@ def create_order():
             logger.warning(f"상품을 찾을 수 없음: product_id={product_id}")
             return error(f'상품을 찾을 수 없습니다: ID {product_id}', status=404)
         
-        # 4. 사용자 정보 조회 (buyer_email, buyer_name)
+        # 4. 사용자 정보 조회 (buyer_email, buyer_name, business_number)
         user = conn.execute(
             """
-            SELECT email, username, company_name
+            SELECT email, username, company_name, business_number
             FROM users
             WHERE id = ? AND COALESCE(is_deleted, 0) = 0
             """,
@@ -92,6 +92,71 @@ def create_order():
         if not user:
             logger.warning(f"사용자를 찾을 수 없음: user_id={user_id}")
             return error('사용자 정보를 찾을 수 없습니다', status=404)
+        
+        # 4-1. 무료 이벤트 1회 제한 / 사업자번호 기준 중복 구매 차단
+        try:
+            one_time_limit = product.get('one_time_limit', 0)
+        except AttributeError:
+            # sqlite3.Row인 경우 dict로 변환
+            product = dict(product)
+            one_time_limit = product.get('one_time_limit', 0)
+        
+        if one_time_limit == 1:
+            # 검사 1: 동일 계정(user_id)이 이미 "무료 이벤트 그룹" 중 하나라도 완료했는지 확인
+            #  - 대상 그룹: type IN ('event', 'event_period') AND price = 0 AND one_time_limit = 1
+            exists_self = conn.execute(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM payment_history ph
+                JOIN orders o ON ph.order_id = o.merchant_uid
+                WHERE ph.user_id = ?
+                  AND ph.status = 'completed'
+                  AND o.product_id IN (
+                      SELECT id
+                      FROM products
+                      WHERE type IN ('event', 'event_period')
+                        AND COALESCE(price, 0) = 0
+                        AND COALESCE(one_time_limit, 0) = 1
+                  )
+                """,
+                (user_id,)
+            ).fetchone()
+            
+            if exists_self and (exists_self['cnt'] or 0) > 0:
+                logger.info(
+                    f"무료 이벤트 1회 제한 - 동일 계정 차단: user_id={user_id}, product_id={product_id}"
+                )
+                return error('이미 참여하신 이벤트입니다.', status=400)
+            
+            # 검사 2: 동일 사업자번호(business_number)를 가진 다른 계정이 이미 혜택을 받은 경우 차단
+            business_number = user['business_number'] if 'business_number' in user.keys() else None
+            if business_number:
+                exists_same_biz = conn.execute(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM payment_history ph
+                    JOIN orders o ON ph.order_id = o.merchant_uid
+                    JOIN users u ON u.id = ph.user_id
+                    WHERE ph.status = 'completed'
+                      AND u.business_number = ?
+                      AND u.id != ?
+                      AND o.product_id IN (
+                          SELECT id
+                          FROM products
+                          WHERE type IN ('event', 'event_period')
+                            AND COALESCE(price, 0) = 0
+                            AND COALESCE(one_time_limit, 0) = 1
+                      )
+                    """,
+                    (business_number, user_id)
+                ).fetchone()
+                
+                if exists_same_biz and (exists_same_biz['cnt'] or 0) > 0:
+                    logger.info(
+                        "무료 이벤트 1회 제한 - 동일 사업자번호 차단: "
+                        f"user_id={user_id}, business_number={business_number}, product_id={product_id}"
+                    )
+                    return error('귀하의 사업자번호로 이미 혜택을 받으셨습니다.', status=400)
         
         # 5. 금액 및 세금 계산 (수량 반영)
         unit_price = product['price'] or 0

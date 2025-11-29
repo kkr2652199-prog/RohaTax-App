@@ -193,8 +193,8 @@ class PaymentService:
                     cursor = conn.execute(
                         """
                         INSERT INTO payment_history 
-                        (user_id, order_id, amount, token_amount, status, pg_provider, previous_plan_type, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+                        (user_id, order_id, amount, token_amount, status, pg_provider, previous_plan_type, product_id, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
                         """,
                         (
                             user_id,
@@ -204,6 +204,7 @@ class PaymentService:
                             status_value,
                             'manual',  # 수동 결제
                             previous_plan_type,  # 이전 등급 저장
+                            product_id,
                         )
                     )
                     
@@ -287,7 +288,7 @@ class PaymentService:
                         
                         current_plan_type = user_row['plan_type'] or 'free'
                         
-                        # 상품 ID에 따른 등급 매핑
+                        # 상품 ID 및 타입에 따른 등급 매핑
                         if product_id == 1:  # Standard
                             # Standard 구매 시: vip로 변경 (단, 이미 premium-vip나 gold-vip면 변경하지 않음)
                             if current_plan_type not in ['premium-vip', 'gold-vip']:
@@ -296,17 +297,15 @@ class PaymentService:
                             # Premium 구매 시: premium-vip로 변경 (단, 이미 gold-vip면 변경하지 않음)
                             if current_plan_type != 'gold-vip':
                                 new_plan_type = 'premium-vip'
-                        elif product_id == 3:  # Gold
-                            # Gold 구매 시: 항상 gold-vip로 변경 (최고 등급)
+                        elif product_id == 3:  # Gold (유료 구독)
+                            # Gold 구매 시: 항상 gold-vip로 변경 (최고 등급) + 구독 종료일 30일 연장
                             new_plan_type = 'gold-vip'
-                            
+
                             # Gold 구매 시 기간 연장 로직
                             # **결제일 기준으로 정확히 30일만 연장** (기존 만료일과 무관하게)
                             from datetime import datetime, timedelta
-                            
+
                             # 결제일을 기준으로 계산 (payment_history의 created_at 사용)
-                            # 주문 ID에서 날짜/시간 추출 또는 현재 시간 사용
-                            # 주문 ID 형식: ORD-YYYYMMDD-HHMMSS-XXXX
                             payment_created_at = None
                             payment_row = conn.execute(
                                 """
@@ -316,10 +315,9 @@ class PaymentService:
                                 """,
                                 (payment_id,)
                             ).fetchone()
-                            
+
                             if payment_row and payment_row['created_at']:
                                 try:
-                                    # payment_history의 created_at 사용 (실제 결제 시점)
                                     payment_created_at_str = payment_row['created_at']
                                     if isinstance(payment_created_at_str, str):
                                         payment_created_at = datetime.strptime(payment_created_at_str, '%Y-%m-%d %H:%M:%S')
@@ -327,7 +325,7 @@ class PaymentService:
                                         payment_created_at = payment_created_at_str
                                 except Exception as e:
                                     self.logger.warning(f"결제일 파싱 오류: {str(e)}, 현재 시간 사용")
-                            
+
                             # 결제일을 찾지 못했으면 현재 시간 사용
                             if payment_created_at is None:
                                 now_row = conn.execute("SELECT datetime('now', 'localtime') as now_time").fetchone()
@@ -336,10 +334,10 @@ class PaymentService:
                                     payment_created_at = datetime.strptime(now_str, '%Y-%m-%d %H:%M:%S')
                                 else:
                                     payment_created_at = datetime.now()
-                            
+
                             # 결제일 기준으로 정확히 30일 연장
                             new_end_date = payment_created_at + timedelta(days=30)
-                            
+
                             # 기존 만료일 조회 (로깅용)
                             subscription_row = conn.execute(
                                 """
@@ -349,22 +347,22 @@ class PaymentService:
                                 """,
                                 (user_id,)
                             ).fetchone()
-                            
+
                             current_end_date = subscription_row['subscription_end_date'] if subscription_row else None
-                            
+
                             if current_end_date:
                                 try:
                                     if isinstance(current_end_date, str):
                                         current_end = datetime.strptime(current_end_date, '%Y-%m-%d %H:%M:%S')
                                     else:
                                         current_end = current_end_date
-                                    
+
                                     self.logger.info(
                                         f"Gold 구독 기간 연장: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
                                         f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일) "
                                         f"[기존 만료일: {current_end.strftime('%Y-%m-%d %H:%M:%S')}]"
                                     )
-                                except Exception as e:
+                                except Exception:
                                     self.logger.info(
                                         f"Gold 구독 기간 연장: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
                                         f"→ 새 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
@@ -374,7 +372,7 @@ class PaymentService:
                                     f"Gold 구독 신규 설정: 결제일 {payment_created_at.strftime('%Y-%m-%d %H:%M:%S')} "
                                     f"→ 만료일 {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (+30일)"
                                 )
-                            
+
                             # subscription_end_date 업데이트 (등급 업데이트와 함께)
                             update_cursor = conn.execute(
                                 """
@@ -395,7 +393,16 @@ class PaymentService:
                                     f"(상품: {product_name}, product_id: {product_id}, 결제 ID: {payment_id}) "
                                     f"구독 만료일: {new_end_date.strftime('%Y-%m-%d %H:%M:%S')} (결제 연동)"
                                 )
-                        elif new_plan_type and new_plan_type != current_plan_type:
+
+                            # Gold는 여기서 처리 완료 (아래 일반 등급 업데이트 분기 스킵)
+                            new_plan_type = None
+                        elif product_type == 'event_period':
+                            # 무료 기간제 이벤트: 체험 기간 동안 Gold VIP 등급 부여
+                            # (subscription_end_date는 건드리지 않고 free_trial_expired_at과 함께 사용)
+                            new_plan_type = 'gold-vip'
+
+                        # Gold(상품 ID 3)를 제외한 일반 등급 업데이트
+                        if new_plan_type and new_plan_type != current_plan_type:
                             # Gold가 아닌 다른 상품의 등급 업데이트
                             update_cursor = conn.execute(
                                 """

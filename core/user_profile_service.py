@@ -109,34 +109,46 @@ class UserProfileService:
                            COALESCE(token_balance, 0) AS token_balance, 
                            COALESCE(tokens_used, 0) AS tokens_used, 
                            COALESCE(approval_status, 'pending') AS approval_status,
-                           subscription_end_date
+                           subscription_end_date,
+                           free_trial_expired_at
                     FROM users 
                     WHERE COALESCE(is_deleted, 0) = 0
                     ORDER BY created_at ASC
                 """).fetchall()
                 
-                # 각 사용자별로 최근 24시간 변환 건수 계산 및 Gold 결제일 조회
+                # 각 사용자별로 최근 24시간 변환 건수 계산 및 유료/무료 기간 시작일 조회
                 users_with_recent_usage = []
                 for user in users:
                     user_data = dict(user)
                     user_data['used_count'] = self._calculate_recent_conversions(user['id'], conn)
                     
-                    # 가장 최근 Gold 상품 결제일 조회 (token_amount = -1)
+                    # 가장 최근 유료 Gold 구독 시작일 조회 (상품 ID = 3)
                     gold_payment = conn.execute(
                         """
                         SELECT created_at
                         FROM payment_history
-                        WHERE user_id = ? AND token_amount = -1 AND status = 'completed'
+                        WHERE user_id = ? AND product_id = 3 AND status = 'completed'
                         ORDER BY created_at DESC
                         LIMIT 1
                         """,
                         (user['id'],)
                     ).fetchone()
                     
-                    if gold_payment:
-                        user_data['gold_payment_start_date'] = gold_payment['created_at']
-                    else:
-                        user_data['gold_payment_start_date'] = None
+                    user_data['gold_payment_start_date'] = gold_payment['created_at'] if gold_payment else None
+
+                    # 가장 최근 무료 기간제(체험) 시작일 조회 (상품 ID = 5)
+                    trial_payment = conn.execute(
+                        """
+                        SELECT created_at
+                        FROM payment_history
+                        WHERE user_id = ? AND product_id = 5 AND status = 'completed'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                        """,
+                        (user['id'],)
+                    ).fetchone()
+
+                    user_data['trial_start_date'] = trial_payment['created_at'] if trial_payment else None
                     
                     users_with_recent_usage.append(user_data)
                 

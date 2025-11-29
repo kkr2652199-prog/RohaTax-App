@@ -45,7 +45,6 @@ def shop():
                 SELECT id, name, description, price, token_amount, duration_days, 
                        type, vat_included, is_active
                 FROM products
-                WHERE COALESCE(is_active, 0) = 1
                 ORDER BY 
                     CASE 
                         WHEN type IN ('event', 'event_period') THEN 0
@@ -57,9 +56,17 @@ def shop():
             
             products_list = [dict(row) for row in products]
             
-            # 이벤트 상품과 일반 상품 분리
-            event_products = [p for p in products_list if p['type'] in ['event', 'event_period']]
-            regular_products = [p for p in products_list if p['type'] not in ['event', 'event_period']]
+            # 이벤트 상품: on/off 상태와 상관없이 항상 표시
+            event_products = [
+                p for p in products_list
+                if p.get('type') in ['event', 'event_period']
+            ]
+            # 일반 상품: is_active = 1 인 것만 판매
+            regular_products = [
+                p for p in products_list
+                if p.get('type') not in ['event', 'event_period']
+                and (p.get('is_active') or 0) == 1
+            ]
         
         return render_template('payment/shop.html', 
                              products=products_list,

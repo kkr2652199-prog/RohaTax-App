@@ -170,6 +170,23 @@ function updateEventCard(product) {
         tokenInput.value = tokenValue;
         tokenInput.setAttribute('value', tokenValue);
     }
+    
+    // 토큰 유효기간 입력창 업데이트
+    const validityInput = document.getElementById('eventTokenValidity');
+    if (validityInput) {
+        const validityValue = Number.isInteger(product.token_validity_days) && product.token_validity_days >= 0
+            ? product.token_validity_days
+            : 0;
+        validityInput.value = validityValue || '';
+        validityInput.setAttribute('value', validityValue || '');
+    }
+    
+    // 1인 1회 제한 스위치 업데이트
+    const oneTimeLimitSwitch = document.getElementById('eventOneTimeLimit');
+    if (oneTimeLimitSwitch) {
+        oneTimeLimitSwitch.checked = product.one_time_limit === 1 || product.one_time_limit === true;
+    }
+    
     if (toggle) {
         toggle.checked = product.is_active !== false;
     }
@@ -190,6 +207,13 @@ function updatePeriodEventCard(product) {
         durationInput.value = durationValue;
         durationInput.setAttribute('value', durationValue);
     }
+    
+    // 1인 1회 제한 스위치 업데이트
+    const oneTimeLimitSwitch = document.getElementById('periodEventOneTimeLimit');
+    if (oneTimeLimitSwitch) {
+        oneTimeLimitSwitch.checked = product.one_time_limit === 1 || product.one_time_limit === true;
+    }
+    
     if (toggle) {
         toggle.checked = product.is_active !== false;
     }
@@ -358,6 +382,8 @@ async function handleEventSubmit(event) {
     }
     
     const tokenAmount = parseInt(document.getElementById('eventTokenAmount').value);
+    const tokenValidityDays = parseInt(document.getElementById('eventTokenValidity').value) || 0;
+    const oneTimeLimit = document.getElementById('eventOneTimeLimit').checked ? 1 : 0;
     const isActive = document.getElementById('eventToggle').checked;
     
     if (isNaN(tokenAmount) || tokenAmount < 1) {
@@ -365,8 +391,15 @@ async function handleEventSubmit(event) {
         return;
     }
     
+    if (isNaN(tokenValidityDays) || tokenValidityDays < 0) {
+        alert('유효 기간은 0 이상의 숫자여야 합니다.');
+        return;
+    }
+    
     const productData = {
         token_amount: tokenAmount,
+        token_validity_days: tokenValidityDays,
+        one_time_limit: oneTimeLimit,
         price: 0,
         is_active: isActive
     };
@@ -389,6 +422,7 @@ async function handlePeriodEventSubmit(event) {
     }
     
     const durationDays = parseInt(document.getElementById('periodDuration').value);
+    const oneTimeLimit = document.getElementById('periodEventOneTimeLimit').checked ? 1 : 0;
     const isActive = document.getElementById('periodEventToggle').checked;
     
     if (isNaN(durationDays) || durationDays < 1) {
@@ -398,6 +432,7 @@ async function handlePeriodEventSubmit(event) {
     
     const productData = {
         duration_days: durationDays,
+        one_time_limit: oneTimeLimit,
         price: 0,
         token_amount: 0,
         is_active: isActive

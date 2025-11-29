@@ -143,7 +143,7 @@ def check_and_revoke_expired_subscription(user_id: int) -> bool:
             conn.row_factory = sqlite3.Row
             user_row = conn.execute(
                 """
-                SELECT id, plan_type, subscription_end_date
+                SELECT id, plan_type, subscription_end_date, free_trial_expired_at
                 FROM users
                 WHERE id = ? AND is_deleted = 0
                 """,
@@ -155,57 +155,68 @@ def check_and_revoke_expired_subscription(user_id: int) -> bool:
             
             plan_type = user_row['plan_type'] or 'free'
             subscription_end_date = user_row['subscription_end_date']
+            free_trial_expired_at = user_row['free_trial_expired_at']
             
             # Gold 등급이 아니면 체크 불필요
             if plan_type not in ['gold', 'gold-vip']:
                 return False
             
-            # subscription_end_date가 없으면 만료로 간주하지 않음 (레거시 데이터)
-            if not subscription_end_date:
-                return False
-            
-            # 만료일 확인
             now = datetime.now()
-            try:
-                if isinstance(subscription_end_date, str):
-                    end_date = datetime.strptime(subscription_end_date, '%Y-%m-%d %H:%M:%S')
-                else:
-                    end_date = subscription_end_date
-                
-                # 만료일이 지났으면 강등
-                if now > end_date:
-                    # 등급을 free로 강등
-                    conn.execute(
-                        """
-                        UPDATE users
-                        SET plan_type = 'free', subscription_end_date = NULL, updated_at = datetime('now', 'localtime')
-                        WHERE id = ?
-                        """,
-                        (user_id,)
-                    )
-                    conn.commit()
-                    
-                    # activity_logs에 기록
-                    from core.activity_service import record_activity
-                    record_activity(
-                        user_id=user_id,
-                        activity_type='GRADE_CHANGE',
-                        details=f"Gold 구독 기간 만료로 등급이 'free'로 하락되었습니다. (만료일: {subscription_end_date})",
-                        token_change=0,
-                        ip_address='System'
-                    )
-                    
-                    logger.info(
-                        f"사용자 ID {user_id}의 Gold 구독이 만료되어 등급이 'free'로 강등되었습니다. "
-                        f"(만료일: {subscription_end_date})"
-                    )
-                    return True
-                    
-            except Exception as e:
-                logger.error(f"만료일 파싱 오류 (user_id: {user_id}): {str(e)}")
+            
+            # helper: 문자열/Datetime → datetime 변환
+            def _parse_dt(value: Any) -> Optional[datetime]:
+                if not value:
+                    return None
+                if isinstance(value, datetime):
+                    return value
+                if isinstance(value, str):
+                    try:
+                        # 기본 포맷 (초 단위)
+                        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        try:
+                            # 밀리초(마이크로초) 포함 포맷 지원
+                            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f')
+                        except ValueError:
+                            return None
+                return None
+            
+            sub_end = _parse_dt(subscription_end_date)
+            trial_end = _parse_dt(free_trial_expired_at)
+            
+            # 둘 중 하나라도 미래(유효)이면 → 권한 유지
+            if (sub_end and now <= sub_end) or (trial_end and now <= trial_end):
                 return False
             
-            return False
+            # 둘 다 없거나, 둘 다 과거(만료)라면 → 등급 free로 강등
+            conn.execute(
+                """
+                UPDATE users
+                SET plan_type = 'free', subscription_end_date = NULL, updated_at = datetime('now', 'localtime')
+                WHERE id = ?
+                """,
+                (user_id,)
+            )
+            conn.commit()
+            
+            from core.activity_service import record_activity
+            record_activity(
+                user_id=user_id,
+                activity_type='GRADE_CHANGE',
+                details=(
+                    "Gold 구독/체험 기간 만료로 등급이 'free'로 하락되었습니다. "
+                    f"(subscription_end_date: {subscription_end_date}, free_trial_expired_at: {free_trial_expired_at})"
+                ),
+                token_change=0,
+                ip_address='System'
+            )
+            
+            logger.info(
+                "사용자 ID %s의 Gold 권한이 만료되어 등급이 'free'로 강등되었습니다. "
+                "(subscription_end_date: %s, free_trial_expired_at: %s)",
+                user_id, subscription_end_date, free_trial_expired_at
+            )
+            return True
             
     except Exception as e:
         logger.error(f"구독 만료 확인 중 오류: {str(e)}")

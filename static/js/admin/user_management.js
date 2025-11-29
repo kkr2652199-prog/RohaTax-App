@@ -141,6 +141,14 @@ function renderUsers(users){
                                     </select>
                                 </div>
                                 <div class="detail-row">
+                                    <span class="detail-label">구독 만료일:</span>
+                                    <span class="detail-value">
+                                        ${u.subscription_end_date 
+                                            ? new Date(u.subscription_end_date).toLocaleDateString('ko-KR') + ' ' + new Date(u.subscription_end_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})
+                                            : '-'}
+                                    </span>
+                                </div>
+                                <div class="detail-row">
                                     <span class="detail-label">보유 토큰:</span>
                                     <span class="detail-value text-success">${u.token_balance || 0}</span>
                                 </div>
@@ -179,34 +187,67 @@ function renderUsers(users){
                                     <span class="badge ${u.is_active ? 'bg-success' : 'bg-danger'}">${u.is_active ? '활성' : '비활성'}</span>
                                 </div>
                             </div>
-                            ${(u.plan_type === 'gold-vip' || u.plan_type === 'gold') ? `
+
+                            ${(u.plan_type === 'gold-vip' || u.plan_type === 'gold') && u.subscription_end_date ? `
                             <div class="detail-section">
-                                <h6><i class="bi bi-clock-history"></i> 이용 기간 (Gold 구독)</h6>
+                                <h6><i class="bi bi-clock-history"></i> 👑 유료 Gold 구독</h6>
                                 <div class="detail-row">
-                                    <span class="detail-label">시작일:</span>
-                                    <span class="detail-value">${u.gold_payment_start_date ? new Date(u.gold_payment_start_date).toLocaleDateString('ko-KR') + ' ' + new Date(u.gold_payment_start_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '기록 없음'}</span>
+                                    <span class="detail-label">이용 기간:</span>
+                                    <span class="detail-value">
+                                        ${u.gold_payment_start_date
+                                            ? new Date(u.gold_payment_start_date).toLocaleDateString('ko-KR')
+                                              + ' ~ ' +
+                                              new Date(u.subscription_end_date).toLocaleDateString('ko-KR')
+                                            : '기록 없음'}
+                                    </span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="detail-label">종료일:</span>
+                                    <span class="detail-label">만료일:</span>
                                     <span class="detail-value d-flex align-items-center gap-2">
-                                        <span id="subscription-end-date-${u.id}" data-original-date="${u.subscription_end_date || ''}">${u.subscription_end_date ? new Date(u.subscription_end_date).toLocaleDateString('ko-KR') + ' ' + new Date(u.subscription_end_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '미설정'}</span>
+                                        <span id="subscription-end-date-${u.id}" data-original-date="${u.subscription_end_date || ''}">
+                                            ${u.subscription_end_date
+                                                ? new Date(u.subscription_end_date).toLocaleDateString('ko-KR') + ' ' +
+                                                  new Date(u.subscription_end_date).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})
+                                                : '미설정'}
+                                        </span>
                                         <button class="btn btn-sm btn-outline-secondary" onclick="editSubscriptionEndDate(${u.id}, '${u.username}', '${u.subscription_end_date || ''}')" title="종료일 수정">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                     </span>
                                 </div>
-                                ${u.subscription_end_date ? `
                                 <div class="detail-row">
                                     <span class="detail-label">남은 기간:</span>
                                     <div class="subscription-progress mt-2">
                                         ${renderSubscriptionProgress(u.subscription_end_date, u.gold_payment_start_date)}
                                     </div>
                                 </div>
-                                ` : ''}
                                 <div class="detail-row">
                                     <span class="detail-label">D-Day:</span>
                                     <span class="detail-value">
                                         ${calculateDDay(u.subscription_end_date)}
+                                    </span>
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            ${u.free_trial_expired_at ? `
+                            <div class="detail-section">
+                                <h6><i class="bi bi-gift"></i> 🎁 무료 체험</h6>
+                                <div class="detail-row">
+                                    <span class="detail-label">이용 기간:</span>
+                                    <span class="detail-value">
+                                        ${u.trial_start_date
+                                            ? new Date(u.trial_start_date).toLocaleDateString('ko-KR')
+                                              + ' ~ ' +
+                                              new Date(u.free_trial_expired_at).toLocaleDateString('ko-KR')
+                                            : '무료 체험 사용 이력 있음'}
+                                    </span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">체험 만료일:</span>
+                                    <span class="detail-value">
+                                        ${new Date(u.free_trial_expired_at).toLocaleDateString('ko-KR') + ' ' +
+                                          new Date(u.free_trial_expired_at).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}
                                     </span>
                                 </div>
                             </div>

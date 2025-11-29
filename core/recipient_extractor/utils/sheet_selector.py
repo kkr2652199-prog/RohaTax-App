@@ -10,6 +10,8 @@ import logging
 import re
 
 logger = logging.getLogger(__name__)
+# 제트엔진 모드: 로그 레벨 최적화 (WARNING 이상만 출력)
+logger.setLevel(logging.WARNING)
 
 
 def select_optimal_sheet_by_family_rule(parsed_data: Dict[str, Any], logger_instance: logging.Logger = None) -> Optional[Dict[str, Any]]:
