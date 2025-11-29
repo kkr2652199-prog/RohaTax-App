@@ -119,6 +119,39 @@ def get_user_subscription(user_id: int) -> Optional[Dict[str, Any]]:
 
         subscription = _build_subscription_payload(plan_type, is_active, token_balance, tokens_used)
 
+        # 토큰 만료 체크 및 자동 회수 (The Reaper)
+        try:
+            from core.token_manager import TokenManager
+            token_manager = TokenManager()
+            expire_result = token_manager.check_and_deduct_expired_tokens(user_id)
+            
+            if expire_result['processed']:
+                # 만료된 토큰이 차감되었으면, 잔액을 다시 조회하여 subscription 업데이트
+                updated_row = conn.execute(
+                    """
+                    SELECT COALESCE(token_balance, 0) AS token_balance
+                    FROM users
+                    WHERE id = ?
+                    """,
+                    (user_id,)
+                ).fetchone()
+                
+                if updated_row:
+                    updated_balance = updated_row['token_balance'] or 0
+                    subscription = _build_subscription_payload(
+                        plan_type, 
+                        is_active, 
+                        updated_balance, 
+                        tokens_used
+                    )
+                    logger.info(
+                        f"토큰 만료 처리 후 구독 정보 업데이트: 사용자 ID {user_id}, "
+                        f"차감량 {expire_result['deducted_amount']}, 새 잔액 {updated_balance}"
+                    )
+        except Exception as e:
+            # 토큰 만료 체크 실패해도 구독 정보는 반환
+            logger.warning(f"토큰 만료 체크 중 오류 발생 (user_id: {user_id}): {str(e)}")
+
         logger.info(
             "사용자 플랜 조회 - ID: %s, 플랜: %s, 무제한: %s",
             user_id,

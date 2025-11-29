@@ -82,10 +82,10 @@ class PaymentService:
                 user_row = None
                 
                 try:
-                    # 1. 상품 정보 조회 (type, duration_days 포함)
+                    # 1. 상품 정보 조회 (type, duration_days, token_validity_days 포함)
                     product_row = conn.execute(
                         """
-                        SELECT id, name, price, token_amount, type, duration_days, is_active
+                        SELECT id, name, price, token_amount, type, duration_days, token_validity_days, is_active
                         FROM products
                         WHERE id = ?
                         """,
@@ -106,6 +106,7 @@ class PaymentService:
                     product_token_amount = product['token_amount']
                     product_type = product.get('type') or 'basic'  # 기본값 'basic'
                     product_duration_days = product.get('duration_days')
+                    product_token_validity_days = product.get('token_validity_days')
                     
                     # 2. 금액 및 토큰 계산 (수량 반영)
                     # event_period 타입은 금액 0원, 토큰 0개
@@ -247,26 +248,40 @@ class PaymentService:
                         
                         # token_history에 기록 (change_type: 'grant' 또는 'CHARGE')
                         import json
+                        from datetime import timedelta
+                        
+                        # 토큰 유효기간 계산 (token_validity_days가 설정되어 있으면)
+                        expires_at = None
+                        if product_token_validity_days and product_token_validity_days > 0:
+                            now = datetime.now()
+                            expires_at = (now + timedelta(days=product_token_validity_days)).strftime('%Y-%m-%d %H:%M:%S')
+                            self.logger.info(
+                                f"토큰 유효기간 설정: 사용자 ID {user_id}, 상품 {product_name}, "
+                                f"유효기간 {product_token_validity_days}일, 만료일 {expires_at}"
+                            )
+                        
                         meta = json.dumps({
                             'payment_id': payment_id,
                             'order_id': order_id,
                             'product_id': product_id,
                             'product_name': product_name,
                             'quantity': quantity if product_id == 1 else 1,
+                            'token_validity_days': product_token_validity_days,
                             'tag': '(결제 연동)'
                         }, ensure_ascii=False)
                         
                         conn.execute(
                             """
                             INSERT INTO token_history 
-                            (user_id, changed_by, amount, change_type, meta, created_at)
-                            VALUES (?, ?, ?, 'grant', ?, datetime('now', 'localtime'))
+                            (user_id, changed_by, amount, change_type, meta, expires_at, created_at)
+                            VALUES (?, ?, ?, 'grant', ?, ?, datetime('now', 'localtime'))
                             """,
                             (
                                 user_id,
                                 admin_user_id,
                                 total_token_amount,
-                                meta
+                                meta,
+                                expires_at
                             )
                         )
                     
