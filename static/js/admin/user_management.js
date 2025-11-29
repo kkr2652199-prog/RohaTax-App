@@ -252,6 +252,29 @@ function renderUsers(users){
                                 </div>
                             </div>
                             ` : ''}
+
+                            ${u.token_event_expires_at ? `
+                            <div class="detail-section">
+                                <h6><i class="bi bi-star"></i> 🎉 무료 토큰 이벤트</h6>
+                                <div class="detail-row">
+                                    <span class="detail-label">이용 기간:</span>
+                                    <span class="detail-value">
+                                        ${u.token_event_start_date
+                                            ? new Date(u.token_event_start_date).toLocaleDateString('ko-KR')
+                                              + ' ~ ' +
+                                              new Date(u.token_event_expires_at).toLocaleDateString('ko-KR')
+                                            : '무료 토큰 이벤트 사용 이력 있음'}
+                                    </span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">토큰 만료일:</span>
+                                    <span class="detail-value">
+                                        ${new Date(u.token_event_expires_at).toLocaleDateString('ko-KR') + ' ' +
+                                          new Date(u.token_event_expires_at).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}
+                                    </span>
+                                </div>
+                            </div>
+                            ` : ''}
                             <div class="detail-section">
                                 <h6><i class="bi bi-gear"></i> 관리 액션</h6>
                                 <div class="d-flex gap-2 flex-wrap">
