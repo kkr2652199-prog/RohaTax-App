@@ -4,526 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로●하 TAX - 상점</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
-    <style>
-        :root {
-            --event-purple: #6f42c1;
-            --event-pink: #d63384;
-            --event-gold: #f59e0b;
-            --card-border: #e5e7eb;
-        }
-        body {
-            font-family: 'Pretendard', 'Inter', sans-serif;
-            margin: 0;
-            background: #f9fafb;
-            color: #111827;
-        }
-        .page-wrapper {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 48px 16px 80px;
-        }
-        .page-title {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .page-title h1 {
-            font-size: 2.5rem;
-            margin: 0;
-        }
-        .event-banner {
-            border-radius: 18px;
-            background: linear-gradient(135deg, #eef2ff, #fdf2ff);
-            padding: 32px;
-            margin-bottom: 32px;
-            border: 2px solid rgba(111, 66, 193, 0.3);
-        }
-        .event-banner h2 {
-            margin: 0 0 12px;
-            font-size: 1.75rem;
-            color: #5b21b6;
-        }
-        .event-grid {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        }
-        .event-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            border: 2px solid rgba(111, 66, 193, 0.3);
-            box-shadow: 0 10px 30px rgba(111, 66, 193, 0.15);
-            position: relative;
-        }
-        .event-card.period {
-            border-color: rgba(214, 51, 132, 0.4);
-            box-shadow: 0 10px 30px rgba(214, 51, 132, 0.15);
-        }
-        .event-card.ended {
-            opacity: 0.65;
-        }
-        .event-card.ended::after {
-            content: '이벤트 종료';
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.95);
-            color: #ffffff;
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-        }
-        .event-card.ended .btn-purchase {
-            background: #9ca3af;
-            cursor: not-allowed;
-            pointer-events: none;
-            box-shadow: none;
-        }
-        .event-card.ended h3 {
-            text-decoration: line-through;
-            text-decoration-thickness: 2px;
-        }
-        .event-card h3 {
-            margin-top: 0;
-            font-size: 1.3rem;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .badge.token {
-            background: rgba(111, 66, 193, 0.15);
-            color: #4c1d95;
-        }
-        .badge.period {
-            background: rgba(214, 51, 132, 0.15);
-            color: #b91c1c;
-        }
-        .pricing-grid {
-            display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        }
-        .pricing-card {
-            background: white;
-            border-radius: 18px;
-            padding: 24px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-            display: flex;
-            flex-direction: column;
-        }
-        .pricing-card h3 {
-            margin: 0 0 8px;
-            font-size: 1.4rem;
-        }
-        .price {
-            font-size: 2.4rem;
-            font-weight: 700;
-            margin: 12px 0 20px;
-        }
-        .price small {
-            font-size: 1rem;
-            color: #6b7280;
-        }
-        .feature-list {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 24px;
-        }
-        .feature-list li {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .feature-list li::before {
-            content: "✔";
-            color: #10b981;
-        }
-        .btn-purchase {
-            margin-top: auto;
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
-            border: none;
-            text-align: center;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-purchase:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-        }
-        .btn-purchase:active {
-            transform: translateY(0);
-        }
-        .btn-purchase:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .cta-button {
-            margin-top: auto;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-        }
-        .text-muted {
-            color: #6b7280;
-        }
-        /* 결제 확인 모달 스타일 - 현대적 디자인 */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            -webkit-backdrop-filter: blur(4px);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        }
-        .modal-overlay.show {
-            display: flex;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 0;
-            max-width: 480px;
-            width: 90%;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-            position: relative;
-            overflow: hidden;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        /* 테마 클래스 */
-        .modal-content.theme-event {
-            background: linear-gradient(135deg, #fef3ff 0%, #fdf2ff 50%, #fef3ff 100%);
-        }
-        .modal-content.theme-basic {
-            background: white;
-        }
-        /* 닫기 버튼 */
-        .modal-close-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #6b7280;
-            transition: all 0.2s;
-            z-index: 10;
-        }
-        .modal-close-btn:hover {
-            background: rgba(0, 0, 0, 0.1);
-            transform: rotate(90deg);
-        }
-        /* Hero Section */
-        .modal-hero {
-            padding: 40px 32px 24px;
-            text-align: center;
-            position: relative;
-        }
-        .modal-hero-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            display: block;
-            animation: bounce 0.6s ease;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .modal-hero-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #111827;
-            margin: 0;
-            line-height: 1.3;
-        }
-        .theme-event .modal-hero-title {
-            color: #6f42c1;
-        }
-        /* Info Section */
-        .modal-info {
-            padding: 0 32px 24px;
-        }
-        .modal-info-card {
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        .theme-event .modal-info-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: rgba(111, 66, 193, 0.2);
-        }
-        .modal-price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 12px;
-        }
-        .modal-price-label {
-            font-size: 0.95rem;
-            color: #6b7280;
-            font-weight: 500;
-        }
-        .modal-price-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #111827;
-        }
-        .theme-event .modal-price-value {
-            color: #6f42c1;
-        }
-        .theme-basic .modal-price-value {
-            color: #10b981;
-        }
-        .modal-specs {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: #f0fdf4;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #059669;
-        }
-        .theme-event .modal-specs {
-            background: rgba(111, 66, 193, 0.1);
-            color: #6f42c1;
-        }
-        /* Control Section */
-        .modal-control {
-            padding: 0 32px 24px;
-        }
-        .modal-quantity-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-        .modal-quantity-label {
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.95rem;
-        }
-        /* Stepper UI */
-        .stepper {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            background: #f9fafb;
-            border-radius: 12px;
-            border: 2px solid #e5e7eb;
-            overflow: hidden;
-        }
-        .stepper-btn {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: white;
-            color: #374151;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .stepper-btn:hover:not(:disabled) {
-            background: #f3f4f6;
-            color: #10b981;
-        }
-        .stepper-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .stepper-value {
-            min-width: 100px;
-            width: 120px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #111827;
-            background: white;
-            border: none;
-            border-left: 1px solid #e5e7eb;
-            border-right: 1px solid #e5e7eb;
-            text-align: center;
-            padding: 0 12px;
-            outline: none;
-        }
-        .stepper-value::placeholder {
-            color: #9ca3af;
-            font-weight: 500;
-        }
-        .stepper-value:focus {
-            background: #f9fafb;
-            border-left-color: #10b981;
-            border-right-color: #10b981;
-        }
-        .stepper-value::-webkit-inner-spin-button,
-        .stepper-value::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .stepper-value[type=number] {
-            -moz-appearance: textfield;
-            appearance: textfield;
-        }
-        /* Event Badge */
-        .modal-event-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(214, 51, 132, 0.1) 100%);
-            border: 2px solid rgba(111, 66, 193, 0.3);
-            border-radius: 16px;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #6f42c1;
-        }
-        /* Total Section */
-        .modal-total {
-            padding: 20px 32px;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-        }
-        .theme-event .modal-total {
-            background: rgba(111, 66, 193, 0.05);
-            border-top-color: rgba(111, 66, 193, 0.2);
-        }
-        .modal-total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #111827;
-        }
-        .theme-event .modal-total-row {
-            color: #6f42c1;
-        }
-        /* Footer */
-        .modal-footer {
-            padding: 20px 32px 32px;
-            display: flex;
-            gap: 12px;
-        }
-        .btn-modal {
-            flex: 1;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s;
-        }
-        .btn-modal-cancel {
-            background: #f3f4f6;
-            color: #374151;
-        }
-        .btn-modal-cancel:hover {
-            background: #e5e7eb;
-            transform: translateY(-1px);
-        }
-        .btn-modal-confirm {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        .btn-modal-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-        }
-        .theme-event .btn-modal-confirm {
-            background: linear-gradient(135deg, #6f42c1 0%, #d63384 100%);
-            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
-        }
-        .theme-event .btn-modal-confirm:hover {
-            box-shadow: 0 8px 20px rgba(111, 66, 193, 0.4);
-        }
-        /* Hidden class */
-        .hidden {
-            display: none !important;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop_modern.css') }}">
 </head>
-<body>
-    <div class="page-wrapper">
-        <div class="page-title">
-            <p class="text-muted">ROHA TAX SHOP</p>
-            <h1>상품 구매</h1>
-            <p>필요에 따라 토큰형/기간형 이벤트와 정식 요금제를 선택하세요.</p>
+<body class="shop-page">
+    {# Glass Header #}
+    <header class="glass-header">
+        <div class="glass-header-container">
+            <a href="/" class="glass-header-logo">
+                <span class="glass-header-logo-icon">⚡</span>
+                <span>로●하 TAX</span>
+            </a>
+            <nav>
+                <ul class="glass-header-nav">
+                    <li><a href="/" class="glass-header-nav-link">홈</a></li>
+                    <li><a href="#features" class="glass-header-nav-link">기능</a></li>
+                    <li><a href="/shop" class="glass-header-nav-link">멤버십</a></li>
+                    <li><a href="#contact" class="glass-header-nav-link">문의</a></li>
+                    {% if session.get('user_id') %}
+                        <li>
+                            <div class="user-menu">
+                                <div class="user-menu-trigger" id="userMenuTrigger">
+                                    <div class="user-avatar">
+                                        {{ (session.get('username') or 'U')[0].upper() }}
+                                    </div>
+                                    <span>{{ session.get('username') or '사용자' }}님</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <ul class="user-menu-dropdown" id="userMenuDropdown">
+                                    <li><a href="/profile/edit" class="user-menu-dropdown-item">내 정보 수정</a></li>
+                                    <li><a href="/profile/edit" class="user-menu-dropdown-item">마이 페이지</a></li>
+                                    <li><a href="/logout" class="user-menu-dropdown-item logout">로그아웃</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li>
+                            <div class="glass-header-auth">
+                                <a href="/login" class="btn-header-login">로그인</a>
+                                <a href="/register" class="btn-header-signup">회원가입</a>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+    {% if session.get('is_admin') %}
+    <a href="/admin" class="admin-badge">관리자 대시보드</a>
+    {% endif %}
+    
+    <div class="shop-page-wrapper">
+        {# Hero Section #}
+        <div class="shop-hero">
+            <div class="shop-hero-badge">
+                <span>⚡</span>
+                <span>ROHA TAX SHOP</span>
+            </div>
+            <h1 class="shop-hero-title">상품 구매</h1>
+            <p class="shop-hero-subtitle">필요에 따라 토큰형/기간형 이벤트와 정식 요금제를 선택하세요</p>
         </div>
 
-        {# 이벤트 상품 배너 #}
+        {# 이벤트 상품 섹션 #}
         {% if event_products %}
-        <section class="event-banner">
-            <h2>🎁 신규 가입 혜택</h2>
-            <p>가입 즉시 토큰 혹은 기간 혜택을 받아보세요.</p>
+        <section class="event-section">
+            <div class="event-section-header">
+                <h2 class="event-section-title">🎁 신규 회원 한정 혜택</h2>
+                <p class="event-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
+            </div>
             <div class="event-grid">
-            {% for product in event_products %}
+                {% for product in event_products %}
                 <div class="event-card {{ 'period' if product.type == 'event_period' else '' }} {{ '' if product.is_active else 'ended' }}">
-                    <div class="badge {{ 'period' if product.type == 'event_period' else 'token' }}">
+                    <div class="event-badge {{ 'period' if product.type == 'event_period' else 'token' }}">
                         {% if product.type == 'event_period' %}
                             ⏳ 기간 이벤트
                         {% else %}
@@ -538,7 +92,7 @@
                         <p>신규 가입 혜택 ({{ product.duration_days or 0 }}일 무료)</p>
                         <p><strong>{{ product.duration_days or 0 }}일</strong> 동안 무료 체험이 제공됩니다.</p>
                     {% endif %}
-                    <ul class="feature-list">
+                    <ul class="event-feature-list">
                         <li>금액 부담 없이 즉시 사용</li>
                         <li>관리자 승인 없이 자동 적용</li>
                     </ul>
@@ -557,43 +111,137 @@
                         {% endif %}
                     </button>
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        {# 유료 요금제 카드 #}
+        {# 유료 요금제 섹션 #}
         {% if regular_products %}
-        <section class="pricing-grid">
-            {% for product in regular_products %}
-                <div class="pricing-card">
-                    <h3>{{ product.name }}</h3>
-                    <p class="text-muted">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
-                    <div class="price">
-                        {{ "{:,}".format(product.price or 0) }}원
-                        {% if product.type == 'subscription' %}
-                            <small>/ 월</small>
-                        {% endif %}
+        <section class="product-section">
+            <div class="product-section-header">
+                <h2 class="product-section-title">정식 요금제</h2>
+                <p class="product-section-subtitle">규모에 맞는 최적의 플랜을 선택하세요</p>
+            </div>
+            <div class="product-grid">
+                {% for product in regular_products %}
+                    {# Standard (ID: 1) #}
+                    {% if product.id == 1 %}
+                    <div class="product-card standard">
+                        <span class="product-icon">🚀</span>
+                        <div class="product-tagline">급할 때 한 건씩!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">필요할 때만 사용하는 유연한 플랜</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>1건당 300원 (부담 없는 가격)</li>
+                            <li>필요할 때만 구매 (유연한 시스템)</li>
+                            <li>기본 템플릿 제공</li>
+                            <li>이메일 지원</li>
+                            <li>99.9% 정확도 보장</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
                     </div>
-                    <ul class="feature-list">
-                        <li>{% if product.token_amount == -1 %}토큰 무제한 사용{% else %}토큰 {{ product.token_amount }}개 포함{% endif %}</li>
-                        <li>부가세 {{ '포함' if product.vat_included else '별도' }}</li>
-                        <li>실시간 고객 지원</li>
-                    </ul>
-                    <button class="btn-purchase" 
-                            data-id="{{ product.id }}"
-                            data-name="{{ product.name }}"
-                            data-price="{{ product.price or 0 }}"
-                            data-type="{{ product.type }}"
-                            data-token="{{ product.token_amount or 0 }}"
-                            data-duration="{{ product.duration_days or 0 }}">구매하기</button>
-                </div>
-            {% endfor %}
+                    {% endif %}
+
+                    {# Premium (ID: 2) - BEST 뱃지 #}
+                    {% if product.id == 2 %}
+                    <div class="product-card premium">
+                        <span class="product-icon">📦</span>
+                        <div class="product-tagline">정산서가 쌓여있을 때!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">100건 패키지로 한 번에 해결</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
+                            <span class="premium-discount-badge">50% 할인</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>100건 패키지 (건당 150원, 50% 할인)</li>
+                            <li>모든 템플릿 제공</li>
+                            <li>우선 지원</li>
+                            <li>데이터 백업</li>
+                            <li>API 연동 가능</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+
+                    {# Gold (ID: 3) - 황금 테두리 #}
+                    {% if product.id == 3 %}
+                    <div class="product-card gold">
+                        <span class="product-icon">👑</span>
+                        <div class="product-tagline">배달 대행사 사장님 필수템!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">무제한 변환으로 업무 효율 극대화</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원/월</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>무제한 토큰 (월 70,000원)</li>
+                            <li>맞춤형 템플릿</li>
+                            <li>전담 매니저 지원</li>
+                            <li>고객 리스트 관리</li>
+                            <li>클라이언트 대리 변환 (특허 가능 BM)</li>
+                            <li>SLA 보장</li>
+                        </ul>
+                        <div class="gold-special-badge">
+                            <span>💎</span>
+                            <span>Gold 전용 특별 기능</span>
+                        </div>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+
+                    {# 기타 상품 (ID 4, 5 등) - 기본 스타일 #}
+                    {% if product.id != 1 and product.id != 2 and product.id != 3 %}
+                    <div class="product-card">
+                        <span class="product-icon">🛒</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원{% if product.type == 'subscription' %}/월{% endif %}</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>{% if product.token_amount == -1 %}토큰 무제한 사용{% else %}토큰 {{ product.token_amount }}개 포함{% endif %}</li>
+                            <li>부가세 {{ '포함' if product.vat_included else '별도' }}</li>
+                            <li>실시간 고객 지원</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </section>
         {% endif %}
     </div>
 
-    {# 결제 확인 모달 - 현대적 디자인 #}
+    {# 결제 확인 모달 - 기존 구조 유지 #}
     <div id="checkoutModal" class="modal-overlay">
         <div class="modal-content" id="modalContent">
             {# 닫기 버튼 #}
@@ -650,8 +298,7 @@
         </div>
     </div>
 
-    {# 주문 연동 스크립트 #}
+    {# 주문 연동 스크립트 - 기존 유지 #}
     <script src="{{ url_for('static', filename='js/payment/shop.js') }}"></script>
 </body>
 </html>
-

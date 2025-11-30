@@ -549,6 +549,36 @@
     }
 
     /**
+     * 사용자 드롭다운 메뉴 초기화
+     */
+    function initUserDropdown() {
+        const trigger = document.getElementById('userMenuTrigger');
+        const dropdown = document.getElementById('userMenuDropdown');
+        
+        if (!trigger || !dropdown) return;
+        
+        // 드롭다운 토글
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+        
+        // 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && dropdown.classList.contains('active')) {
+                dropdown.classList.remove('active');
+            }
+        });
+    }
+
+    /**
      * 초기화
      */
     function init() {
@@ -557,10 +587,12 @@
             document.addEventListener('DOMContentLoaded', function() {
                 initPurchaseButtons();
                 initModalEvents();
+                initUserDropdown();
             });
         } else {
             initPurchaseButtons();
             initModalEvents();
+            initUserDropdown();
         }
     }
 
