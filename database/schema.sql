@@ -132,6 +132,23 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tok
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
 
+-- SMS 인증 코드 테이블
+-- 주의: phone_number는 정규화된 형식(하이픈 제거)으로 저장되므로 FOREIGN KEY 제약조건 없음
+CREATE TABLE IF NOT EXISTS sms_verification_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  phone_number TEXT NOT NULL,
+  code TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  is_verified INTEGER NOT NULL DEFAULT 0,
+  verified_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- SMS 인증 코드 인덱스
+CREATE INDEX IF NOT EXISTS idx_sms_codes_phone ON sms_verification_codes(phone_number);
+CREATE INDEX IF NOT EXISTS idx_sms_codes_expires ON sms_verification_codes(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sms_codes_verified ON sms_verification_codes(is_verified);
+
 -- 구독 플랜 테이블 (VIP/VIP-Plus/GoldVIP 요금제 정의)
 CREATE TABLE IF NOT EXISTS subscription_plans (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

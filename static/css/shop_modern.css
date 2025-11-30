@@ -769,6 +769,17 @@ body.shop-page {
     font-size: 0.95rem;
     line-height: 1.6;
     font-weight: 500;
+    word-break: keep-all;
+    hyphens: auto;
+}
+
+.product-feature-list li .feature-subtext {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    opacity: 0.85;
+    font-weight: 400;
+    line-height: 1.4;
 }
 
 .product-feature-list li::before {

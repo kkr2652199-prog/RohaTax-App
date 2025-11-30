@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import os
 import sqlite3
+import re
 from datetime import datetime
 import json as _json
 from core.db import get_conn_optimized as get_conn
@@ -44,8 +45,15 @@ def register_post():
         flash('사업자등록번호는 10자리 숫자여야 합니다', 'error')
         return redirect(url_for('registration.register'))
     
-    if len(password) < 6:
-        flash('비밀번호는 6자 이상이어야 합니다', 'error')
+    # 비밀번호 검증: 영문+숫자 조합, 8자 이상
+    if len(password) < 8:
+        flash('비밀번호는 8자 이상이어야 합니다', 'error')
+        return redirect(url_for('registration.register'))
+    
+    has_letter = bool(re.search(r'[a-zA-Z]', password))
+    has_number = bool(re.search(r'\d', password))
+    if not (has_letter and has_number):
+        flash('비밀번호는 영문과 숫자를 포함해야 합니다', 'error')
         return redirect(url_for('registration.register'))
     
     if '@' not in email:

@@ -1,347 +1,702 @@
-{% extends 'base.html' %}
-{% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<style>
-  header{display:none}
-  body{background:linear-gradient(135deg,var(--color-bg-start,#5f6ee6) 0%,var(--color-bg-end,#6f4fb0) 100%)}
-  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-  .auth-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12);width:360px;padding:24px}
-  .auth-card h1{margin:0 0 16px 0;text-align:center}
-  .auth-actions{display:flex;gap:12px;justify-content:center;margin-top:12px}
-  .auth-actions a{text-decoration:none;color:#5865f2;font-weight:700}
-  .btn-primary{display:block;width:100%;padding:12px 16px;border:none;border-radius:10px;background:#5865f2;color:#fff;font-weight:700;margin-top:8px}
-  form{display:grid;gap:12px}
-  input{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px}
-  input:focus{outline:none;border-color:#5865f2;box-shadow:0 0 0 3px rgba(88,101,242,0.1)}
-  .error{color:#e53e3e;font-size:12px;margin-top:4px}
-  .success{color:#10b981;font-size:12px;margin-top:4px}
-</style>
-{% endblock %}
-{% block content %}
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <h1>👑 {{ t('auth.register_title','VIP 회원가입') }}</h1>
-      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center;">
-        <strong style="color: #92400e;">🎉 VIP 회원 특별 혜택</strong><br>
-        <span style="color: #92400e; font-size: 14px;">신규 가입시 1개월 무료 + 무제한 변환 서비스</span>
-      </div>
-      <form method="post" id="registerForm">
-          <!-- 사용자 아이디 -->
-          <input type="text" name="username" id="username" placeholder="아이디 (영문/숫자/언더스코어 3~20자)" required>
-          <!-- 사업자등록번호 -->
-          <input type="text" name="business_number" id="businessNumber" placeholder="사업자등록번호 (10자리)" maxlength="10" required>
-          
-          <!-- 대표자명 -->
-          <input type="text" name="representative_name" placeholder="대표자명" required>
-          
-          <!-- 사업자명 -->
-          <input type="text" name="company_name" placeholder="사업자명" required>
-          
-          <!-- 휴대폰번호 -->
-          <input type="tel" name="phone" id="phoneNumber" placeholder="휴대폰번호 (010-0000-0000)" required>
-          
-          <!-- 이메일 -->
-          <input type="email" name="email" placeholder="이메일" required>
-          
-          <!-- 비밀번호 -->
-          <input type="password" name="password" id="password" placeholder="비밀번호 (영문, 숫자, 특수문자 조합)" required>
-          
-          <!-- 비밀번호 확인 -->
-          <input type="password" name="confirm_password" id="confirmPassword" placeholder="비밀번호 확인" required>
-          
-          <!-- 사업자 주소 (선택사항) -->
-          <input type="text" name="address" placeholder="사업자 주소 (선택사항)">
-          
-          <!-- 업태 -->
-          <input type="text" name="business_type" placeholder="업태 (예: 도소매업, 제조업, 서비스업)" required>
-          
-          <!-- 종목 -->
-          <input type="text" name="business_category" placeholder="종목 (예: 컴퓨터 및 주변장치 도소매업)" required>
-          
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-primary">{{ t('auth.register_button','회원가입') }}</button>
-      </form>
-      <div class="auth-actions">
-          <a href="/login">{{ t('home.nav.login','로그인') }}</a>
-          <a href="/">홈으로</a>
-      </div>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 로●하 TAX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register_modern.css') }}">
+</head>
+<body class="register-page">
+    <div class="register-page-wrapper">
+        {# Left Panel - Brand Area #}
+        <div class="register-left-panel">
+            <div class="register-brand-content">
+                <div class="register-logo">⚡</div>
+                <h1 class="register-brand-title">로●하 TAX</h1>
+                <p class="register-brand-subtitle">
+                    배달대행 정산의 새로운 기준<br>
+                    전자세금계산서 자동 변환 서비스
+                </p>
+                <div class="register-trust-badges">
+                    <div class="register-trust-item">
+                        <span class="register-trust-icon">🔒</span>
+                        <span>안전한 데이터 보호</span>
+                    </div>
+                    <div class="register-trust-item">
+                        <span class="register-trust-icon">⚡</span>
+                        <span>빠른 변환 처리</span>
+                    </div>
+                    <div class="register-trust-item">
+                        <span class="register-trust-icon">✅</span>
+                        <span>99.9% 정확도 보장</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Right Panel - Form Area #}
+        <div class="register-right-panel">
+            <div class="register-form-container">
+                <div class="register-form-header">
+                    <h2 class="register-form-title">회원가입</h2>
+                    <p class="register-form-subtitle">간단한 정보 입력으로 시작하세요</p>
+                </div>
+
+                {# Progress Bar #}
+                <div class="register-progress">
+                    <div class="register-progress-line" id="progressLine"></div>
+                    <div class="register-progress-step active" id="step1Progress">
+                        <div class="register-progress-circle">1</div>
+                        <span class="register-progress-label">계정 정보</span>
+                    </div>
+                    <div class="register-progress-step" id="step2Progress">
+                        <div class="register-progress-circle">2</div>
+                        <span class="register-progress-label">사업자 정보</span>
+                    </div>
+                </div>
+
+                {# Wizard Form #}
+                <form method="post" id="registerForm" class="register-wizard">
+                    {# Step 1: 계정 정보 #}
+                    <div class="register-step active" id="step1">
+                        <h3 class="register-step-title">계정 정보 입력</h3>
+                        
+                        <div class="register-form-group">
+                            <label for="username" class="register-form-label">아이디</label>
+                            <input type="text" 
+                                   name="username" 
+                                   id="username" 
+                                   class="register-form-input" 
+                                   placeholder="영문/숫자/언더스코어 3~20자" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="email" class="register-form-label">이메일</label>
+                            <input type="email" 
+                                   name="email" 
+                                   id="email" 
+                                   class="register-form-input" 
+                                   placeholder="이메일 주소" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="phoneNumber" class="register-form-label">휴대폰번호</label>
+                            <input type="tel" 
+                                   name="phone" 
+                                   id="phoneNumber" 
+                                   class="register-form-input" 
+                                   placeholder="010-0000-0000" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="password" class="register-form-label">비밀번호</label>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   class="register-form-input" 
+                                   placeholder="영문/숫자 조합 8자 이상" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="confirmPassword" class="register-form-label">비밀번호 확인</label>
+                            <input type="password" 
+                                   name="confirm_password" 
+                                   id="confirmPassword" 
+                                   class="register-form-input" 
+                                   placeholder="비밀번호를 다시 입력하세요" 
+                                   required>
+                        </div>
+
+                        <div class="register-button-group">
+                            <button type="button" class="register-btn register-btn-primary" id="btnNextStep">다음 단계로</button>
+                        </div>
+                    </div>
+
+                    {# Step 2: 사업자 정보 #}
+                    <div class="register-step" id="step2">
+                        <h3 class="register-step-title">사업자 정보 입력</h3>
+                        
+                        <div class="register-form-group">
+                            <label for="businessNumber" class="register-form-label">사업자등록번호</label>
+                            <input type="text" 
+                                   name="business_number" 
+                                   id="businessNumber" 
+                                   class="register-form-input" 
+                                   placeholder="10자리 숫자" 
+                                   maxlength="10" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="company_name" class="register-form-label">사업자명</label>
+                            <input type="text" 
+                                   name="company_name" 
+                                   id="company_name" 
+                                   class="register-form-input" 
+                                   placeholder="사업자명" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="representative_name" class="register-form-label">대표자명</label>
+                            <input type="text" 
+                                   name="representative_name" 
+                                   id="representative_name" 
+                                   class="register-form-input" 
+                                   placeholder="대표자명" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="address" class="register-form-label">사업자 주소 <span class="register-label-optional">(선택사항)</span></label>
+                            <input type="text" 
+                                   name="address" 
+                                   id="address" 
+                                   class="register-form-input" 
+                                   placeholder="사업자 주소">
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="business_type" class="register-form-label">업태</label>
+                            <input type="text" 
+                                   name="business_type" 
+                                   id="business_type" 
+                                   class="register-form-input" 
+                                   placeholder="예: 도소매업, 제조업, 서비스업" 
+                                   required>
+                        </div>
+
+                        <div class="register-form-group">
+                            <label for="business_category" class="register-form-label">종목</label>
+                            <input type="text" 
+                                   name="business_category" 
+                                   id="business_category" 
+                                   class="register-form-input" 
+                                   placeholder="예: 컴퓨터 및 주변장치 도소매업" 
+                                   required>
+                        </div>
+
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="register-button-group">
+                            <button type="button" class="register-btn register-btn-secondary" id="btnPrevStep">이전</button>
+                            <button type="submit" class="register-btn register-btn-primary" id="btnSubmit">가입 완료</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="register-footer-link">
+                    <a href="/login" class="register-login-link">이미 계정이 있으신가요? 로그인</a>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const form = document.getElementById('registerForm');
-          const username = document.getElementById('username');
-      const businessNumber = document.getElementById('businessNumber');
-      const phoneNumber = document.getElementById('phoneNumber');
-      const email = document.querySelector('input[name="email"]');
-      const password = document.getElementById('password');
-      const confirmPassword = document.getElementById('confirmPassword');
-      const businessType = document.querySelector('input[name="business_type"]');
-      const businessCategory = document.querySelector('input[name="business_category"]');
-      // 간단 디바운스
-      function debounce(fn, wait){
-        let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), wait); };
-      }
-      async function check(url, paramKey, value){
-        try{
-          const u = `${url}?${paramKey}=${encodeURIComponent(value)}`;
-          const res = await fetch(u, { headers: { 'X-Requested-With':'fetch' } });
-          if(!res.ok) return null;
-          return await res.json();
-        }catch{ return null; }
-      }
-      // 아이디 기본 유효성 검사 (클라이언트 측)
-      username.addEventListener('input', debounce(function(e){
-        const value = e.target.value.trim();
-        const ok = /^[a-zA-Z0-9_]{3,20}$/.test(value);
-        if(value.length === 0){
-          clearValidation(username);
-          return;
-        }
-        if(ok){
-          // 형식 OK → 실시간 중복 확인
-          check('/api/check-username','username', value).then(r=>{
-            if(!r){ showValidation(username,'⚠️ 확인 실패(네트워크)','error'); return; }
-            if(r.available){
-              showValidation(username, '✅ 사용 가능한 아이디입니다', 'success');
-            }else{
-              showValidation(username, '❌ 이미 사용 중인 아이디입니다', 'error');
+    <script>
+        (function() {
+            'use strict';
+
+            const form = document.getElementById('registerForm');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const btnNext = document.getElementById('btnNextStep');
+            const btnPrev = document.getElementById('btnPrevStep');
+            const progressLine = document.getElementById('progressLine');
+            const step1Progress = document.getElementById('step1Progress');
+            const step2Progress = document.getElementById('step2Progress');
+            
+            let currentStep = 1;
+
+            // Progress Bar 업데이트
+            function updateProgress(step) {
+                if (step === 1) {
+                    step1Progress.classList.add('active');
+                    step1Progress.classList.remove('completed');
+                    step2Progress.classList.remove('active', 'completed');
+                    progressLine.style.width = '0%';
+                } else if (step === 2) {
+                    step1Progress.classList.remove('active');
+                    step1Progress.classList.add('completed');
+                    step2Progress.classList.add('active');
+                    progressLine.style.width = '100%';
+                }
             }
-          });
-        } else {
-          showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
-        }
-      }, 300));
 
-
-      // 사업자등록번호 자동 포맷팅 (숫자만 입력)
-      businessNumber.addEventListener('input', debounce(function(e) {
-        let value = e.target.value.replace(/\D/g, ''); // 숫자만 남기기
-        if (value.length > 10) value = value.substring(0, 10);
-        e.target.value = value;
-        
-        // 유효성 검사
-        if (value.length === 10) {
-          // 형식 OK → 실시간 중복 확인
-          check('/api/check-business-number','business_number', value).then(r=>{
-            if(!r){ showValidation(businessNumber,'⚠️ 확인 실패(네트워크)','error'); return; }
-            if(r.available){
-              showValidation(businessNumber, '✅ 사용 가능한 사업자등록번호입니다', 'success');
-            }else{
-              showValidation(businessNumber, '❌ 이미 등록된 사업자등록번호입니다', 'error');
+            // Step 전환
+            function showStep(step) {
+                if (step === 1) {
+                    step1.classList.add('active');
+                    step2.classList.remove('active');
+                    currentStep = 1;
+                    updateProgress(1);
+                } else if (step === 2) {
+                    step1.classList.remove('active');
+                    step2.classList.add('active');
+                    currentStep = 2;
+                    updateProgress(2);
+                }
             }
-          });
-        } else if (value.length > 0) {
-          showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
-        } else {
-          clearValidation(businessNumber);
-        }
-      }, 300));
 
-      // 이메일 실시간 중복 확인
-      email.addEventListener('input', debounce(function(e){
-        const value = e.target.value.trim();
-        if(value.length === 0){ clearValidation(email); return; }
-        // 간단 이메일 형식 체크
-        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        if(!ok){ showValidation(email,'❌ 유효한 이메일 형식이 아닙니다','error'); return; }
-        check('/api/check-email','email', value).then(r=>{
-          if(!r){ showValidation(email,'⚠️ 확인 실패(네트워크)','error'); return; }
-          if(r.available){
-            showValidation(email,'✅ 사용 가능한 이메일입니다','success');
-          }else{
-            showValidation(email,'❌ 이미 등록된 이메일입니다','error');
-          }
-        });
-      }, 300));
+            // Step 1 필수 필드 검증
+            function validateStep1() {
+                const username = document.getElementById('username');
+                const email = document.querySelector('input[name="email"]');
+                const phone = document.getElementById('phoneNumber');
+                const password = document.getElementById('password');
+                const confirmPassword = document.getElementById('confirmPassword');
 
-      // 휴대폰번호 자동 포맷팅
-      phoneNumber.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, ''); // 숫자만 남기기
-        if (value.length > 11) value = value.substring(0, 11);
-        
-        // 010-0000-0000 형식으로 포맷팅
-        if (value.length >= 3) {
-          value = value.substring(0, 3) + '-' + value.substring(3);
-        }
-        if (value.length >= 8) {
-          value = value.substring(0, 8) + '-' + value.substring(8);
-        }
-        
-        e.target.value = value;
-        
-        // 유효성 검사
-        if (value.length === 13 && value.match(/^010-\d{4}-\d{4}$/)) {
-          showValidation(phoneNumber, '✅ 올바른 휴대폰번호 형식입니다', 'success');
-        } else if (value.length > 0) {
-          showValidation(phoneNumber, '❌ 올바른 휴대폰번호 형식이 아닙니다 (010-0000-0000)', 'error');
-        } else {
-          clearValidation(phoneNumber);
-        }
-      });
+                let isValid = true;
 
-      // 비밀번호 유효성 검사
-      password.addEventListener('input', function(e) {
-        const value = e.target.value;
-        const hasUpper = /[A-Z]/.test(value);
-        const hasLower = /[a-z]/.test(value);
-        const hasNumber = /\d/.test(value);
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-        const isLongEnough = value.length >= 8;
+                // 아이디 검증
+                if (!username.value.trim() || !/^[a-zA-Z0-9_]{3,20}$/.test(username.value.trim())) {
+                    showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
+                    isValid = false;
+                }
 
-        if (value.length === 0) {
-          clearValidation(password);
-          return;
-        }
+                // 이메일 검증
+                if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+                    showValidation(email, '❌ 유효한 이메일 형식이 아닙니다', 'error');
+                    isValid = false;
+                }
 
-        let message = '';
-        let isValid = true;
+                // 휴대폰번호 검증
+                if (!phone.value.match(/^010-\d{4}-\d{4}$/)) {
+                    showValidation(phone, '❌ 올바른 휴대폰번호 형식이 아닙니다 (010-0000-0000)', 'error');
+                    isValid = false;
+                }
 
-        if (!isLongEnough) {
-          message += '❌ 8자리 이상 ';
-          isValid = false;
-        }
-        if (!hasUpper) {
-          message += '❌ 대문자 포함 ';
-          isValid = false;
-        }
-        if (!hasLower) {
-          message += '❌ 소문자 포함 ';
-          isValid = false;
-        }
-        if (!hasNumber) {
-          message += '❌ 숫자 포함 ';
-          isValid = false;
-        }
-        if (!hasSpecial) {
-          message += '❌ 특수문자 포함 ';
-          isValid = false;
-        }
+                // 비밀번호 검증 (영문+숫자, 8자 이상)
+                const hasLetter = /[a-zA-Z]/.test(password.value);
+                const hasNumber = /\d/.test(password.value);
+                const isLongEnough = password.value.length >= 8;
+                const passwordValid = isLongEnough && hasLetter && hasNumber;
+                
+                if (!passwordValid) {
+                    showValidation(password, '❌ 비밀번호는 영문/숫자 조합 8자리 이상이어야 합니다', 'error');
+                    isValid = false;
+                }
 
-        if (isValid) {
-          message = '✅ 안전한 비밀번호입니다';
-          showValidation(password, message, 'success');
-        } else {
-          showValidation(password, message, 'error');
-        }
-      });
+                // 비밀번호 확인
+                if (password.value !== confirmPassword.value) {
+                    showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
+                    isValid = false;
+                }
 
-      // 비밀번호 확인
-      confirmPassword.addEventListener('input', function(e) {
-        const passwordValue = password.value;
-        const confirmValue = e.target.value;
+                return isValid;
+            }
 
-        if (confirmValue.length === 0) {
-          clearValidation(confirmPassword);
-          return;
-        }
+            // 다음 단계로
+            btnNext.addEventListener('click', function() {
+                if (validateStep1()) {
+                    showStep(2);
+                } else {
+                    // 첫 번째 에러 필드로 스크롤
+                    const firstError = document.querySelector('.register-form-input.error');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
 
-        if (passwordValue === confirmValue) {
-          showValidation(confirmPassword, '✅ 비밀번호가 일치합니다', 'success');
-        } else {
-          showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
-        }
-      });
+            // 이전 단계로
+            btnPrev.addEventListener('click', function() {
+                showStep(1);
+            });
 
-      // 업태 유효성 검사
-      businessType.addEventListener('input', function(e) {
-        const value = e.target.value.trim();
-        
-        if (value.length === 0) {
-          clearValidation(businessType);
-          return;
-        }
-        
-        if (value.length >= 2) {
-          showValidation(businessType, '✅ 올바른 업태입니다', 'success');
-        } else {
-          showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
-        }
-      });
+            // Step 1에서 엔터키 처리
+            step1.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnNext.click();
+                }
+            });
 
-      // 종목 유효성 검사
-      businessCategory.addEventListener('input', function(e) {
-        const value = e.target.value.trim();
-        
-        if (value.length === 0) {
-          clearValidation(businessCategory);
-          return;
-        }
-        
-        if (value.length >= 3) {
-          showValidation(businessCategory, '✅ 올바른 종목입니다', 'success');
-        } else {
-          showValidation(businessCategory, '❌ 종목은 3자 이상 입력해주세요', 'error');
-        }
-      });
+            // 기존 검증 로직 (아이디/사업자번호 중복 확인)
+            const username = document.getElementById('username');
+            const businessNumber = document.getElementById('businessNumber');
+            const phoneNumber = document.getElementById('phoneNumber');
+            const email = document.querySelector('input[name="email"]');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const businessType = document.getElementById('business_type');
+            const businessCategory = document.getElementById('business_category');
 
-      // 폼 제출 시 최종 검증
-      form.addEventListener('submit', function(e) {
-        let isValid = true;
+            // 디바운스 함수
+            function debounce(fn, wait) {
+                let t;
+                return function(...args) {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn.apply(this, args), wait);
+                };
+            }
 
-          // 아이디 검증
-          if(!/^[a-zA-Z0-9_]{3,20}$/.test(username.value.trim())){
-            showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
-            isValid = false;
-          }
+            // API 체크 함수
+            async function check(url, paramKey, value) {
+                try {
+                    const u = `${url}?${paramKey}=${encodeURIComponent(value)}`;
+                    const res = await fetch(u, { headers: { 'X-Requested-With': 'fetch' } });
+                    if (!res.ok) return null;
+                    return await res.json();
+                } catch {
+                    return null;
+                }
+            }
 
-        // 사업자등록번호 검증
-        if (businessNumber.value.length !== 10) {
-          showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
-          isValid = false;
-        }
+            // 아이디 실시간 중복 확인
+            username.addEventListener('input', debounce(function(e) {
+                const value = e.target.value.trim();
+                const ok = /^[a-zA-Z0-9_]{3,20}$/.test(value);
+                
+                if (value.length === 0) {
+                    clearValidation(username);
+                    username.classList.remove('error', 'success');
+                    return;
+                }
+                
+                if (ok) {
+                    check('/api/check-username', 'username', value).then(r => {
+                        if (!r) {
+                            showValidation(username, '⚠️ 확인 실패(네트워크)', 'error');
+                            username.classList.add('error');
+                            username.classList.remove('success');
+                            return;
+                        }
+                        if (r.available) {
+                            showValidation(username, '✅ 사용 가능한 아이디입니다', 'success');
+                            username.classList.add('success');
+                            username.classList.remove('error');
+                        } else {
+                            showValidation(username, '❌ 이미 사용 중인 아이디입니다', 'error');
+                            username.classList.add('error');
+                            username.classList.remove('success');
+                        }
+                    });
+                } else {
+                    showValidation(username, '❌ 아이디는 영문/숫자/언더스코어 3~20자', 'error');
+                    username.classList.add('error');
+                    username.classList.remove('success');
+                }
+            }, 300));
 
-        // 휴대폰번호 검증
-        if (!phoneNumber.value.match(/^010-\d{4}-\d{4}$/)) {
-          showValidation(phoneNumber, '❌ 올바른 휴대폰번호 형식이 아닙니다', 'error');
-          isValid = false;
-        }
+            // 사업자등록번호 자동 포맷팅 및 중복 확인
+            businessNumber.addEventListener('input', debounce(function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 10) value = value.substring(0, 10);
+                e.target.value = value;
+                
+                if (value.length === 10) {
+                    check('/api/check-business-number', 'business_number', value).then(r => {
+                        if (!r) {
+                            showValidation(businessNumber, '⚠️ 확인 실패(네트워크)', 'error');
+                            businessNumber.classList.add('error');
+                            businessNumber.classList.remove('success');
+                            return;
+                        }
+                        if (r.available) {
+                            showValidation(businessNumber, '✅ 사용 가능한 사업자등록번호입니다', 'success');
+                            businessNumber.classList.add('success');
+                            businessNumber.classList.remove('error');
+                        } else {
+                            showValidation(businessNumber, '❌ 이미 등록된 사업자등록번호입니다', 'error');
+                            businessNumber.classList.add('error');
+                            businessNumber.classList.remove('success');
+                        }
+                    });
+                } else if (value.length > 0) {
+                    showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
+                    businessNumber.classList.add('error');
+                    businessNumber.classList.remove('success');
+                } else {
+                    clearValidation(businessNumber);
+                    businessNumber.classList.remove('error', 'success');
+                }
+            }, 300));
 
-        // 비밀번호 검증
-        if (password.value !== confirmPassword.value) {
-          showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
-          isValid = false;
-        }
+            // 이메일 실시간 중복 확인
+            email.addEventListener('input', debounce(function(e) {
+                const value = e.target.value.trim();
+                if (value.length === 0) {
+                    clearValidation(email);
+                    email.classList.remove('error', 'success');
+                    return;
+                }
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+                if (!ok) {
+                    showValidation(email, '❌ 유효한 이메일 형식이 아닙니다', 'error');
+                    email.classList.add('error');
+                    email.classList.remove('success');
+                    return;
+                }
+                check('/api/check-email', 'email', value).then(r => {
+                    if (!r) {
+                        showValidation(email, '⚠️ 확인 실패(네트워크)', 'error');
+                        email.classList.add('error');
+                        email.classList.remove('success');
+                        return;
+                    }
+                    if (r.available) {
+                        showValidation(email, '✅ 사용 가능한 이메일입니다', 'success');
+                        email.classList.add('success');
+                        email.classList.remove('error');
+                    } else {
+                        showValidation(email, '❌ 이미 등록된 이메일입니다', 'error');
+                        email.classList.add('error');
+                        email.classList.remove('success');
+                    }
+                });
+            }, 300));
 
-        // 업태 검증
-        if (businessType.value.trim().length < 2) {
-          showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
-          isValid = false;
-        }
+            // 휴대폰번호 자동 포맷팅
+            phoneNumber.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 11) value = value.substring(0, 11);
+                
+                if (value.length >= 3) {
+                    value = value.substring(0, 3) + '-' + value.substring(3);
+                }
+                if (value.length >= 8) {
+                    value = value.substring(0, 8) + '-' + value.substring(8);
+                }
+                
+                e.target.value = value;
+                
+                if (value.length === 13 && value.match(/^010-\d{4}-\d{4}$/)) {
+                    showValidation(phoneNumber, '✅ 올바른 휴대폰번호 형식입니다', 'success');
+                    phoneNumber.classList.add('success');
+                    phoneNumber.classList.remove('error');
+                } else if (value.length > 0) {
+                    showValidation(phoneNumber, '❌ 올바른 휴대폰번호 형식이 아닙니다 (010-0000-0000)', 'error');
+                    phoneNumber.classList.add('error');
+                    phoneNumber.classList.remove('success');
+                } else {
+                    clearValidation(phoneNumber);
+                    phoneNumber.classList.remove('error', 'success');
+                }
+            });
 
-        // 종목 검증
-        if (businessCategory.value.trim().length < 3) {
-          showValidation(businessCategory, '❌ 종목은 3자 이상 입력해주세요', 'error');
-          isValid = false;
-        }
+            // 비밀번호 유효성 검사 (긍정적 UI로 개선)
+            let passwordValidationContainer = null;
+            
+            function createPasswordValidationContainer() {
+                if (!passwordValidationContainer) {
+                    passwordValidationContainer = document.createElement('div');
+                    passwordValidationContainer.className = 'register-password-validation';
+                    passwordValidationContainer.id = 'password-validation-container';
+                    const parent = password.closest('.register-form-group');
+                    if (parent) {
+                        parent.appendChild(passwordValidationContainer);
+                    }
+                }
+                return passwordValidationContainer;
+            }
+            
+            function updatePasswordValidation(value) {
+                const container = createPasswordValidationContainer();
+                // 영문(대소문자 무관) + 숫자 포함, 8자 이상
+                const hasLetter = /[a-zA-Z]/.test(value);
+                const hasNumber = /\d/.test(value);
+                const isLongEnough = value.length >= 8;
+                
+                const allValid = isLongEnough && hasLetter && hasNumber;
+                
+                // 모든 조건 충족 시 초록색으로 표시
+                if (allValid) {
+                    password.classList.add('success');
+                    password.classList.remove('error', 'register-input-neutral');
+                    container.innerHTML = '<div class="register-password-success">✅ 안전한 비밀번호입니다</div>';
+                } else {
+                    // 입력 중에는 중립적 스타일, 에러 클래스 제거
+                    password.classList.remove('error');
+                    password.classList.add('register-input-neutral');
+                    
+                    // 단순화된 체크리스트 (2개 조건만)
+                    container.innerHTML = `
+                        <div class="register-password-checklist">
+                            <div class="register-password-item ${isLongEnough ? 'valid' : 'pending'}">
+                                ${isLongEnough ? '✅' : '○'} 8자리 이상
+                            </div>
+                            <div class="register-password-item ${hasLetter && hasNumber ? 'valid' : 'pending'}">
+                                ${hasLetter && hasNumber ? '✅' : '○'} 영문/숫자 조합
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            password.addEventListener('input', function(e) {
+                const value = e.target.value;
+                
+                if (value.length === 0) {
+                    if (passwordValidationContainer) {
+                        passwordValidationContainer.remove();
+                        passwordValidationContainer = null;
+                    }
+                    password.classList.remove('error', 'success', 'register-input-neutral');
+                    clearValidation(password);
+                    return;
+                }
+                
+                updatePasswordValidation(value);
+            });
+            
+            // Blur 시에만 에러 상태 표시 (입력 중이 아닐 때)
+            password.addEventListener('blur', function(e) {
+                const value = e.target.value;
+                if (value.length > 0) {
+                    const hasLetter = /[a-zA-Z]/.test(value);
+                    const hasNumber = /\d/.test(value);
+                    const isLongEnough = value.length >= 8;
+                    const allValid = isLongEnough && hasLetter && hasNumber;
+                    
+                    if (!allValid) {
+                        password.classList.add('error');
+                        password.classList.remove('register-input-neutral');
+                    }
+                }
+            });
 
-        if (!isValid) {
-          e.preventDefault();
-          alert('입력 정보를 다시 확인해주세요.');
-        }
-      });
+            // 비밀번호 확인
+            confirmPassword.addEventListener('input', function(e) {
+                const passwordValue = password.value;
+                const confirmValue = e.target.value;
 
-      // 유효성 메시지: 해당 입력칸 바로 아래에 표시
-      function showValidation(input, message, type) {
-        clearValidation(input);
-        const div = document.createElement('div');
-        div.className = type;
-        div.textContent = message;
-        // 입력 요소 바로 뒤에 삽입
-        if (input.nextSibling) {
-          input.parentNode.insertBefore(div, input.nextSibling);
-        } else {
-          input.parentNode.appendChild(div);
-        }
-      }
+                if (confirmValue.length === 0) {
+                    clearValidation(confirmPassword);
+                    confirmPassword.classList.remove('error', 'success');
+                    return;
+                }
 
-      function clearValidation(input) {
-        const next = input.nextSibling;
-        if (next && next.classList && (next.classList.contains('error') || next.classList.contains('success'))) {
-          next.remove();
-        }
-      }
-    });
-  </script>
-{% endblock %}
+                if (passwordValue === confirmValue) {
+                    showValidation(confirmPassword, '✅ 비밀번호가 일치합니다', 'success');
+                    confirmPassword.classList.add('success');
+                    confirmPassword.classList.remove('error');
+                } else {
+                    showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
+                    confirmPassword.classList.add('error');
+                    confirmPassword.classList.remove('success');
+                }
+            });
+
+            // 업태 유효성 검사
+            businessType.addEventListener('input', function(e) {
+                const value = e.target.value.trim();
+                
+                if (value.length === 0) {
+                    clearValidation(businessType);
+                    businessType.classList.remove('error', 'success');
+                    return;
+                }
+                
+                if (value.length >= 2) {
+                    showValidation(businessType, '✅ 올바른 업태입니다', 'success');
+                    businessType.classList.add('success');
+                    businessType.classList.remove('error');
+                } else {
+                    showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
+                    businessType.classList.add('error');
+                    businessType.classList.remove('success');
+                }
+            });
+
+            // 종목 유효성 검사 (1자 이상으로 완화)
+            businessCategory.addEventListener('input', function(e) {
+                const value = e.target.value.trim();
+                
+                if (value.length === 0) {
+                    clearValidation(businessCategory);
+                    businessCategory.classList.remove('error', 'success');
+                    return;
+                }
+                
+                if (value.length >= 1) {
+                    showValidation(businessCategory, '✅ 올바른 종목입니다', 'success');
+                    businessCategory.classList.add('success');
+                    businessCategory.classList.remove('error');
+                } else {
+                    showValidation(businessCategory, '❌ 종목은 1자 이상 입력해주세요', 'error');
+                    businessCategory.classList.add('error');
+                    businessCategory.classList.remove('success');
+                }
+            });
+
+            // 폼 제출 시 최종 검증
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+
+                // Step 1 검증
+                if (!validateStep1()) {
+                    isValid = false;
+                    showStep(1);
+                }
+
+                // Step 2 검증
+                if (businessNumber.value.length !== 10) {
+                    showValidation(businessNumber, '❌ 사업자등록번호는 10자리여야 합니다', 'error');
+                    isValid = false;
+                }
+
+                if (businessType.value.trim().length < 2) {
+                    showValidation(businessType, '❌ 업태는 2자 이상 입력해주세요', 'error');
+                    isValid = false;
+                }
+
+                if (businessCategory.value.trim().length < 1) {
+                    showValidation(businessCategory, '❌ 종목은 1자 이상 입력해주세요', 'error');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // 에러가 있는 단계로 이동
+                    if (currentStep === 1 || !validateStep1()) {
+                        showStep(1);
+                    } else {
+                        showStep(2);
+                    }
+                    const firstError = document.querySelector('.register-form-input.error');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+
+            // 유효성 메시지 표시 함수
+            function showValidation(input, message, type) {
+                clearValidation(input);
+                const div = document.createElement('div');
+                div.className = `register-form-${type}`;
+                div.textContent = message;
+                
+                const parent = input.closest('.register-form-group');
+                if (parent) {
+                    const existing = parent.querySelector(`.register-form-${type}`);
+                    if (existing) {
+                        existing.remove();
+                    }
+                    parent.appendChild(div);
+                }
+            }
+
+            function clearValidation(input) {
+                const parent = input.closest('.register-form-group');
+                if (parent) {
+                    const error = parent.querySelector('.register-form-error');
+                    const success = parent.querySelector('.register-form-success');
+                    if (error) error.remove();
+                    if (success) success.remove();
+                }
+            }
+
+            // 초기화
+            updateProgress(1);
+        })();
+    </script>
+</body>
+</html>
