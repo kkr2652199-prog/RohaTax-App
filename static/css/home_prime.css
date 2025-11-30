@@ -1300,6 +1300,9 @@ body {
     padding: 0;
     min-width: 180px;
     flex: 1;
+    background: transparent;
+    box-shadow: none;
+    border: none;
 }
 
 .achievement-number {
@@ -1313,7 +1316,7 @@ body {
 
 .achievement-label {
     font-size: 1.1rem;
-    color: #666666;
+    color: #333333;
     font-weight: 500;
     line-height: 1.5;
 }
@@ -1790,30 +1793,7 @@ body {
 /* homepage.html 전용 스타일 */
 /* 이 파일은 homepage.css에서 homepage.html에서만 사용되는 스타일을 추출한 것입니다. */
 
-.achievement-item {
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    color: white;
-}
-
-.achievement-label {
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-.achievement-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.achievements {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
-    text-align: center;
-}
+/* Achievement styles are defined above (lines 1291-1319) - removed duplicate styles with purple gradient */
 
 .amount {
     font-size: 3rem;
@@ -1939,6 +1919,87 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
     margin-bottom: 3rem;
+}
+
+/* ================================================================
+   VS Table (비교표) - 깔끔한 좌우 비교 레이아웃
+   ================================================================ */
+.vs-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.vs-column {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.vs-column:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.vs-column.individual {
+    border-left: 4px solid #ef4444;
+}
+
+.vs-column.batch {
+    border-left: 4px solid var(--primary-color);
+}
+
+.vs-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vs-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.vs-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.vs-steps {
+    margin-bottom: 1.5rem;
+}
+
+.vs-step {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vs-step:last-child {
+    border-bottom: none;
+}
+
+.vs-step-content {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.vs-cta {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .vs-table {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
 }
 
 .cta-actions {
@@ -2527,7 +2588,12 @@ body {
     object-position: center;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease, transform 6s ease;
+    transform: scale(1);
+}
+
+.slide.active .guide-image {
+    transform: scale(1.05);
 }
 
 .slide:nth-child(7) .guide-image,
@@ -2636,7 +2702,7 @@ body {
     margin: 4rem 0 2rem 0;
     border-radius: var(--radius-xl);
     position: relative;
-    box-shadow: 0 4px 20px rgba(18, 184, 134, 0.1);
+    box-shadow: 0 4px 20px rgba(44, 91, 240, 0.1);
     overflow: visible;
 }
 
@@ -2714,6 +2780,20 @@ body {
     will-change: transform, opacity; /* 브라우저에게 변화 예고 */
 }
 
+/* 1단계: 로그인 텍스트 정확한 위치 조정 (상단 우측) */
+.mouse-click-effect[data-step="1"] .mouse-cursor {
+    position: absolute;
+    top: calc(8% + 20px); /* 상단 로그인 텍스트 위치 */
+    left: calc(92% - 50px - 100px - 30px - 20px - 10px); /* 우측 로그인 버튼 위치 - 왼쪽으로 160px 이동 */
+    width: 45px;
+    height: 45px;
+    z-index: 10000;
+    opacity: 1 !important;
+    transform: translate3d(-50%, -50%, 0);
+    animation: fingerMoveUp 3s ease-in-out 1s forwards;
+    will-change: transform, opacity;
+}
+
 .fullscreen-mode .mouse-cursor {
     position: absolute;
     top: calc(5% + 40px + 15px + 3px); /* 작은창과 동일한 비율 */
@@ -2729,8 +2809,8 @@ body {
 
 .mouse-click-effect[data-step="2"] .mouse-cursor {
     position: absolute;
-    top: calc(5% + 40px + 15px + 3px); /* 1번과 동일한 위치 */
-    left: calc(85% - 70px - 15px - 44px); /* 왼쪽으로 44px 이동 (43px + 1px) */
+    top: calc(5% + 40px + 15px + 3px - 20px); /* 1번과 동일한 위치 - 상단으로 20px 이동 */
+    left: calc(85% - 70px - 15px - 44px - 25px - 20px); /* 왼쪽으로 44px 이동 (43px + 1px) + 왼쪽으로 45px 추가 이동 */
     width: 45px; /* 크기 증가: 40px → 45px */
     height: 45px; /* 크기 증가: 40px → 45px */
     z-index: 10000;
@@ -2886,7 +2966,7 @@ body {
 .mouse-click-effect[data-step="6"] .mouse-cursor {
     position: absolute;
     top: calc(5% + 40px + 15px + 3px + 200px - 60px + 5px + 5px); /* 하단으로 200px 이동 후 상단으로 60px 이동, 하단으로 5px + 5px 추가 이동 */
-    left: calc(85% - 70px - 15px + 150px); /* 오른쪽으로 150px 이동 */
+    left: calc(85% - 70px - 15px + 150px - 25px); /* 오른쪽으로 150px 이동 - 왼쪽으로 25px 추가 이동 */
     width: 45px; /* 크기 증가: 40px → 45px */
     height: 45px; /* 크기 증가: 40px → 45px */
     z-index: 10000;
@@ -2911,8 +2991,8 @@ body {
 
 .mouse-click-effect[data-step="8"] .mouse-cursor {
     position: absolute;
-    top: calc(5% + 40px + 15px + 3px + 400px + 90px + 4px); /* 하단으로 400px + 90px + 4px 이동 */
-    left: calc(85% - 70px - 15px + 20px); /* 오른쪽으로 20px 이동 */
+    top: calc(5% + 40px + 15px + 3px + 400px + 90px + 4px - 15px); /* 하단으로 400px + 90px + 4px 이동 - 상단으로 15px 추가 이동 */
+    left: calc(85% - 70px - 15px + 20px - 25px - 10px); /* 오른쪽으로 20px 이동 - 왼쪽으로 35px 추가 이동 (25px + 10px) */
     width: 45px; /* 크기 증가: 40px → 45px */
     height: 45px; /* 크기 증가: 40px → 45px */
     z-index: 10000;
@@ -3007,6 +3087,7 @@ body {
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
     z-index: 1000;
@@ -3046,6 +3127,7 @@ body {
     border: 2px solid rgba(18, 184, 134, 0.3);
     border-radius: var(--radius-lg);
     background-color: rgba(0, 0, 0, 0.8);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -3261,7 +3343,7 @@ body {
 .progress-bar {
     position: relative;
     margin: 0 0 0 0;
-    background: rgba(18, 184, 134, 0.1);
+    background: rgba(44, 91, 240, 0.1);
     height: 20px;
     border-radius: 4px;
     overflow: hidden;
@@ -3269,7 +3351,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #12B886, #0ea472);
+    background: linear-gradient(90deg, #2C5BF0, #1e40af);
     width: 12.5%;
     transition: width 0.3s ease;
     border-radius: 4px;
@@ -3347,14 +3429,66 @@ body {
 
 .slide-controls {
     position: absolute;
-    bottom: 1rem; /* -80px → 1rem로 원래 위치로 복원 */
+    bottom: 1.5rem; /* 유튜브 스타일: 하단 여백 증가 */
     left: 50%;
     transform: translate3d(-50%, 0, 0); /* GPU 가속을 위한 3D 변환 */
     display: flex;
-    gap: 1rem; /* 0.7rem → 1rem로 원래 간격으로 복원 */
-    z-index: 10;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
+    gap: 1.5rem; /* 버튼 간격 증가 */
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.4); /* 반투명 배경 (유튜브 스타일) */
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px; /* 타원형 컨트롤 바 */
+}
+
+/* 컨트롤러 버튼 스타일 (유튜브 스타일) */
+.slide-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+}
+
+.slide-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.slide-btn .btn-icon {
+    width: 24px;
+    height: 24px;
+    color: white;
+    stroke-width: 2;
+}
+
+/* 재생 버튼 강조 (동그라미 배경) */
+.play-pause-btn {
+    background: #2C5BF0 !important;
+    width: 48px;
+    height: 48px;
+}
+
+.play-pause-btn:hover {
+    background: #1e40af !important;
+    transform: scale(1.15);
+}
+
+.play-pause-btn .btn-icon {
+    width: 20px;
+    height: 20px;
+    color: white;
+    stroke-width: 2.5;
 }
 
 .slide-highlight {
@@ -3373,11 +3507,39 @@ body {
     animation: highlightGlow 2s ease-in-out;
 }
 
+/* ================================================================
+   모니터 프레임 (MacBook/Monitor 스타일)
+   ================================================================ */
+.monitor-frame {
+    border: 12px solid #333;
+    border-radius: 12px;
+    background: #1a1a1a;
+    padding: 8px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.monitor-frame::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 8px;
+    background: #333;
+    border-radius: 4px 4px 0 0;
+}
+
 .slide-wrapper {
     position: relative;
     width: 100%;
     height: 600px;
     overflow: hidden;
+    background: #000;
+    border-radius: 4px;
 }
 
 .stars {
@@ -3461,8 +3623,8 @@ body {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: rgba(18, 184, 134, 0.2);
-    color: #12B886;
+    background: rgba(44, 91, 240, 0.2);
+    color: #2C5BF0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3480,16 +3642,117 @@ body {
 }
 
 .step-indicator.active {
-    background: #12B886;
+    background: #2C5BF0;
     color: white;
     transform: scale(1.1);
-    border-color: #0ea472;
-    box-shadow: 0 0 10px rgba(18, 184, 134, 0.4);
+    border-color: #1e40af;
+    box-shadow: 0 0 10px rgba(44, 91, 240, 0.4);
 }
 
 .step-indicator:hover {
-    background: rgba(18, 184, 134, 0.3);
+    background: rgba(44, 91, 240, 0.3);
     color: white;
+}
+
+/* ================================================================
+   Guide Tabs (프로그레스 탭 네비게이션)
+   ================================================================ */
+.guide-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.guide-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-item {
+    flex: 1;
+    min-width: 120px;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px; /* 타원형(Pill shape)으로 변경 */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.tab-item:hover {
+    border-color: var(--primary-color);
+    background: rgba(44, 91, 240, 0.02);
+}
+
+.tab-item.active {
+    border-color: var(--primary-color);
+    background: rgba(44, 91, 240, 0.05);
+}
+
+.tab-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.tab-item.active .tab-label {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.tab-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--border-color);
+    overflow: hidden;
+}
+
+.tab-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-color);
+    transition: width 0.1s linear;
+}
+
+.tab-item.active .tab-progress-fill {
+    animation: progressFill 5s linear forwards;
+}
+
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .guide-tabs {
+        gap: 0.25rem;
+        padding: 0 0.5rem;
+    }
+    
+    .tab-item {
+        min-width: 100px;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .tab-label {
+        font-size: 0.8rem;
+    }
 }
 
 .step-title {
@@ -3520,6 +3783,7 @@ body {
     left: 50%;
     transform: translate3d(-50%, 0, 0); /* GPU 가속을 위한 3D 변환 */
     background: rgba(80, 80, 80, 0.6); /* 더 연한 검정색 */
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-lg);
     padding: 1rem 1.5rem;
@@ -3541,6 +3805,7 @@ body {
     border-radius: 50px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -3690,10 +3955,10 @@ body {
     gap: 1.5rem;
     text-align: center;
     padding: 2rem;
-    background: rgba(18, 184, 134, 0.05);
+    background: rgba(44, 91, 240, 0.05);
     border-radius: var(--radius-xl);
-    border: 2px solid rgba(18, 184, 134, 0.15);
-    box-shadow: 0 8px 32px rgba(18, 184, 134, 0.1);
+    border: 2px solid rgba(44, 91, 240, 0.15);
+    box-shadow: 0 8px 32px rgba(44, 91, 240, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -3705,7 +3970,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(18, 184, 134, 0.05), transparent);
+    background: linear-gradient(90deg, transparent, rgba(44, 91, 240, 0.05), transparent);
     animation: trustShimmer 3s infinite;
 }
 
@@ -3713,7 +3978,7 @@ body {
     padding: 3rem 0;
     background: #ffffff;
     margin: 2rem 0;
-    box-shadow: 0 4px 20px rgba(18, 184, 134, 0.1);
+    box-shadow: 0 4px 20px rgba(44, 91, 240, 0.1);
 }
 
 .trust-text {

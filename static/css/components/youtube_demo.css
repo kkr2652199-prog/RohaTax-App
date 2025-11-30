@@ -78,15 +78,19 @@
 }
 
 .roha-video-player .play-overlay-btn {
-    background: transparent;
-    border: none;
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     cursor: pointer;
-    padding: 0;
+    padding: 0 !important;
     transition: transform 0.3s ease;
 }
 
 .roha-video-player .play-overlay-btn:hover {
     transform: scale(1.1);
+    background-color: transparent !important;
+    background: transparent !important;
 }
 
 /* 새로운 비디오 컨트롤 바 */
@@ -183,11 +187,13 @@
 }
 
 .roha-video-player .control-btn {
-    background: transparent;
-    border: none;
-    color: white;
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #FFFFFF !important;
     cursor: pointer;
-    padding: 8px;
+    padding: 8px 10px !important;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -200,7 +206,25 @@
 }
 
 .roha-video-player .control-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 재생/일시정지 버튼 명시적 스타일 (글로벌 스타일 오버라이드) */
+.roha-video-player .play-pause-btn,
+.roha-video-player .control-btn.play-pause-btn {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #FFFFFF !important;
+    padding: 8px 10px !important;
+}
+
+.roha-video-player .play-pause-btn:hover,
+.roha-video-player .control-btn.play-pause-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 볼륨 컨테이너 */

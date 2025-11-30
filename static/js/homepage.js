@@ -308,11 +308,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!sliderContainer) return;
         
         const slides = sliderContainer.querySelectorAll('.slide');
-        const indicators = sliderContainer.querySelectorAll('.step-indicator');
+        const tabItems = sliderContainer.querySelectorAll('.tab-item');
         const prevBtn = sliderContainer.querySelector('#prevBtn');
         const nextBtn = sliderContainer.querySelector('#nextBtn');
         const progressFill = sliderContainer.querySelector('#progressFill');
-        const closeBtn = sliderContainer.querySelector('#closeBtn');
+        // 닫기 버튼 제거됨 (HTML에서 삭제)
         const subtitleText = sliderContainer.querySelector('#subtitleText');
         // const neonSignContainer = sliderContainer.querySelector('#neonSignContainer'); // 네온사인 삭제됨
         
@@ -414,15 +414,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // 프로그레스 바 리셋 및 재시작
+        function resetTabProgress(tabIndex) {
+            // 모든 탭의 프로그레스 바 리셋
+            tabItems.forEach((tab, idx) => {
+                const progressFill = tab.querySelector('.tab-progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '0%';
+                    progressFill.style.animation = 'none';
+                }
+            });
+            
+            // 현재 탭의 프로그레스 바 재시작
+            if (tabItems[tabIndex]) {
+                const currentProgressFill = tabItems[tabIndex].querySelector('.tab-progress-fill');
+                if (currentProgressFill) {
+                    // 애니메이션 리셋을 위한 강제 리플로우
+                    currentProgressFill.offsetHeight;
+                    currentProgressFill.style.animation = 'progressFill 5s linear forwards';
+                }
+            }
+        }
+        
         // 슬라이드 표시 함수 (개선된 버전)
         function showSlide(index) {
             // 모든 슬라이드 숨기기
             slides.forEach(slide => slide.classList.remove('active'));
-            indicators.forEach(indicator => indicator.classList.remove('active'));
+            tabItems.forEach(tab => tab.classList.remove('active'));
             
             // 현재 슬라이드 표시
             slides[index].classList.add('active');
-            indicators[index].classList.add('active');
+            if (tabItems[index]) {
+                tabItems[index].classList.add('active');
+            }
             
             // 7번, 8번 이미지에 특별한 object-position 적용
             const currentImage = slides[index].querySelector('.guide-image');
@@ -432,17 +456,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentImage.style.objectPosition = 'center center';
             }
             
-            // 진행률 업데이트
-            const progressPercent = ((index + 1) / totalSlides) * 100;
-            progressFill.style.width = progressPercent + '%';
+            // 진행률 업데이트 (기존 progressFill은 유지하되, 탭 프로그레스 바 리셋)
+            if (progressFill) {
+                const progressPercent = ((index + 1) / totalSlides) * 100;
+                progressFill.style.width = progressPercent + '%';
+            }
+            
+            // 탭 프로그레스 바 리셋 및 재시작
+            resetTabProgress(index);
             
             // 버튼 상태 업데이트 (무한 루프이므로 항상 활성화)
-            prevBtn.disabled = false;
-            nextBtn.disabled = false;
+            if (prevBtn) prevBtn.disabled = false;
+            if (nextBtn) nextBtn.disabled = false;
             
             // 자막 텍스트 즉시 표시 (타이핑 애니메이션 없이)
-            subtitleText.textContent = subtitleTexts[index];
-            subtitleText.classList.remove('typing');
+            if (subtitleText) {
+                subtitleText.textContent = subtitleTexts[index];
+                subtitleText.classList.remove('typing');
+            }
             
             // 특정 단계에서 하이라이트 효과
             if (index === 2) { // 3단계: 일괄/공동발급 발급
@@ -507,35 +538,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 현재 재생 중이면 일시정지
                 stopAutoPlay();
                 isAutoPlaying = false;
-                btnIcon.textContent = '▶';
+                // Lucide 아이콘을 play로 변경
+                btnIcon.setAttribute('data-lucide', 'play');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
                 playPauseBtn.title = '재생';
             } else {
                 // 현재 일시정지 중이면 재생
                 startAutoPlay();
                 isAutoPlaying = true;
-                btnIcon.textContent = '⏸';
+                // Lucide 아이콘을 pause로 변경
+                btnIcon.setAttribute('data-lucide', 'pause');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
                 playPauseBtn.title = '일시정지';
             }
         }
         
-        // 닫기 버튼 (가이드 기본창으로 복귀)
-        function closeToGuide() {
-            // 자동 재생 재시작
-            startAutoPlay();
-        }
-        
-        // 슬라이더 닫기
-        function closeSlider() {
-            stopAutoPlay();
-            // 홈페이지의 기능 섹션으로 스크롤
-            const featuresSection = document.getElementById('features');
-            if (featuresSection) {
-                featuresSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }
+        // 닫기 버튼 관련 함수 제거됨 (HTML에서 닫기 버튼 삭제)
         
         // 이벤트 리스너 등록
         if (nextBtn) nextBtn.addEventListener('click', () => {
@@ -550,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => { isUserInteracting = false; }, 1000);
         });
         
-        if (closeBtn) closeBtn.addEventListener('click', closeToGuide);
+        // 닫기 버튼 제거됨 (HTML에서 삭제)
         
         // 플레이/일시정지 버튼 이벤트 리스너
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -558,12 +580,19 @@ document.addEventListener('DOMContentLoaded', function() {
             playPauseBtn.addEventListener('click', togglePlayPause);
         }
         
-        // 인디케이터 클릭 이벤트
-        indicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', () => {
+        // 탭 클릭 이벤트
+        tabItems.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
                 isUserInteracting = true;
                 currentSlide = index;
                 showSlide(currentSlide);
+                
+                // 자동 재생 타이머 리셋
+                if (isAutoPlaying) {
+                    stopAutoPlay();
+                    startAutoPlay();
+                }
+                
                 setTimeout(() => { isUserInteracting = false; }, 1000);
             });
         });
@@ -604,9 +633,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 초기 슬라이드 표시 및 자동 재생 시작
         showSlide(0);
-        updateProgressBar(0);
+        if (progressFill) {
+            updateProgressBar(0);
+        }
         // typeText(subtitleText, subtitleTexts[0]); // 1단계는 빈 텍스트이므로 제거
         // startAutoPlay(); // 자동 재생은 사용자가 플레이 버튼을 클릭할 때만 시작
+        
+        // 초기 재생 버튼 아이콘 설정 (play 상태)
+        const playPauseBtnInit = document.getElementById('playPauseBtn');
+        if (playPauseBtnInit) {
+            const btnIconInit = playPauseBtnInit.querySelector('.btn-icon');
+            if (btnIconInit) {
+                btnIconInit.setAttribute('data-lucide', 'play');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        }
         
         console.log('🎯 홈택스 가이드 슬라이더가 고도화되어 초기화되었습니다.');
         

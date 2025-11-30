@@ -41,66 +41,60 @@
                         </div>
                     </div>
 
-                    <!-- 2열 비교 섹션 (핵심) -->
-                    <div class="comparison-section">
-                        <!-- 왼쪽: 건별 발행 (빨간 테마) -->
-                        <div class="comparison-card individual">
-                            <div class="card-header">
-                                <div class="card-icon"></div>
+                    <!-- 2열 비교 섹션 (vs-table) -->
+                    <div class="vs-table">
+                        <!-- 왼쪽: 건별 발행 -->
+                        <div class="vs-column individual">
+                            <div class="vs-header">
                                 <h3>건별 전자세금계산서 발행</h3>
-                                <p class="card-subtitle">수작업의 번거로움</p>
+                                <p class="vs-subtitle">수작업의 번거로움</p>
                             </div>
                             
-                            <div class="steps-container">
-                                <div class="step-box">
-                                    <div class="step-content">로그인·사업자전환 → 전자세금계산서 메뉴</div>
-                                    <div class="step-arrow">→</div>
+                            <div class="vs-steps">
+                                <div class="vs-step">
+                                    <div class="vs-step-content">로그인·사업자전환 → 전자세금계산서 메뉴</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">건별 입력(공급자/공급받는자/작성일자/금액)</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">건별 입력(공급자/공급받는자/작성일자/금액)</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">내용 확인 → 전자서명 → 발행</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">내용 확인 → 전자서명 → 발행</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">다음 건 반복(건수만큼 반복)</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">다음 건 반복(건수만큼 반복)</div>
                                 </div>
                             </div>
                             
-                            <div class="cta-button individual">수작업으로 발행하기</div>
+                            <div class="vs-cta">
+                                <a href="#" class="btn-outline">수작업으로 발행하기</a>
+                            </div>
                         </div>
 
-                        <!-- 오른쪽: 일괄 발행 (초록 테마) -->
-                        <div class="comparison-card batch">
-                            <div class="card-header">
-                                <div class="card-icon"></div>
+                        <!-- 오른쪽: 일괄 발행 -->
+                        <div class="vs-column batch">
+                            <div class="vs-header">
                                 <h3>일괄 전자세금계산서 발행</h3>
-                                <p class="card-subtitle">로하택스의 편리함</p>
+                                <p class="vs-subtitle">로하택스의 편리함</p>
                             </div>
                             
-                            <div class="steps-container">
-                                <div class="step-box">
-                                    <div class="step-content">로그인·사업자전환 → 일괄발급 메뉴</div>
-                                    <div class="step-arrow">→</div>
+                            <div class="vs-steps">
+                                <div class="vs-step">
+                                    <div class="vs-step-content">로그인·사업자전환 → 일괄발급 메뉴</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">로하택스 변환 파일 업로드</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">로하택스 변환 파일 업로드</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">엑셀파일 변환하기 → 결과 확인</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">엑셀파일 변환하기 → 결과 확인</div>
                                 </div>
-                                <div class="step-box">
-                                    <div class="step-content">일괄발급 진행 → 발행 완료</div>
-                                    <div class="step-arrow">→</div>
+                                <div class="vs-step">
+                                    <div class="vs-step-content">일괄발급 진행 → 발행 완료</div>
                                 </div>
                             </div>
                             
-                            <div class="cta-button batch">로하택스로 발행하기</div>
+                            <div class="vs-cta">
+                                <a href="/conversion" class="btn-primary">로하택스로 발행하기</a>
+                            </div>
                         </div>
                     </div>
 
@@ -128,25 +122,64 @@
                     </div>
                 </div>
                 
-                <!-- 진행 막대 -->
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                    <div class="progress-steps">
-                        <span class="step-indicator active" data-step="1">1</span>
-                        <span class="step-indicator" data-step="2">2</span>
-                        <span class="step-indicator" data-step="3">3</span>
-                        <span class="step-indicator" data-step="4">4</span>
-                        <span class="step-indicator" data-step="5">5</span>
-                        <span class="step-indicator" data-step="6">6</span>
-                        <span class="step-indicator" data-step="7">7</span>
-                        <span class="step-indicator" data-step="8">8</span>
-                    </div>
+                <!-- 프로그레스 탭 네비게이션 -->
+                <div class="guide-tabs">
+                    <button class="tab-item active" data-index="0">
+                        <span class="tab-label">1. 로그인</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="1">
+                        <span class="tab-label">2. 사업자전환</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="2">
+                        <span class="tab-label">3. 일괄발급 메뉴</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="3">
+                        <span class="tab-label">4. 전자세금계산서 메뉴</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="4">
+                        <span class="tab-label">5. 파일 업로드</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="5">
+                        <span class="tab-label">6. 변환하기</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="6">
+                        <span class="tab-label">7. 결과 확인</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="7">
+                        <span class="tab-label">8. 일괄발급</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
                 </div>
                 
                 <!-- 슬라이드 컨테이너 -->
                 <div class="slide-container">
-                    <!-- 슬라이드 이미지들 -->
-                    <div class="slide-wrapper">
+                    <!-- 모니터 프레임 -->
+                    <div class="monitor-frame">
+                        <!-- 슬라이드 이미지들 -->
+                        <div class="slide-wrapper">
                         <div class="slide active" data-step="1">
                             <img src="/static/images/hometax_guide/step1.png.jpg" alt="홈택스 가이드 1단계" class="guide-image">
                             <div class="slide-highlight" data-step="1"></div>
@@ -245,6 +278,8 @@
                             </div>
                         </div>
                     </div>
+                    </div>
+                    <!-- 모니터 프레임 끝 -->
                     
                     <!-- 자막 영역 -->
                     <div class="subtitle-container">
@@ -254,15 +289,13 @@
                     <!-- 슬라이드 컨트롤 버튼 -->
                     <div class="slide-controls">
                         <button class="slide-btn prev-btn" id="prevBtn" title="이전 단계">
-                            <span class="btn-icon">←</span>
+                            <i data-lucide="chevron-left" class="btn-icon"></i>
                         </button>
                         <button class="slide-btn play-pause-btn" id="playPauseBtn" title="재생">
+                            <i data-lucide="play" class="btn-icon play-icon"></i>
                         </button>
                         <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
-                            <span class="btn-icon">→</span>
-                        </button>
-                        <button class="slide-btn close-btn" id="closeBtn" title="닫기">
-                            <span class="btn-text">닫기</span>
+                            <i data-lucide="chevron-right" class="btn-icon"></i>
                         </button>
                     </div>
                 </div>
