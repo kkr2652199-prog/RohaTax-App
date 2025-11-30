@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}로●하 Tax{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home_prime.css') }}">
     {% block head_extra %}{% endblock %}
     {% if csrf_token is defined %}
         {% if csrf_token is callable %}

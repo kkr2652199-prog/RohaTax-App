@@ -208,7 +208,9 @@ body {
   border-bottom: 2px solid #F3F4F6;
 }
 
-.user-avatar {
+/* 마이홈 페이지 내부의 user-avatar만 스타일 적용 (헤더와 충돌 방지) */
+.user-info-header .user-avatar,
+.user-info-card .user-avatar {
   width: 60px;
   height: 60px;
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);

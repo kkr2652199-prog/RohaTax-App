@@ -13,29 +13,8 @@
     <link rel="stylesheet" href="/static/css/components/youtube_demo.css">
 </head>
 <body>
-    <!-- 네비게이션 -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <span class="logo-text">로하택스</span>
-            </div>
-            <div class="nav-menu">
-                <a href="#features" class="nav-link">기능 소개</a>
-                <a href="#testimonials" class="nav-link">성공 사례</a>
-                <a href="/shop" class="nav-link">멤버십</a>
-                <a href="#faq" class="nav-link">고객 지원</a>
-                {% if session.user_id %}
-                    <a href="/conversion" class="nav-link">변환하기</a>
-                    <a href="/profile/edit" class="nav-link">마이홈</a>
-                    <a href="/logout" class="nav-link login-btn">로그아웃</a>
-                    <span class="nav-user">{{ session.username }}님</span>
-                {% else %}
-                    <a href="/login" class="nav-link login-btn">로그인</a>
-                    <a href="/register" class="nav-link signup-btn">회원가입</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
+    <!-- 전역 헤더 -->
+    {% include 'partials/header.html' %}
 
     {% include 'home_sections/_hero.html' %}
     {% include 'home_sections/_stats.html' %}

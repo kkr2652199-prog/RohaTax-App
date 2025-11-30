@@ -7,51 +7,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home_prime.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shop_modern.css') }}">
 </head>
 <body class="shop-page">
-    {# Glass Header #}
-    <header class="glass-header">
-        <div class="glass-header-container">
-            <a href="/" class="glass-header-logo">
-                <span class="glass-header-logo-icon">⚡</span>
-                <span>로●하 TAX</span>
-            </a>
-            <nav>
-                <ul class="glass-header-nav">
-                    <li><a href="/" class="glass-header-nav-link">홈</a></li>
-                    <li><a href="#features" class="glass-header-nav-link">기능</a></li>
-                    <li><a href="/shop" class="glass-header-nav-link">멤버십</a></li>
-                    <li><a href="#contact" class="glass-header-nav-link">문의</a></li>
-                    {% if session.get('user_id') %}
-                        <li>
-                            <div class="user-menu">
-                                <div class="user-menu-trigger" id="userMenuTrigger">
-                                    <div class="user-avatar">
-                                        {{ (session.get('username') or 'U')[0].upper() }}
-                                    </div>
-                                    <span>{{ session.get('username') or '사용자' }}님</span>
-                                    <span class="dropdown-arrow">▼</span>
-                                </div>
-                                <ul class="user-menu-dropdown" id="userMenuDropdown">
-                                    <li><a href="/conversion" class="user-menu-dropdown-item">파일 변환하기</a></li>
-                                    <li><a href="/profile/edit" class="user-menu-dropdown-item">마이 페이지</a></li>
-                                    <li><a href="/logout" class="user-menu-dropdown-item logout">로그아웃</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    {% else %}
-                        <li>
-                            <div class="glass-header-auth">
-                                <a href="/login" class="btn-header-login">로그인</a>
-                                <a href="/register" class="btn-header-signup">회원가입</a>
-                            </div>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <!-- 전역 헤더 -->
+    {% include 'partials/header.html' %}
     {% if session.get('is_admin') %}
     <a href="/admin" class="admin-badge">관리자 대시보드</a>
     {% endif %}
@@ -118,7 +79,7 @@
 
         {# 유료 요금제 섹션 #}
         {% if regular_products %}
-        <section class="product-section">
+        <section class="product-section" id="regular-products">
             <div class="product-section-header">
                 <h2 class="product-section-title">정식 요금제</h2>
                 <p class="product-section-subtitle">규모에 맞는 최적의 플랜을 선택하세요</p>
