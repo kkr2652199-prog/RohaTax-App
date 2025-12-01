@@ -76,6 +76,9 @@
         <!-- 결제 관리 섹션 -->
         {% include 'admin/tabs/payment_management.html' %}
         {% include 'admin/tabs/product_management.html' %}
+        
+        <!-- 세무 리포트 섹션 -->
+        {% include 'admin/tabs/tax_report.html' %}
 
         <div class="grid" style="margin-top:16px">
             <section class="panel hidden" id="settings">
@@ -128,7 +131,7 @@
             tabs.forEach(b => { b.classList.remove('active'); b.classList.add('inactive'); });
             e.target.classList.add('active');
             e.target.classList.remove('inactive');
-            document.querySelectorAll('#users, #token-history, #stats, #settings').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('#users, #token-history, #stats, #settings, #payment-management, #product-management, #tax-report, #admin-management, #control-deck').forEach(sec => sec.classList.add('hidden'));
             document.getElementById(e.target.dataset.target).classList.remove('hidden');
             
             // 설정 탭 클릭 시 이메일 인증 설정 로드
@@ -228,6 +231,14 @@
                                     } else if (typeof loadProducts === 'function') {
                                         loadProducts();
                                     }
+                                }, 100);
+                            }
+                            break;
+                        case 'tax-report':
+                            // 세무 리포트 데이터 로드
+                            if (typeof loadTaxStats === 'function') {
+                                setTimeout(() => {
+                                    loadTaxStats();
                                 }, 100);
                             }
                             break;

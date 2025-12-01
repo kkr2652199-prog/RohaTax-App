@@ -846,6 +846,27 @@ class PaymentService:
                     (PaymentStatus.CANCELLED.value, payment_id)
                 )
                 
+                # 5-1. orders 테이블도 동기화 (세무 리포트 정확성 보장)
+                order_id = payment_row['order_id']
+                if order_id:
+                    orders_updated = conn.execute(
+                        """
+                        UPDATE orders
+                        SET status = 'cancelled', updated_at = datetime('now', 'localtime')
+                        WHERE merchant_uid = ?
+                        """,
+                        (order_id,)
+                    )
+                    
+                    if orders_updated.rowcount > 0:
+                        self.logger.info(
+                            f"결제 취소로 인한 orders 테이블 동기화: 주문번호 {order_id} -> status='cancelled' (결제 취소/환불)"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"결제 취소 시 orders 테이블 업데이트 실패: 주문번호 {order_id}를 찾을 수 없습니다 (결제 취소/환불)"
+                        )
+                
                 # 6. activity_logs에 PAYMENT_CANCEL 기록 (통합 관제실 동기화)
                 # 사용자 최신 정보 조회 (토큰 잔액, 등급)
                 final_user_row = conn.execute(
@@ -912,6 +933,7 @@ class PaymentService:
     def delete_payment(self, payment_id: int) -> None:
         """
         결제 기록 삭제 (Hard Delete)
+        payment_history와 orders 테이블에서 완전히 삭제하여 세무 리포트에서도 사라지도록 함
         
         Args:
             payment_id: 삭제할 결제 ID
@@ -922,35 +944,56 @@ class PaymentService:
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
             
-            # 결제 정보 조회
-            payment_row = conn.execute(
-                """
-                SELECT id, status
-                FROM payment_history
-                WHERE id = ?
-                """,
-                (payment_id,)
-            ).fetchone()
+            # 트랜잭션 시작
+            conn.execute("BEGIN TRANSACTION")
             
-            if not payment_row:
-                raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
-            
-            # 삭제 가능한 상태인지 확인
-            status_str = payment_row['status']
-            if status_str not in [PaymentStatus.CANCELLED.value, PaymentStatus.FAILED.value]:
-                raise ValueError(f"삭제할 수 없는 결제 상태입니다: {status_str} (취소/환불 또는 실패 상태만 삭제 가능)")
-            
-            # 결제 기록 삭제
-            cursor = conn.execute(
-                "DELETE FROM payment_history WHERE id = ?",
-                (payment_id,)
-            )
-            
-            if cursor.rowcount == 0:
-                raise ValueError(f"결제 삭제에 실패했습니다: ID {payment_id}")
-            
-            conn.commit()
-            self.logger.info(f"결제 기록 삭제 완료: ID {payment_id}")
+            try:
+                # 결제 정보 조회 (order_id 포함)
+                payment_row = conn.execute(
+                    """
+                    SELECT id, status, order_id
+                    FROM payment_history
+                    WHERE id = ?
+                    """,
+                    (payment_id,)
+                ).fetchone()
+                
+                if not payment_row:
+                    raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
+                
+                # 삭제 가능한 상태인지 확인
+                status_str = payment_row['status']
+                if status_str not in [PaymentStatus.CANCELLED.value, PaymentStatus.FAILED.value]:
+                    raise ValueError(f"삭제할 수 없는 결제 상태입니다: {status_str} (취소/환불 또는 실패 상태만 삭제 가능)")
+                
+                order_id = payment_row['order_id']
+                
+                # 1. orders 테이블에서 삭제 (merchant_uid로 매칭)
+                if order_id:
+                    orders_deleted = conn.execute(
+                        "DELETE FROM orders WHERE merchant_uid = ?",
+                        (order_id,)
+                    )
+                    if orders_deleted.rowcount > 0:
+                        self.logger.info(f"orders 테이블에서 주문 삭제 완료: merchant_uid={order_id}")
+                
+                # 2. payment_history 테이블에서 삭제
+                cursor = conn.execute(
+                    "DELETE FROM payment_history WHERE id = ?",
+                    (payment_id,)
+                )
+                
+                if cursor.rowcount == 0:
+                    raise ValueError(f"결제 삭제에 실패했습니다: ID {payment_id}")
+                
+                # 트랜잭션 커밋
+                conn.commit()
+                self.logger.info(f"결제 기록 완전 삭제 완료: payment_id={payment_id}, order_id={order_id}")
+                
+            except Exception as e:
+                # 트랜잭션 롤백
+                conn.rollback()
+                raise e
     
     def get_payments_by_user_id(
         self, 
@@ -1157,23 +1200,28 @@ class PaymentService:
             # 페이징 계산
             offset = (page - 1) * per_page
             
-            # 결제 목록 조회 (유저 정보 JOIN)
+            # 결제 목록 조회 (유저 정보 및 주문 정보 JOIN)
             rows = conn.execute(
                 f"""
                 SELECT 
                     ph.id, 
                     ph.user_id, 
                     ph.order_id, 
-                    ph.amount, 
+                    ph.amount as ph_amount, 
                     ph.token_amount, 
                     ph.status, 
                     ph.pg_provider, 
                     ph.created_at, 
                     ph.updated_at,
                     u.username,
-                    u.email
+                    u.email,
+                    COALESCE(o.amount, ph.amount, 0) as amount,
+                    COALESCE(o.supply_price, 0) as supply_price,
+                    COALESCE(o.vat, 0) as vat,
+                    o.payment_method
                 FROM payment_history ph
                 LEFT JOIN users u ON ph.user_id = u.id
+                LEFT JOIN orders o ON ph.order_id = o.merchant_uid
                 {where_clause}
                 ORDER BY ph.created_at DESC
                 LIMIT ? OFFSET ?
@@ -1184,34 +1232,36 @@ class PaymentService:
             payments = []
             for row in rows:
                 try:
+                    # sqlite3.Row를 dict로 변환하여 안전하게 접근
+                    row_dict = dict(row)
+                    
+                    # orders 테이블의 amount를 우선 사용 (부가세 포함 총액)
+                    # orders 테이블에 데이터가 없으면 payment_history의 amount 사용
+                    final_amount = row_dict.get('amount') or row_dict.get('ph_amount') or 0
+                    
                     payment_obj = PaymentResponse(
-                        id=row['id'],
-                        user_id=row['user_id'],
-                        order_id=row['order_id'],
-                        amount=row['amount'],
-                        token_amount=row['token_amount'],
-                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
-                        pg_provider=row['pg_provider'],
-                        created_at=row['created_at'],
-                        updated_at=row['updated_at']
+                        id=row_dict.get('id'),
+                        user_id=row_dict.get('user_id'),
+                        order_id=row_dict.get('order_id'),
+                        amount=final_amount,
+                        token_amount=row_dict.get('token_amount'),
+                        status=self._safe_parse_payment_status(row_dict.get('status', 'pending'), f"(Payment ID: {row_dict.get('id')})"),
+                        pg_provider=row_dict.get('pg_provider'),
+                        created_at=row_dict.get('created_at'),
+                        updated_at=row_dict.get('updated_at')
                     )
-                    # Pydantic v1/v2 호환성: .dict() 또는 .model_dump() 사용
-                    payment_dict = payment_obj.model_dump() if hasattr(payment_obj, 'model_dump') else payment_obj.model_dump()
-                    # 유저 정보 추가 (sqlite3.Row는 딕셔너리처럼 접근, NULL 처리)
-                    # sqlite3.Row는 NULL 값을 None으로 반환하므로 안전하게 처리
-                    try:
-                        username = row['username']
-                        payment_dict['user_name'] = username if username is not None else ''
-                    except (KeyError, TypeError, IndexError):
-                        payment_dict['user_name'] = ''
-                    try:
-                        email = row['email']
-                        payment_dict['user_email'] = email if email is not None else ''
-                    except (KeyError, TypeError, IndexError):
-                        payment_dict['user_email'] = ''
+                    # Pydantic v1/v2 호환성: .model_dump() 사용
+                    payment_dict = payment_obj.model_dump()
+                    # 유저 정보 추가 (NULL 처리)
+                    payment_dict['user_name'] = row_dict.get('username') or ''
+                    payment_dict['user_email'] = row_dict.get('email') or ''
+                    # 주문 정보 추가 (공급가/부가세/결제수단)
+                    payment_dict['supply_price'] = row_dict.get('supply_price') or 0
+                    payment_dict['vat'] = row_dict.get('vat') or 0
+                    payment_dict['payment_method'] = row_dict.get('payment_method') or ''
                     payments.append(payment_dict)
                 except Exception as e:
-                    self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
+                    self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")
                     continue
             
             # KPI 통계 계산 (기간 필터 적용)
@@ -1356,24 +1406,24 @@ class PaymentService:
             latest_payments = []
             for row in latest_payments_rows:
                 try:
+                    # sqlite3.Row를 dict로 변환하여 안전하게 접근
+                    row_dict = dict(row)
+                    
                     payment_obj = PaymentResponse(
-                        id=row['id'],
-                        user_id=row['user_id'],
-                        order_id=row['order_id'],
-                        amount=row['amount'],
-                        token_amount=row['token_amount'],
-                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
-                        pg_provider=row['pg_provider'],
-                        created_at=row['created_at'],
-                        updated_at=row['updated_at']
+                        id=row_dict.get('id'),
+                        user_id=row_dict.get('user_id'),
+                        order_id=row_dict.get('order_id'),
+                        amount=row_dict.get('amount'),
+                        token_amount=row_dict.get('token_amount'),
+                        status=self._safe_parse_payment_status(row_dict.get('status', 'pending'), f"(Payment ID: {row_dict.get('id')})"),
+                        pg_provider=row_dict.get('pg_provider'),
+                        created_at=row_dict.get('created_at'),
+                        updated_at=row_dict.get('updated_at')
                     )
-                    # Pydantic v1/v2 호환성: .dict() 또는 .model_dump() 사용
-                    if hasattr(payment_obj, 'model_dump'):
-                        latest_payments.append(payment_obj.model_dump())
-                    else:
-                        latest_payments.append(payment_obj.model_dump())
+                    # Pydantic v1/v2 호환성: .model_dump() 사용
+                    latest_payments.append(payment_obj.model_dump())
                 except Exception as e:
-                    self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
+                    self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")
                     continue
             
             # 일별 매출 추이 데이터 구성
@@ -1402,8 +1452,8 @@ class PaymentService:
             else:
                 # 기본값: 최근 7일
                 for i in range(6, -1, -1):
-                    date = datetime.now()
-                    date = date.replace(day=date.day - i)
+                    # timedelta를 사용하여 안전하게 날짜 계산
+                    date = datetime.now() - timedelta(days=i)
                     date_str = date.strftime('%Y-%m-%d')
                     
                     # 해당 날짜의 매출 찾기
