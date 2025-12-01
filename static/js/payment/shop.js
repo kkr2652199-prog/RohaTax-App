@@ -110,7 +110,7 @@
             totalLabel.textContent = '총 혜택 금액';
         } else {
             confirmBtn.textContent = '💳 결제하기';
-            totalLabel.textContent = '총 결제 예상액';
+            totalLabel.textContent = '총 결제 예상액 (VAT 포함)';
         }
 
         // 총 결제 예상액 계산 및 표시
@@ -122,7 +122,7 @@
     }
 
     /**
-     * 총 결제 예상액 계산 및 업데이트
+     * 총 결제 예상액 계산 및 업데이트 (부가세 별도 과금 방식)
      */
     function updateTotalPrice() {
         let quantity = 0;
@@ -141,7 +141,11 @@
             }
         }
         
-        const totalPrice = currentProduct.price * quantity;
+        // 부가세 별도 과금 방식: 공급가액 * 수량 * 1.1 (부가세 포함 총액)
+        const supplyPrice = currentProduct.price * quantity;
+        const vat = Math.round(supplyPrice * 0.1);
+        const totalPrice = supplyPrice + vat;
+        
         document.getElementById('modalTotalPrice').textContent = formatCurrency(totalPrice);
     }
 

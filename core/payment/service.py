@@ -1178,23 +1178,27 @@ class PaymentService:
             # 페이징 계산
             offset = (page - 1) * per_page
             
-            # 결제 목록 조회 (유저 정보 JOIN)
+            # 결제 목록 조회 (유저 정보 및 주문 정보 JOIN)
             rows = conn.execute(
                 f"""
                 SELECT 
                     ph.id, 
                     ph.user_id, 
                     ph.order_id, 
-                    ph.amount, 
+                    ph.amount as ph_amount, 
                     ph.token_amount, 
                     ph.status, 
                     ph.pg_provider, 
                     ph.created_at, 
                     ph.updated_at,
                     u.username,
-                    u.email
+                    u.email,
+                    COALESCE(o.amount, ph.amount, 0) as amount,
+                    COALESCE(o.supply_price, 0) as supply_price,
+                    COALESCE(o.vat, 0) as vat
                 FROM payment_history ph
                 LEFT JOIN users u ON ph.user_id = u.id
+                LEFT JOIN orders o ON ph.order_id = o.merchant_uid
                 {where_clause}
                 ORDER BY ph.created_at DESC
                 LIMIT ? OFFSET ?
@@ -1208,11 +1212,15 @@ class PaymentService:
                     # sqlite3.Row를 dict로 변환하여 안전하게 접근
                     row_dict = dict(row)
                     
+                    # orders 테이블의 amount를 우선 사용 (부가세 포함 총액)
+                    # orders 테이블에 데이터가 없으면 payment_history의 amount 사용
+                    final_amount = row_dict.get('amount') or row_dict.get('ph_amount') or 0
+                    
                     payment_obj = PaymentResponse(
                         id=row_dict.get('id'),
                         user_id=row_dict.get('user_id'),
                         order_id=row_dict.get('order_id'),
-                        amount=row_dict.get('amount'),
+                        amount=final_amount,
                         token_amount=row_dict.get('token_amount'),
                         status=self._safe_parse_payment_status(row_dict.get('status', 'pending'), f"(Payment ID: {row_dict.get('id')})"),
                         pg_provider=row_dict.get('pg_provider'),
@@ -1224,6 +1232,9 @@ class PaymentService:
                     # 유저 정보 추가 (NULL 처리)
                     payment_dict['user_name'] = row_dict.get('username') or ''
                     payment_dict['user_email'] = row_dict.get('email') or ''
+                    # 주문 정보 추가 (공급가/부가세)
+                    payment_dict['supply_price'] = row_dict.get('supply_price') or 0
+                    payment_dict['vat'] = row_dict.get('vat') or 0
                     payments.append(payment_dict)
                 except Exception as e:
                     self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")

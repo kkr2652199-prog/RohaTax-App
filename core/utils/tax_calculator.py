@@ -67,6 +67,38 @@ def calculate_tax_dict(total_amount: int) -> Dict[str, int]:
     }
 
 
+def calculate_total_with_vat(supply_price: int) -> Tuple[int, int]:
+    """
+    공급가액에서 부가세를 가산하여 총 금액 계산 (부가세 별도 과금 방식)
+    
+    Args:
+        supply_price: 공급가액 (원 단위, 정수)
+        
+    Returns:
+        Tuple[int, int]: (total_amount, vat) 튜플
+        - total_amount: 부가세 포함 총 금액 (원 단위, 정수)
+        - vat: 부가세 (원 단위, 정수)
+        
+    Example:
+        >>> total_amount, vat = calculate_total_with_vat(10000)
+        >>> print(total_amount, vat)
+        11000 1000
+    """
+    if supply_price < 0:
+        raise ValueError("공급가액은 0 이상이어야 합니다")
+    
+    if supply_price == 0:
+        return (0, 0)
+    
+    # 부가세 계산: supply_price * 0.1 (반올림)
+    vat = round(supply_price * 0.1)
+    
+    # 총 금액 계산: supply_price + vat
+    total_amount = supply_price + vat
+    
+    return (total_amount, vat)
+
+
 def validate_tax_calculation(supply_price: int, vat: int, total_amount: int) -> bool:
     """
     세금 계산 결과 검증

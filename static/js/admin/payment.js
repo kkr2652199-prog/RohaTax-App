@@ -145,7 +145,7 @@ async function loadPayments(page = 1, status = '', startDate = null, endDate = n
         
         // 로딩 표시
         const tbody = document.getElementById('paymentLedgerBody');
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">결제 데이터를 불러오는 중...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">결제 데이터를 불러오는 중...</td></tr>';
         
         // API 호출
         const params = new URLSearchParams({
@@ -180,7 +180,7 @@ async function loadPayments(page = 1, status = '', startDate = null, endDate = n
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 const errorData = await response.json();
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-danger">${errorData.message || '인증 오류'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">${errorData.message || '인증 오류'}</td></tr>`;
                 return;
             }
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -209,11 +209,11 @@ async function loadPayments(page = 1, status = '', startDate = null, endDate = n
                 renderPagination(result.data);
             } catch (renderError) {
                 console.error('[Render Error]', renderError);
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-danger">렌더링 오류: ${renderError.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">렌더링 오류: ${renderError.message}</td></tr>`;
             }
         } else {
             console.warn('[Payment API] success=false or data missing', result);
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">결제 데이터가 없습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">결제 데이터가 없습니다.</td></tr>';
         }
         
     } catch (error) {
@@ -221,7 +221,7 @@ async function loadPayments(page = 1, status = '', startDate = null, endDate = n
         console.error('[Error Stack]', error.stack);
         const tbody = document.getElementById('paymentLedgerBody');
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-danger">결제 데이터 로드 실패: ${error.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">결제 데이터 로드 실패: ${error.message}</td></tr>`;
         }
     }
 }
@@ -263,7 +263,9 @@ function renderPaymentTable(data) {
                     <td><code class="text-primary">${payment.order_id || 'N/A'}</code></td>
                     <td>${userDisplay}</td>
                     <td>${getProductBadge(payment.token_amount || 0)}</td>
-                    <td class="text-end payment-amount fw-bold">${formatCurrency(payment.amount || 0)}</td>
+                    <td class="text-end">${formatCurrency(payment.supply_price || 0)}</td>
+                    <td class="text-end text-muted">${formatCurrency(payment.vat || 0)}</td>
+                    <td class="text-end payment-amount fw-bold text-primary">${formatCurrency(payment.amount || 0)}</td>
                     <td class="payment-token">${payment.token_amount === -1 ? '<span class="text-warning">무제한</span>' : formatNumber(payment.token_amount || 0) + '개'}</td>
                     <td>${getStatusBadge(payment.status || 'pending')}</td>
                     <td><small class="text-muted">${payment.pg_provider || '-'}</small></td>
@@ -289,7 +291,7 @@ function renderPaymentTable(data) {
         console.log('[renderPaymentTable] 테이블 렌더링 완료');
     } catch (error) {
         console.error('[renderPaymentTable] 렌더링 오류:', error);
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-danger">렌더링 오류: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">렌더링 오류: ${error.message}</td></tr>`;
     }
 }
 

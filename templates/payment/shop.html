@@ -184,7 +184,7 @@
                         </div>
                         <ul class="product-feature-list">
                             <li>{% if product.token_amount == -1 %}토큰 무제한 사용{% else %}토큰 {{ product.token_amount }}개 포함{% endif %}</li>
-                            <li>부가세 {{ '포함' if product.vat_included else '별도' }}</li>
+                            <li>부가세 별도</li>
                             <li>실시간 고객 지원</li>
                         </ul>
                         <button class="btn-purchase" 

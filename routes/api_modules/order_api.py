@@ -158,12 +158,16 @@ def create_order():
                     )
                     return error('귀하의 사업자번호로 이미 혜택을 받으셨습니다.', status=400)
         
-        # 5. 금액 및 세금 계산 (수량 반영)
+        # 5. 금액 및 세금 계산 (부가세 별도 과금 방식)
         unit_price = product['price'] or 0
-        total_amount = unit_price * quantity  # 수량 곱하기
+        # product.price는 공급가액이므로, 수량을 곱한 것이 총 공급가액
+        supply_price = unit_price * quantity
         
-        # 세금 계산기 사용 (총액 기준)
-        supply_price, vat = calculate_tax(total_amount)
+        # 부가세 계산: 공급가액 * 0.1 (반올림)
+        vat = round(supply_price * 0.1)
+        
+        # 총 금액 계산: 공급가액 + 부가세
+        total_amount = supply_price + vat
         
         # 6. merchant_uid 생성: ORD-{YYYYMMDD}-{UUID4}
         today = datetime.now().strftime('%Y%m%d')
