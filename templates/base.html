@@ -18,7 +18,9 @@
     {% endif %}
 </head>
 <body>
+    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path %}
     {% include 'partials/header.html' %}
+    {% endif %}
     <main>
                {% with messages = get_flashed_messages(with_categories=true) %}
                {% if messages %}
@@ -34,6 +36,14 @@
         {% block content %}{% endblock %}
     </main>
     {% block scripts %}{% endblock %}
+    
+    <!-- ================================================================
+         채널톡 챗봇 위젯 설치 위치
+         ================================================================
+         아래 주석을 해제하고 chatbot_widget.html의 플러그인 키를 입력하면
+         모든 페이지에 챗봇이 표시됩니다.
+         ================================================================ -->
+    {# {% include 'components/chatbot_widget.html' %} #}
 </body>
 </html>
 

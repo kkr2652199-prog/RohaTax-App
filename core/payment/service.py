@@ -846,6 +846,27 @@ class PaymentService:
                     (PaymentStatus.CANCELLED.value, payment_id)
                 )
                 
+                # 5-1. orders 테이블도 동기화 (세무 리포트 정확성 보장)
+                order_id = payment_row['order_id']
+                if order_id:
+                    orders_updated = conn.execute(
+                        """
+                        UPDATE orders
+                        SET status = 'cancelled', updated_at = datetime('now', 'localtime')
+                        WHERE merchant_uid = ?
+                        """,
+                        (order_id,)
+                    )
+                    
+                    if orders_updated.rowcount > 0:
+                        self.logger.info(
+                            f"결제 취소로 인한 orders 테이블 동기화: 주문번호 {order_id} -> status='cancelled' (결제 취소/환불)"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"결제 취소 시 orders 테이블 업데이트 실패: 주문번호 {order_id}를 찾을 수 없습니다 (결제 취소/환불)"
+                        )
+                
                 # 6. activity_logs에 PAYMENT_CANCEL 기록 (통합 관제실 동기화)
                 # 사용자 최신 정보 조회 (토큰 잔액, 등급)
                 final_user_row = conn.execute(
@@ -1184,34 +1205,28 @@ class PaymentService:
             payments = []
             for row in rows:
                 try:
+                    # sqlite3.Row를 dict로 변환하여 안전하게 접근
+                    row_dict = dict(row)
+                    
                     payment_obj = PaymentResponse(
-                        id=row['id'],
-                        user_id=row['user_id'],
-                        order_id=row['order_id'],
-                        amount=row['amount'],
-                        token_amount=row['token_amount'],
-                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
-                        pg_provider=row['pg_provider'],
-                        created_at=row['created_at'],
-                        updated_at=row['updated_at']
+                        id=row_dict.get('id'),
+                        user_id=row_dict.get('user_id'),
+                        order_id=row_dict.get('order_id'),
+                        amount=row_dict.get('amount'),
+                        token_amount=row_dict.get('token_amount'),
+                        status=self._safe_parse_payment_status(row_dict.get('status', 'pending'), f"(Payment ID: {row_dict.get('id')})"),
+                        pg_provider=row_dict.get('pg_provider'),
+                        created_at=row_dict.get('created_at'),
+                        updated_at=row_dict.get('updated_at')
                     )
-                    # Pydantic v1/v2 호환성: .dict() 또는 .model_dump() 사용
-                    payment_dict = payment_obj.model_dump() if hasattr(payment_obj, 'model_dump') else payment_obj.model_dump()
-                    # 유저 정보 추가 (sqlite3.Row는 딕셔너리처럼 접근, NULL 처리)
-                    # sqlite3.Row는 NULL 값을 None으로 반환하므로 안전하게 처리
-                    try:
-                        username = row['username']
-                        payment_dict['user_name'] = username if username is not None else ''
-                    except (KeyError, TypeError, IndexError):
-                        payment_dict['user_name'] = ''
-                    try:
-                        email = row['email']
-                        payment_dict['user_email'] = email if email is not None else ''
-                    except (KeyError, TypeError, IndexError):
-                        payment_dict['user_email'] = ''
+                    # Pydantic v1/v2 호환성: .model_dump() 사용
+                    payment_dict = payment_obj.model_dump()
+                    # 유저 정보 추가 (NULL 처리)
+                    payment_dict['user_name'] = row_dict.get('username') or ''
+                    payment_dict['user_email'] = row_dict.get('email') or ''
                     payments.append(payment_dict)
                 except Exception as e:
-                    self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
+                    self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")
                     continue
             
             # KPI 통계 계산 (기간 필터 적용)
@@ -1356,24 +1371,24 @@ class PaymentService:
             latest_payments = []
             for row in latest_payments_rows:
                 try:
+                    # sqlite3.Row를 dict로 변환하여 안전하게 접근
+                    row_dict = dict(row)
+                    
                     payment_obj = PaymentResponse(
-                        id=row['id'],
-                        user_id=row['user_id'],
-                        order_id=row['order_id'],
-                        amount=row['amount'],
-                        token_amount=row['token_amount'],
-                        status=self._safe_parse_payment_status(row['status'], f"(Payment ID: {row['id']})"),
-                        pg_provider=row['pg_provider'],
-                        created_at=row['created_at'],
-                        updated_at=row['updated_at']
+                        id=row_dict.get('id'),
+                        user_id=row_dict.get('user_id'),
+                        order_id=row_dict.get('order_id'),
+                        amount=row_dict.get('amount'),
+                        token_amount=row_dict.get('token_amount'),
+                        status=self._safe_parse_payment_status(row_dict.get('status', 'pending'), f"(Payment ID: {row_dict.get('id')})"),
+                        pg_provider=row_dict.get('pg_provider'),
+                        created_at=row_dict.get('created_at'),
+                        updated_at=row_dict.get('updated_at')
                     )
-                    # Pydantic v1/v2 호환성: .dict() 또는 .model_dump() 사용
-                    if hasattr(payment_obj, 'model_dump'):
-                        latest_payments.append(payment_obj.model_dump())
-                    else:
-                        latest_payments.append(payment_obj.model_dump())
+                    # Pydantic v1/v2 호환성: .model_dump() 사용
+                    latest_payments.append(payment_obj.model_dump())
                 except Exception as e:
-                    self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row)}")
+                    self.logger.error(f"최신 결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")
                     continue
             
             # 일별 매출 추이 데이터 구성
@@ -1402,8 +1417,8 @@ class PaymentService:
             else:
                 # 기본값: 최근 7일
                 for i in range(6, -1, -1):
-                    date = datetime.now()
-                    date = date.replace(day=date.day - i)
+                    # timedelta를 사용하여 안전하게 날짜 계산
+                    date = datetime.now() - timedelta(days=i)
                     date_str = date.strftime('%Y-%m-%d')
                     
                     # 해당 날짜의 매출 찾기

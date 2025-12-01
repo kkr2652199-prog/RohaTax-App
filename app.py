@@ -251,6 +251,7 @@ from routes.home_modules.email_routes import email_bp
 from routes.conversion_modules.conversion_engine_routes import conversion_engine_bp
 from routes.admin import admin_bp
 from routes.admin.activity_log_api import activity_log_bp
+from routes.admin.tax_api import admin_tax_bp
 from routes.ops import ops_bp
 from routes.api_modules.admin_api import admin_api_bp
 # 기존 user_api (비상시 롤백용으로 보존)
@@ -286,6 +287,8 @@ if 'admin' not in app.blueprints:
     app.register_blueprint(admin_bp)
 if 'activity_log_api' not in app.blueprints:
     app.register_blueprint(activity_log_bp)
+if 'admin_tax' not in app.blueprints:
+    app.register_blueprint(admin_tax_bp)
 if 'ops' not in app.blueprints:
     app.register_blueprint(ops_bp)
 if 'admin_api' not in app.blueprints:
