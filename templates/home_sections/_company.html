@@ -1,68 +1,91 @@
-<!-- 회사 소개 섹션 -->
-<section class="company-section">
+<section id="company" class="company-section">
     <div class="container">
-        <div class="company-content">
-            <!-- Vision Header -->
-            <div class="company-header">
-                <h2 class="section-title">
-                    세무 행정은 우리의 일입니다.<br>
-                    사장님은 <span class="text-primary">사업</span>에만 집중하세요.
+        <!-- Part 1: Vision & Identity -->
+        <div class="company-vision-wrapper">
+            <div class="vision-content">
+                <span class="vision-badge">ABOUT US</span>
+                <h2 class="vision-title">
+                    데이터가 흐르는<br>
+                    <strong>디지털 금융 인프라</strong>
                 </h2>
-                <p class="section-subtitle" style="color: #666; font-size: 1.1rem; margin-top: 1rem;">
-                    로하택스는 기술로 반복 업무를 제거하여 기업의 성장을 돕습니다.
+                <p class="vision-desc">
+                    로하택스는 단순한 변환 도구가 아닙니다.<br>
+                    기업의 재무 데이터를 안전하게 연결하고,<br>
+                    홈택스 양식에 맞추는 <strong>데이터 전처리(Pre-processing)</strong> 과정을 <strong>'디지털 워크포스'</strong>로 대체하여<br>
+                    경영의 본질에 집중하게 만드는 <strong>엔터프라이즈 솔루션</strong>입니다.
                 </p>
+                
+                <div class="vision-metrics">
+                    <div class="metric-item">
+                        <strong class="metric-value">99.9%</strong>
+                        <span class="metric-label">변환 정확도</span>
+                    </div>
+                    <div class="metric-line"></div>
+                    <div class="metric-item">
+                        <strong class="metric-value">Zero</strong>
+                        <span class="metric-label">데이터 유출 사고</span>
+                    </div>
+                </div>
             </div>
             
-            <div class="company-info">
-                <!-- 카드 1: Identity -->
-                <div class="company-card">
-                    <div class="card-icon">
-                        <i data-lucide="cpu" class="lucide-icon"></i>
-                    </div>
-                    <h3 class="card-title">우리가 하는 일</h3>
-                    <div class="card-content">
-                        <p style="color: #666; line-height: 1.8;">
-                            배달대행, 물류 등 데이터가 폭증하는 현장의 '엑셀 지옥'을 해결합니다. 
-                            복잡한 정산서를 국세청 표준 양식으로 <b class="text-primary">단 3초</b> 만에 변환합니다.
-                        </p>
+            <div class="vision-image-box">
+                <!-- 신뢰감을 주는 비즈니스 미팅 이미지 (Unsplash) -->
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="비즈니스 파트너십" class="vision-img">
+                <div class="image-overlay-card">
+                    <div class="overlay-icon">🤝</div>
+                    <div class="overlay-text">
+                        <strong>함께 성장합니다</strong>
+                        <span>Partnership First</span>
                     </div>
                 </div>
-                
-                <!-- 카드 2: Technology -->
-                <div class="company-card">
-                    <div class="card-icon">
-                        <i data-lucide="zap" class="lucide-icon"></i>
-                    </div>
-                    <h3 class="card-title">압도적인 기술력</h3>
-                    <div class="card-content">
-                        <p style="color: #666; line-height: 1.8;">
-                            Rust 기반 Calamine 엔진 탑재로 <b class="text-primary">10만 건</b>의 데이터도 순식간에 처리하며, 
-                            독자적인 <b class="text-primary">10:1 부가세 검증 알고리즘</b>으로 실수를 <b class="text-primary">원천 봉쇄</b>합니다.
-                        </p>
+            </div>
+        </div>
+
+        <!-- Part 2: History Timeline -->
+        <div class="company-history-wrapper">
+            <div class="history-header">
+                <h3>걸어온 길 (History)</h3>
+                <p>끊임없는 혁신으로 정산의 새로운 표준을 만듭니다.</p>
+            </div>
+            
+            <div class="timeline-container">
+                <!-- 2025 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot current"></div>
+                    <div class="timeline-date">2025.01</div>
+                    <div class="timeline-content">
+                        <strong>로하택스(RohaTax) 정식 런칭</strong>
+                        <p>엔터프라이즈급 정산 자동화 솔루션 상용화</p>
                     </div>
                 </div>
-                
-                <!-- 카드 3: Security -->
-                <div class="company-card">
-                    <div class="card-icon">
-                        <i data-lucide="shield-check" class="lucide-icon"></i>
+                <!-- 2024.11 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2024.11</div>
+                    <div class="timeline-content">
+                        <strong>오픈 베타 테스트 완료</strong>
+                        <p>실사용자 데이터 기반 안정성 검증 (Project Phoenix)</p>
                     </div>
-                    <h3 class="card-title">타협 없는 보안</h3>
-                    <div class="card-content">
-                        <p style="color: #666; line-height: 1.8;">
-                            업로드된 모든 파일은 변환 즉시 서버에서 <b class="text-primary">영구 삭제</b>됩니다. 
-                            금융권 수준의 <b class="text-primary">AES-256 암호화</b>로 귀사의 데이터를 지킵니다.
-                        </p>
+                </div>
+                <!-- 2024.06 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2024.06</div>
+                    <div class="timeline-content">
+                        <strong>변환 엔진 고도화</strong>
+                        <p>대용량 엑셀 처리 및 AI 매칭 알고리즘 특허 출원(준비)</p>
+                    </div>
+                </div>
+                <!-- 2024.01 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2024.01</div>
+                    <div class="timeline-content">
+                        <strong>프로젝트 착수</strong>
+                        <p>배달대행 정산 자동화 R&D 시작</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
-<script>
-    // Lucide 아이콘 초기화
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-</script>
