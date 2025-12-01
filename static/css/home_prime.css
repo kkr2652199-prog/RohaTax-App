@@ -4505,3 +4505,29 @@ main {
     }
 }
 
+
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.auth-card .alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.auth-card .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem;
+    }
+    
+    .auth-header h2 {
+        font-size: 1.25rem;
+    }
+}
+

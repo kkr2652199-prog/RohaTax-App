@@ -97,3 +97,59 @@
         </div>
     </div>
 </section>
+
+                    {% endif %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- 상품이 없을 경우 기본 메시지 -->
+        <div class="pricing-preview-grid">
+            <div class="pricing-preview-card">
+                <h3 class="pricing-preview-title">Standard</h3>
+                <div class="pricing-preview-price">
+                    <span class="price-amount">500원</span>
+                    <span class="price-unit">/건</span>
+                </div>
+                <p class="pricing-preview-feature">급할 때 한 건씩</p>
+                <ul class="pricing-preview-benefits">
+                    <li>✅ 토큰 1개 포함</li>
+                    <li>✅ 부가세 별도</li>
+                    <li>✅ 실시간 고객 지원</li>
+                </ul>
+            </div>
+            <div class="pricing-preview-card featured">
+                <div class="pricing-badge">BEST</div>
+                <h3 class="pricing-preview-title">Premium</h3>
+                <div class="pricing-preview-price">
+                    <span class="price-amount">25,000원</span>
+                    <span class="price-unit">/월</span>
+                </div>
+                <p class="pricing-preview-feature">정산서가 쌓여있을 때</p>
+                <ul class="pricing-preview-benefits">
+                    <li>✅ 토큰 100개 포함</li>
+                    <li>✅ 대량 할인 적용</li>
+                    <li>✅ 우선 처리</li>
+                </ul>
+            </div>
+            <div class="pricing-preview-card">
+                <h3 class="pricing-preview-title">Gold</h3>
+                <div class="pricing-preview-price">
+                    <span class="price-amount">70,000원</span>
+                    <span class="price-unit">/월</span>
+                </div>
+                <p class="pricing-preview-feature">세무사 등 대리 발급 전문</p>
+                <ul class="pricing-preview-benefits">
+                    <li>✅ 무제한 변환</li>
+                    <li>✅ 전담 매니저 배정</li>
+                    <li>✅ API 연동 지원</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        <div class="pricing-preview-action">
+            <a href="/shop" class="btn-outline">멤버십 전체 보기</a>
+        </div>
+    </div>
+</section>

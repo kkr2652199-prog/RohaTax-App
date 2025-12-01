@@ -674,3 +674,27 @@
 .roha-video-player.fullscreen .video-cta {
     display: none;
 }
+
+.roha-video-player.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    padding: 0;
+    z-index: 9999;
+    background: #000;
+}
+
+.roha-video-player.fullscreen .video-container {
+    padding-top: 0;
+    height: 100%;
+    border-radius: 0;
+}
+
+.roha-video-player.fullscreen .video-cta {
+    display: none;
+}

@@ -417,17 +417,19 @@ if __name__ == '__main__':
     try:
         # 파일 관리 시스템 초기화 (가장 먼저 실행)
         init_file_management()
-        
+
         # 기존 초기화
         init_logging()
         init_db()
         seed_demo()
         version_manager.create_initial_version()
         change_detector.start_monitoring()
-        
+
         print(f"SERVER START PORT {settings.PORT}")
         print(f"OPEN http://localhost:{settings.PORT}")
         print(f"LOCAL ACCESS ONLY: http://127.0.0.1:{settings.PORT}")
     except Exception:
+        # 초기화 중 오류가 발생해도 서버 기동 자체는 시도
         pass
+
     app.run(host='127.0.0.1', port=settings.PORT, debug=settings.DEBUG)
