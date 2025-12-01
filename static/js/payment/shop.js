@@ -796,16 +796,3 @@
     init();
 
 })();
-
-            });
-        } else {
-            initPurchaseButtons();
-            initModalEvents();
-            initUserDropdown();
-        }
-    }
-
-    // 초기화 실행
-    init();
-
-})();
