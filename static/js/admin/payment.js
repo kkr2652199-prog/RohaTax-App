@@ -119,6 +119,29 @@ function getProductBadge(tokenAmount) {
 }
 
 /**
+ * 결제 수단 배지 HTML 생성 (3단 분류: 카드/현금/기타)
+ */
+function getPaymentMethodBadge(paymentMethod, pgProvider) {
+    // payment_method 우선, 없으면 pg_provider 사용
+    const method = (paymentMethod || pgProvider || '').toLowerCase();
+    
+    // 카드: 'card' 포함
+    if (method === 'card' || method.includes('card')) {
+        return '<span class="badge bg-primary">💳 카드</span>';
+    }
+    // 현금(증빙): 'trans', 'vbank' 포함
+    else if (method === 'trans' || method === 'vbank' || method.includes('trans') || method.includes('vbank')) {
+        return '<span class="badge bg-success">📄 현금</span>';
+    }
+    // 기타(무증빙): 'manual', 'virtual', 'test_virtual', 'unknown', NULL 등
+    else if (method) {
+        return '<span class="badge bg-secondary">💵 기타</span>';
+    } else {
+        return '<span class="badge bg-secondary">💵 기타</span>';
+    }
+}
+
+/**
  * 결제 상태에 따른 Pill Badge HTML 생성
  */
 function getStatusBadge(status) {
@@ -268,6 +291,7 @@ function renderPaymentTable(data) {
                     <td class="text-end payment-amount fw-bold text-primary">${formatCurrency(payment.amount || 0)}</td>
                     <td class="payment-token">${payment.token_amount === -1 ? '<span class="text-warning">무제한</span>' : formatNumber(payment.token_amount || 0) + '개'}</td>
                     <td>${getStatusBadge(payment.status || 'pending')}</td>
+                    <td>${getPaymentMethodBadge(payment.payment_method, payment.pg_provider)}</td>
                     <td><small class="text-muted">${payment.pg_provider || '-'}</small></td>
                     <td><small class="text-muted">${formatDateTime(payment.created_at || '')}</small></td>
                     <td class="text-center">
@@ -291,7 +315,7 @@ function renderPaymentTable(data) {
         console.log('[renderPaymentTable] 테이블 렌더링 완료');
     } catch (error) {
         console.error('[renderPaymentTable] 렌더링 오류:', error);
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">렌더링 오류: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="text-center py-4 text-danger">렌더링 오류: ${error.message}</td></tr>`;
     }
 }
 

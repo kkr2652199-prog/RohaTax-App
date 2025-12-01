@@ -53,45 +53,60 @@
             </div>
         </div>
         
-        <!-- 요약 카드 -->
+        <!-- 요약 카드 (4개) -->
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none;">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div style="font-size: 2.5rem; margin-right: 1rem;">💰</div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-1" style="opacity: 0.9;">총 매출</h6>
+                                <h6 class="mb-1" style="opacity: 0.9;">총 거래액</h6>
                                 <h4 class="mb-0 fw-bold" id="taxTotalRevenue">0원</h4>
-                                <small style="opacity: 0.8;">부가세 포함</small>
+                                <small style="opacity: 0.8;">paid + cancelled</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-md-4">
-                <div class="card" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; border: none;">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div style="font-size: 2.5rem; margin-right: 1rem;">📊</div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1" style="opacity: 0.9;">총 공급가액</h6>
-                                <h4 class="mb-0 fw-bold" id="taxTotalSupply">0원</h4>
-                                <small style="opacity: 0.8;">부가세 제외</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; border: none;">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
-                            <div style="font-size: 2.5rem; margin-right: 1rem;">📋</div>
+                            <div style="font-size: 2.5rem; margin-right: 1rem;">❌</div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-1" style="opacity: 0.9;">총 부가세</h6>
+                                <h6 class="mb-1" style="opacity: 0.9;">취소/환불</h6>
+                                <h4 class="mb-0 fw-bold" id="taxRefunds">0원</h4>
+                                <small style="opacity: 0.8;">cancelled 합계</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; border: none;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div style="font-size: 2.5rem; margin-right: 1rem;">💵</div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1" style="opacity: 0.9;">순 매출</h6>
+                                <h4 class="mb-0 fw-bold" id="taxNetRevenue">0원</h4>
+                                <small style="opacity: 0.8;" id="taxPaymentMethodBreakdown">(카드: 0원 / 현금: 0원)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white; border: none;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div style="font-size: 2.5rem; margin-right: 1rem;">🏛️</div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1" style="opacity: 0.9;">부가세</h6>
                                 <h4 class="mb-0 fw-bold" id="taxTotalVat">0원</h4>
                                 <small style="opacity: 0.8;">납부예정액</small>
                             </div>
@@ -139,15 +154,17 @@
                             <tr>
                                 <th>일자</th>
                                 <th>주문번호</th>
+                                <th>고객명</th>
                                 <th>상품명</th>
-                                <th class="text-end">공급가</th>
-                                <th class="text-end">부가세</th>
-                                <th class="text-end">합계</th>
+                                <th class="text-end">공급가액</th>
+                                <th class="text-end">세액</th>
+                                <th class="text-end">합계금액</th>
+                                <th>상태</th>
                             </tr>
                         </thead>
                         <tbody id="taxReportTableBody">
                             <tr>
-                                <td colspan="6" class="text-center text-muted">조회 버튼을 클릭하여 데이터를 불러오세요</td>
+                                <td colspan="8" class="text-center text-muted">조회 버튼을 클릭하여 데이터를 불러오세요</td>
                             </tr>
                         </tbody>
                     </table>
@@ -186,21 +203,29 @@ async function loadTaxStats() {
         if (result.success) {
             const data = result.data;
             
-            // 요약 카드 업데이트
-            document.getElementById('taxTotalRevenue').textContent = formatCurrency(data.total_revenue) + '원';
-            document.getElementById('taxTotalSupply').textContent = formatCurrency(data.total_supply) + '원';
-            document.getElementById('taxTotalVat').textContent = formatCurrency(data.total_vat) + '원';
-            document.getElementById('taxOrderCount').textContent = formatNumber(data.order_count) + '건';
+            // 요약 카드 업데이트 (4개)
+            document.getElementById('taxTotalRevenue').textContent = formatCurrency(data.total_revenue || 0) + '원';
+            document.getElementById('taxRefunds').textContent = formatCurrency(data.refunds || 0) + '원';
+            document.getElementById('taxNetRevenue').textContent = formatCurrency(data.net_revenue || 0) + '원';
+            document.getElementById('taxTotalVat').textContent = formatCurrency(data.total_vat || 0) + '원';
+            document.getElementById('taxOrderCount').textContent = formatNumber(data.order_count || 0) + '건';
+            
+            // 결제 수단별 통계 표시 (3단 분류: 카드/현금/기타)
+            const cardTotal = data.card_total || 0;
+            const cashTotal = data.cash_total || 0;
+            const otherTotal = data.other_total || 0;
+            document.getElementById('taxPaymentMethodBreakdown').textContent = 
+                `(카드: ${formatCurrency(cardTotal)}원 / 현금: ${formatCurrency(cashTotal)}원 / 기타: ${formatCurrency(otherTotal)}원)`;
             
             // 평균 주문 금액 계산
-            const avgAmount = data.order_count > 0 ? Math.round(data.total_revenue / data.order_count) : 0;
+            const avgAmount = data.order_count > 0 ? Math.round((data.net_revenue || 0) / data.order_count) : 0;
             document.getElementById('taxAvgOrderAmount').textContent = formatCurrency(avgAmount) + '원';
             
             // 차트 업데이트
             updateTaxChart(data.chart_data);
             
-            // 테이블 업데이트는 별도 API 호출 필요 (현재는 차트 데이터만 표시)
-            updateTaxTable(data.chart_data);
+            // 테이블 업데이트 (개별 거래 내역)
+            updateTaxTable(data.recent_transactions || []);
         } else {
             alert('세무 통계 조회 실패: ' + (result.message || '알 수 없는 오류'));
         }
@@ -281,26 +306,38 @@ function updateTaxChart(chartData) {
     });
 }
 
-// 테이블 업데이트 (차트 데이터 기반)
-function updateTaxTable(chartData) {
+// 테이블 업데이트 (개별 거래 내역)
+function updateTaxTable(transactions) {
     const tbody = document.getElementById('taxReportTableBody');
     if (!tbody) return;
     
-    if (chartData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">데이터가 없습니다</td></tr>';
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">데이터가 없습니다</td></tr>';
         return;
     }
     
-    tbody.innerHTML = chartData.map(item => `
-        <tr>
-            <td>${item.date}</td>
-            <td>-</td>
-            <td>집계 데이터</td>
-            <td class="text-end">${formatCurrency(item.supply)}원</td>
-            <td class="text-end">${formatCurrency(item.vat)}원</td>
-            <td class="text-end"><strong>${formatCurrency(item.revenue)}원</strong></td>
+    tbody.innerHTML = transactions.map(transaction => {
+        const isCancelled = transaction.status === 'cancelled';
+        const statusText = isCancelled ? '취소' : '정상';
+        const statusClass = isCancelled ? 'text-danger fw-bold' : 'text-success';
+        const rowClass = isCancelled ? 'table-danger' : '';
+        
+        // 날짜 포맷팅
+        const dateStr = transaction.created_at ? new Date(transaction.created_at).toLocaleDateString('ko-KR') : '-';
+        
+        return `
+        <tr class="${rowClass}">
+            <td>${dateStr}</td>
+            <td><code class="text-primary">${transaction.merchant_uid || '-'}</code></td>
+            <td>${transaction.username || '알 수 없음'}</td>
+            <td>${transaction.product_name || '-'}</td>
+            <td class="text-end">${formatCurrency(transaction.supply_price || 0)}원</td>
+            <td class="text-end">${formatCurrency(transaction.vat || 0)}원</td>
+            <td class="text-end ${isCancelled ? 'text-danger' : ''}"><strong>${formatCurrency(transaction.amount || 0)}원</strong></td>
+            <td><span class="${statusClass}">${statusText}</span></td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // 엑셀 다운로드

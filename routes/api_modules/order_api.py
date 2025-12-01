@@ -158,16 +158,31 @@ def create_order():
                     )
                     return error('귀하의 사업자번호로 이미 혜택을 받으셨습니다.', status=400)
         
-        # 5. 금액 및 세금 계산 (부가세 별도 과금 방식)
+        # 5. 금액 및 세금 계산 (부가세 별도 과금 방식 + 가변 부가세 로직)
         unit_price = product['price'] or 0
         # product.price는 공급가액이므로, 수량을 곱한 것이 총 공급가액
         supply_price = unit_price * quantity
         
-        # 부가세 계산: 공급가액 * 0.1 (반올림)
-        vat = round(supply_price * 0.1)
+        # 5-1. 결제 수단 및 증빙 신청 여부 확인
+        payment_method = data.get('payment_method', 'card')  # 기본값: 카드
+        if not payment_method or payment_method.strip() == '':
+            payment_method = 'card'
         
-        # 총 금액 계산: 공급가액 + 부가세
-        total_amount = supply_price + vat
+        tax_evidence_requested = data.get('tax_evidence_requested', True)  # 기본값: 증빙 신청
+        # Boolean 또는 문자열로 올 수 있으므로 정규화
+        if isinstance(tax_evidence_requested, str):
+            tax_evidence_requested = tax_evidence_requested.lower() in ('true', '1', 'yes')
+        tax_evidence_requested = bool(tax_evidence_requested)
+        
+        # 5-2. 가변 부가세 계산 로직
+        if payment_method == 'trans' and not tax_evidence_requested:
+            # 계좌이체 + 증빙 미신청: 부가세 0원
+            vat = 0
+            total_amount = supply_price
+        else:
+            # 카드 또는 계좌이체 + 증빙 신청: 부가세 포함
+            vat = round(supply_price * 0.1)
+            total_amount = supply_price + vat
         
         # 6. merchant_uid 생성: ORD-{YYYYMMDD}-{UUID4}
         today = datetime.now().strftime('%Y%m%d')
@@ -181,9 +196,9 @@ def create_order():
                 """
                 INSERT INTO orders (
                     user_id, merchant_uid, product_id, product_name,
-                    amount, supply_price, vat, quantity, status, created_at
+                    amount, supply_price, vat, quantity, status, payment_method, tax_evidence_requested, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready', datetime('now', 'localtime'))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready', ?, ?, datetime('now', 'localtime'))
                 """,
                 (
                     user_id,
@@ -193,7 +208,9 @@ def create_order():
                     total_amount,
                     supply_price,
                     vat,
-                    quantity  # 수량 저장
+                    quantity,  # 수량 저장
+                    payment_method,  # 결제 수단 저장
+                    int(tax_evidence_requested)  # 증빙 신청 여부 저장 (0 또는 1)
                 )
             )
             conn.commit()

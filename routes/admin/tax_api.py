@@ -108,33 +108,98 @@ def get_tax_stats():
                 date_params = (now.strftime("%Y-%m"),)
                 date_format = "%Y-%m"
             
-            # 총 통계 조회 (status='paid'인 주문만)
-            total_stats = conn.execute(
-                f"""
+            # 주문 데이터 조회 (paid + cancelled 모두 포함, payment_history와 조인하여 pg_provider도 가져옴)
+            orders_query = f"""
                 SELECT 
-                    COUNT(*) as order_count,
-                    COALESCE(SUM(o.amount), 0) as total_revenue,
-                    COALESCE(SUM(o.supply_price), 0) as total_supply,
-                    COALESCE(SUM(o.vat), 0) as total_vat
+                    o.id,
+                    o.merchant_uid,
+                    o.status,
+                    o.amount,
+                    o.supply_price,
+                    o.vat,
+                    o.created_at,
+                    o.product_name,
+                    o.payment_method,
+                    ph.pg_provider,
+                    u.username
                 FROM orders o
-                WHERE o.status = 'paid'
+                LEFT JOIN users u ON o.user_id = u.id
+                LEFT JOIN payment_history ph ON o.merchant_uid = ph.order_id
+                WHERE o.status IN ('paid', 'cancelled')
                   AND {date_filter}
-                """,
-                date_params
-            ).fetchone()
+                ORDER BY o.created_at DESC
+            """
             
-            # 차트 데이터 조회 (일별/월별 그룹화)
+            orders_rows = conn.execute(orders_query, date_params).fetchall()
+            
+            # Pandas DataFrame으로 변환
+            if orders_rows:
+                orders_data = [dict(row) for row in orders_rows]
+                df = pd.DataFrame(orders_data)
+            else:
+                df = pd.DataFrame(columns=['id', 'merchant_uid', 'status', 'amount', 'supply_price', 'vat', 'created_at', 'product_name', 'payment_method', 'pg_provider', 'username'])
+            
+            # 집계 계산 (Pandas 활용)
+            total_revenue = int(df['amount'].sum()) if not df.empty else 0  # 총 거래액 (paid + cancelled)
+            refunds = int(df[df['status'] == 'cancelled']['amount'].sum()) if not df.empty else 0  # 환불액
+            net_revenue = int(df[df['status'] == 'paid']['amount'].sum()) if not df.empty else 0  # 순 매출
+            total_vat = int(df[df['status'] == 'paid']['vat'].sum()) if not df.empty else 0  # 부가세 (순 매출 기준)
+            total_supply = int(df[df['status'] == 'paid']['supply_price'].sum()) if not df.empty else 0  # 공급가액 (순 매출 기준)
+            order_count = len(df[df['status'] == 'paid']) if not df.empty else 0  # 주문 건수 (paid만)
+            
+            # 결제 수단별 통계 계산 (순 매출 기준) - 3단 분류: 카드/현금(증빙)/기타(무증빙)
+            paid_df = df[df['status'] == 'paid'] if not df.empty else pd.DataFrame()
+            if not paid_df.empty:
+                # payment_method 우선, 없으면 pg_provider 사용하여 3단 분류
+                def categorize_payment_method(row):
+                    # payment_method 우선 확인
+                    method = row.get('payment_method') if 'payment_method' in row else None
+                    pg_provider = row.get('pg_provider') if 'pg_provider' in row else None
+                    
+                    # payment_method가 없거나 NULL이면 pg_provider 사용
+                    if pd.isna(method) or method == '' or method is None:
+                        method = pg_provider
+                    
+                    # 둘 다 없으면 'other'
+                    if pd.isna(method) or method == '' or method is None:
+                        return 'other'
+                    
+                    method_lower = str(method).lower()
+                    
+                    # 카드: 'card' 포함
+                    if method_lower == 'card' or 'card' in method_lower:
+                        return 'card'
+                    # 현금(증빙): 'trans', 'vbank' 포함
+                    elif method_lower in ['trans', 'vbank'] or 'trans' in method_lower or 'vbank' in method_lower:
+                        return 'cash'
+                    # 기타(무증빙): 'manual', 'virtual', 'test_virtual', 'unknown', NULL 등
+                    else:
+                        return 'other'
+                
+                # 결제 수단 카테고리 추가
+                paid_df['payment_category'] = paid_df.apply(categorize_payment_method, axis=1)
+                
+                # 3단 분류 집계
+                card_total = int(paid_df[paid_df['payment_category'] == 'card']['amount'].sum()) if 'payment_category' in paid_df.columns else 0
+                cash_total = int(paid_df[paid_df['payment_category'] == 'cash']['amount'].sum()) if 'payment_category' in paid_df.columns else 0
+                other_total = int(paid_df[paid_df['payment_category'] == 'other']['amount'].sum()) if 'payment_category' in paid_df.columns else 0
+            else:
+                card_total = 0
+                cash_total = 0
+                other_total = 0
+            
+            # 차트 데이터 조회 (일별/월별 그룹화) - 순 매출 기준
             if report_type == 'daily':
                 # 일별 데이터
                 chart_query = f"""
                     SELECT 
                         DATE(o.created_at) as date,
-                        COUNT(*) as order_count,
-                        COALESCE(SUM(o.amount), 0) as revenue,
-                        COALESCE(SUM(o.supply_price), 0) as supply,
-                        COALESCE(SUM(o.vat), 0) as vat
+                        COUNT(CASE WHEN o.status = 'paid' THEN 1 END) as order_count,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.amount ELSE 0 END), 0) as revenue,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.supply_price ELSE 0 END), 0) as supply,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.vat ELSE 0 END), 0) as vat
                     FROM orders o
-                    WHERE o.status = 'paid'
+                    WHERE o.status IN ('paid', 'cancelled')
                       AND {date_filter}
                     GROUP BY DATE(o.created_at)
                     ORDER BY date ASC
@@ -144,12 +209,12 @@ def get_tax_stats():
                 chart_query = f"""
                     SELECT 
                         strftime('%Y-%m', o.created_at) as date,
-                        COUNT(*) as order_count,
-                        COALESCE(SUM(o.amount), 0) as revenue,
-                        COALESCE(SUM(o.supply_price), 0) as supply,
-                        COALESCE(SUM(o.vat), 0) as vat
+                        COUNT(CASE WHEN o.status = 'paid' THEN 1 END) as order_count,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.amount ELSE 0 END), 0) as revenue,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.supply_price ELSE 0 END), 0) as supply,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.vat ELSE 0 END), 0) as vat
                     FROM orders o
-                    WHERE o.status = 'paid'
+                    WHERE o.status IN ('paid', 'cancelled')
                       AND {date_filter}
                     GROUP BY strftime('%Y-%m', o.created_at)
                     ORDER BY date ASC
@@ -159,12 +224,12 @@ def get_tax_stats():
                 chart_query = f"""
                     SELECT 
                         strftime('%Y-Q', o.created_at) || CAST((CAST(strftime('%m', o.created_at) AS INTEGER) - 1) / 3 + 1 AS TEXT) as date,
-                        COUNT(*) as order_count,
-                        COALESCE(SUM(o.amount), 0) as revenue,
-                        COALESCE(SUM(o.supply_price), 0) as supply,
-                        COALESCE(SUM(o.vat), 0) as vat
+                        COUNT(CASE WHEN o.status = 'paid' THEN 1 END) as order_count,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.amount ELSE 0 END), 0) as revenue,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.supply_price ELSE 0 END), 0) as supply,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.vat ELSE 0 END), 0) as vat
                     FROM orders o
-                    WHERE o.status = 'paid'
+                    WHERE o.status IN ('paid', 'cancelled')
                       AND {date_filter}
                     GROUP BY strftime('%Y', o.created_at), (CAST(strftime('%m', o.created_at) AS INTEGER) - 1) / 3 + 1
                     ORDER BY date ASC
@@ -174,12 +239,12 @@ def get_tax_stats():
                 chart_query = f"""
                     SELECT 
                         strftime('%Y', o.created_at) as date,
-                        COUNT(*) as order_count,
-                        COALESCE(SUM(o.amount), 0) as revenue,
-                        COALESCE(SUM(o.supply_price), 0) as supply,
-                        COALESCE(SUM(o.vat), 0) as vat
+                        COUNT(CASE WHEN o.status = 'paid' THEN 1 END) as order_count,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.amount ELSE 0 END), 0) as revenue,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.supply_price ELSE 0 END), 0) as supply,
+                        COALESCE(SUM(CASE WHEN o.status = 'paid' THEN o.vat ELSE 0 END), 0) as vat
                     FROM orders o
-                    WHERE o.status = 'paid'
+                    WHERE o.status IN ('paid', 'cancelled')
                       AND {date_filter}
                     GROUP BY strftime('%Y', o.created_at)
                     ORDER BY date ASC
@@ -197,12 +262,21 @@ def get_tax_stats():
                 for row in chart_rows
             ]
             
+            # 상세 거래 내역 (최근 거래 내역)
+            recent_transactions = df.head(100).to_dict('records') if not df.empty else []
+            
             return success('세무 통계 조회 성공', data={
-                'total_revenue': total_stats['total_revenue'] or 0,
-                'total_supply': total_stats['total_supply'] or 0,
-                'total_vat': total_stats['total_vat'] or 0,
-                'order_count': total_stats['order_count'] or 0,
+                'total_revenue': total_revenue,  # 총 거래액 (paid + cancelled)
+                'refunds': refunds,  # 환불액
+                'net_revenue': net_revenue,  # 순 매출
+                'total_vat': total_vat,  # 부가세
+                'total_supply': total_supply,  # 공급가액
+                'order_count': order_count,  # 주문 건수
+                'card_total': card_total,  # 카드 결제 총액
+                'cash_total': cash_total,  # 현금(증빙) 결제 총액
+                'other_total': other_total,  # 기타(무증빙) 결제 총액
                 'chart_data': chart_data,
+                'recent_transactions': recent_transactions,  # 상세 거래 내역
                 'report_type': report_type,
                 'date_range': {
                     'start': start_date or (f"{year}-{month:02d}-01" if month else f"{year}-01-01"),
@@ -278,18 +352,25 @@ def download_tax_report():
                 date_filter = "strftime('%Y-%m', o.created_at) = ?"
                 date_params = (now.strftime("%Y-%m"),)
             
-            # 주문 내역 조회
+            # 주문 내역 조회 (users 테이블 조인하여 고객명 포함)
             orders = conn.execute(
                 f"""
                 SELECT 
                     DATE(o.created_at) as 일자,
                     o.merchant_uid as 주문번호,
+                    COALESCE(u.username, '알 수 없음') as 고객명,
                     o.product_name as 상품명,
-                    o.supply_price as 공급가,
-                    o.vat as 부가세,
-                    o.amount as 합계
+                    o.supply_price as 공급가액,
+                    o.vat as 세액,
+                    o.amount as 합계금액,
+                    CASE 
+                        WHEN o.status = 'paid' THEN '정상'
+                        WHEN o.status = 'cancelled' THEN '취소'
+                        ELSE o.status
+                    END as 상태
                 FROM orders o
-                WHERE o.status = 'paid'
+                LEFT JOIN users u ON o.user_id = u.id
+                WHERE o.status IN ('paid', 'cancelled')
                   AND {date_filter}
                 ORDER BY o.created_at ASC
                 """,
@@ -301,22 +382,56 @@ def download_tax_report():
             
             if df.empty:
                 # 빈 데이터프레임인 경우 기본 구조만 생성
-                df = pd.DataFrame(columns=['일자', '주문번호', '상품명', '공급가', '부가세', '합계'])
+                df = pd.DataFrame(columns=['일자', '주문번호', '고객명', '상품명', '공급가액', '세액', '합계금액', '상태'])
             
             # 엑셀 파일 생성 (메모리 버퍼)
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df.to_excel(writer, sheet_name='세무 리포트', index=False)
                 
-                # 시트 스타일링 (선택사항)
+                # openpyxl 스타일링
+                from openpyxl.styles import Font, PatternFill, Alignment, NamedStyle
+                from openpyxl.utils import get_column_letter
+                
                 worksheet = writer.sheets['세무 리포트']
+                
+                # 헤더 행 스타일링 (1행)
+                header_fill = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
+                header_font = Font(bold=True, size=11)
+                header_alignment = Alignment(horizontal='center', vertical='center')
+                
+                for cell in worksheet[1]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = header_alignment
+                
+                # 금액 컬럼 포맷팅 및 정렬
+                amount_columns = ['공급가액', '세액', '합계금액']
+                amount_column_indices = []
+                for idx, col in enumerate(df.columns, start=1):
+                    if col in amount_columns:
+                        amount_column_indices.append(idx)
+                        # 숫자 포맷 적용 (3자리 콤마)
+                        for row in range(2, len(df) + 2):
+                            cell = worksheet.cell(row=row, column=idx)
+                            if cell.value is not None:
+                                try:
+                                    cell.number_format = '#,##0'
+                                    cell.alignment = Alignment(horizontal='right', vertical='center')
+                                except:
+                                    pass
+                
                 # 컬럼 너비 자동 조정
-                for idx, col in enumerate(df.columns):
-                    max_length = max(
-                        df[col].astype(str).map(len).max(),
-                        len(str(col))
-                    )
-                    worksheet.column_dimensions[chr(65 + idx)].width = min(max_length + 2, 50)
+                for idx, col in enumerate(df.columns, start=1):
+                    max_length = 0
+                    # 헤더 길이 확인
+                    max_length = max(max_length, len(str(col)))
+                    # 데이터 길이 확인
+                    if not df.empty:
+                        col_data = df[col].astype(str)
+                        max_length = max(max_length, col_data.map(len).max())
+                    # 컬럼 너비 설정 (최소 10, 최대 50)
+                    worksheet.column_dimensions[get_column_letter(idx)].width = min(max(max_length + 2, 10), 50)
             
             output.seek(0)
             

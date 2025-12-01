@@ -933,6 +933,7 @@ class PaymentService:
     def delete_payment(self, payment_id: int) -> None:
         """
         결제 기록 삭제 (Hard Delete)
+        payment_history와 orders 테이블에서 완전히 삭제하여 세무 리포트에서도 사라지도록 함
         
         Args:
             payment_id: 삭제할 결제 ID
@@ -943,35 +944,56 @@ class PaymentService:
         with get_conn() as conn:
             conn.row_factory = sqlite3.Row
             
-            # 결제 정보 조회
-            payment_row = conn.execute(
-                """
-                SELECT id, status
-                FROM payment_history
-                WHERE id = ?
-                """,
-                (payment_id,)
-            ).fetchone()
+            # 트랜잭션 시작
+            conn.execute("BEGIN TRANSACTION")
             
-            if not payment_row:
-                raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
-            
-            # 삭제 가능한 상태인지 확인
-            status_str = payment_row['status']
-            if status_str not in [PaymentStatus.CANCELLED.value, PaymentStatus.FAILED.value]:
-                raise ValueError(f"삭제할 수 없는 결제 상태입니다: {status_str} (취소/환불 또는 실패 상태만 삭제 가능)")
-            
-            # 결제 기록 삭제
-            cursor = conn.execute(
-                "DELETE FROM payment_history WHERE id = ?",
-                (payment_id,)
-            )
-            
-            if cursor.rowcount == 0:
-                raise ValueError(f"결제 삭제에 실패했습니다: ID {payment_id}")
-            
-            conn.commit()
-            self.logger.info(f"결제 기록 삭제 완료: ID {payment_id}")
+            try:
+                # 결제 정보 조회 (order_id 포함)
+                payment_row = conn.execute(
+                    """
+                    SELECT id, status, order_id
+                    FROM payment_history
+                    WHERE id = ?
+                    """,
+                    (payment_id,)
+                ).fetchone()
+                
+                if not payment_row:
+                    raise ValueError(f"결제를 찾을 수 없습니다: ID {payment_id}")
+                
+                # 삭제 가능한 상태인지 확인
+                status_str = payment_row['status']
+                if status_str not in [PaymentStatus.CANCELLED.value, PaymentStatus.FAILED.value]:
+                    raise ValueError(f"삭제할 수 없는 결제 상태입니다: {status_str} (취소/환불 또는 실패 상태만 삭제 가능)")
+                
+                order_id = payment_row['order_id']
+                
+                # 1. orders 테이블에서 삭제 (merchant_uid로 매칭)
+                if order_id:
+                    orders_deleted = conn.execute(
+                        "DELETE FROM orders WHERE merchant_uid = ?",
+                        (order_id,)
+                    )
+                    if orders_deleted.rowcount > 0:
+                        self.logger.info(f"orders 테이블에서 주문 삭제 완료: merchant_uid={order_id}")
+                
+                # 2. payment_history 테이블에서 삭제
+                cursor = conn.execute(
+                    "DELETE FROM payment_history WHERE id = ?",
+                    (payment_id,)
+                )
+                
+                if cursor.rowcount == 0:
+                    raise ValueError(f"결제 삭제에 실패했습니다: ID {payment_id}")
+                
+                # 트랜잭션 커밋
+                conn.commit()
+                self.logger.info(f"결제 기록 완전 삭제 완료: payment_id={payment_id}, order_id={order_id}")
+                
+            except Exception as e:
+                # 트랜잭션 롤백
+                conn.rollback()
+                raise e
     
     def get_payments_by_user_id(
         self, 
@@ -1195,7 +1217,8 @@ class PaymentService:
                     u.email,
                     COALESCE(o.amount, ph.amount, 0) as amount,
                     COALESCE(o.supply_price, 0) as supply_price,
-                    COALESCE(o.vat, 0) as vat
+                    COALESCE(o.vat, 0) as vat,
+                    o.payment_method
                 FROM payment_history ph
                 LEFT JOIN users u ON ph.user_id = u.id
                 LEFT JOIN orders o ON ph.order_id = o.merchant_uid
@@ -1232,9 +1255,10 @@ class PaymentService:
                     # 유저 정보 추가 (NULL 처리)
                     payment_dict['user_name'] = row_dict.get('username') or ''
                     payment_dict['user_email'] = row_dict.get('email') or ''
-                    # 주문 정보 추가 (공급가/부가세)
+                    # 주문 정보 추가 (공급가/부가세/결제수단)
                     payment_dict['supply_price'] = row_dict.get('supply_price') or 0
                     payment_dict['vat'] = row_dict.get('vat') or 0
+                    payment_dict['payment_method'] = row_dict.get('payment_method') or ''
                     payments.append(payment_dict)
                 except Exception as e:
                     self.logger.error(f"결제 데이터 변환 오류: {str(e)}, row: {dict(row) if row else 'None'}")

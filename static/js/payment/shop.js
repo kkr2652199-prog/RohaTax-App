@@ -82,13 +82,22 @@
         const quantityStepper = document.getElementById('modalQuantityStepper');
         const quantityInput = document.getElementById('modalQuantityInput');
         const stepperDecrease = document.getElementById('stepperDecrease');
+        const paymentMethodSection = document.getElementById('modalPaymentMethodSection');
         
         if (isEventType) {
             eventBadge.classList.remove('hidden');
             quantityStepper.classList.add('hidden');
+            // 이벤트 상품은 결제 수단 선택 숨김
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.add('hidden');
+            }
         } else if (isBasicType) {
             eventBadge.classList.add('hidden');
             quantityStepper.classList.remove('hidden');
+            // 유료 상품은 결제 수단 선택 표시
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.remove('hidden');
+            }
             if (quantityInput) {
                 quantityInput.value = ''; // 초기값 빈 문자열
             }
@@ -99,6 +108,34 @@
         } else {
             eventBadge.classList.add('hidden');
             quantityStepper.classList.add('hidden');
+            // 기타 상품도 결제 수단 선택 표시
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.remove('hidden');
+            }
+        }
+        
+        // 결제 수단 선택 초기화 (카드가 기본값)
+        const paymentMethodCard = document.getElementById('paymentMethodCard');
+        const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+        if (paymentMethodCard) {
+            paymentMethodCard.checked = true;
+        }
+        if (paymentMethodTrans) {
+            paymentMethodTrans.checked = false;
+        }
+        
+        // 계좌 정보 및 증빙 체크박스 초기 상태 (숨김)
+        const accountInfoBox = document.getElementById('modalAccountInfoBox');
+        const taxEvidenceCheckbox = document.getElementById('modalTaxEvidenceCheckbox');
+        const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+        if (accountInfoBox) {
+            accountInfoBox.classList.add('hidden');
+        }
+        if (taxEvidenceCheckbox) {
+            taxEvidenceCheckbox.classList.add('hidden');
+        }
+        if (taxEvidenceInput) {
+            taxEvidenceInput.checked = true; // 기본값: 체크됨
         }
 
         // Action Button: 텍스트 동적 변경
@@ -110,6 +147,7 @@
             totalLabel.textContent = '총 혜택 금액';
         } else {
             confirmBtn.textContent = '💳 결제하기';
+            // 초기 라벨은 updateTotalPrice에서 동적으로 설정됨
             totalLabel.textContent = '총 결제 예상액 (VAT 포함)';
         }
 
@@ -122,31 +160,103 @@
     }
 
     /**
-     * 총 결제 예상액 계산 및 업데이트 (부가세 별도 과금 방식)
+     * 총 결제 예상액 계산 및 업데이트 (부가세 별도 과금 방식 + 가변 부가세 로직)
      */
     function updateTotalPrice() {
         let quantity = 0;
         
-        // Input 필드에서 수량 가져오기
-        const quantityInput = document.getElementById('modalQuantityInput');
-        if (quantityInput && !quantityInput.closest('.hidden')) {
-            const inputValue = quantityInput.value.trim();
-            if (inputValue === '' || inputValue === null || inputValue === undefined) {
-                quantity = 0;
-            } else {
-                quantity = parseInt(inputValue, 10);
-                if (isNaN(quantity) || quantity < 0) {
+        // Gold 상품 예외 처리: token_amount === -1인 경우 수량은 무조건 1
+        if (currentProduct.token === -1) {
+            quantity = 1;
+        } else {
+            // Input 필드에서 수량 가져오기
+            const quantityInput = document.getElementById('modalQuantityInput');
+            if (quantityInput && !quantityInput.closest('.hidden')) {
+                const inputValue = quantityInput.value.trim();
+                if (inputValue === '' || inputValue === null || inputValue === undefined) {
                     quantity = 0;
+                } else {
+                    quantity = parseInt(inputValue, 10);
+                    if (isNaN(quantity) || quantity < 0) {
+                        quantity = 0;
+                    }
+                }
+            }
+            
+            // 수량이 0이고 유료 상품인 경우 기본값 1로 설정 (subscription 타입 등)
+            if (quantity === 0 && currentProduct.price > 0) {
+                const isEventType = currentProduct.type === 'event' || currentProduct.type === 'event_period';
+                if (!isEventType) {
+                    quantity = 1;
                 }
             }
         }
         
-        // 부가세 별도 과금 방식: 공급가액 * 수량 * 1.1 (부가세 포함 총액)
+        // 공급가액 계산
         const supplyPrice = currentProduct.price * quantity;
-        const vat = Math.round(supplyPrice * 0.1);
-        const totalPrice = supplyPrice + vat;
         
-        document.getElementById('modalTotalPrice').textContent = formatCurrency(totalPrice);
+        // 결제 수단 및 증빙 신청 여부 확인
+        const paymentMethodCard = document.getElementById('paymentMethodCard');
+        const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+        const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+        
+        let isCard = true;
+        let isTaxEvidenceRequested = true;
+        
+        if (paymentMethodCard && paymentMethodTrans) {
+            isCard = paymentMethodCard.checked;
+        }
+        
+        if (taxEvidenceInput) {
+            isTaxEvidenceRequested = taxEvidenceInput.checked;
+        } else {
+            // 체크박스가 없으면 (카드 선택 시) 무조건 증빙 신청
+            isTaxEvidenceRequested = true;
+        }
+        
+        // 가변 부가세 로직
+        let vat = 0;
+        let totalPrice = supplyPrice;
+        
+        if (isCard) {
+            // 카드는 무조건 부가세 포함
+            vat = Math.round(supplyPrice * 0.1);
+            totalPrice = supplyPrice + vat;
+        } else {
+            // 계좌이체인 경우
+            if (isTaxEvidenceRequested) {
+                // 증빙 신청: 부가세 포함
+                vat = Math.round(supplyPrice * 0.1);
+                totalPrice = supplyPrice + vat;
+            } else {
+                // 증빙 미신청: 부가세 0원
+                vat = 0;
+                totalPrice = supplyPrice;
+            }
+        }
+        
+        // 총액 라벨 동적 업데이트
+        const totalLabel = document.getElementById('modalTotalLabel');
+        if (totalLabel) {
+            const isEventType = currentProduct.type === 'event' || currentProduct.type === 'event_period';
+            if (!isEventType) {
+                if (isCard || isTaxEvidenceRequested) {
+                    totalLabel.textContent = '총 결제 예상액 (VAT 포함)';
+                } else {
+                    totalLabel.textContent = '총 결제 예상액 (VAT 별도)';
+                }
+            }
+        }
+        
+        // 총액 표시 (0원일 때만 '무료' 표시)
+        const totalPriceElement = document.getElementById('modalTotalPrice');
+        if (totalPriceElement) {
+            if (totalPrice === 0) {
+                totalPriceElement.textContent = '무료';
+            } else {
+                totalPriceElement.textContent = formatCurrency(totalPrice);
+            }
+        }
     }
 
     /**
@@ -275,6 +385,47 @@
     }
 
     /**
+     * 결제 수단 변경 이벤트 핸들러
+     */
+    function handlePaymentMethodChange() {
+        const paymentMethodCard = document.getElementById('paymentMethodCard');
+        const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+        const accountInfoBox = document.getElementById('modalAccountInfoBox');
+        const taxEvidenceCheckbox = document.getElementById('modalTaxEvidenceCheckbox');
+        const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+        
+        if (!paymentMethodCard || !paymentMethodTrans) return;
+        
+        const isCard = paymentMethodCard.checked;
+        const isTrans = paymentMethodTrans.checked;
+        
+        if (isCard) {
+            // 카드 선택 시: 계좌 정보 및 증빙 체크박스 숨김
+            if (accountInfoBox) {
+                accountInfoBox.classList.add('hidden');
+            }
+            if (taxEvidenceCheckbox) {
+                taxEvidenceCheckbox.classList.add('hidden');
+            }
+            // 카드는 무조건 증빙 신청 (강제)
+            if (taxEvidenceInput) {
+                taxEvidenceInput.checked = true;
+            }
+        } else if (isTrans) {
+            // 계좌이체 선택 시: 계좌 정보 및 증빙 체크박스 표시
+            if (accountInfoBox) {
+                accountInfoBox.classList.remove('hidden');
+            }
+            if (taxEvidenceCheckbox) {
+                taxEvidenceCheckbox.classList.remove('hidden');
+            }
+        }
+        
+        // 가격 재계산
+        updateTotalPrice();
+    }
+
+    /**
      * 금액 포맷팅 (천단위 구분자)
      * @param {number} amount - 금액
      * @returns {string} 포맷된 금액 문자열
@@ -357,6 +508,29 @@
                 btn.disabled = true;
             });
 
+            // 결제 수단 및 증빙 신청 여부 가져오기
+            const paymentMethodCard = document.getElementById('paymentMethodCard');
+            const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+            const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+            
+            let paymentMethod = 'card'; // 기본값: 카드
+            let taxEvidenceRequested = true; // 기본값: 증빙 신청
+            
+            if (paymentMethodCard && paymentMethodTrans) {
+                if (paymentMethodTrans.checked) {
+                    paymentMethod = 'trans';
+                } else if (paymentMethodCard.checked) {
+                    paymentMethod = 'card';
+                }
+            }
+            
+            if (taxEvidenceInput) {
+                taxEvidenceRequested = taxEvidenceInput.checked;
+            } else {
+                // 체크박스가 없으면 (카드 선택 시) 무조건 true
+                taxEvidenceRequested = true;
+            }
+
             // API 호출
             const response = await fetch('/api/orders/create', {
                 method: 'POST',
@@ -365,7 +539,9 @@
                 },
                 body: JSON.stringify({
                     product_id: productId,
-                    quantity: quantity
+                    quantity: quantity,
+                    payment_method: paymentMethod,
+                    tax_evidence_requested: taxEvidenceRequested
                 }),
                 credentials: 'same-origin' // 세션 쿠키 포함
             });
@@ -529,6 +705,22 @@
             quantityInput.addEventListener('input', handleQuantityInputChange);
             quantityInput.addEventListener('change', handleQuantityInputChange);
             quantityInput.addEventListener('blur', handleQuantityInputChange);
+        }
+
+        // 결제 수단 라디오 버튼 이벤트 리스너
+        const paymentMethodCard = document.getElementById('paymentMethodCard');
+        const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+        if (paymentMethodCard) {
+            paymentMethodCard.addEventListener('change', handlePaymentMethodChange);
+        }
+        if (paymentMethodTrans) {
+            paymentMethodTrans.addEventListener('change', handlePaymentMethodChange);
+        }
+
+        // 증빙 신청 체크박스 이벤트 리스너
+        const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+        if (taxEvidenceInput) {
+            taxEvidenceInput.addEventListener('change', updateTotalPrice);
         }
 
         // 모달 오버레이 클릭 시 닫기
