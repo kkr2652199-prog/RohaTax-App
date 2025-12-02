@@ -1,3 +1,13 @@
+## [2025-12-02 18:11:33 KST] [Hash: 1eda73c] : 상점/결제 로직 긴급 수리 완료 및 데이터 정상화 (안정화 버전)
+- **수리 내역:**
+    - 상품 관리 시스템 복구: `product.js`의 Premium/Gold 카드에 `data-product-id` 동적 설정 추가
+    - 상점 페이지 CSS 의존성 복구: `shop.html`에 `home_prime.css` 재연결
+    - DB 상품 데이터 정상 확인: ID 1(Standard), 2(Premium), 3(Gold), 4(Welcome Event), 5(Period Event) 모두 존재
+- **안정성 확보:**
+    - 관리자 페이지 상품 수정 기능 정상화 (ID 3 오류 해결)
+    - 상점 페이지 디자인 무결성 복원
+    - 결제 로직 데이터 정합성 확보
+
 ## [2025-12-01 16:30:00 KST] [Hash: bb7ef77] : 서비스 핵심 가치 피벗(전송→변환) 및 B2B 엔터프라이즈 톤앤매너 적용 (Hero, Company, Testimonials)
 
 ## [2025-12-01 16:10:00 KST] [Hash: 733e327] : 법적 필수 페이지(이용약관, 개인정보처리방침) 구현 및 푸터 연결 완료

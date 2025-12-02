@@ -1034,13 +1034,16 @@ main {
     border: 2px solid rgba(225, 29, 72, 0.3);
 }
 
-.card-header {
+/* Use Cases 섹션 전용 스타일 - 관리자 페이지 침범 방지 */
+.use-cases-section .card-header,
+.immersive-card .card-header {
     display: flex;
     flex-direction: column;
     margin-bottom: 20px;
 }
 
-.card-header h3 {
+.use-cases-section .card-header h3,
+.immersive-card .card-header h3 {
     font-size: 2rem;
     font-weight: 800;
     color: #ffffff; /* 순백색 */
@@ -1049,7 +1052,8 @@ main {
     text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* 그림자로 띄움 */
 }
 
-.card-body {
+.use-cases-section .card-body,
+.immersive-card .card-body {
     background: rgba(0, 0, 0, 0.6); /* 검은 반투명 */
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px); /* 블러 효과 */

@@ -122,9 +122,14 @@ function updateStandardCard(product) {
  * Premium 카드 업데이트
  */
 function updatePremiumCard(product) {
+    const form = document.getElementById('premiumForm');
+    if (form) form.dataset.productId = product.id;
+    
     const tokenInput = document.getElementById('premiumTokenAmount');
     const priceInput = document.getElementById('premiumPrice');
     const toggle = document.getElementById('premiumToggle');
+    
+    if (toggle) toggle.dataset.productId = product.id;
     
     if (tokenInput) {
         tokenInput.value = product.token_amount || 100;
@@ -144,8 +149,13 @@ function updatePremiumCard(product) {
  * Gold 카드 업데이트
  */
 function updateGoldCard(product) {
+    const form = document.getElementById('goldForm');
+    if (form) form.dataset.productId = product.id;
+    
     const priceInput = document.getElementById('goldPrice');
     const toggle = document.getElementById('goldToggle');
+    
+    if (toggle) toggle.dataset.productId = product.id;
     
     if (priceInput) {
         priceInput.value = product.price || 50000;
