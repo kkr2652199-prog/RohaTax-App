@@ -1,6 +1,27 @@
 // 1Tax App 홈페이지 JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    // [안전장치] JS 로드 완료 플래그 → 이때부터 CSS가 reveal 요소를 숨기고 애니메이션 준비
+    document.body.classList.add('js-loaded');
+
+    // Scroll Reveal Animation (IntersectionObserver)
+    const revealElements = document.querySelectorAll('.reveal');
+    
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target); // 한 번 나타나면 관찰 중단
+            }
+        });
+    }, {
+        root: null,
+        threshold: 0.1, // 10%만 보여도 등장 시작
+        rootMargin: '0px 0px -50px 0px' // 약간 미리 등장
+    });
+    
+    revealElements.forEach(el => revealObserver.observe(el));
+
     // 네비게이션 스크롤 효과
     const navbar = document.querySelector('.navbar');
     const navLinks = document.querySelectorAll('.nav-link');

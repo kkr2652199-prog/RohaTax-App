@@ -1,30 +1,40 @@
 <!-- How it Works 섹션 (Video Demo + Hometax Slider 통합) -->
-<section class="how-it-works-section" id="how-it-works">
+<section class="how-it-works-section reveal" id="how-it-works">
     <div class="container">
-        <div class="section-header">
-            <h2>누구나 쉽게 따라 할 수 있습니다</h2>
-            <p>3단계로 끝나는 스마트 변환</p>
+        <!-- 헤더: 다크 모드용 텍스트 -->
+        <div class="section-header text-center">
+            <h2 class="section-title text-white">Seamless Workflow</h2>
+            <p class="section-subtitle text-gray-400">복잡한 세무 행정, <strong>단 3단계의 프로세스</strong>로 종결됩니다.</p>
         </div>
-        
-        <!-- 동영상 데모 -->
-        <div class="video-demo-section">
+
+        <!-- 비디오 영역: 다크 시어터 디자인 -->
+        <div class="video-demo-section theater-mode">
             <div class="video-section-header">
-                    <h2 class="video-section-title">3단계로 끝나는 스마트 변환</h2>
-                    <div class="video-section-subtitles">
-                        <div class="subtitle-item">
-                            <span class="subtitle-text">초간편 파일 업로드</span>
-                        </div>
-                        <div class="subtitle-item">
-                            <span class="subtitle-text">완벽 검증 및 자동 정제</span>
-                        </div>
-                        <div class="subtitle-item">
-                            <span class="subtitle-text">즉시 다운로드 및 완료</span>
-                        </div>
+                <!-- 3단계 프로세스 바 -->
+                <div class="process-steps">
+                    <div class="step-item active">
+                        <span class="step-num">01</span>
+                        <span class="step-text">Raw Data Upload<br>(원본 업로드)</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item active">
+                        <span class="step-num">02</span>
+                        <span class="step-text">AI Verification<br>(자동 검증)</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item active">
+                        <span class="step-num">03</span>
+                        <span class="step-text">Standard Output<br>(표준 변환)</span>
                     </div>
                 </div>
-                
-                <!-- 동영상 플레이어 -->
+            </div>
+
+            <!-- [중요] 비디오 플레이어 컴포넌트 유지 -->
+            <div class="video-wrapper-glow">
                 {% include 'components/video_player.html' %}
+            </div>
+            
+            <p class="video-caption">* 실제 로하택스 구동 화면입니다. (속도 조작 없음)</p>
         </div>
 
         <!-- 홈택스 가이드 슬라이더 -->
@@ -94,29 +104,6 @@
                             
                             <div class="vs-cta">
                                 <a href="#monitor-frame" class="btn-primary">로하택스로 발행하기</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 요약 섹션 -->
-                    <div class="summary-section">
-                        <h3>로하택스 활용전략 (한눈에 보기)</h3>
-                        <div class="feature-grid">
-                            <div class="feature-item">
-                                <div class="feature-icon"></div>
-                                <div class="feature-text">30건→1장 · 100건→2장 · 500건→10장</div>
-                            </div>
-                            <div class="feature-item">
-                                <div class="feature-icon"></div>
-                                <div class="feature-text">50건 10분 미만</div>
-                            </div>
-                            <div class="feature-item">
-                                <div class="feature-icon"></div>
-                                <div class="feature-text">작성일자 1회 입력</div>
-                            </div>
-                            <div class="feature-item">
-                                <div class="feature-icon"></div>
-                                <div class="feature-text">매월 변동 세액 자동 처리</div>
                             </div>
                         </div>
                     </div>
@@ -297,15 +284,6 @@
                         <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
                             <i data-lucide="chevron-right" class="btn-icon"></i>
                         </button>
-                    </div>
-                </div>
-        </div>
-        
-        <!-- 신뢰 구축 최종 메시지 -->
-        <div class="trust-message-container">
-            <div class="trust-message">
-                    <div class="trust-text">
-                        <span class="trust-highlight">이 영상을 보셨다면, 50건 일괄 발급은 이미 90% 성공입니다.</span>
                     </div>
                 </div>
         </div>
