@@ -1821,9 +1821,7 @@ main {
     border-radius: var(--radius);
     padding: 40px;
     text-align: center;
-    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                box-shadow 0.3s ease,
-                border-color 0.3s ease;
+    transition: all 0.3s ease;
     position: relative;
 }
 
@@ -1833,25 +1831,9 @@ main {
     transform: translateY(-4px);
 }
 
-/* Apple-style tap effect */
-.pricing-preview-card:active {
-    transform: translateY(-4px) scale(0.98);
-    transition-duration: 0.1s;
-}
-
 .pricing-preview-card.featured {
     border: 2px solid var(--primary-color);
     box-shadow: 0 4px 12px rgba(44, 91, 240, 0.1);
-    transform: scale(1.02);
-}
-
-.pricing-preview-card.featured:hover {
-    transform: scale(1.02) translateY(-4px);
-}
-
-.pricing-preview-card.featured:active {
-    transform: scale(1.02) translateY(-4px) scale(0.98);
-    transition-duration: 0.1s;
 }
 
 .pricing-badge {

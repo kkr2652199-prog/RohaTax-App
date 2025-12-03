@@ -38,76 +38,66 @@
         </div>
 
         <!-- 홈택스 가이드 슬라이더 -->
-        <div class="hometax-guide-slider-container">
-            <!-- PPT 스타일 가이드 컨테이너 -->
-            <div class="ppt-container">
-                    <!-- 헤더 섹션 -->
-                    <div class="ppt-header">
-                        <div class="main-title">
-                            <span class="tax-highlight">로하택스</span>로 일괄 발행을 10분에 완성
+        <div class="hometax-guide-slider-container reveal">
+            <div class="container">
+                <!-- 1. Provocative Header (도발적 헤더) -->
+                <div class="guide-header text-center">
+                    <span class="guide-badge warning">REALITY CHECK</span>
+                    <h2>아직도 '건별 발행'을 하고 계십니까?</h2>
+                    <p>디지털 시대에 <strong>수기 입력</strong>은 단순한 불편함이 아닙니다.<br>그것은 <strong>경영 자원의 낭비</strong>입니다.</p>
+                </div>
+
+                <!-- 2. Cost Comparison (비용/시간 비교) -->
+                <div class="vs-container">
+                    <!-- Left: Legacy (Loss) -->
+                    <div class="vs-card legacy">
+                        <div class="vs-header">
+                            <h3>건별 수기 입력</h3>
+                            <span class="status-badge bad">Legacy Way</span>
                         </div>
-                        <div class="subtitle">
-                            고객 정보 자동 폐기로 신뢰 100%, 원본 보존으로 안전 100%
+                        <div class="cost-box loss">
+                            <span class="label">월 낭비 시간</span>
+                            <strong class="value">- 4.5시간</strong>
+                            <span class="sub-value">(연간 54시간 허비)</span>
                         </div>
+                        <ul class="vs-list">
+                            <li class="bad">❌ 반복적인 로그인/로그아웃</li>
+                            <li class="bad">❌ 건마다 사업자 번호 타이핑</li>
+                            <li class="bad">❌ 오타 발생 시 수정 불가</li>
+                        </ul>
                     </div>
 
-                    <!-- 2열 비교 섹션 (vs-table) -->
-                    <div class="vs-table">
-                        <!-- 왼쪽: 건별 발행 -->
-                        <div class="vs-column individual">
-                            <div class="vs-header">
-                                <h3>건별 전자세금계산서 발행</h3>
-                                <p class="vs-subtitle">수작업의 번거로움</p>
-                            </div>
-                            
-                            <div class="vs-steps">
-                                <div class="vs-step">
-                                    <div class="vs-step-content">로그인·사업자전환 → 전자세금계산서 메뉴</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">건별 입력(공급자/공급받는자/작성일자/금액)</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">내용 확인 → 전자서명 → 발행</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">다음 건 반복(건수만큼 반복)</div>
-                                </div>
-                            </div>
-                            
-                            <div class="vs-cta">
-                                <a href="#" class="btn-outline">수작업으로 발행하기</a>
-                            </div>
+                    <!-- Right: RohaTax (Gain) -->
+                    <div class="vs-card smart">
+                        <div class="recommended-badge">SMART CHOICE</div>
+                        <div class="vs-header">
+                            <h3>로하택스 일괄 변환</h3>
+                            <span class="status-badge good">New Standard</span>
                         </div>
-
-                        <!-- 오른쪽: 일괄 발행 -->
-                        <div class="vs-column batch">
-                            <div class="vs-header">
-                                <h3>일괄 전자세금계산서 발행</h3>
-                                <p class="vs-subtitle">로하택스의 편리함</p>
-                            </div>
-                            
-                            <div class="vs-steps">
-                                <div class="vs-step">
-                                    <div class="vs-step-content">로그인·사업자전환 → 일괄발급 메뉴</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">로하택스 변환 파일 업로드</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">엑셀파일 변환하기 → 결과 확인</div>
-                                </div>
-                                <div class="vs-step">
-                                    <div class="vs-step-content">일괄발급 진행 → 발행 완료</div>
-                                </div>
-                            </div>
-                            
-                            <div class="vs-cta">
-                                <a href="#monitor-frame" class="btn-primary">로하택스로 발행하기</a>
-                            </div>
+                        <div class="cost-box gain">
+                            <span class="label">월 확보 시간</span>
+                            <strong class="value">+ 4시간 20분</strong>
+                            <span class="sub-value">(커피 한 잔 마실 시간이면 끝)</span>
+                        </div>
+                        <ul class="vs-list">
+                            <li class="good">✅ <strong>단 1번</strong>의 로그인</li>
+                            <li class="good">✅ 엑셀 그대로 업로드 (타이핑 Zero)</li>
+                            <li class="good">✅ <strong>1,000건도 10분</strong>이면 완료</li>
+                        </ul>
+                        <div class="vs-footer">
+                            <button class="btn-vs primary pulse-effect" onclick="document.querySelector('.monitor-frame').scrollIntoView({behavior: 'smooth'})">
+                                가이드 확인하기 ↓
+                            </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- 3. Slider Section (Monitor Frame) -->
+                <div class="guide-slider-wrapper">
+                    <div class="slider-header">
+                        <h3>홈택스 일괄발행 가이드</h3>
+                        <p>복잡해 보이지만, 로하택스와 함께라면 <strong>클릭 8번</strong>이면 충분합니다.</p>
+                    </div>
                 
                 <!-- 프로그레스 탭 네비게이션 -->
                 <div class="guide-tabs">
@@ -286,6 +276,7 @@
                         </button>
                     </div>
                 </div>
+            </div>
         </div>
     </div>
 </section>

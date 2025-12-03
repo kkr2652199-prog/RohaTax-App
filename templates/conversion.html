@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/conversion.css') }}">
+<!-- Core Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+<!-- Conversion Page Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/conversion.css') }}">
 <script src="{{ url_for('static', filename='js/components/token_alert_modal.js') }}"></script>
 <style>
     .guest-overlay {

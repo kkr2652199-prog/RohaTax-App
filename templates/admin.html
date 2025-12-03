@@ -6,8 +6,12 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- Admin CSS -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<!-- Core Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+<!-- Admin Page Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
 {% endblock %}
 {% block content %}
     <div id="adminDashboard" class="admin-wrap">

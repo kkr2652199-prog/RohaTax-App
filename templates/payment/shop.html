@@ -7,8 +7,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/home_prime.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop_modern.css') }}">
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+    
+    <!-- Layout Styles (Header & Footer only) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}">
+    
+    <!-- Common Components -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}">
+    
+    <!-- Shop Page Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
 </head>
 <body class="shop-page">
     <!-- 전역 헤더 -->
