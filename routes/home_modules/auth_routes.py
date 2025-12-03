@@ -95,6 +95,11 @@ def login_post():
     from core.subscription_utils import check_and_revoke_expired_subscription
     check_and_revoke_expired_subscription(user['id'])
     
+    # 토큰 만료 확인 및 자동 삭제 처리
+    from core.token_manager import TokenManager
+    token_manager = TokenManager()
+    token_manager.check_and_deduct_expired_tokens(user['id'])
+    
     # 만료 체크 후 최신 사용자 정보 다시 조회 (강등되었을 수 있음)
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
