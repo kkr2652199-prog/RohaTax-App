@@ -312,7 +312,11 @@ class PaymentService:
                             # Premium 구매 시: premium-vip로 변경 (단, 이미 gold-vip면 변경하지 않음)
                             if current_plan_type != 'gold-vip':
                                 new_plan_type = 'premium-vip'
-                        elif product_id == 3:  # Gold (유료 구독)
+                        # Gold (유료 구독)
+                        # - 과거 규칙: product_id == 3
+                        # - 현재 규칙: type='subscription' 이면서 token_amount=-1 (무제한)
+                        #   → ID가 바뀌어도 골드 상품이면 자동 인식되도록 방어
+                        elif product_id == 3 or (product_type == 'subscription' and product_token_amount == -1):
                             # Gold 구매 시: 항상 gold-vip로 변경 (최고 등급) + 구독 종료일 30일 연장
                             new_plan_type = 'gold-vip'
 

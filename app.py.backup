@@ -327,12 +327,6 @@ from routes.api_modules.payment_complete_api import payment_complete_bp
 if 'payment_complete_api' not in app.blueprints:
     app.register_blueprint(payment_complete_bp)
 
-# kweon21 (AI Blog Studio) 등록
-from routes.playground_routes.kweon21_routes import kweon21_bp
-if 'kweon21' not in app.blueprints:
-    app.register_blueprint(kweon21_bp)
-    print(f"[kweon21] AI 블로그 스튜디오 가동 완료! (URL Prefix: {kweon21_bp.url_prefix})")
-
 
 @app.route('/')
 def homepage():
@@ -402,14 +396,6 @@ def api_test():
 # 에러 핸들러
 @app.errorhandler(404)
 def not_found(_):
-    # /studio 경로는 kweon21_bp에서 처리하므로 404 핸들러에서 완전히 제외
-    # Flask의 라우팅 시스템이 먼저 매칭을 시도하므로, 여기 도달했다는 것은 실제 404
-    if request.path.startswith('/studio'):
-        # kweon21_bp가 처리해야 하는 경로인데 여기 도달했다면
-        # 실제로는 kweon21_bp의 라우트가 매칭되어야 함
-        # Flask의 라우팅 시스템이 먼저 매칭을 시도하므로, 여기 도달했다는 것은 실제 404
-        # 따라서 빈 응답을 반환하여 kweon21_bp가 처리하도록 함
-        return "", 200  # 200을 반환하여 kweon21_bp가 처리하도록 함
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(500)

@@ -77,12 +77,21 @@
         }
         productSpecs.textContent = specsText;
 
-        // Control Section: Event는 배지, Basic은 Stepper
+        // Control Section: Event는 배지, Basic(건별 토큰 상품)은 Stepper
         const eventBadge = document.getElementById('modalEventBadge');
         const quantityStepper = document.getElementById('modalQuantityStepper');
         const quantityInput = document.getElementById('modalQuantityInput');
         const stepperDecrease = document.getElementById('stepperDecrease');
         const paymentMethodSection = document.getElementById('modalPaymentMethodSection');
+        
+        // "건별 수량 선택이 가능한 상품" 정의:
+        // - 이벤트 타입이 아니고
+        // - 무제한 토큰(-1)이 아니며
+        // - 가격이 0원이 아닌 일반 토큰 상품
+        const isQuantityProduct =
+            !isEventType &&
+            currentProduct.token !== -1 &&
+            (currentProduct.price || 0) > 0;
         
         if (isEventType) {
             eventBadge.classList.remove('hidden');
@@ -91,7 +100,7 @@
             if (paymentMethodSection) {
                 paymentMethodSection.classList.add('hidden');
             }
-        } else if (isBasicType) {
+        } else if (isBasicType || isQuantityProduct) {
             eventBadge.classList.add('hidden');
             quantityStepper.classList.remove('hidden');
             // 유료 상품은 결제 수단 선택 표시
@@ -448,8 +457,16 @@
         const quantityInput = document.getElementById('modalQuantityInput');
         const isQuantityInputVisible = quantityInput && !quantityInput.closest('.hidden');
         
+        // "수량 입력이 필요한 상품" 정의 (openCheckoutModal의 isQuantityProduct와 동일 기준)
+        const isQuantityProduct =
+            currentProduct &&
+            currentProduct.token !== -1 &&
+            currentProduct.type !== 'event' &&
+            currentProduct.type !== 'event_period' &&
+            (currentProduct.price || 0) > 0;
+        
         if (isQuantityInputVisible) {
-            // 수량 입력창이 보이는 경우 (basic 타입)
+            // 수량 입력창이 보이는 경우 (건별/패키지 토큰 상품)
             const inputValue = quantityInput.value.trim();
             if (inputValue === '' || inputValue === null || inputValue === undefined) {
                 quantity = 0;
@@ -460,19 +477,18 @@
                 }
             }
         } else {
-            // 수량 입력창이 숨겨진 경우 (package, subscription, event 타입)
-            // package, subscription은 수량 1로 자동 설정
-            // event 타입은 수량 1로 설정 (이벤트 상품도 1개씩만 구매 가능)
-            if (currentProduct.type === 'package' || currentProduct.type === 'subscription' || 
+            // 수량 입력창이 숨겨진 경우 (무제한/이벤트/특수 상품)
+            // subscription(무제한), event, event_period 등은 수량 1로 고정
+            if (currentProduct.type === 'subscription' || 
                 currentProduct.type === 'event' || currentProduct.type === 'event_period') {
                 quantity = 1;
             } else {
                 quantity = 0;
             }
         }
-
-        // 수량 검증 (basic 타입만 수량 입력 필수)
-        if (quantity <= 0 && currentProduct.type === 'basic') {
+        
+        // 수량 검증 (수량 입력이 필요한 상품은 1 이상 필수)
+        if (quantity <= 0 && isQuantityProduct) {
             alert('수량을 입력해주세요.');
             if (quantityInput) {
                 quantityInput.focus();

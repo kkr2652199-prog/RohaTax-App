@@ -146,6 +146,16 @@ def login_post():
         # 로그 기록 실패해도 로그인은 계속 진행
     
     flash('로그인 성공', 'success')
+    
+    # next 파라미터가 있으면 해당 페이지로 리다이렉트
+    next_url = request.args.get('next')
+    if next_url:
+        # 보안: 같은 도메인인지 확인
+        from urllib.parse import urlparse
+        parsed = urlparse(next_url)
+        if parsed.netloc == '' or parsed.netloc == request.host:
+            return redirect(next_url)
+    
     if session['is_admin']:
         return redirect(url_for('admin.admin_dashboard'))
     return redirect(url_for('home.home'))

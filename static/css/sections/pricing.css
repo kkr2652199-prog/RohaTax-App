@@ -301,3 +301,43 @@
     }
 }
 
+/* === Architect's Enhancement v2.0: Visual Dominance === */
+
+/* 기존 효과를 리셋하고 새로운 기반을 설정 */
+.pricing-preview-card.featured {
+    border: 2px solid var(--primary-color-dark); /* 테두리를 더 진한 색으로 강조 */
+    transform: translateY(-20px) scale(1.05); /* 기존보다 더 높이, 더 크게 */
+    box-shadow: 0 15px 40px -10px rgba(44, 91, 240, 0.4); /* 그림자를 더 넓고 진하게 */
+    transition: all 0.3s ease-in-out; /* 모든 전환 효과를 부드럽게 */
+}
+
+/* 마우스를 올렸을 때의 인터랙션 강화 */
+.pricing-preview-card.featured:hover {
+    transform: translateY(-25px) scale(1.07); /* 더 높이 올라가고 약간 더 커짐 */
+    box-shadow: 0 20px 50px -10px rgba(44, 91, 240, 0.5); /* 그림자가 더욱 선명해짐 */
+}
+
+/* 하단의 '멤버십 전체 보기' 버튼을 행동 유도 버튼으로 변경 */
+.pricing-preview-action .btn-outline {
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* featured 카드 아래의 버튼만 특별하게 스타일링 */
+.pricing-preview-card.featured + .pricing-preview-card + .pricing-preview-card + .pricing-preview-action .btn-outline,
+.pricing-preview-grid > .pricing-preview-card.featured ~ .pricing-preview-action .btn-outline {
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-color-dark));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(44, 91, 240, 0.3);
+}
+
+.pricing-preview-card.featured + .pricing-preview-card + .pricing-preview-card + .pricing-preview-action .btn-outline:hover,
+.pricing-preview-grid > .pricing-preview-card.featured ~ .pricing-preview-action .btn-outline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 91, 240, 0.4);
+}
+
+/* === End of Enhancement === */
+

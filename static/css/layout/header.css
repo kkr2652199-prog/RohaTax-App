@@ -333,3 +333,15 @@
     }
 }
 
+/* Beta Badge */
+.navbar .nav-link .beta-badge {
+    font-size: 0.75rem;
+    background: #F59E0B;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 600;
+    display: inline-block;
+}
+

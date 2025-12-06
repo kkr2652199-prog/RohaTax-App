@@ -8,16 +8,19 @@
             <a href="#features" class="nav-link">기능 소개</a>
             <a href="#testimonials" class="nav-link">성공 사례</a>
             <a href="/shop" class="nav-link">멤버십</a>
+            <a href="/studio" class="nav-link">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
             <a href="#faq" class="nav-link">고객 지원</a>
-            {% if session.get('user_id') %}
+            {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
+            {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}
                 <a href="/conversion" class="nav-link signup-btn">워크스페이스</a>
                 <a href="/profile/edit" class="nav-link">마이홈</a>
                 <div class="user-menu">
                     <div class="user-menu-trigger" id="userMenuTrigger" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}" role="button" tabindex="0" aria-expanded="false" aria-haspopup="true">
                         <div class="user-avatar">
-                            {{ (session.get('username') or 'U')[0].upper() }}
+                            {# 사용자 이름: session.username, current_user.name, 또는 기본값 'U' #}
+                            {{ ((session.get('username') or (current_user is defined and current_user.name) or 'U'))[0].upper() }}
                         </div>
-                        <span>{{ session.get('username') or '사용자' }}님</span>
+                        <span>{{ session.get('username') or (current_user is defined and current_user.name) or '사용자' }}님</span>
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <ul class="user-menu-dropdown" id="userMenuDropdown">
@@ -32,7 +35,8 @@
             {% endif %}
         </div>
     </div>
-    {% if session.get('is_admin') %}
+    {# 관리자 체크: session.is_admin 또는 current_user.is_admin 확인 #}
+    {% if session.get('is_admin') or (current_user is defined and current_user.is_authenticated and current_user.is_admin) %}
     <a href="/admin" style="position:fixed;top:12px;right:12px;background:#2c3e50;color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;text-decoration:none;z-index:9999;">관리자 대시보드</a>
     {% endif %}
 </nav>
