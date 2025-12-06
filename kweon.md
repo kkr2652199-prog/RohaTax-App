@@ -1,3 +1,5 @@
+﻿# 2025-12-06 12:04 (KST) | Commit: 101a3c5 | Power Blog 잔재 완전 소각 및 AI Blog Studio 단일 체제 확립
+
 # 2025-12-03 11:30 (KST) | Commit: cb5f663 | chore: 홈페이지 디자인 개편 전 안전지대 구축 (Snapshot)
 
 - 기존 '비즈니스/기업' 느낌의 홈페이지 상태 저장
@@ -214,4 +216,4 @@
 - **라우트 복구:** `/pricing` 페이지 라우트 추가 및 상점 페이지 정상화
 ---------------------------------------------------------
 
-- Homepage1 kweon [2025-12-06 12:02 KST] [CLEAN-SWEEP] Power Blog ���� ���� �Ұ� �� AI Blog Studio ���� ü�� Ȯ��
+- Homepage1 kweon [2025-12-06 12:02 KST] [CLEAN-SWEEP] Power Blog ���� ���� �Ұ� �� AI Blog Studio ���� ü�� Ȯ��

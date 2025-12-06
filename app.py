@@ -141,6 +141,10 @@ def _preserve_session():
 # 간단한 요청 로깅
 @app.before_request
 def _log_request():
+    # 성능 최적화: 정적 파일 및 헬스 체크는 로깅 제외
+    if request.path.startswith('/static') or request.path.startswith('/assets') or request.path == '/health':
+        return
+    
     try:
         # Python 3.14 Template Strings 사용
         app.logger.info(f"REQ {request.method} {request.path}")
