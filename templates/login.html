@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block head_extra %}
+    {# 로그인 전용 스타일 (auth 카드 레이아웃) #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home_prime.css') }}">
 {% endblock %}
 {% block content %}
 <div class="auth-container">

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - 로●하 Tax{% endblock %}
+
+{% block content %}
+<section class="legal-page-section">
+    <div class="container" style="max-width: 900px; margin: 2.5rem auto; padding: 2rem 1.5rem; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);">
+        <header style="margin-bottom: 1.5rem;">
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">{{ title }}</h1>
+            <p style="font-size: 0.9rem; color: #6B7280;">본 문서는 로하택스 서비스 이용과 개인정보 보호를 위해 제공되는 법적 안내문입니다.</p>
+        </header>
+        <div class="legal-content" style="font-size: 0.95rem; line-height: 1.8; color: #111827;">
+            {{ content | safe }}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

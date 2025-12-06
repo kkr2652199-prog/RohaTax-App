@@ -1,6 +1,27 @@
 // 1Tax App 홈페이지 JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    // [안전장치] JS 로드 완료 플래그 → 이때부터 CSS가 reveal 요소를 숨기고 애니메이션 준비
+    document.body.classList.add('js-loaded');
+
+    // Scroll Reveal Animation (IntersectionObserver)
+    const revealElements = document.querySelectorAll('.reveal');
+    
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target); // 한 번 나타나면 관찰 중단
+            }
+        });
+    }, {
+        root: null,
+        threshold: 0.1, // 10%만 보여도 등장 시작
+        rootMargin: '0px 0px -50px 0px' // 약간 미리 등장
+    });
+    
+    revealElements.forEach(el => revealObserver.observe(el));
+
     // 네비게이션 스크롤 효과
     const navbar = document.querySelector('.navbar');
     const navLinks = document.querySelectorAll('.nav-link');
@@ -726,29 +747,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => showMouseClickEffect(slideIndex), 1000); // 1초 후 시작
             }
         }
-        
-        // 테스트 모드 - 즉시 효과 표시 (1~8번 슬라이드)
-        for (let i = 1; i <= 8; i++) {
-            const mouseEffect = document.querySelector(`.mouse-click-effect[data-step="${i}"]`);
-            if (mouseEffect) {
-                mouseEffect.classList.add('test-mode');
-                console.log(`🧪 ${i}번 슬라이드 테스트 모드 활성화 - 마우스 효과가 즉시 표시됩니다`);
-            }
-        }
-        
-        // 즉시 효과 실행 (테스트용) - 1~8번 슬라이드
-        for (let i = 0; i < 8; i++) {
-            setTimeout(() => {
-                console.log(`🎯 ${i + 1}번 슬라이드 즉시 효과 실행`);
-                showMouseClickEffect(i);
-            }, (i + 1) * 2000); // 각 슬라이드마다 2초 간격
-        }
-        
-        // 초기 로드 시 효과 실행
-        setTimeout(() => {
-            console.log('🎯 초기 로드 - 현재 슬라이드:', 0);
-            showMouseClickEffect(0);
-        }, 2000);
+
+        // 아래 테스트/디버그용 자동 실행 코드는 페이지 로드 시
+        // 과도한 애니메이션과 콘솔 로그를 유발하므로 비활성화한다.
+        //
+        // // 테스트 모드 - 즉시 효과 표시 (1~8번 슬라이드)
+        // for (let i = 1; i <= 8; i++) {
+        //     const mouseEffect = document.querySelector(`.mouse-click-effect[data-step="${i}"]`);
+        //     if (mouseEffect) {
+        //         mouseEffect.classList.add('test-mode');
+        //         console.log(`🧪 ${i}번 슬라이드 테스트 모드 활성화 - 마우스 효과가 즉시 표시됩니다`);
+        //     }
+        // }
+        //
+        // // 즉시 효과 실행 (테스트용) - 1~8번 슬라이드
+        // for (let i = 0; i < 8; i++) {
+        //     setTimeout(() => {
+        //         console.log(`🎯 ${i + 1}번 슬라이드 즉시 효과 실행`);
+        //         showMouseClickEffect(i);
+        //     }, (i + 1) * 2000); // 각 슬라이드마다 2초 간격
+        // }
+        //
+        // // 초기 로드 시 효과 실행
+        // setTimeout(() => {
+        //     console.log('🎯 초기 로드 - 현재 슬라이드:', 0);
+        //     showMouseClickEffect(0);
+        // }, 2000);
         
         // 슬라이드 변경 이벤트 리스너 추가
         const slides = document.querySelectorAll('.slide');

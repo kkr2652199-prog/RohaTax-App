@@ -70,6 +70,10 @@ echo Server Address: http://localhost:5001
 echo Stop Server: Ctrl+C
 echo ================================
 
+REM Set Google Gemini API Key (무료 티어: 월 60회)
+set GOOGLE_API_KEY=AIzaSyCZh8sPRFRYPTTr7rBvmzw2UK8KwLDnpeY
+echo Google Gemini API Key configured
+
 REM Start server
 set PORT=5001
 "%PYTHON_PATH%" app.py

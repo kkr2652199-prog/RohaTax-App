@@ -6,7 +6,7 @@
             <p>규모에 맞는 최적의 플랜을 선택하세요</p>
         </div>
         {% if products %}
-        <div class="pricing-preview-grid">
+        <div class="pricing-preview-grid reveal">
             {% for product in products %}
             <!-- {{ product.name }} -->
             <div class="pricing-preview-card{% if product.id == 2 %} featured{% endif %}">
@@ -49,7 +49,7 @@
         </div>
         {% else %}
         <!-- 상품이 없을 경우 기본 메시지 -->
-        <div class="pricing-preview-grid">
+        <div class="pricing-preview-grid reveal">
             <div class="pricing-preview-card">
                 <h3 class="pricing-preview-title">Standard</h3>
                 <div class="pricing-preview-price">

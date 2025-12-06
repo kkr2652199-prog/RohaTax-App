@@ -141,6 +141,10 @@ def _preserve_session():
 # 간단한 요청 로깅
 @app.before_request
 def _log_request():
+    # 성능 최적화: 정적 파일 및 헬스 체크는 로깅 제외
+    if request.path.startswith('/static') or request.path.startswith('/assets') or request.path == '/health':
+        return
+    
     try:
         # Python 3.14 Template Strings 사용
         app.logger.info(f"REQ {request.method} {request.path}")
@@ -327,10 +331,67 @@ from routes.api_modules.payment_complete_api import payment_complete_bp
 if 'payment_complete_api' not in app.blueprints:
     app.register_blueprint(payment_complete_bp)
 
+# kweon21 (AI Blog Studio) 등록
+from routes.playground_routes.kweon21_routes import kweon21_bp
+if 'kweon21' not in app.blueprints:
+    app.register_blueprint(kweon21_bp)
+    print(f"[kweon21] AI 블로그 스튜디오 가동 완료! (URL Prefix: {kweon21_bp.url_prefix})")
+
 
 @app.route('/')
 def homepage():
     return render_template('homepage.html')
+
+
+@app.route('/terms')
+def terms():
+    """서비스 이용약관 페이지"""
+    terms_content = """
+<h3>제 1 조 (목적)</h3>
+<p>본 약관은 1Tax(이하 "회사")가 제공하는 로하택스 및 관련 제반 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+
+<h3>제 2 조 (용어의 정의)</h3>
+<p>1. "토큰"이라 함은 서비스 내에서 파일 변환 등 유료 기능을 이용하기 위해 사용되는 가상의 데이터를 말합니다.<br>
+2. "변환"이라 함은 회원이 업로드한 엑셀 파일을 국세청 양식에 맞게 가공하는 과정을 말합니다.</p>
+
+<h3>제 3 조 (데이터의 보관 및 삭제)</h3>
+<p>1. 회사는 회원이 업로드한 파일(정산서 등)을 변환 처리를 위해 <strong>임시 저장</strong>하며, <strong>24시간이 경과하면 서버에서 영구적으로 자동 삭제</strong>합니다.<br>
+2. 회원은 변환된 파일을 즉시 다운로드하여 별도 보관해야 하며, 자동 삭제된 데이터에 대한 복구 책임은 회원에게 있습니다.</p>
+
+<h3>제 4 조 (환불 및 취소)</h3>
+<p>1. 유상으로 충전한 토큰은 구매 후 7일 이내에 사용하지 않은 경우 전액 환불이 가능합니다.<br>
+2. 이미 사용된 토큰이나, 이벤트로 무상 지급된 토큰은 환불 대상에서 제외됩니다.</p>
+
+<h3>제 5 조 (면책)</h3>
+<p>회사는 회원이 업로드한 파일 자체의 오류나, 국세청 홈택스 시스템의 변경으로 인한 변환 결과의 불일치에 대해서는 책임을 지지 않습니다.</p>
+"""
+    return render_template('legal.html', title='서비스 이용약관', content=terms_content)
+
+
+@app.route('/privacy')
+def privacy():
+    """개인정보 처리방침 페이지"""
+    privacy_content = """
+<h3>1. 수집하는 개인정보 항목</h3>
+<p>회사는 회원가입 및 서비스 제공을 위해 아래와 같은 정보를 수집합니다.<br>
+- 필수항목: 아이디, 비밀번호, 회사명, 사업자등록번호, 대표자명, 휴대전화번호, 이메일, 주소</p>
+
+<h3>2. 개인정보의 수집 및 이용 목적</h3>
+<p>- 서비스 이용에 따른 본인 식별 및 불량 회원의 부정이용 방지<br>
+- 세금계산서 변환 서비스 제공 및 요금 정산<br>
+- 고지사항 전달 및 불만 처리</p>
+
+<h3>3. 개인정보의 처리 위탁 및 파일 관리</h3>
+<p>회사는 서비스 제공을 위해 회원이 업로드한 파일(제3자의 개인정보 포함 가능)을 처리합니다.<br>
+- 보관 기간: 파일 업로드 후 <strong>24시간</strong><br>
+- 파기 방법: 서버 내 자동 삭제 스크립트를 통한 영구 삭제<br>
+- 안전성 확보 조치: 업로드된 파일은 외부에서 접근 불가능한 내부 경로에 저장되며, 정해진 목적 외에는 열람되지 않습니다.</p>
+
+<h3>4. 개인정보 보호책임자</h3>
+<p>이름: (관리자 권강록)<br>
+이메일: kweon4309@naver.com</p>
+"""
+    return render_template('legal.html', title='개인정보 처리방침', content=privacy_content)
 
 # API 엔드포인트
 @app.route('/api/test')
@@ -345,6 +406,14 @@ def api_test():
 # 에러 핸들러
 @app.errorhandler(404)
 def not_found(_):
+    # /studio 경로는 kweon21_bp에서 처리하므로 404 핸들러에서 완전히 제외
+    # Flask의 라우팅 시스템이 먼저 매칭을 시도하므로, 여기 도달했다는 것은 실제 404
+    if request.path.startswith('/studio'):
+        # kweon21_bp가 처리해야 하는 경로인데 여기 도달했다면
+        # 실제로는 kweon21_bp의 라우트가 매칭되어야 함
+        # Flask의 라우팅 시스템이 먼저 매칭을 시도하므로, 여기 도달했다는 것은 실제 404
+        # 따라서 빈 응답을 반환하여 kweon21_bp가 처리하도록 함
+        return "", 200  # 200을 반환하여 kweon21_bp가 처리하도록 함
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(500)
@@ -417,17 +486,19 @@ if __name__ == '__main__':
     try:
         # 파일 관리 시스템 초기화 (가장 먼저 실행)
         init_file_management()
-        
+
         # 기존 초기화
         init_logging()
         init_db()
         seed_demo()
         version_manager.create_initial_version()
         change_detector.start_monitoring()
-        
+
         print(f"SERVER START PORT {settings.PORT}")
         print(f"OPEN http://localhost:{settings.PORT}")
         print(f"LOCAL ACCESS ONLY: http://127.0.0.1:{settings.PORT}")
     except Exception:
+        # 초기화 중 오류가 발생해도 서버 기동 자체는 시도
         pass
+
     app.run(host='127.0.0.1', port=settings.PORT, debug=settings.DEBUG)

@@ -29,7 +29,9 @@ class Settings:
             print(f"⚠️  Generated temporary key: {SECRET_KEY}")
             print("⚠️  Set SECRET_KEY in .env file for consistent sessions.")
     
-    # DEBUG 모드 (기본값 false로 변경)
+    # DEBUG 모드 (기본값 false로 변경, 성능 최적화)
+    # 개발 환경에서도 기본적으로 False로 설정하여 성능 저하 방지
+    # 필요시 .env 파일에서 DEBUG=true로 명시적 설정
     DEBUG: bool = get_env("DEBUG", "false").lower() == "true"
     
     # 환경별 자동 설정

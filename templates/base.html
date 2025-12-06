@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}로●하 Tax{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/home_prime.css') }}">
+    <!-- Core Styles (Base) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+    <!-- Layout Styles (Base) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}">
     {% block head_extra %}{% endblock %}
     {% if csrf_token is defined %}
         {% if csrf_token is callable %}
@@ -18,7 +24,7 @@
     {% endif %}
 </head>
 <body>
-    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path %}
+    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path and request.endpoint != 'auth.login' and '/login' not in request.path %}
     {% include 'partials/header.html' %}
     {% endif %}
     <main>

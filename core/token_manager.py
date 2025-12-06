@@ -158,6 +158,49 @@ class TokenManager:
                         
                         processed_count += 1
                     
+                    # activity_logs에 토큰 만료 기록 추가
+                    if total_deducted > 0:
+                        from core.activity_service import record_activity
+                        cursor = conn.cursor()
+                        
+                        # 만료 전 잔액 (차감 전)
+                        balance_before = current_balance + total_deducted
+                        # 만료 후 잔액 (차감 후)
+                        balance_after = current_balance
+                        
+                        # 사용자 plan_type 조회
+                        user_plan = conn.execute(
+                            "SELECT plan_type FROM users WHERE id = ?",
+                            (user_id,)
+                        ).fetchone()
+                        plan_type = user_plan['plan_type'] if user_plan else 'free'
+                        
+                        activity_data = {
+                            'user_id': user_id,
+                            'performed_by_id': user_id,  # 시스템 자동 처리
+                            'performed_by_type': 'system',
+                            'activity_type': 'TOKEN_EXPIRED',
+                            'details': {
+                                'reason': 'token_expired',
+                                'expired_count': processed_count,
+                                'total_deducted': total_deducted
+                            },
+                            'token_change': -total_deducted,
+                            'potential_cost': 0,
+                            'token_balance_before': balance_before,
+                            'token_balance_after': balance_after,
+                            'user_plan_snapshot': {
+                                'plan_type': plan_type,
+                                'username': username
+                            }
+                        }
+                        
+                        try:
+                            record_activity(cursor, activity_data)
+                        except Exception as e:
+                            logger.error(f"activity_logs 기록 중 오류: {str(e)}")
+                            # activity_logs 기록 실패해도 토큰 차감은 계속 진행
+                    
                     conn.commit()
                     
                     if total_deducted > 0:

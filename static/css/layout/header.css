@@ -1,0 +1,347 @@
+/* ================================================================
+   Header & Navigation - RohaTax
+   ================================================================ */
+
+/* Main Navbar */
+.navbar {
+    background: white !important;
+    border-bottom: 1px solid #eee !important;
+    padding: 16px 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Fixed Navbar (Alternative Style) */
+.navbar.fixed-style {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+/* Nav Container */
+.navbar .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo */
+.navbar .nav-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 1.5rem !important;
+    font-weight: 800 !important;
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    letter-spacing: -0.5px !important;
+    transition: color 0.3s ease !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+}
+
+.navbar .nav-logo:hover {
+    color: var(--primary-color) !important;
+}
+
+.navbar .nav-logo .logo-text {
+    font-weight: 800 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+    background: linear-gradient(135deg, #1F2937 0%, #F59E0B 50%, #1F2937 100%) !important;
+    background-size: 200% 200% !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    animation: brandShimmer 3s ease-in-out infinite !important;
+}
+
+@keyframes brandShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.navbar .nav-logo .logo-icon {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+/* Navigation Menu */
+.navbar .nav-menu {
+    display: flex !important;
+    align-items: center;
+    gap: 32px;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-direction: row !important;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+/* Navigation Links */
+.navbar .nav-link {
+    color: var(--text-color) !important;
+    text-decoration: none !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+    display: inline-block;
+}
+
+.navbar .nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--primary-color);
+}
+
+/* Login & Signup Buttons */
+.navbar .login-btn, 
+.navbar .signup-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.navbar .login-btn {
+    color: var(--primary-color) !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.navbar .signup-btn {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-radius: 4px;
+}
+
+.navbar .signup-btn:hover {
+    background: var(--primary-dark) !important;
+}
+
+.nav-link.login-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+
+.nav-link.login-btn:hover {
+    background-color: var(--background-light);
+}
+
+.nav-link.signup-btn {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+
+.nav-link.signup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* User Info */
+.navbar .nav-user {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.nav-user {
+    color: var(--primary-color);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* User Dropdown Menu */
+.navbar .user-menu {
+    position: relative;
+}
+
+.navbar .user-menu-trigger {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 16px !important;
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    pointer-events: auto !important;
+    z-index: 10 !important;
+    position: relative !important;
+}
+
+.navbar .dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.navbar .user-menu-dropdown.active ~ .user-menu-trigger .dropdown-arrow,
+.navbar .user-menu-trigger:has(+ .user-menu-dropdown.active) .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.navbar .user-menu-trigger:hover {
+    background: var(--bg-light);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar .user-menu .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    pointer-events: none !important;
+}
+
+.navbar .user-menu-trigger span {
+    pointer-events: none !important;
+}
+
+.navbar .user-menu-trigger .dropdown-arrow {
+    pointer-events: none !important;
+}
+
+.navbar .user-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1001;
+    list-style: none;
+    margin: 0;
+}
+
+.navbar .user-menu-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.navbar .user-menu-dropdown-item {
+    display: block;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.navbar .user-menu-dropdown-item:hover {
+    background: var(--bg-light);
+    color: var(--primary-color);
+    padding-left: 20px;
+}
+
+.navbar .user-menu-dropdown-item.logout {
+    color: #f87171;
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+.navbar .user-menu-dropdown-item.logout:hover {
+    background: rgba(248, 113, 113, 0.1);
+    color: #dc2626;
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+    .nav-menu {
+        gap: 16px;
+        font-size: 0.85rem;
+    }
+    
+    .nav-link {
+        font-size: 0.85rem;
+    }
+    
+    .navbar .user-menu-dropdown {
+        right: -20px;
+    }
+}
+
+/* Beta Badge */
+.navbar .nav-link .beta-badge {
+    font-size: 0.75rem;
+    background: #F59E0B;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 600;
+    display: inline-block;
+}
+

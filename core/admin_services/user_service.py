@@ -86,8 +86,8 @@ def get_user_by_id(user_id: int) -> Dict:
         else:
             user_data['trial_start_date'] = None
 
-        # 가장 최근 무료 토큰 이벤트 정보 조회 (상품 ID = 4, expires_at이 있는 grant 기록)
-        # payment_history에서 product_id = 4인 결제를 찾고,
+        # 가장 최근 무료 토큰 이벤트 정보 조회 (event 타입이고 price=0인 상품, expires_at이 있는 grant 기록)
+        # payment_history에서 event 타입이고 price=0인 상품의 결제를 찾고,
         # 해당 결제 시점의 token_history에서 expires_at이 있는 grant 기록 찾기
         token_event = conn.execute(
             """
@@ -95,10 +95,13 @@ def get_user_by_id(user_id: int) -> Dict:
             FROM token_history th
             JOIN payment_history ph ON ph.user_id = th.user_id 
                 AND ABS(JULIANDAY(ph.created_at) - JULIANDAY(th.created_at)) < 0.01
+            JOIN products p ON p.id = ph.product_id
             WHERE th.user_id = ?
               AND th.change_type = 'grant'
               AND th.expires_at IS NOT NULL
-              AND ph.product_id = 4
+              AND p.type = 'event'
+              AND p.price = 0
+              AND p.token_amount > 0
             ORDER BY th.created_at DESC
             LIMIT 1
             """,

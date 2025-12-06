@@ -35,12 +35,139 @@
       currentProduct.type === 'event' || currentProduct.type === 'event_period';
     const isBasicType = currentProduct.type === 'basic';
 
-    // 테마 클래스 적용/제거
-    modalContent.classList.remove('theme-event', 'theme-basic');
-    if (isEventType) {
-      modalContent.classList.add('theme-event');
-    } else {
-      modalContent.classList.add('theme-basic');
+        // 테마 클래스 적용/제거
+        modalContent.classList.remove('theme-event', 'theme-basic');
+        if (isEventType) {
+            modalContent.classList.add('theme-event');
+        } else {
+            modalContent.classList.add('theme-basic');
+        }
+
+        // Hero Section: 아이콘 및 상품명
+        const heroIcon = document.getElementById('modalHeroIcon');
+        const productName = document.getElementById('modalProductName');
+        
+        if (currentProduct.type === 'event') {
+            heroIcon.textContent = '🎉';
+        } else if (currentProduct.type === 'event_period') {
+            heroIcon.textContent = '⏳';
+        } else if (currentProduct.type === 'package') {
+            heroIcon.textContent = '💎';
+        } else if (currentProduct.type === 'subscription') {
+            heroIcon.textContent = '👑';
+        } else {
+            heroIcon.textContent = '🛒';
+        }
+        
+        productName.textContent = currentProduct.name;
+
+        // Info Section: 가격 및 스펙
+        const productPrice = document.getElementById('modalProductPrice');
+        const productSpecs = document.getElementById('modalProductSpecs');
+        
+        productPrice.textContent = formatCurrency(currentProduct.price);
+        
+        let specsText = '';
+        if (currentProduct.duration > 0) {
+            specsText = `⏳ 이용 기간: ${currentProduct.duration}일`;
+        } else if (currentProduct.token === -1) {
+            specsText = '♾️ 무제한 이용';
+        } else if (currentProduct.token > 0) {
+            specsText = `💰 포함 토큰: ${currentProduct.token}개`;
+        } else {
+            specsText = '📦 기본 상품';
+        }
+        productSpecs.textContent = specsText;
+
+        // Control Section: Event는 배지, Basic(건별 토큰 상품)은 Stepper
+        const eventBadge = document.getElementById('modalEventBadge');
+        const quantityStepper = document.getElementById('modalQuantityStepper');
+        const quantityInput = document.getElementById('modalQuantityInput');
+        const stepperDecrease = document.getElementById('stepperDecrease');
+        const paymentMethodSection = document.getElementById('modalPaymentMethodSection');
+        
+        // "건별 수량 선택이 가능한 상품" 정의:
+        // - 이벤트 타입이 아니고
+        // - 무제한 토큰(-1)이 아니며
+        // - 가격이 0원이 아닌 일반 토큰 상품
+        const isQuantityProduct =
+            !isEventType &&
+            currentProduct.token !== -1 &&
+            (currentProduct.price || 0) > 0;
+        
+        if (isEventType) {
+            eventBadge.classList.remove('hidden');
+            quantityStepper.classList.add('hidden');
+            // 이벤트 상품은 결제 수단 선택 숨김
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.add('hidden');
+            }
+        } else if (isBasicType || isQuantityProduct) {
+            eventBadge.classList.add('hidden');
+            quantityStepper.classList.remove('hidden');
+            // 유료 상품은 결제 수단 선택 표시
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.remove('hidden');
+            }
+            if (quantityInput) {
+                quantityInput.value = ''; // 초기값 빈 문자열
+            }
+            // 초기값이 비어있으므로 감소 버튼 비활성화
+            if (stepperDecrease) {
+                stepperDecrease.disabled = true;
+            }
+        } else {
+            eventBadge.classList.add('hidden');
+            quantityStepper.classList.add('hidden');
+            // 기타 상품도 결제 수단 선택 표시
+            if (paymentMethodSection) {
+                paymentMethodSection.classList.remove('hidden');
+            }
+        }
+        
+        // 결제 수단 선택 초기화 (카드가 기본값)
+        const paymentMethodCard = document.getElementById('paymentMethodCard');
+        const paymentMethodTrans = document.getElementById('paymentMethodTrans');
+        if (paymentMethodCard) {
+            paymentMethodCard.checked = true;
+        }
+        if (paymentMethodTrans) {
+            paymentMethodTrans.checked = false;
+        }
+        
+        // 계좌 정보 및 증빙 체크박스 초기 상태 (숨김)
+        const accountInfoBox = document.getElementById('modalAccountInfoBox');
+        const taxEvidenceCheckbox = document.getElementById('modalTaxEvidenceCheckbox');
+        const taxEvidenceInput = document.getElementById('taxEvidenceRequested');
+        if (accountInfoBox) {
+            accountInfoBox.classList.add('hidden');
+        }
+        if (taxEvidenceCheckbox) {
+            taxEvidenceCheckbox.classList.add('hidden');
+        }
+        if (taxEvidenceInput) {
+            taxEvidenceInput.checked = true; // 기본값: 체크됨
+        }
+
+        // Action Button: 텍스트 동적 변경
+        const confirmBtn = document.getElementById('btnConfirmPayment');
+        const totalLabel = document.getElementById('modalTotalLabel');
+        
+        if (isEventType) {
+            confirmBtn.textContent = '🎁 무료 혜택 받기';
+            totalLabel.textContent = '총 혜택 금액';
+        } else {
+            confirmBtn.textContent = '💳 결제하기';
+            // 초기 라벨은 updateTotalPrice에서 동적으로 설정됨
+            totalLabel.textContent = '총 결제 예상액 (VAT 포함)';
+        }
+
+        // 총 결제 예상액 계산 및 표시
+        updateTotalPrice();
+
+        // 모달 표시
+        const modal = document.getElementById('checkoutModal');
+        modal.classList.add('show');
     }
 
     // Hero Section: 아이콘 및 상품명
@@ -247,19 +374,73 @@
       }
     }
 
-    // 총액 라벨 동적 업데이트
-    const totalLabel = document.getElementById('modalTotalLabel');
-    if (totalLabel) {
-      const isEventType =
-        currentProduct.type === 'event' ||
-        currentProduct.type === 'event_period';
-      if (!isEventType) {
-        if (isCard || isTaxEvidenceRequested) {
-          totalLabel.textContent = '총 결제 예상액 (VAT 포함)';
-        } else {
-          totalLabel.textContent = '총 결제 예상액 (VAT 별도)';
+    /**
+     * 금액 포맷팅 (천단위 구분자)
+     * @param {number} amount - 금액
+     * @returns {string} 포맷된 금액 문자열
+     */
+    function formatCurrency(amount) {
+        const safeAmount = Number(amount) || 0;
+        if (safeAmount === 0) {
+            return '무료';
         }
-      }
+        return new Intl.NumberFormat('ko-KR').format(Math.round(safeAmount)) + '원';
+    }
+
+    /**
+     * 결제 확인 및 실행
+     */
+    async function confirmPurchase() {
+        let quantity = 0;
+        
+        // Input 필드에서 수량 가져오기
+        const quantityInput = document.getElementById('modalQuantityInput');
+        const isQuantityInputVisible = quantityInput && !quantityInput.closest('.hidden');
+        
+        // "수량 입력이 필요한 상품" 정의 (openCheckoutModal의 isQuantityProduct와 동일 기준)
+        const isQuantityProduct =
+            currentProduct &&
+            currentProduct.token !== -1 &&
+            currentProduct.type !== 'event' &&
+            currentProduct.type !== 'event_period' &&
+            (currentProduct.price || 0) > 0;
+        
+        if (isQuantityInputVisible) {
+            // 수량 입력창이 보이는 경우 (건별/패키지 토큰 상품)
+            const inputValue = quantityInput.value.trim();
+            if (inputValue === '' || inputValue === null || inputValue === undefined) {
+                quantity = 0;
+            } else {
+                quantity = parseInt(inputValue, 10);
+                if (isNaN(quantity) || quantity < 1) {
+                    quantity = 0;
+                }
+            }
+        } else {
+            // 수량 입력창이 숨겨진 경우 (무제한/이벤트/특수 상품)
+            // subscription(무제한), event, event_period 등은 수량 1로 고정
+            if (currentProduct.type === 'subscription' || 
+                currentProduct.type === 'event' || currentProduct.type === 'event_period') {
+                quantity = 1;
+            } else {
+                quantity = 0;
+            }
+        }
+        
+        // 수량 검증 (수량 입력이 필요한 상품은 1 이상 필수)
+        if (quantity <= 0 && isQuantityProduct) {
+            alert('수량을 입력해주세요.');
+            if (quantityInput) {
+                quantityInput.focus();
+            }
+            return;
+        }
+
+        // 모달 닫기
+        closeCheckoutModal();
+
+        // 주문 생성
+        await createOrder(currentProduct.id, quantity);
     }
 
     // 총액 표시 (0원일 때만 '무료' 표시)
