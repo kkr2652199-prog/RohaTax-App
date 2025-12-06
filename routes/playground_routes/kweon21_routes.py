@@ -78,7 +78,7 @@ def kweon21_index(path):
                 <h1>🚧 kweon21 스튜디오 준비 중</h1>
                 <p>kweon21 앱을 빌드해야 합니다.</p>
                 <p style="color: #666; margin-top: 20px;">
-                    <code>cd homepage1/kweon21 && npm install && npm run build</code>
+                    <code>cd kweon21 && npm install && npm run build</code>
                 </p>
                 <p style="color: #999; font-size: 12px; margin-top: 40px;">
                     빌드 디렉토리: {dist_dir}
