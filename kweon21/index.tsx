@@ -1,6 +1,6 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './src/Navbar.css'; // Tailwind 제압용 - React 내부 CSS 강제 적용
 import App from './App';
 
 const rootElement = document.getElementById('root');

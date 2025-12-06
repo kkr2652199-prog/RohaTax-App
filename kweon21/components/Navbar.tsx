@@ -1,5 +1,155 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Tailwind 무력화용 인라인 스타일 정의 (CSS 우선순위 1000점)
+const styles = {
+  navbar: {
+    background: 'rgba(255, 255, 255, 0.85)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)' as any,
+    borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+    position: 'sticky' as 'sticky',
+    top: 0,
+    zIndex: 50,
+    width: '100%',
+    height: '60px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    transition: 'all 0.3s ease'
+  },
+  userCapsule: {
+    border: '1px solid #e0e0e0',
+    borderRadius: '30px',
+    padding: '6px 14px 6px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+    minHeight: '36px'
+  },
+  dropdownArrow: {
+    fontSize: '0.7rem',
+    transition: 'transform 0.3s ease',
+    color: '#6b7280',
+    marginLeft: '4px',
+    flexShrink: 0,
+    paddingRight: '4px'
+  },
+  dropdown: {
+    position: 'absolute' as 'absolute',
+    top: 'calc(100% + 20px)',
+    right: 0,
+    width: '340px',
+    backgroundColor: '#ffffff',
+    background: '#ffffff',
+    backgroundImage: 'none',
+    backgroundClip: 'padding-box',
+    backgroundOrigin: 'padding-box',
+    backgroundAttachment: 'scroll',
+    backgroundRepeat: 'repeat',
+    backgroundSize: 'auto',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+    borderRadius: '16px',
+    padding: '25px',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '12px',
+    zIndex: 1001,
+    listStyle: 'none' as 'none',
+    margin: 0,
+    marginTop: '8px',
+    opacity: 0,
+    visibility: 'hidden' as 'hidden',
+    transform: 'translateY(-10px) scale(0.95)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none' as any,
+    mixBlendMode: 'normal' as 'normal'
+  },
+  dropdownActive: {
+    opacity: 1,
+    visibility: 'visible' as 'visible',
+    transform: 'translateY(0) scale(1)',
+    backgroundColor: '#ffffff',
+    background: '#ffffff',
+    backgroundImage: 'none',
+    mixBlendMode: 'normal' as 'normal'
+  },
+  menuItem: {
+    display: 'flex',
+    flexDirection: 'column' as 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px 16px',
+    color: '#1d1d1f',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    background: '#f5f5f7',
+    border: 'none',
+    boxShadow: '0 4px 0 #d1d1d6',
+    transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    textAlign: 'center' as 'center',
+    cursor: 'pointer',
+    position: 'relative' as 'relative',
+    minHeight: '100px',
+    minWidth: '90px',
+    gap: '8px'
+  },
+  menuItemHover: {
+    background: '#e8e8ed',
+    boxShadow: '0 6px 0 #c1c1c6',
+    transform: 'translateY(-2px)'
+  },
+  menuItemActive: {
+    transform: 'translateY(4px)',
+    boxShadow: '0 0 0 #d1d1d6',
+    background: '#e0e0e5'
+  },
+  keycapIcon: {
+    fontSize: '2rem',
+    lineHeight: 1,
+    marginBottom: '4px',
+    display: 'block',
+    textAlign: 'center' as 'center',
+    width: '100%'
+  },
+  keycapText: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: '#1d1d1f',
+    lineHeight: 1.2,
+    display: 'block',
+    textAlign: 'center' as 'center',
+    width: '100%',
+    whiteSpace: 'nowrap'
+  },
+  logoutItem: {
+    background: '#fee2e2',
+    boxShadow: '0 4px 0 #fca5a5',
+    color: '#dc2626',
+    gridColumn: 'span 3',
+    marginTop: '4px',
+    paddingTop: '20px',
+    borderTop: '2px solid #fee2e2'
+  },
+  logoutItemHover: {
+    background: '#fecaca',
+    boxShadow: '0 6px 0 #f87171',
+    color: '#b91c1c'
+  },
+  logoutItemActive: {
+    transform: 'translateY(4px)',
+    boxShadow: '0 0 0 #fca5a5',
+    background: '#fca5a5'
+  }
+};
+
 export const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   
@@ -141,269 +291,153 @@ export const Navbar: React.FC = () => {
   }, [isUserMenuOpen]);
 
   return (
-    <nav className="navbar" style={{
-      background: 'white',
-      borderBottom: '1px solid #eee',
-      padding: '16px 0',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-    }}>
-      <div className="nav-container" style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <a href="/" className="nav-logo" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontSize: '1.5rem',
-          fontWeight: 800,
-          color: '#111111',
-          textDecoration: 'none',
-          letterSpacing: '-0.5px',
-          transition: 'color 0.3s ease'
-        }}>
-          <span className="logo-text" style={{
-            fontWeight: 800,
-            lineHeight: 1.2,
-            background: 'linear-gradient(135deg, #1F2937 0%, #F59E0B 50%, #1F2937 100%)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            animation: 'brandShimmer 3s ease-in-out infinite'
-          }}>로하택스</span>
+    <nav className="navbar" style={styles.navbar}>
+      <div className="nav-container">
+        <a href="/" className="nav-logo">
+          <span className="logo-text">로하택스</span>
         </a>
-        <div className="nav-menu" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '32px',
-          listStyle: 'none',
-          margin: 0,
-          padding: 0
-        }}>
-          <a href="#features" className="nav-link" style={{
-            color: '#333333',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '0.95rem',
-            transition: 'color 0.3s ease'
-          }}>기능 소개</a>
-          <a href="#testimonials" className="nav-link" style={{
-            color: '#333333',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '0.95rem',
-            transition: 'color 0.3s ease'
-          }}>성공 사례</a>
-          <a href="/shop" className="nav-link" style={{
-            color: '#333333',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '0.95rem',
-            transition: 'color 0.3s ease'
-          }}>멤버십</a>
-          <a href="/studio" className="nav-link" style={{
-            color: '#333333',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '0.95rem',
-            transition: 'color 0.3s ease'
-          }}>
-            AI 블로그 스튜디오 <span style={{
-              display: 'inline-block',
-              marginLeft: '0.5rem',
-              padding: '0.2rem 0.6rem',
-              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-              color: 'white',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              borderRadius: '4px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>New</span>
+        <div className="nav-menu">
+          <a href="#features" className="nav-link">기능 소개</a>
+          <a href="#testimonials" className="nav-link">성공 사례</a>
+          <a href="/shop" className="nav-link">멤버십</a>
+          <a href="/studio" className="nav-link">
+            AI 블로그 스튜디오 <span className="beta-badge">New</span>
           </a>
-          <a href="#faq" className="nav-link" style={{
-            color: '#333333',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '0.95rem',
-            transition: 'color 0.3s ease'
-          }}>고객 지원</a>
+          <a href="#faq" className="nav-link">고객 지원</a>
           {userInfo.isLoggedIn ? (
             <>
-              <a href="/conversion" className="nav-link signup-btn" style={{
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontWeight: 600,
-                background: '#2C5BF0',
-                color: 'white',
-                textDecoration: 'none',
-                transition: 'all 0.3s ease'
-              }}>워크스페이스</a>
-              <a href="/profile/edit" className="nav-link" style={{
-                color: '#333333',
-                textDecoration: 'none',
-                fontWeight: 500,
-                fontSize: '0.95rem',
-                transition: 'color 0.3s ease'
-              }}>마이홈</a>
+              <a href="/conversion" className="nav-link">워크스페이스</a>
+              <a href="/profile/edit" className="nav-link">마이홈</a>
               <div className="user-menu" style={{ position: 'relative' }}>
                 <div 
-                  className="user-menu-trigger" 
+                  className="user-menu-trigger"
+                  style={styles.userCapsule}
                   onClick={toggleUserMenu}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 16px',
-                    background: '#FFFFFF',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '999px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    color: '#111111',
-                    fontWeight: 600,
-                    fontSize: '0.9rem'
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isUserMenuOpen ? 'true' : 'false'}
+                  aria-haspopup="true"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleUserMenu(e);
+                    }
                   }}
                 >
-                  <div className="user-avatar" style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #2C5BF0 0%, #4a7aff 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '1rem',
-                    color: '#ffffff',
-                    textTransform: 'uppercase'
-                  }}>
+                  <div className="user-avatar">
                     {(userInfo.username || 'U')[0].toUpperCase()}
                   </div>
                   <span>{userInfo.username || '사용자'}님</span>
-                  <span className="dropdown-arrow" style={{
-                    fontSize: '0.7rem',
-                    transition: 'transform 0.3s ease',
-                    color: '#666666',
-                    transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                  }}>▼</span>
+                  <span 
+                    className={`dropdown-arrow ${isUserMenuOpen ? 'active' : ''}`}
+                    style={styles.dropdownArrow}
+                  >▼</span>
                 </div>
-                {isUserMenuOpen && (
-                  <ul className="user-menu-dropdown" style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    minWidth: '200px',
-                    background: '#FFFFFF',
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
-                    borderRadius: '12px',
-                    padding: '8px',
-                    listStyle: 'none',
-                    margin: 0,
-                    zIndex: 1001
-                  }}>
-                    <li>
-                      <a href="/conversion" className="user-menu-dropdown-item" style={{
-                        display: 'block',
-                        padding: '12px 16px',
-                        color: '#111111',
-                        textDecoration: 'none',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease',
-                        fontWeight: 500,
-                        fontSize: '0.9rem'
-                      }}>파일 변환하기</a>
-                    </li>
-                    <li>
-                      <a href="/profile/edit" className="user-menu-dropdown-item" style={{
-                        display: 'block',
-                        padding: '12px 16px',
-                        color: '#111111',
-                        textDecoration: 'none',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease',
-                        fontWeight: 500,
-                        fontSize: '0.9rem'
-                      }}>마이 페이지</a>
-                    </li>
-                    <li>
-                      <a href="/logout" className="user-menu-dropdown-item logout" style={{
-                        display: 'block',
-                        padding: '12px 16px',
-                        color: '#DC2626',
-                        textDecoration: 'none',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease',
-                        fontWeight: 500,
-                        fontSize: '0.9rem'
-                      }}>로그아웃</a>
-                    </li>
-                  </ul>
-                )}
+                <div 
+                  className={`user-menu-dropdown ${isUserMenuOpen ? 'active' : ''}`}
+                  style={{
+                    ...styles.dropdown,
+                    ...(isUserMenuOpen ? styles.dropdownActive : {}),
+                    backgroundColor: isUserMenuOpen ? '#ffffff' : 'transparent',
+                    background: isUserMenuOpen ? '#ffffff' : 'transparent',
+                    backgroundImage: 'none',
+                    backgroundClip: 'padding-box',
+                    backgroundOrigin: 'padding-box',
+                    backgroundAttachment: 'scroll',
+                    backgroundRepeat: 'repeat',
+                    backgroundSize: 'auto',
+                    opacity: isUserMenuOpen ? 1 : 0,
+                    visibility: isUserMenuOpen ? 'visible' : 'hidden',
+                    mixBlendMode: 'normal',
+                    // Tailwind 무력화를 위한 강제 스타일
+                    color: '#000000',
+                    border: 'none',
+                    outline: 'none'
+                  } as React.CSSProperties}
+                >
+                  <a 
+                    href="/" 
+                    className="user-menu-dropdown-item"
+                    style={styles.menuItem}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f7'; e.currentTarget.style.boxShadow = '0 4px 0 #d1d1d6'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.menuItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>🏠</span>
+                    <span className="keycap-text" style={styles.keycapText}>홈</span>
+                  </a>
+                  <a 
+                    href="/shop" 
+                    className="user-menu-dropdown-item"
+                    style={styles.menuItem}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f7'; e.currentTarget.style.boxShadow = '0 4px 0 #d1d1d6'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.menuItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>🛍️</span>
+                    <span className="keycap-text" style={styles.keycapText}>상점</span>
+                  </a>
+                  <a 
+                    href="/studio" 
+                    className="user-menu-dropdown-item"
+                    style={styles.menuItem}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f7'; e.currentTarget.style.boxShadow = '0 4px 0 #d1d1d6'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.menuItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>📝</span>
+                    <span className="keycap-text" style={styles.keycapText}>스튜디오</span>
+                  </a>
+                  <a 
+                    href="/conversion" 
+                    className="user-menu-dropdown-item"
+                    style={styles.menuItem}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f7'; e.currentTarget.style.boxShadow = '0 4px 0 #d1d1d6'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.menuItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>⚡</span>
+                    <span className="keycap-text" style={styles.keycapText}>변환</span>
+                  </a>
+                  <a 
+                    href="/profile/edit" 
+                    className="user-menu-dropdown-item"
+                    style={styles.menuItem}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f7'; e.currentTarget.style.boxShadow = '0 4px 0 #d1d1d6'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.menuItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.menuItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>👤</span>
+                    <span className="keycap-text" style={styles.keycapText}>마이홈</span>
+                  </a>
+                  <a 
+                    href="/logout" 
+                    className="user-menu-dropdown-item logout"
+                    style={{ ...styles.menuItem, ...styles.logoutItem }}
+                    onMouseEnter={(e) => { Object.assign(e.currentTarget.style, styles.logoutItemHover); }}
+                    onMouseLeave={(e) => { Object.assign(e.currentTarget.style, { ...styles.menuItem, ...styles.logoutItem }); }}
+                    onMouseDown={(e) => { Object.assign(e.currentTarget.style, styles.logoutItemActive); }}
+                    onMouseUp={(e) => { Object.assign(e.currentTarget.style, styles.logoutItemHover); }}
+                  >
+                    <span className="keycap-icon" style={styles.keycapIcon}>🚪</span>
+                    <span className="keycap-text" style={styles.keycapText}>로그아웃</span>
+                  </a>
+                </div>
               </div>
             </>
           ) : (
             <>
-              <a 
-                href="/login" 
-                className="nav-link login-btn" 
-                onClick={(e) => {
-                  // 로그인 페이지로 이동 전에 세션 확인 준비
-                  // 로그인 성공 후 돌아올 때를 대비하여 이벤트 리스너는 이미 설정됨
-                }}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  color: '#2C5BF0',
-                  background: 'transparent',
-                  textDecoration: 'none',
-                  transition: 'all 0.3s ease'
-                }}
-              >로그인</a>
-              <a href="/register" className="nav-link signup-btn" style={{
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontWeight: 600,
-                background: '#2C5BF0',
-                color: 'white',
-                textDecoration: 'none',
-                transition: 'all 0.3s ease'
-              }}>회원가입</a>
+              <a href="/login" className="nav-link login-btn">로그인</a>
+              <a href="/register" className="nav-link signup-btn">회원가입</a>
             </>
           )}
         </div>
       </div>
-      <style>{`
-        @keyframes brandShimmer {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        .nav-link:hover {
-          color: #2C5BF0 !important;
-        }
-        .nav-logo:hover {
-          color: #2C5BF0 !important;
-        }
-        .user-menu-dropdown-item:hover {
-          background: #F9FAFB !important;
-          color: #2C5BF0 !important;
-          padding-left: 20px !important;
-        }
-        .signup-btn:hover {
-          background: #1e4ed8 !important;
-        }
-      `}</style>
     </nav>
   );
 };
-

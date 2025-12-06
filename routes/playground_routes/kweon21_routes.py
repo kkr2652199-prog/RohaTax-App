@@ -67,6 +67,7 @@ def kweon21_index(path):
         html_content = re.sub(r'src="/assets/', 'src="/studio/assets/', html_content)
         html_content = re.sub(r'href="/assets/', 'href="/studio/assets/', html_content)
         html_content = re.sub(r'href="/index\.css', 'href="/studio/index.css', html_content)
+        # /static/ 경로는 Flask 기본 static 폴더이므로 그대로 유지 (변환하지 않음)
         
         return Response(html_content, mimetype='text/html')
     else:

@@ -23,10 +23,10 @@ playground_bp = Blueprint(
 # [봉인] Power Blog 라우트 비활성화 - kweon21로 대체
 # from . import power_blog_routes  # Power Blog 라우트 등록
 
-# [유지] playground 대시보드 라우트만 직접 정의
+# [리다이렉트] playground는 이제 /studio로 리다이렉트
 @playground_bp.route('/')
 def index():
-    """Playground 메인 대시보드"""
-    from flask import render_template
-    return render_template('playground/index.html')
+    """Playground를 AI 블로그 스튜디오로 리다이렉트"""
+    from flask import redirect, url_for
+    return redirect(url_for('kweon21.kweon21_index', path=''))
 

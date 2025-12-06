@@ -1,6 +1,11 @@
 {% extends "playground/base_playground.html" %}
 
+{% block head_extra %}
+{{ super() }}
+{% endblock %}
+
 {% block playground_content %}
+
 <div class="playground-dashboard">
     <div class="dashboard-header">
         <h1 class="dashboard-title">블로그 연구소</h1>
@@ -69,5 +74,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block playground_scripts %}
 {% endblock %}
 

@@ -12,7 +12,7 @@
             <a href="#faq" class="nav-link">고객 지원</a>
             {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
             {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}
-                <a href="/conversion" class="nav-link signup-btn">워크스페이스</a>
+                <a href="/conversion" class="nav-link">워크스페이스</a>
                 <a href="/profile/edit" class="nav-link">마이홈</a>
                 <div class="user-menu">
                     <div class="user-menu-trigger" id="userMenuTrigger" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}" role="button" tabindex="0" aria-expanded="false" aria-haspopup="true">
@@ -24,9 +24,30 @@
                         <span class="dropdown-arrow">▼</span>
                     </div>
                     <ul class="user-menu-dropdown" id="userMenuDropdown">
-                        <li><a href="/conversion" class="user-menu-dropdown-item">파일 변환하기</a></li>
-                        <li><a href="/profile/edit" class="user-menu-dropdown-item">마이 페이지</a></li>
-                        <li><a href="/logout" class="user-menu-dropdown-item logout">로그아웃</a></li>
+                        <a href="/" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">🏠</span>
+                            <span class="keycap-text">홈</span>
+                        </a>
+                        <a href="/shop" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">🛍️</span>
+                            <span class="keycap-text">상점</span>
+                        </a>
+                        <a href="/studio" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">📝</span>
+                            <span class="keycap-text">스튜디오</span>
+                        </a>
+                        <a href="/conversion" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">⚡</span>
+                            <span class="keycap-text">변환</span>
+                        </a>
+                        <a href="/profile/edit" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">👤</span>
+                            <span class="keycap-text">마이홈</span>
+                        </a>
+                        <a href="/logout" class="user-menu-dropdown-item logout">
+                            <span class="keycap-icon">🚪</span>
+                            <span class="keycap-text">로그아웃</span>
+                        </a>
                     </ul>
                 </div>
             {% else %}

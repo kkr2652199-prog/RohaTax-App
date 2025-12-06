@@ -337,6 +337,12 @@ if 'kweon21' not in app.blueprints:
     app.register_blueprint(kweon21_bp)
     print(f"[kweon21] AI 블로그 스튜디오 가동 완료! (URL Prefix: {kweon21_bp.url_prefix})")
 
+# Playground 대시보드 등록
+from routes.playground_routes import playground_bp
+if 'playground' not in app.blueprints:
+    app.register_blueprint(playground_bp)
+    print(f"[playground] 블로그 연구소 대시보드 가동 완료! (URL Prefix: {playground_bp.url_prefix})")
+
 
 @app.route('/')
 def homepage():
