@@ -25,13 +25,19 @@ def create_success_response(
     extraction_summary: Dict[str, Any],
     conversion_log: List[str],
     detailed_stats: Dict[str, Any],
+    template_count: int = None,  # ✅ 추가: 실제 템플릿 기입 건수
 ) -> Dict[str, Any]:
     """표준 성공 응답을 생성한다."""
+
+    # ✅ template_count가 제공되지 않으면 recipients 길이 사용 (하위 호환성)
+    actual_template_count = template_count if template_count is not None else len(recipients)
 
     return {
         "success": True,
         "files": result_files,
-        "total_recipients": len(recipients),
+        "total_recipients": len(recipients),  # 전체 추출 건수 (참고용)
+        "template_count": actual_template_count,  # ✅ 추가: 실제 템플릿 기입 건수 (토큰 차감용)
+        "actual_templates": actual_template_count,  # ✅ 추가: 별칭 (안전장치)
         "extraction_summary": extraction_summary,
         "conversion_log": conversion_log,
         "recipients_preview": recipients[:5],

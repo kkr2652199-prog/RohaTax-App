@@ -687,7 +687,7 @@ body.shop-page {
 
 .product-card.standard .product-tagline,
 .product-card.premium .product-tagline {
-    color: #818cf8;
+    color: var(--gold);
 }
 
 .product-card.gold .product-tagline {
@@ -705,7 +705,7 @@ body.shop-page {
 .product-card.standard .product-name,
 .product-card.premium .product-name,
 .product-card.gold .product-name {
-    color: #ffffff;
+    color: var(--gold);
 }
 
 .product-description {
@@ -719,7 +719,8 @@ body.shop-page {
 .product-card.standard .product-description,
 .product-card.premium .product-description,
 .product-card.gold .product-description {
-    color: #cbd5e1;
+    color: var(--gold);
+    opacity: 0.9;
 }
 
 .product-price {
@@ -732,12 +733,12 @@ body.shop-page {
 
 /* Standard 가격 색상 */
 .product-card.standard .product-price {
-    color: #22d3ee;
+    color: var(--gold);
 }
 
 /* Premium 가격 색상 */
 .product-card.premium .product-price {
-    color: #818cf8;
+    color: var(--gold);
 }
 
 /* Gold 가격 색상 */
@@ -761,7 +762,8 @@ body.shop-page {
 .product-card.standard .product-price-unit,
 .product-card.premium .product-price-unit,
 .product-card.gold .product-price-unit {
-    color: #cbd5e1;
+    color: var(--gold);
+    opacity: 0.8;
 }
 
 .product-feature-list {
@@ -787,7 +789,8 @@ body.shop-page {
 .product-card.standard .product-feature-list li,
 .product-card.premium .product-feature-list li,
 .product-card.gold .product-feature-list li {
-    color: #cbd5e1;
+    color: var(--gold);
+    opacity: 0.85;
 }
 
 .product-feature-list li .feature-subtext {

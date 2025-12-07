@@ -44,6 +44,19 @@ class TokenDeductionProcessor:
             
             self.logger.info(f"변환 결과 키: {list(conversion_result.keys())}")
             
+            # ✅ 수정: template_count 우선 확인 (정확한 값, 템플릿 기입 후 계산)
+            template_count = conversion_result.get('template_count')
+            if template_count is not None and template_count > 0:
+                self.logger.info(f"템플릿 건수 (template_count 사용): {template_count}개")
+                return int(template_count)
+            
+            # ✅ 차선: actual_templates도 확인
+            actual_templates = conversion_result.get('actual_templates')
+            if actual_templates is not None and actual_templates > 0:
+                self.logger.info(f"템플릿 건수 (actual_templates 사용): {actual_templates}개")
+                return int(actual_templates)
+            
+            # 기존 로직 (fallback) - 변환 엔진이 반환한 값 사용
             total_recipients = conversion_result.get('total_recipients')
 
             if total_recipients in (None, 0):

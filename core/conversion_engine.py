@@ -161,14 +161,28 @@ class ConversionEngine:
             
             conversion_log.append(f"업종별 절대지침 적용 완료: {len(recipients)}건")
             
+            # ✅ 핵심 수정: 엄마값(부가세) 0인 경우 제외 (템플릿에 기입되지 않음)
+            # 템플릿에 실제로 기입되는 개수만 계산
+            # recipients 딕셔너리에는 "부가세" 필드가 있음 (mom_value 아님)
+            valid_recipients = [
+                r for r in recipients 
+                if r.get('부가세', 0) != 0 or r.get('mom_amount', 0) != 0
+            ]
+            actual_template_count = len(valid_recipients)
+            
+            self.logger.info(f"📊 [CONVERSION] 추출된 공급받는자: {len(recipients)}건")
+            self.logger.info(f"📊 [CONVERSION] 실제 템플릿 기입 건수 (엄마값 0 제외): {actual_template_count}건")
+            conversion_log.append(f"실제 템플릿 기입 건수: {actual_template_count}건 (전체 {len(recipients)}건 중)")
+            
             conversion_log.append("3단계: 공급받는자 통합지침 적용 시작")
             self.logger.info("👥 [CONVERSION] 3단계: 공급받는자 통합지침 적용 시작")
             self.logger.info(
                 f"📊 [CONVERSION] 추출 대상 데이터: {len(parsed_data.get('data', []))}행"
             )
 
+            # ✅ 수정: valid_recipients만 템플릿에 기입 (엄마값 0 제외)
             result_files = self.template_writer.fill_templates_simple(
-                recipients=recipients,
+                recipients=valid_recipients,
                 supplier_info=supplier_info,
                 template_id=template_id,
                 issue_date=issue_date,
@@ -206,6 +220,7 @@ class ConversionEngine:
             self.logger.info(f"   - 처리 시간: {processing_time:.2f}초")
             self.logger.info(f"   - 초당 처리 건수: {per_second:.2f}건/초")
             self.logger.info(f"   - 추출된 공급받는자: {len(recipients)}건")
+            self.logger.info(f"   - 실제 템플릿 기입 건수: {actual_template_count}건")
             self.logger.info(f"   - 생성된 파일: {len(result_files)}개")
             
             return create_success_response(
@@ -214,6 +229,7 @@ class ConversionEngine:
                 extraction_summary=extraction_summary,
                 conversion_log=conversion_log,
                 detailed_stats=final_stats,
+                template_count=actual_template_count,  # ✅ 추가: 실제 템플릿 기입 건수
             )
 
         except ContextValidationError as exc:

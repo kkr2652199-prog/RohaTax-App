@@ -161,6 +161,21 @@ def start_conversion():
             cleanup_temp_file(temp_file_path)
             return error(f"변환 실패: {conversion_result.get('error_message', '알 수 없는 오류')}", status=500)
         
+        # ✅ 핵심 수정: 변환 엔진이 반환한 실제 템플릿 개수 사용 (템플릿 생성 후 계산)
+        # conversion_engine.convert_file()에서 이미 엄마값 0을 제외하고 계산함
+        actual_template_count = conversion_result.get('template_count') or conversion_result.get('actual_templates')
+        
+        if actual_template_count is None:
+            # 하위 호환성: 변환 엔진이 template_count를 반환하지 않은 경우 변환 전 계산값 사용
+            logger.warning("변환 엔진이 template_count를 반환하지 않음. 변환 전 계산값 사용")
+            actual_template_count = template_count
+        
+        # ✅ 최종 확인: 변환 후 실제 개수 사용
+        conversion_result['template_count'] = actual_template_count
+        conversion_result['actual_templates'] = actual_template_count
+        
+        logger.info(f"✅ 최종 템플릿 개수 확인: {actual_template_count}개 (변환 후 계산)")
+        
         # 임시 파일 정리
         cleanup_temp_file(temp_file_path)
         
@@ -191,10 +206,16 @@ def start_conversion():
                 user_id_for_activity = user_current['id']
                 plan_type = user_current['plan_type'] or 'free'
                 token_balance_before = user_current['token_balance'] or 0
-                total_recipients = conversion_result.get('total_recipients', 0)
+                # ✅ 핵심 수정: 변환 후 실제 템플릿 개수 사용 (템플릿 생성 후 계산, 엄마값 0 제외)
+                actual_template_count = conversion_result.get('template_count') or conversion_result.get('actual_templates') or 0
+                total_recipients = conversion_result.get('total_recipients', 0)  # 원본 추출 개수 (참고용)
+                
+                if actual_template_count == 0:
+                    logger.warning(f"템플릿 개수가 0입니다. total_recipients 사용: {total_recipients}")
+                    actual_template_count = total_recipients
                 
                 # 2. '경제 헌법' 적용
-                potential_cost = total_recipients * -1
+                potential_cost = actual_template_count * -1  # ✅ 정확한 템플릿 개수로 계산
                 token_change = 0
                 if plan_type not in ['unlimited', 'gold', 'gold-vip']:
                     token_change = potential_cost
@@ -208,8 +229,13 @@ def start_conversion():
                     'activity_type': 'FILE_CONVERT',
                     'details': {
                         "filename": file_name,
-                        "extracted_rows": total_recipients,
-                        "cost_policy": "1_token_per_row(temp)"
+                        "extracted_rows": actual_template_count,  # ✅ 정확한 템플릿 개수 (변환 후 계산)
+                        "template_count": actual_template_count,  # ✅ 추가: 정확한 템플릿 개수 (변환 후 계산)
+                        "actual_templates": actual_template_count,  # ✅ 추가: 실제 템플릿 개수 (변환 후 계산)
+                        "total_recipients": total_recipients,  # ✅ 추가: 원본 추출 개수 (참고용)
+                        "tokens_deducted": abs(token_change),  # ✅ 추가: 차감된 토큰 수
+                        "cost_policy": "1_token_per_row(temp)",
+                        "note": "템플릿 생성 후 실제 기입된 개수 사용 (엄마값 0 제외)"
                     },
                     'token_change': token_change,
                     'potential_cost': potential_cost,

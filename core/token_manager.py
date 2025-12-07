@@ -45,15 +45,18 @@ class TokenManager:
                 try:
                     # 1. 만료된 토큰 기록 찾기
                     # expires_at < NOW 이고 is_expired_processed = 0인 항목
+                    # ⚠️ 중요: 무료 토큰(source_type='FREE')만 만료 처리
+                    # 유료 토큰(source_type='PAID')은 만료일이 지나도 절대 회수하지 않음
                     expired_records = conn.execute(
                         """
-                        SELECT id, amount, expires_at, created_at
+                        SELECT id, amount, expires_at, created_at, source_type
                         FROM token_history
                         WHERE user_id = ?
                           AND expires_at IS NOT NULL
                           AND expires_at < datetime('now', 'localtime')
                           AND COALESCE(is_expired_processed, 0) = 0
                           AND change_type = 'grant'
+                          AND COALESCE(source_type, 'PAID') = 'FREE'  -- 무료 토큰만 만료 처리
                         ORDER BY created_at ASC
                         """,
                         (user_id,)
@@ -181,9 +184,11 @@ class TokenManager:
                             'performed_by_type': 'system',
                             'activity_type': 'TOKEN_EXPIRED',
                             'details': {
-                                'reason': 'token_expired',
+                                'type': 'free_token_expiration',  # 무료 토큰 만료 명시
+                                'reason': '무료 토큰 만료로 인한 자동 회수',
                                 'expired_count': processed_count,
-                                'total_deducted': total_deducted
+                                'total_deducted': total_deducted,
+                                'note': '유료로 구매한 토큰은 만료일이 지나도 유지됩니다'
                             },
                             'token_change': -total_deducted,
                             'potential_cost': 0,

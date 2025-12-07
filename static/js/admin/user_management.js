@@ -281,8 +281,11 @@ function renderUsers(users){
                                     <button class="btn btn-success btn-sm" onclick="grantTokens(${u.id}, '${u.username}')">
                                         <i class="bi bi-plus-circle"></i> 토큰 지급
                                     </button>
+                                    <button class="btn btn-warning btn-sm" onclick="resetFreeTokensOnly(${u.id}, '${u.username}')">
+                                        <i class="bi bi-arrow-counterclockwise"></i> 무료토큰 초기화
+                                    </button>
                                     <button class="btn btn-primary btn-sm" onclick="resetTokens(${u.id}, '${u.username}')">
-                                        <i class="bi bi-arrow-clockwise"></i> 초기화
+                                        <i class="bi bi-arrow-clockwise"></i> 전체 초기화
                                     </button>
                                     ${u.approval_status === 'pending' ? `
                                         <button class="btn btn-warning btn-sm" onclick="approveUser(${u.id}, '${u.username}')">
@@ -390,6 +393,39 @@ async function grantTokens(userId, username) {
 }
 
 /**
+ * 무료 토큰만 초기화
+ * 사용자의 무료로 지급된 토큰만 초기화하고, 유료로 구매한 토큰은 유지합니다.
+ * 마이홈 통합 관제실에도 반영됩니다.
+ *
+ * @param {number} userId - 사용자 ID
+ * @param {string} username - 사용자명
+ */
+async function resetFreeTokensOnly(userId, username) {
+    if (!confirm(`${username}의 무료 토큰만 초기화하시겠습니까?\n\n유료로 구매한 토큰은 유지됩니다.`)) return;
+    
+    try {
+        const response = await fetch('/admin/api/reset-free-tokens', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken()
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('무료 토큰이 초기화되었습니다. 유료 토큰은 유지되었습니다.\n\n마이홈 통합 관제실에도 반영되었습니다.');
+            loadUsers();
+        } else {
+            alert('무료 토큰 초기화 실패: ' + (result.error || result.message || '알 수 없는 오류'));
+        }
+    } catch (error) {
+        alert('무료 토큰 초기화 중 오류가 발생했습니다: ' + error.message);
+    }
+}
+
+/**
  * 토큰 초기화
  * 사용자의 토큰 사용량을 초기화하는 기능입니다.
  *
@@ -397,7 +433,7 @@ async function grantTokens(userId, username) {
  * @param {string} username - 사용자명
  */
 async function resetTokens(userId, username) {
-    if (!confirm(`${username}의 토큰 사용량을 초기화하시겠습니까?`)) return;
+    if (!confirm(`${username}의 토큰 사용량을 초기화하시겠습니까?\n\n⚠️ 경고: 모든 토큰, 등급, 구독 기간이 초기화됩니다.`)) return;
     
     try {
         const response = await fetch('/admin/api/reset-tokens', {
@@ -605,6 +641,7 @@ window.renderUsers = renderUsers;
 window.loadUserConversionHistory = loadUserConversionHistory;
 window.grantTokens = grantTokens;
 window.resetTokens = resetTokens;
+window.resetFreeTokensOnly = resetFreeTokensOnly;
 window.approveUser = approveUser;
 window.deleteUser = deleteUser;
 window.restoreUser = restoreUser;

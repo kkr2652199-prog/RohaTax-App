@@ -366,7 +366,25 @@ class UserService:
                 return f"{amount} 토큰 지급"
             
             elif activity_type == 'TOKEN_RESET_BY_ADMIN':
-                return "토큰 잔액 초기화"
+                # 무료 토큰만 초기화한 경우와 전체 초기화를 구분
+                reason = details.get('reason', '')
+                if '무료 토큰만 초기화' in reason:
+                    reset_free_tokens = details.get('reset_free_tokens', 0)
+                    paid_preserved = details.get('paid_tokens_preserved', 0)
+                    return f"무료 토큰 {reset_free_tokens}개 초기화 (유료 토큰 {paid_preserved}개 유지)"
+                else:
+                    return "토큰 잔액 초기화"
+            
+            elif activity_type == 'TOKEN_EXPIRED':
+                # 무료 토큰 만료 로그 표시
+                expiration_type = details.get('type', '')
+                total_deducted = details.get('total_deducted', 0)
+                expired_count = details.get('expired_count', 0)
+                
+                if expiration_type == 'free_token_expiration':
+                    return f"무료 토큰 {total_deducted}개 만료로 자동 회수 ({expired_count}건)"
+                else:
+                    return f"토큰 {total_deducted}개 만료 ({expired_count}건)"
             
             elif activity_type == 'FILE_CONVERT':
                 filename = details.get('filename', '파일')

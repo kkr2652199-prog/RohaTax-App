@@ -233,3 +233,15 @@
   - 성능 최적화: DEBUG 모드 해제 및 정적 파일 로깅 제외로 속도 향상
   - React 빌드 파이프라인 정비 및 경로 매핑 수정
 
+
+## [2025-12-07 11:06 KST] [COMMIT: Token-Logic-Final] | feat: 토큰 경제 정상화 (무료/유료 완전 분리)
+- Database & Schema:
+  - Token History: 'source_type' 컬럼 추가 (무료/유료 출처 기록용)
+  - Migration: 기존 데이터 안전 처리를 위한 마이그레이션 스크립트 적용
+- Logic Core:
+  - 지급(Grant): 결제 시 'PAID', 관리자/이벤트 지급 시 'FREE' 자동 태깅 구현
+  - 만료(Expire): 오직 'FREE' 태그가 붙은 토큰만 유효기간 만료 시 자동 회수
+  - 방어(Defense): 유료 결제 토큰은 기간이 지나도 영구 보존되도록 로직 3중 방어
+- Verification:
+  - 시뮬레이션: 'verify_token_logic.py'를 통해 유료 생존/무료 소멸 100% 검증 완료
+

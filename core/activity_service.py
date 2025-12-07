@@ -23,6 +23,13 @@ def record_activity(cursor: sqlite3.Cursor, activity_data: Dict[str, Any]) -> No
                 token_balance_after, user_plan_snapshot
             ) VALUES (?, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'), ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
+        # user_plan_snapshot을 JSON으로 변환 (dict인 경우)
+        user_plan_snapshot = activity_data.get('user_plan_snapshot')
+        if isinstance(user_plan_snapshot, dict):
+            user_plan_snapshot = json.dumps(user_plan_snapshot, ensure_ascii=False)
+        elif user_plan_snapshot is not None:
+            user_plan_snapshot = str(user_plan_snapshot)
+        
         cursor.execute(sql_log, (
             activity_data.get('user_id'),
             activity_data.get('performed_by_id'),
@@ -33,7 +40,7 @@ def record_activity(cursor: sqlite3.Cursor, activity_data: Dict[str, Any]) -> No
             activity_data.get('potential_cost', 0),
             activity_data.get('token_balance_before'),
             activity_data.get('token_balance_after'),
-            activity_data.get('user_plan_snapshot')
+            user_plan_snapshot
         ))
         
         # 2. 사용자 토큰 잔액 업데이트 (필요한 경우)
