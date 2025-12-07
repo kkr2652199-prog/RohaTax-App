@@ -161,7 +161,7 @@ def start_conversion():
             cleanup_temp_file(temp_file_path)
             return error(f"변환 실패: {conversion_result.get('error_message', '알 수 없는 오류')}", status=500)
         
-        # ✅ 핵심 수정: 변환 엔진이 반환한 실제 템플릿 개수 사용 (템플릿 생성 후 계산)
+        # ✅ 안정화: 변환 엔진이 반환한 실제 템플릿 개수 사용 (템플릿 생성 후 계산)
         # conversion_engine.convert_file()에서 이미 엄마값 0을 제외하고 계산함
         actual_template_count = conversion_result.get('template_count') or conversion_result.get('actual_templates')
         
@@ -170,11 +170,21 @@ def start_conversion():
             logger.warning("변환 엔진이 template_count를 반환하지 않음. 변환 전 계산값 사용")
             actual_template_count = template_count
         
+        # ✅ 안정화: 변환 전/후 계산값 비교 로깅
+        if actual_template_count != template_count:
+            logger.warning(
+                f"⚠️ [안정화] 변환 전/후 계산값 불일치: "
+                f"변환 전={template_count}개, 변환 후={actual_template_count}개 "
+                f"(차이: {abs(template_count - actual_template_count)}개)"
+            )
+        else:
+            logger.info(
+                f"✅ [안정화] 변환 전/후 계산값 일치: {actual_template_count}개"
+            )
+        
         # ✅ 최종 확인: 변환 후 실제 개수 사용
         conversion_result['template_count'] = actual_template_count
         conversion_result['actual_templates'] = actual_template_count
-        
-        logger.info(f"✅ 최종 템플릿 개수 확인: {actual_template_count}개 (변환 후 계산)")
         
         # 임시 파일 정리
         cleanup_temp_file(temp_file_path)

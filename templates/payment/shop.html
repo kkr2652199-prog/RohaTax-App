@@ -9,20 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Core Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
     
     <!-- Layout Styles (Header & Footer only) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v=2025_FINAL_SYNC">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}?v={{ timestamp }}">
     
     <!-- Common Components -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}?v={{ timestamp }}">
     
     <!-- Shop Page Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}?v={{ timestamp }}">
 </head>
 <body class="shop-page">
     <!-- 전역 헤더 -->
@@ -311,6 +311,6 @@
     </div>
 
     {# 주문 연동 스크립트 - 기존 유지 #}
-    <script src="{{ url_for('static', filename='js/payment/shop.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/payment/shop.js') }}?v={{ timestamp }}"></script>
 </body>
 </html>

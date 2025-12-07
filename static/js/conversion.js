@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                                     <div style="padding: 10px; background: white; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                        <div style="font-size: 1.5rem; color: #059669; font-weight: bold;">${result.template_count || result.total_recipients || 0}</div>
+                                        <div style="font-size: 1.5rem; color: #059669; font-weight: bold;">${result.template_count || 0}</div>
                                         <div style="font-size: 0.9rem; color: #6b7280;">총 공급받는자</div>
                                     </div>
                                     <div style="padding: 10px; background: white; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <strong>📊 상세 통계:</strong>
                                     </div>
                                     <div style="font-size: 0.85rem; color: #6b7280; line-height: 1.4;">
-                                        • 성공적으로 추출된 공급받는자: ${result.template_count || result.total_recipients || 0}건<br>
+                                        • 성공적으로 추출된 공급받는자: ${result.template_count || 0}건<br>
                                         • 추출 실패: ${extractionSummary.failed_extractions || 0}건<br>
                                         • 처리된 행 수: ${extractionSummary.total_rows_processed || 0}행<br>
                                         • 생성된 파일 수: ${files.length}개

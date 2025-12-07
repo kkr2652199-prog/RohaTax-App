@@ -233,3 +233,4 @@ const gl = canvas.getContext('webgl2');
 **기술적 가치**: 고품질 셰이더 코드로 WebGL 학습 및 배경 효과로 활용 가능
 
 
+

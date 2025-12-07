@@ -124,40 +124,69 @@ def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -
             logger.info(f"   - 엄마값 0인 항목: {mom_zero_count}건")
             logger.info(f"   - 엄마값 0이 아닌 항목: {mom_non_zero_count}건")
             
-            # 엄마값 0인 경우 제외
+            # ✅ 안정화: 엄마값 0인 경우 제외 (변환 전 계산값 정확도 향상)
             valid_families = []
             for idx, f in enumerate(merged_families):
-                # ✅ 핵심: 모든 가능한 필드명 확인
-                mom_amount = f.get('mom_amount') or f.get('부가세') or f.get('vat_amount') or 0
-                부가세 = f.get('부가세') or f.get('mom_amount') or f.get('vat_amount') or 0
+                # ✅ 핵심: merged_families는 merge_family_data 결과
+                # - single_df: 원본 families의 모든 필드 유지 (mom_amount 또는 부가세 포함 가능)
+                # - merged_multi: mom_amount만 합산 (부가세 필드 없음)
+                # 따라서 mom_amount 필드를 우선 확인하고, 없으면 부가세 필드 확인
+                mom_amount_raw = f.get('mom_amount')
+                부가세_raw = f.get('부가세')
+                vat_amount_raw = f.get('vat_amount')
                 
                 # 숫자 변환 (문자열, None, NaN 등 모든 경우 처리)
-                try:
-                    if mom_amount is None or (isinstance(mom_amount, float) and math.isnan(mom_amount)):
-                        mom_amount = 0
-                    else:
-                        mom_amount = float(mom_amount) if mom_amount else 0
-                except (ValueError, TypeError, AttributeError):
-                    mom_amount = 0
+                mom_amount = 0
+                부가세 = 0
                 
-                try:
-                    if 부가세 is None or (isinstance(부가세, float) and math.isnan(부가세)):
+                # mom_amount 우선 확인 (merged_multi는 mom_amount만 있음)
+                if mom_amount_raw is not None:
+                    try:
+                        if isinstance(mom_amount_raw, float) and math.isnan(mom_amount_raw):
+                            mom_amount = 0
+                        else:
+                            mom_amount = float(mom_amount_raw) if mom_amount_raw else 0
+                    except (ValueError, TypeError, AttributeError):
+                        mom_amount = 0
+                
+                # 부가세 필드 확인 (single_df는 원본 필드 유지)
+                if 부가세_raw is not None:
+                    try:
+                        if isinstance(부가세_raw, float) and math.isnan(부가세_raw):
+                            부가세 = 0
+                        else:
+                            부가세 = float(부가세_raw) if 부가세_raw else 0
+                    except (ValueError, TypeError, AttributeError):
                         부가세 = 0
-                    else:
-                        부가세 = float(부가세) if 부가세 else 0
-                except (ValueError, TypeError, AttributeError):
-                    부가세 = 0
+                
+                # vat_amount 필드 확인 (fallback)
+                if vat_amount_raw is not None and mom_amount == 0 and 부가세 == 0:
+                    try:
+                        if isinstance(vat_amount_raw, float) and math.isnan(vat_amount_raw):
+                            pass
+                        else:
+                            vat_amount = float(vat_amount_raw) if vat_amount_raw else 0
+                            if vat_amount != 0:
+                                mom_amount = vat_amount  # vat_amount를 mom_amount로 사용
+                    except (ValueError, TypeError, AttributeError):
+                        pass
+                
+                # 최종 엄마값 결정 (mom_amount 우선, 없으면 부가세 사용)
+                final_mom_value = mom_amount if mom_amount != 0 else 부가세
                 
                 # 디버깅: 처음 3개 항목의 상세 정보 로깅
                 if idx < 3:
-                    logger.info(f"   [디버깅] 항목 {idx+1}: mom_amount={mom_amount}, 부가세={부가세}, 필드={list(f.keys())[:5]}")
+                    logger.info(f"   [안정화] 항목 {idx+1}: mom_amount={mom_amount}, 부가세={부가세}, 최종값={final_mom_value}, 필드={list(f.keys())[:5]}")
                 
                 # 엄마값이 0이 아닌 경우만 포함
-                if mom_amount != 0 or 부가세 != 0:
+                if final_mom_value != 0:
                     valid_families.append(f)
             
             template_count = len(valid_families)
-            logger.info(f"엄마값 0 제외 후: {template_count}건 (제외: {len(merged_families) - template_count}건)")
+            excluded_count = len(merged_families) - template_count
+            logger.info(f"✅ [안정화] 변환 전 템플릿 개수 계산 완료: {template_count}건 (엄마값 0 제외: {excluded_count}건)")
+            if excluded_count > 0:
+                logger.info(f"   → 엄마값 0인 항목은 템플릿에 기입되지 않으므로 제외됨")
         else:
             # 데이터 없음 (0건)
             recipient_extractor = RecipientExtractor()
@@ -188,7 +217,7 @@ def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -
             logger.info(f"   - 엄마값 0인 항목: {mom_zero_count}건")
             logger.info(f"   - 엄마값 0이 아닌 항목: {mom_non_zero_count}건")
             
-            # 엄마값 0인 경우 제외
+            # ✅ 안정화: 엄마값 0인 경우 제외 (변환 전 계산값 정확도 향상)
             valid_recipients = []
             for r in recipients:
                 부가세 = r.get('부가세', 0)
@@ -208,10 +237,13 @@ def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -
                     valid_recipients.append(r)
             
             template_count = len(valid_recipients)
-            logger.info(f"엄마값 0 제외 후: {template_count}건 (제외: {len(recipients) - template_count}건)")
+            excluded_count = len(recipients) - template_count
+            logger.info(f"✅ [안정화] 변환 전 템플릿 개수 계산 완료: {template_count}건 (엄마값 0 제외: {excluded_count}건)")
+            if excluded_count > 0:
+                logger.info(f"   → 엄마값 0인 항목은 템플릿에 기입되지 않으므로 제외됨")
         
         logger.info(f"검열 전 건수: {parsed_data.get('total_rows', 0)}건")
-        logger.info(f"실제 템플릿 기입 건수(토큰 차감, 엄마값 0 제외): {template_count}건")
+        logger.info(f"✅ [안정화] 실제 템플릿 기입 건수(토큰 차감, 엄마값 0 제외): {template_count}건")
         logger.info(f"파싱된 데이터 반환 (재사용 준비 완료)")
         
         return (template_count, parsed_data)

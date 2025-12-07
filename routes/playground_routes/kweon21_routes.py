@@ -43,9 +43,18 @@ def kweon21_index(path):
     
     dist_dir = os.path.abspath(KWEON21_DIST_DIR)
     
+    # ✅ 캐시 무력화: React 앱은 항상 최신 상태 유지
+    no_cache_headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+    
     # A. 실제 파일이 존재하면 그 파일을 반환 (JS, CSS, 이미지 등)
     if path != "" and os.path.exists(os.path.join(dist_dir, path)) and os.path.isfile(os.path.join(dist_dir, path)):
-        return send_from_directory(dist_dir, path)
+        resp = send_from_directory(dist_dir, path)
+        resp.headers.update(no_cache_headers)
+        return resp
     
     # B. assets 폴더 내 파일 처리
     if path.startswith('assets/'):
@@ -53,7 +62,9 @@ def kweon21_index(path):
         filename = path.replace('assets/', '')
         file_path = os.path.join(assets_dir, filename)
         if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(assets_dir, filename)
+            resp = send_from_directory(assets_dir, filename)
+            resp.headers.update(no_cache_headers)
+            return resp
     
     # C. 그 외 모든 경우(새로고침, 직접접속, React Router 경로 등)는 index.html 반환
     index_path = os.path.join(dist_dir, 'index.html')
@@ -69,7 +80,9 @@ def kweon21_index(path):
         html_content = re.sub(r'href="/index\.css', 'href="/studio/index.css', html_content)
         # /static/ 경로는 Flask 기본 static 폴더이므로 그대로 유지 (변환하지 않음)
         
-        return Response(html_content, mimetype='text/html')
+        resp = Response(html_content, mimetype='text/html')
+        resp.headers.update(no_cache_headers)
+        return resp
     else:
         # 빌드 파일이 없는 경우 안내 페이지
         return f"""
