@@ -75,7 +75,9 @@ set GOOGLE_API_KEY=AIzaSyCZh8sPRFRYPTTr7rBvmzw2UK8KwLDnpeY
 echo Google Gemini API Key configured
 
 REM Start server
+REM 환경 변수를 명시적으로 설정 (dotenv override를 위해)
 set PORT=5001
+echo Port configured: %PORT%
 "%PYTHON_PATH%" app.py
 
 if %ERRORLEVEL% NEQ 0 (

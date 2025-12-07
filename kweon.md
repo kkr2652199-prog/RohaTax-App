@@ -1,4 +1,18 @@
-﻿## [2025-12-07 12:48 KST] [COMMIT: 76463d6] [Pre-Shop-Upgrade] | chore: 상점 UI 홀로그램 업그레이드 전 안전 저장
+﻿## [2025-12-07 14:44 KST] [COMMIT: Pre-Showroom] | fix: 헤더 디자인 최종 보정 및 상점 리모델링 준비 완료
+
+- Global Header Fix:
+
+  - React(스튜디오) 유저 메뉴 드롭다운의 배경색/그림자 누락 수정 (White Box & Shadow 적용)
+
+  - Flask(본진)와 React(스튜디오) 간의 디자인 일관성(Consistency) 최종 확보
+
+- Shop UI Analysis:
+
+  - 상점 페이지 구조 정밀 진단 완료 (HTML/CSS 비만도 측정)
+
+  - 모듈화 전략 확정: 기존 shop.css 유지, 신규 shop_showroom.css 생성 결정
+
+## [2025-12-07 12:48 KST] [COMMIT: 77a9222] [Pre-Shop-Upgrade] | chore: 상점 UI 홀로그램 업그레이드 전 안전 저장
 
 - Status: 모든 기능(결제, 토큰, 블로그, 헤더) 정상 작동 상태
 
@@ -285,6 +299,7 @@
   - ���(Defense): ���� ���� ��ū�� �Ⱓ�� ������ ���� �����ǵ��� ���� 3�� ���
 - Verification:
   - �ùķ��̼�: 'verify_token_logic.py'�� ���� ���� ����/���� �Ҹ� 100% ���� �Ϸ�
+
 
 
 

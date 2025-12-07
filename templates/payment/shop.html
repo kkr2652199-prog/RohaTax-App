@@ -51,7 +51,8 @@
             </div>
             <div class="event-grid">
                 {% for product in event_products %}
-                <div class="event-card {{ 'period' if product.type == 'event_period' else '' }} {{ '' if product.is_active else 'ended' }}">
+                <div class="event-card {{ 'period' if product.type == 'event_period' else '' }} {{ '' if product.is_active else 'ended' }}" 
+                     {% if product.is_active %}data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05"{% endif %}>
                     <div class="event-badge {{ 'period' if product.type == 'event_period' else 'token' }}">
                         {% if product.type == 'event_period' %}
                             ⏳ 기간 이벤트
@@ -100,9 +101,9 @@
             </div>
             <div class="product-grid">
                 {% for product in regular_products %}
-                    {# Standard (ID: 1) #}
-                    {% if product.id == 1 %}
-                    <div class="product-card standard">
+                    {# Standard 상품 #}
+                    {% if product.name|lower|replace(' ', '') == 'standard' %}
+                    <div class="product-card standard" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
                         <span class="product-icon">🚀</span>
                         <div class="product-tagline">급할 때 한 건씩!</div>
                         <h3 class="product-name">{{ product.name }}</h3>
@@ -127,19 +128,25 @@
                     </div>
                     {% endif %}
 
-                    {# Premium (ID: 2) - BEST 뱃지 #}
-                    {% if product.id == 2 %}
-                    <div class="product-card premium">
+                    {# Premium 상품 - BEST 뱃지 #}
+                    {% if product.name|lower|replace(' ', '') == 'premium' %}
+                    <div class="product-card premium" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
                         <span class="product-icon">📦</span>
                         <div class="product-tagline">정산서가 쌓여있을 때!</div>
                         <h3 class="product-name">{{ product.name }}</h3>
                         <p class="product-description">100건 패키지로 한 번에 해결</p>
                         <div class="product-price">
                             {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
-                            <span class="premium-discount-badge">50% 할인</span>
+                            {% if discount_rate > 0 %}
+                            <div class="discount-badge-wrapper">
+                                <span class="premium-discount-badge dynamic-badge">
+                                    {{ discount_rate }}% SAVE
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
                         <ul class="product-feature-list">
-                            <li>100건 패키지 (건당 150원, 50% 할인)</li>
+                            <li>{{ product.token_amount or 0 }}건 패키지 (건당 {{ "{:,}".format(premium_per_token_price) }}원{% if discount_rate > 0 %}, {{ discount_rate }}% 할인{% endif %})</li>
                             <li>모든 템플릿 제공</li>
                             <li>우선 지원</li>
                             <li>데이터 백업</li>
@@ -155,9 +162,9 @@
                     </div>
                     {% endif %}
 
-                    {# Gold (ID: 3) - 황금 테두리 #}
-                    {% if product.id == 3 %}
-                    <div class="product-card gold">
+                    {# Gold 상품 - 황금 테두리 #}
+                    {% if product.name|lower|replace(' ', '') == 'gold' %}
+                    <div class="product-card gold" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
                         <span class="product-icon">👑</span>
                         <div class="product-tagline">세무사/대리 발급 전문가용</div>
                         <h3 class="product-name">{{ product.name }}</h3>
@@ -187,9 +194,10 @@
                     </div>
                     {% endif %}
 
-                    {# 기타 상품 (ID 4, 5 등) - 기본 스타일 #}
-                    {% if product.id != 1 and product.id != 2 and product.id != 3 %}
-                    <div class="product-card">
+                    {# 기타 상품 - 기본 스타일 #}
+                    {% set product_name_normalized = product.name|lower|replace(' ', '') %}
+                    {% if product_name_normalized not in ['standard', 'premium', 'gold'] %}
+                    <div class="product-card" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
                         <span class="product-icon">🛒</span>
                         <h3 class="product-name">{{ product.name }}</h3>
                         <p class="product-description">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
@@ -310,6 +318,9 @@
         </div>
     </div>
 
+    {# vanilla-tilt.js - CodePen 스타일 3D 효과 #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    
     {# 주문 연동 스크립트 - 기존 유지 #}
     <script src="{{ url_for('static', filename='js/payment/shop.js') }}?v={{ timestamp }}"></script>
 </body>

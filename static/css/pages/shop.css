@@ -388,30 +388,67 @@ body.shop-page {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
     margin-bottom: 40px;
+    perspective: 1000px;
 }
 
 .event-card {
-    background: var(--card-bg);
-    border: none;
+    /* Glassmorphism 효과 - 깊이감 있는 반투명 배경 */
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
     padding: 32px;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease;
     box-shadow: var(--shadow-md);
+    z-index: 1;
 }
 
+/* 홀로그램 빛 반사 효과 (무료 이벤트 - 무지개빛) */
 .event-card::before {
-    display: none;
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 154, 158, 0.3) 40%,
+        rgba(250, 208, 196, 0.4) 50%,
+        rgba(255, 154, 158, 0.3) 60%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.event-card:hover::before {
+    opacity: 1;
+    animation: hologram-shine 0.8s ease-out;
 }
 
 .event-card.period::before {
-    display: none;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(147, 51, 234, 0.3) 40%,
+        rgba(99, 102, 241, 0.4) 50%,
+        rgba(147, 51, 234, 0.3) 60%,
+        transparent 70%
+    );
 }
 
+/* vanilla-tilt.js가 transform을 제어하므로 hover transform 제거 */
 .event-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .event-card.ended {
@@ -523,6 +560,7 @@ body.shop-page {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 32px;
+    perspective: 1000px;
 }
 
 @media (max-width: 1024px) {
@@ -542,56 +580,112 @@ body.shop-page {
    ================================================================ */
 
 .product-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    /* Glassmorphism 효과 - 깊이감 있는 반투명 배경 */
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
     padding: 40px 32px;
     position: relative;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease;
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
+    z-index: 1;
 }
 
+/* 홀로그램 빛 반사 효과 (기본) */
 .product-card::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(99, 102, 241, 0.2) 40%,
+        rgba(129, 140, 248, 0.3) 50%,
+        rgba(99, 102, 241, 0.2) 60%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
     opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.product-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--primary-color);
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 2;
 }
 
 .product-card:hover::before {
     opacity: 1;
+    animation: hologram-shine 0.8s ease-out;
 }
 
-/* Standard Card (Dark Theme) */
+/* vanilla-tilt.js가 transform을 제어하므로 hover transform 제거 */
+.product-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--primary-color);
+}
+
+/* Standard Card (Dark Theme) - Glassmorphism 적용 */
 .product-card.standard {
-    background: #0f172a;
-    border: none;
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    position: relative;
 }
 
+.product-card.standard::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, #cbd5e1 0%, #64748b 50%, #3b82f6 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.product-card.standard:hover::after {
+    opacity: 1;
+}
+
+.product-card.standard::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(203, 213, 225, 0.3) 40%,
+        rgba(59, 130, 246, 0.4) 50%,
+        rgba(203, 213, 225, 0.3) 60%,
+        transparent 70%
+    );
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
 .product-card.standard:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Premium Card (BEST) - Dark Theme */
+/* Premium Card (BEST) - Glassmorphism + 네온 시안+퍼플 */
 .product-card.premium {
-    background: #0f172a;
-    border: none;
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(6, 182, 212, 0.3);
     color: #ffffff;
+    position: relative;
 }
 
 .product-card.premium::after {
@@ -600,46 +694,115 @@ body.shop-page {
     top: 20px;
     right: 20px;
     padding: 6px 16px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
     color: white;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.6),
+                0 0 40px rgba(139, 92, 246, 0.4);
+    z-index: 10;
+    animation: premium-badge-pulse 2s ease-in-out infinite;
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
 }
 
-@keyframes pulse {
+@keyframes premium-badge-pulse {
     0%, 100% {
-        box-shadow: 0 0 20px var(--neon-glow);
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.6),
+                    0 0 40px rgba(139, 92, 246, 0.4);
     }
     50% {
-        box-shadow: 0 0 30px var(--neon-glow-strong);
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.9),
+                    0 0 60px rgba(139, 92, 246, 0.7);
     }
 }
 
+.product-card.premium::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(6, 182, 212, 0.4) 40%,
+        rgba(139, 92, 246, 0.5) 50%,
+        rgba(6, 182, 212, 0.4) 60%,
+        transparent 70%
+    );
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
 .product-card.premium:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
     border: none;
 }
 
-/* Gold Card (황금 테두리) - Dark Theme */
+/* Gold Card (리얼 골드 텍스처) - Glassmorphism 적용 */
 .product-card.gold {
-    background: #0f172a;
-    border: 2px solid var(--gold);
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 3px solid rgba(251, 191, 36, 0.3);
     color: #ffffff;
     box-shadow: var(--shadow-md), 0 0 0 1px rgba(251, 191, 36, 0.2);
+    position: relative;
+}
+
+.product-card.gold::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 3px;
+    background: linear-gradient(
+        to right,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #aa771c 50%,
+        #fcf6ba 75%,
+        #bf953f 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.product-card.gold:hover::after {
+    opacity: 1;
+    animation: gold-shimmer 2s ease-in-out infinite;
 }
 
 .product-card.gold::before {
-    background: linear-gradient(90deg, var(--gold) 0%, #fcd34d 100%);
-    opacity: 1;
-    height: 6px;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(251, 191, 36, 0.4) 40%,
+        rgba(252, 211, 77, 0.5) 50%,
+        rgba(251, 191, 36, 0.4) 60%,
+        transparent 70%
+    );
 }
 
+@keyframes gold-shimmer {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
 .product-card.gold:hover {
-    box-shadow: var(--shadow-lg), 0 0 30px var(--gold-glow);
-    border-color: #fcd34d;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border-color: transparent;
 }
 
 /* ================================================================
@@ -691,7 +854,10 @@ body.shop-page {
 }
 
 .product-card.gold .product-tagline {
-    color: var(--gold);
+    background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .product-name {
@@ -702,10 +868,33 @@ body.shop-page {
     letter-spacing: -0.5px;
 }
 
-.product-card.standard .product-name,
-.product-card.premium .product-name,
+/* Gold 상품명 - 리얼 골드 그라데이션 */
 .product-card.gold .product-name {
-    color: var(--gold);
+    background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(191, 149, 63, 0.8));
+    text-shadow: 0 0 20px rgba(191, 149, 63, 0.6);
+}
+
+/* Premium 상품명 - Cyan Blue 네온 */
+.product-card.premium .product-name {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.8));
+    text-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+}
+
+/* Standard 상품명 - 기본 스타일 유지 */
+.product-card.standard .product-name {
+    background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.5));
 }
 
 .product-description {
@@ -724,11 +913,15 @@ body.shop-page {
 }
 
 .product-price {
-    font-size: 3.6rem;
+    font-size: 2.5rem;
     font-weight: 900;
     margin: 0 0 8px;
     color: #22d3ee;
     line-height: 1.1;
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.8),
+                 0 0 40px rgba(34, 211, 238, 0.5),
+                 0 4px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.05em;
 }
 
 /* Standard 가격 색상 */
@@ -841,6 +1034,7 @@ body.shop-page {
     box-shadow: var(--shadow-md);
     position: relative;
     overflow: hidden;
+    z-index: 10;
 }
 
 .btn-purchase::before {
@@ -1254,6 +1448,24 @@ body.shop-page {
 }
 
 /* ================================================================
+   Holographic Shine Animation
+   ================================================================ */
+
+@keyframes hologram-shine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+        opacity: 0;
+    }
+}
+
+/* ================================================================
    Responsive Design
    ================================================================ */
 
@@ -1269,10 +1481,18 @@ body.shop-page {
     .product-grid {
         grid-template-columns: 1fr;
         gap: 24px;
+        perspective: 800px;
     }
     
     .event-grid {
         grid-template-columns: 1fr;
+        perspective: 800px;
+    }
+    
+    /* vanilla-tilt.js가 transform을 제어하므로 모바일 hover transform 제거 */
+    .product-card:hover,
+    .event-card:hover {
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4) !important;
     }
 }
 
@@ -1293,6 +1513,15 @@ body.shop-page {
     color: var(--gold);
     margin-top: 12px;
     box-shadow: 0 0 15px var(--gold-glow);
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+}
+
+.discount-badge-wrapper {
+    display: inline-block;
+    transform-style: preserve-3d;
+    perspective: 1000px;
 }
 
 .premium-discount-badge {
@@ -1305,6 +1534,29 @@ body.shop-page {
     font-weight: 700;
     color: var(--success);
     margin-left: 8px;
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gold-special-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 12px;
+    box-shadow: 0 0 15px var(--gold-glow);
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
 }
 
 

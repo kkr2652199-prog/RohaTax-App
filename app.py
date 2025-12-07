@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 import os
 
 # .env 파일 로드 (프로젝트 루트에서)
-load_dotenv()
+# override=True: 환경 변수가 .env 파일보다 우선순위를 갖도록 함
+load_dotenv(override=True)
 
 from flask import Flask, request, jsonify, render_template, session
 from werkzeug.exceptions import HTTPException
