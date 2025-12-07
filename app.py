@@ -337,6 +337,12 @@ if 'kweon21' not in app.blueprints:
     app.register_blueprint(kweon21_bp)
     print(f"[kweon21] AI 블로그 스튜디오 가동 완료! (URL Prefix: {kweon21_bp.url_prefix})")
 
+# Studio API (보안 프록시) 등록
+from routes.playground_routes.studio_api import studio_api_bp
+if 'studio_api' not in app.blueprints:
+    app.register_blueprint(studio_api_bp)
+    print(f"[studio_api] AI 블로그 스튜디오 보안 프록시 API 가동 완료! (URL Prefix: {studio_api_bp.url_prefix})")
+
 # Playground 대시보드 등록
 from routes.playground_routes import playground_bp
 if 'playground' not in app.blueprints:

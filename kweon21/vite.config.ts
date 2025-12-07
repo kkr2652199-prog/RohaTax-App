@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => {
     // 상위 디렉토리의 환경 변수를 우선 사용 (없으면 현재 디렉토리 사용)
     const env = { ...currentEnv, ...parentEnv };
     
-    // GEMINI_API_KEY 또는 GOOGLE_API_KEY 중 하나를 사용
-    const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    // ✅ 보안 강화: API 키는 백엔드에서만 관리 (프론트엔드에서는 제거)
+    // API 키는 더 이상 프론트엔드 빌드에 포함되지 않음
     
     return {
       server: {
@@ -19,9 +19,7 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(apiKey),
-        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
-        'process.env.GOOGLE_API_KEY': JSON.stringify(apiKey)
+        // API 키 관련 환경변수 제거 (보안 강화)
       },
       resolve: {
         alias: {

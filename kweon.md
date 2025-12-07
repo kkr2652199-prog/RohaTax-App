@@ -1,26 +1,17 @@
-﻿## [2025-12-07 11:59 KST] [COMMIT: de7e97d] [Header-Sync-Fix] | chore: ��� ������ ���� �� �ý��� ���� �Ϸ�
+﻿## [2025-12-07 12:48 KST] [COMMIT: 76463d6] [Pre-Shop-Upgrade] | chore: 상점 UI 홀로그램 업그레이드 전 안전 저장
 
-- Global Header Design (Flask & React):
+- Status: 모든 기능(결제, 토큰, 블로그, 헤더) 정상 작동 상태
 
-  - ������ ������: ��� �������� ����� 'Modern Glass & Capsule' ��Ÿ�Ϸ� 100% ��ġ��Ŵ
+- Plan: 상점(Shop) 페이지 UI/UX 대규모 개편 예정
+  - Target: 상품 카드에 '홀로그래픽 3D Tilt' 효과 적용
+  - Strategy: 기능(JS/HTML)은 0.1%도 건드리지 않고, 오직 CSS만으로 시각 효과 극대화
+  - Goal: 유료 상품은 '고급스럽게', 무료 상품은 '선물처럼' 표현하여 구매 전환율 증대
 
-  - React Fix: Tailwind ������ �ζ��� ��Ÿ��(Inline Style) ���� �������� �ذ�
-
-  - Bug Fix: ��Ʃ��� ��Ӵٿ� �޴��� ����/�׸��� ���� ���� ���� (White Box ����)
-
-- System Cleanup (Operation Fat Burn):
-
-  - Dead Code �Ұ�: ������� �ʴ� 3D Keypad ���� ����(html, css, js) ���� ����
-
-  - Hygiene: �ӽ� ���� ��ũ��Ʈ(diagnose_*.py) �� ��� ���� ����
-
-- Token Logic Verification:
-
-  - ���� �Ϸ�: ����/���� ��ū �и� ������ �������� �ùķ��̼����� ���� Ȯ��
+- Safety: 작업 실패 시 이 지점으로 즉시 롤백(Rollback) 가능하도록 체크포인트 생성
 
 
-
-## [2025-12-07 11:07 KST] [COMMIT: c0fa734] [Token-Logic-Final] | feat: ��ū ���� ����ȭ (����/���� ���� �и�)
+## [2025-12-07 11:59 KST] [커밋: 3cbacf0] [헤더-동기화-수정] | 작업: 헤더 디자인 통일 및 시스템 정비 완료
+## [2025-12-07 11:07 KST] [COMMIT: 76463d6] [Token-Logic-Final] | feat: ��ū ���� ����ȭ (����/���� ���� �и�)
 
 - Database & Schema:
   - Token History: 'source_type' �÷� �߰� (����/���� ��ó ��Ͽ�)
@@ -294,7 +285,6 @@
   - ���(Defense): ���� ���� ��ū�� �Ⱓ�� ������ ���� �����ǵ��� ���� 3�� ���
 - Verification:
   - �ùķ��̼�: 'verify_token_logic.py'�� ���� ���� ����/���� �Ҹ� 100% ���� �Ϸ�
-
 
 
 
