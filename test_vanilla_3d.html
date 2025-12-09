@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vanilla Three.js Gift Box Test</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #ffffff;
+    }
+    a { color: #fbbf24; text-decoration: none; }
+    #openBtn {
+      position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+      padding: 12px 18px; font-size: 15px; font-weight: 700;
+      background: linear-gradient(135deg, #fbbf24, #b45309);
+      color: #1a0d0d; border: none; border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      cursor: pointer;
+    }
+    #openBtn:active { transform: translateX(-50%) translateY(1px); }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <button id="openBtn" aria-label="상자 열기">상자 열기</button>
+
+  <!-- Three.js r128 + OrbitControls (CDN) -->
+  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    (() => {
+      const BOX_RED = "#5D0016"; // Deep Velvet Wine (벨벳 와인 베이스)
+      const BOX_RED_HIGHLIGHT = "#881326"; // Ruby Shine (하이라이트용)
+      const RIBBON_GOLD = "#D4AF37"; // Rich Gold (기본 골드)
+      const RIBBON_GOLD_SHIMMER = "#FADD85"; // Shimmer Gold (반짝임용)
+
+      // Dimensions (same as React version)
+      const boxWidth = 2.0;
+      const boxDepth = 2.0;
+      const boxHeight = 1.8;
+      const wallThickness = 0.15;
+      const ribbonWidth = 0.26;  // lid ribbon strip width (more visible)
+      const ribbonThick = 0.05; // lid ribbon thickness (increased for better visibility)
+      const lidHeight = 0.3;
+      const lidOverhang = 0.1;
+      const boxRadius = 0.1;
+      const bevelSize = 0.03;
+      const hingePosition = new THREE.Vector3(0, boxHeight, -boxDepth / 2);
+
+      const canvas = document.getElementById("c");
+      const renderer = new THREE.WebGLRenderer({ 
+        canvas, 
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance"
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.5)); // 더 높은 픽셀 비율
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      
+      // 색상 품질 향상 설정 (Three.js r128+)
+      if (THREE.SRGBColorSpace !== undefined) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace; // 최신 방식
+      } else {
+        renderer.outputEncoding = THREE.sRGBEncoding; // 하위 호환
+      }
+      
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2; // 약간 조정하여 더 자연스러운 색상
+      
+      // 색상 정밀도 향상
+      renderer.useLegacyLights = false; // 최신 조명 시스템 사용
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xF5E6C4); // Champagne Cream
+      scene.fog = new THREE.Fog(0xF5E6C4, 35, 120);
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+      camera.position.set(5.5, 4.5, 6.5); // Slightly adjusted for better depth perception
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.target.set(0, 1.2, 0);
+      controls.maxPolarAngle = Math.PI * 0.49;
+
+      // Lights - Enhanced for color quality and glossy reflection
+      // 색상 품질 향상을 위한 정밀한 조명 설정
+      const ambient = new THREE.AmbientLight(0xffffff, 0.65); // 약간 증가하여 색상 선명도 향상
+      scene.add(ambient);
+      
+      // 색상 보간을 개선하기 위한 정밀한 HemisphereLight 색상
+      const hemi = new THREE.HemisphereLight(
+        new THREE.Color(0xfff4d6), // 상단: 따뜻한 크림색
+        new THREE.Color(0x2A0005), // 하단: 가장 어두운 그림자 색상
+        0.95 // 강도 약간 증가
+      );
+      scene.add(hemi);
+
+      // Main directional light - stronger for glossy highlights
+      const dir = new THREE.DirectionalLight(0xffffff, 2.5);
+      dir.position.set(7, 12, 6.5);
+      dir.castShadow = true;
+      dir.shadow.mapSize.set(4096, 4096); // Higher resolution shadows
+      dir.shadow.camera.near = 0.5;
+      dir.shadow.camera.far = 20;
+      dir.shadow.camera.left = -6;
+      dir.shadow.camera.right = 6;
+      dir.shadow.camera.top = 6;
+      dir.shadow.camera.bottom = -6;
+      dir.shadow.bias = -0.0001;
+      dir.shadow.normalBias = 0.02;
+      scene.add(dir);
+
+      // Soft fill light from opposite side for depth (색상 품질 향상)
+      const fill = new THREE.DirectionalLight(new THREE.Color(0xfff6e4), 1.0); // 강도 약간 증가
+      fill.position.set(-6, 4, -5);
+      scene.add(fill);
+
+      // Additional rim light for edge definition and gloss
+      const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      rimLight.position.set(-5, 8, 8);
+      scene.add(rimLight);
+
+      // Spot light for focused glossy highlights
+      const spotLight = new THREE.SpotLight(0xffffff, 1.2);
+      spotLight.position.set(5, 10, 5);
+      spotLight.angle = Math.PI / 6;
+      spotLight.penumbra = 0.3;
+      spotLight.castShadow = true;
+      scene.add(spotLight);
+
+      // 벨벳 와인 하이라이트를 위한 추가 조명 (Ruby Shine) - 색상 품질 향상
+      const highlightColor = new THREE.Color(0x881326); // Ruby Shine 색상
+      const highlightLight = new THREE.DirectionalLight(highlightColor, 0.45); // 강도 약간 증가
+      highlightLight.position.set(5, 8, 4);
+      scene.add(highlightLight);
+      
+      // 색상 그라데이션 효과를 위한 추가 조명 (골드 반사)
+      const goldReflection = new THREE.DirectionalLight(new THREE.Color(0xFADD85), 0.3); // Shimmer Gold
+      goldReflection.position.set(-4, 6, 5);
+      scene.add(goldReflection);
+
+      // Transparent floor with shadow only
+      const floorGeo = new THREE.PlaneGeometry(20, 20);
+      const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Gift group
+      const giftRoot = new THREE.Group();
+      giftRoot.scale.set(1.5, 1.5, 1.5);
+      scene.add(giftRoot);
+
+      // Helper to build rounded ribbon strips
+      function makeRoundedRibbon(lenX, lenZ, width, thick, radius = 0.04) {
+        const shape = new THREE.Shape();
+        const hx = lenX / 2;
+        const hz = lenZ / 2;
+        const r = Math.min(radius, hx * 0.5, hz * 0.5);
+        shape.moveTo(-hx + r, -hz);
+        shape.lineTo(hx - r, -hz);
+        shape.quadraticCurveTo(hx, -hz, hx, -hz + r);
+        shape.lineTo(hx, hz - r);
+        shape.quadraticCurveTo(hx, hz, hx - r, hz);
+        shape.lineTo(-hx + r, hz);
+        shape.quadraticCurveTo(-hx, hz, -hx, hz - r);
+        shape.lineTo(-hx, -hz + r);
+        shape.quadraticCurveTo(-hx, -hz, -hx + r, -hz);
+        return new THREE.ExtrudeGeometry(shape, {
+          depth: thick,
+          bevelEnabled: true,
+          bevelSegments: 4,
+          steps: 1,
+          bevelSize: r * 0.6,
+          bevelThickness: r * 0.6,
+          curveSegments: 12
+        });
+      }
+
+        // High-res canvas text helper
+      function makeTextPlane(size = 2048) {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(0,0,0,0)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.textAlign = "center";
+        const centerX = canvas.width / 2;
+
+        // [15%] 아이콘: "🎉" (이모지, 크기 150px)
+        ctx.font = "150px Arial";
+        ctx.fillText("🎉", centerX, canvas.height * 0.15);
+
+        // [25%] 메인 타이틀: "토큰 이벤트" (색상: 리본 색상과 일치, 폰트: Bold 120px, 그림자 효과 필수)
+        ctx.font = "bold 120px 'Noto Sans KR', sans-serif";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillText("토큰 이벤트", centerX + 4, canvas.height * 0.25 + 4);
+        ctx.fillStyle = "#D4AF37"; // Rich Gold (리본 색상과 일치)
+        ctx.fillText("토큰 이벤트", centerX, canvas.height * 0.25);
+
+        // [32%] 서브 타이틀: "Welcome Event" (색상: #E0E0E0, 폰트: Thin 60px)
+        ctx.font = "300 60px 'Inter', sans-serif";
+        ctx.fillStyle = "#E0E0E0";
+        ctx.fillText("Welcome Event", centerX, canvas.height * 0.32);
+
+        // [50%] 핵심 혜택: "신규 가입 혜택 (60토큰)" (색상: #FFFFFF, 폰트: Bold 100px)
+        ctx.font = "bold 100px 'Noto Sans KR', sans-serif";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText("신규 가입 혜택 (60토큰)", centerX, canvas.height * 0.50);
+
+        // [65%] 설명 1: "60개의 무료 토큰이" (색상: #CCCCCC, 폰트: Medium 50px)
+        ctx.font = "500 50px 'Noto Sans KR', sans-serif";
+        ctx.fillStyle = "#CCCCCC";
+        ctx.fillText("60개의 무료 토큰이", centerX, canvas.height * 0.65);
+
+        // [70%] 설명 2: "즉시 지급됩니다." (색상: #CCCCCC, 폰트: Medium 50px)
+        ctx.fillText("즉시 지급됩니다.", centerX, canvas.height * 0.70);
+
+        // [85%] 작은 설명: "금액 부담 없이 즉시 사용\n관리자 승인 없이 자동 적용" (색상: #AAAAAA, 폰트: Small 40px)
+        ctx.font = "400 40px 'Noto Sans KR', sans-serif";
+        ctx.fillStyle = "#AAAAAA";
+        const smallText = "금액 부담 없이 즉시 사용\n관리자 승인 없이 자동 적용";
+        const lines = smallText.split("\n");
+        lines.forEach((line, i) => {
+          ctx.fillText(line, centerX, canvas.height * 0.85 + i * 50);
+        });
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = 8;
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      // Confetti pool
+      const confettiCount = 45;
+      const confetti = [];
+      const confettiGroup = new THREE.Group();
+      confettiGroup.position.set(0, boxHeight * 0.2, 0);
+      const confettiGeo = new THREE.PlaneGeometry(0.08, 0.12);
+      const confettiColors = [0xf59e0b, 0x22d3ee, 0xec4899, 0xa3e635, 0xffedd5, 0xffffff, 0xffd700];
+      for (let i = 0; i < confettiCount; i++) {
+        const mat = new THREE.MeshStandardMaterial({
+          color: confettiColors[i % confettiColors.length],
+          metalness: 0.2,
+          roughness: 0.4,
+          side: THREE.DoubleSide
+        });
+        const m = new THREE.Mesh(confettiGeo, mat);
+        m.castShadow = true;
+        m.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        confettiGroup.add(m);
+        confetti.push({
+          mesh: m,
+          vel: new THREE.Vector3(),
+          angVel: new THREE.Vector3(),
+          life: 0
+        });
+      }
+      giftRoot.add(confettiGroup);
+
+      let lidGroup; // filled below
+
+      function createBoxGeometry() {
+        const shape = new THREE.Shape();
+        const w = boxWidth / 2;
+        const h = boxDepth / 2;
+        const r = boxRadius;
+
+        // Outer rounded rect
+        shape.moveTo(-w + r, -h);
+        shape.lineTo(w - r, -h);
+        shape.quadraticCurveTo(w, -h, w, -h + r);
+        shape.lineTo(w, h - r);
+        shape.quadraticCurveTo(w, h, w - r, h);
+        shape.lineTo(-w + r, h);
+        shape.quadraticCurveTo(-w, h, -w, h - r);
+        shape.lineTo(-w, -h + r);
+        shape.quadraticCurveTo(-w, -h, -w + r, -h);
+
+        // Inner hole
+        const hole = new THREE.Shape();
+        const iw = w - wallThickness;
+        const ih = h - wallThickness;
+        const ir = Math.max(0.01, r - wallThickness);
+
+        hole.moveTo(-iw + ir, -ih);
+        hole.quadraticCurveTo(-iw, -ih, -iw, -ih + ir);
+        hole.lineTo(-iw, ih - ir);
+        hole.quadraticCurveTo(-iw, ih, -iw + ir, ih);
+        hole.lineTo(iw - ir, ih);
+        hole.quadraticCurveTo(iw, ih, iw, ih - ir);
+        hole.lineTo(iw, -ih + ir);
+        hole.quadraticCurveTo(iw, -ih, iw - ir, -ih);
+        hole.lineTo(-iw + ir, -ih);
+
+        shape.holes.push(hole);
+
+        const extrudeSettings = {
+          depth: boxHeight,
+          bevelEnabled: true,
+          bevelSegments: 5,
+          steps: 1,
+          bevelSize,
+          bevelThickness: bevelSize,
+          curveSegments: 12
+        };
+        return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      }
+
+      function createBox() {
+        const group = new THREE.Group();
+
+        // Walls
+        const boxGeometry = createBoxGeometry();
+        // 벨벳/매트 질감을 위한 재질 조정 (고품질 매트 마감)
+        const boxColor = new THREE.Color(BOX_RED);
+        const boxMaterial = new THREE.MeshPhysicalMaterial({
+          color: boxColor,
+          roughness: 0.5, // 벨벳/매트 느낌을 위해 더 증가
+          metalness: 0.0, // 벨벳은 금속성이 없음
+          clearcoat: 0.3, // 고광택이 아닌 부드러운 질감
+          clearcoatRoughness: 0.4, // 더 거칠게
+          envMapIntensity: 0.5 // 환경 반사 감소
+        });
+        const walls = new THREE.Mesh(boxGeometry, boxMaterial);
+        walls.rotation.x = -Math.PI / 2;
+        walls.castShadow = true;
+        walls.receiveShadow = true;
+        group.add(walls);
+
+        // Floor (RoundedBox substitute -> slightly beveled box)
+        // Rounded floor using shape+extrude (beveled)
+        const floorShape = new THREE.Shape();
+        const fw = (boxWidth - wallThickness * 2) / 2;
+        const fh = (boxDepth - wallThickness * 2) / 2;
+        const fr = Math.max(0.04, boxRadius * 0.5);
+        floorShape.moveTo(-fw + fr, -fh);
+        floorShape.lineTo(fw - fr, -fh);
+        floorShape.quadraticCurveTo(fw, -fh, fw, -fh + fr);
+        floorShape.lineTo(fw, fh - fr);
+        floorShape.quadraticCurveTo(fw, fh, fw - fr, fh);
+        floorShape.lineTo(-fw + fr, fh);
+        floorShape.quadraticCurveTo(-fw, fh, -fw, fh - fr);
+        floorShape.lineTo(-fw, -fh + fr);
+        floorShape.quadraticCurveTo(-fw, -fh, -fw + fr, -fh);
+
+        const floorGeo = new THREE.ExtrudeGeometry(floorShape, {
+          depth: wallThickness,
+          bevelEnabled: true,
+          bevelSegments: 5,
+          steps: 1,
+          bevelSize: fr * 0.6,
+          bevelThickness: fr * 0.6,
+          curveSegments: 16
+        });
+        floorGeo.center();
+        // 벨벳/매트 질감을 위한 바닥 재질 (고품질 매트 마감)
+        const floorColor = new THREE.Color(BOX_RED);
+        const floorMat = new THREE.MeshPhysicalMaterial({
+          color: floorColor,
+          roughness: 0.5, // 벨벳/매트 느낌
+          metalness: 0.0, // 벨벳은 금속성이 없음
+          clearcoat: 0.3, // 고광택이 아닌 부드러운 질감
+          clearcoatRoughness: 0.4,
+          envMapIntensity: 0.5
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = wallThickness / 2;
+        floor.castShadow = true;
+        floor.receiveShadow = true;
+        group.add(floor);
+
+        // (Side ribbons removed per request; body bands omitted)
+
+        // Inner liner (gold tone) for a premium look
+        const linerShape = floorShape;
+        const linerGeo = new THREE.ExtrudeGeometry(linerShape, {
+          depth: wallThickness * 0.35,
+          bevelEnabled: true,
+          bevelSegments: 3,
+          steps: 1,
+          bevelSize: fr * 0.35,
+          bevelThickness: fr * 0.35,
+          curveSegments: 12
+        });
+        linerGeo.center();
+        const linerMat = new THREE.MeshPhysicalMaterial({
+          color: 0xdab15a,
+          metalness: 0.65,
+          roughness: 0.2,
+          clearcoat: 0.6,
+          clearcoatRoughness: 0.15,
+          side: THREE.DoubleSide
+        });
+        const liner = new THREE.Mesh(linerGeo, linerMat);
+        liner.rotation.x = -Math.PI / 2;
+        liner.position.y = wallThickness * 0.9;
+        liner.scale.set(0.96, 1, 0.96);
+        liner.castShadow = false;
+        liner.receiveShadow = true;
+        group.add(liner);
+
+        // High-res front text plate with exact layout
+        const frontTextTex = makeTextPlane(2048);
+        // 3D layered text effect - multiple layers for depth
+        const frontMat = new THREE.MeshStandardMaterial({
+          map: frontTextTex,
+          transparent: true,
+          roughness: 0.2,
+          metalness: 0.1
+        });
+        const frontPlate = new THREE.Mesh(
+          new THREE.PlaneGeometry(boxWidth * 0.98, boxHeight * 0.88),
+          frontMat
+        );
+        frontPlate.position.set(0, boxHeight * 0.48, boxDepth / 2 + 0.035);
+        group.add(frontPlate);
+
+        return group;
+      }
+
+      function createLid() {
+        const group = new THREE.Group();
+        group.position.copy(hingePosition);
+
+        const lidBody = new THREE.Group();
+        lidBody.position.set(0, lidHeight / 2, boxDepth / 2);
+        group.add(lidBody);
+
+        // 벨벳/매트 질감을 위한 뚜껑 재질 (고품질 매트 마감)
+        const lidColor = new THREE.Color(BOX_RED);
+        const lidMat = new THREE.MeshPhysicalMaterial({
+          color: lidColor,
+          roughness: 0.5, // 벨벳/매트 느낌
+          metalness: 0.0, // 벨벳은 금속성이 없음
+          clearcoat: 0.3, // 고광택이 아닌 부드러운 질감
+          clearcoatRoughness: 0.4, // 더 거칠게
+          envMapIntensity: 0.5
+        });
+
+        // Rounded lid via Shape + Extrude
+        const lidShape = new THREE.Shape();
+        const lw = (boxWidth + lidOverhang) / 2;
+        const lh = (boxDepth + lidOverhang) / 2;
+        const lr = boxRadius;
+        lidShape.moveTo(-lw + lr, -lh);
+        lidShape.lineTo(lw - lr, -lh);
+        lidShape.quadraticCurveTo(lw, -lh, lw, -lh + lr);
+        lidShape.lineTo(lw, lh - lr);
+        lidShape.quadraticCurveTo(lw, lh, lw - lr, lh);
+        lidShape.lineTo(-lw + lr, lh);
+        lidShape.quadraticCurveTo(-lw, lh, -lw, lh - lr);
+        lidShape.lineTo(-lw, -lh + lr);
+        lidShape.quadraticCurveTo(-lw, -lh, -lw + lr, -lh);
+
+        const lidExtrude = new THREE.ExtrudeGeometry(lidShape, {
+          depth: lidHeight,
+          bevelEnabled: true,
+          bevelSegments: 6,
+          steps: 1,
+          bevelSize: boxRadius * 0.6,
+          bevelThickness: boxRadius * 0.6,
+          curveSegments: 16
+        });
+        lidExtrude.center();
+        const lidMesh = new THREE.Mesh(lidExtrude, lidMat);
+        lidMesh.rotation.x = -Math.PI / 2;
+        lidMesh.position.y = 0;
+        lidMesh.castShadow = true;
+        lidMesh.receiveShadow = true;
+        lidBody.add(lidMesh);
+
+        // Cross ribbons on lid (wrapping top and bottom surfaces)
+        // 메탈릭 골드 느낌을 위한 리본 재질 (색상 품질 향상)
+        const ribbonColor = new THREE.Color(RIBBON_GOLD); // #D4AF37
+        const ribbonMatLid = new THREE.MeshPhysicalMaterial({
+          color: ribbonColor,
+          metalness: 0.3, // 메탈릭 느낌 강화
+          roughness: 0.15, // 반짝임 강화
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.05, // 더 반짝이게
+          envMapIntensity: 1.5 // 환경 반사 증가
+        });
+        const ribbonProtrusion = 0.05; // Slight protrusion from lid
+
+        // Top surface cross ribbons (X direction)
+        const lidRibbonTopX = new THREE.Mesh(
+          new THREE.BoxGeometry(boxWidth + lidOverhang + ribbonProtrusion * 2, ribbonThick, ribbonWidth),
+          ribbonMatLid
+        );
+        lidRibbonTopX.position.set(0, lidHeight / 2 + ribbonThick / 2 + ribbonProtrusion, 0);
+        lidRibbonTopX.castShadow = true;
+        lidRibbonTopX.receiveShadow = true;
+        lidBody.add(lidRibbonTopX);
+
+        // Top surface cross ribbons (Z direction)
+        const lidRibbonTopZ = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonWidth, ribbonThick, boxDepth + lidOverhang + ribbonProtrusion * 2),
+          ribbonMatLid
+        );
+        lidRibbonTopZ.position.set(0, lidHeight / 2 + ribbonThick / 2 + ribbonProtrusion, 0);
+        lidRibbonTopZ.castShadow = true;
+        lidRibbonTopZ.receiveShadow = true;
+        lidBody.add(lidRibbonTopZ);
+
+        // Bottom surface cross ribbons (X direction)
+        const lidRibbonBottomX = new THREE.Mesh(
+          new THREE.BoxGeometry(boxWidth + lidOverhang + ribbonProtrusion * 2, ribbonThick, ribbonWidth),
+          ribbonMatLid
+        );
+        lidRibbonBottomX.position.set(0, -lidHeight / 2 - ribbonThick / 2 - ribbonProtrusion, 0);
+        lidRibbonBottomX.castShadow = true;
+        lidRibbonBottomX.receiveShadow = true;
+        lidBody.add(lidRibbonBottomX);
+
+        // Bottom surface cross ribbons (Z direction)
+        const lidRibbonBottomZ = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonWidth, ribbonThick, boxDepth + lidOverhang + ribbonProtrusion * 2),
+          ribbonMatLid
+        );
+        lidRibbonBottomZ.position.set(0, -lidHeight / 2 - ribbonThick / 2 - ribbonProtrusion, 0);
+        lidRibbonBottomZ.castShadow = true;
+        lidRibbonBottomZ.receiveShadow = true;
+        lidBody.add(lidRibbonBottomZ);
+
+        // Front side ribbon (connecting top and bottom X ribbons)
+        const lidRibbonFront = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonWidth, lidHeight + ribbonProtrusion * 2, ribbonThick),
+          ribbonMatLid
+        );
+        lidRibbonFront.position.set(0, 0, (boxDepth + lidOverhang) / 2 + ribbonThick / 2 + ribbonProtrusion);
+        lidRibbonFront.castShadow = true;
+        lidRibbonFront.receiveShadow = true;
+        lidBody.add(lidRibbonFront);
+
+        // Back side ribbon (connecting top and bottom X ribbons)
+        const lidRibbonBack = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonWidth, lidHeight + ribbonProtrusion * 2, ribbonThick),
+          ribbonMatLid
+        );
+        lidRibbonBack.position.set(0, 0, -(boxDepth + lidOverhang) / 2 - ribbonThick / 2 - ribbonProtrusion);
+        lidRibbonBack.castShadow = true;
+        lidRibbonBack.receiveShadow = true;
+        lidBody.add(lidRibbonBack);
+
+        // Left side ribbon (connecting top and bottom Z ribbons)
+        const lidRibbonLeft = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonThick, lidHeight + ribbonProtrusion * 2, ribbonWidth),
+          ribbonMatLid
+        );
+        lidRibbonLeft.position.set(-(boxWidth + lidOverhang) / 2 - ribbonThick / 2 - ribbonProtrusion, 0, 0);
+        lidRibbonLeft.castShadow = true;
+        lidRibbonLeft.receiveShadow = true;
+        lidBody.add(lidRibbonLeft);
+
+        // Right side ribbon (connecting top and bottom Z ribbons)
+        const lidRibbonRight = new THREE.Mesh(
+          new THREE.BoxGeometry(ribbonThick, lidHeight + ribbonProtrusion * 2, ribbonWidth),
+          ribbonMatLid
+        );
+        lidRibbonRight.position.set((boxWidth + lidOverhang) / 2 + ribbonThick / 2 + ribbonProtrusion, 0, 0);
+        lidRibbonRight.castShadow = true;
+        lidRibbonRight.receiveShadow = true;
+        lidBody.add(lidRibbonRight);
+
+        // Bow
+        const bowGroup = new THREE.Group();
+        bowGroup.position.set(0, lidHeight / 2 + 0.1, 0);
+
+        // 메탈릭 골드 느낌을 위한 리본 고리 재질 (색상 품질 향상)
+        const torusColor = new THREE.Color(RIBBON_GOLD); // #D4AF37
+        const torusMat = new THREE.MeshPhysicalMaterial({ 
+          color: torusColor,
+          metalness: 0.3, // 메탈릭 느낌 강화
+          roughness: 0.15, // 반짝임 강화
+          clearcoat: 1.0, 
+          clearcoatRoughness: 0.05, // 더 반짝이게
+          envMapIntensity: 1.5
+        });
+        const loopA = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.12, 16, 32), torusMat);
+        loopA.position.set(-0.35, 0.15, 0);
+        loopA.rotation.z = 0.6;
+        loopA.castShadow = true;
+        bowGroup.add(loopA);
+
+        const loopB = loopA.clone();
+        loopB.position.set(0.35, 0.15, 0);
+        loopB.rotation.z = -0.6;
+        bowGroup.add(loopB);
+
+        // 벨벳/매트 질감을 위한 매듭 재질 (고품질 매트 마감)
+        const knotColor = new THREE.Color(BOX_RED);
+        const knot = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshPhysicalMaterial({
+          color: knotColor,
+          metalness: 0.0, // 벨벳은 금속성이 없음
+          roughness: 0.5, // 벨벳/매트 느낌
+          clearcoat: 0.3, 
+          clearcoatRoughness: 0.4,
+          envMapIntensity: 0.5
+        }));
+        knot.position.set(0, 0.05, 0);
+        knot.castShadow = true;
+        bowGroup.add(knot);
+
+        // 메탈릭 골드 느낌을 위한 리본 꼬리 재질 (색상 품질 향상)
+        const tailColor = new THREE.Color(RIBBON_GOLD); // #D4AF37
+        const tailMat = new THREE.MeshPhysicalMaterial({ 
+          color: tailColor,
+          metalness: 0.3, // 메탈릭 느낌 강화
+          roughness: 0.15, // 반짝임 강화
+          clearcoat: 1.0, 
+          clearcoatRoughness: 0.05, // 더 반짝이게
+          envMapIntensity: 1.5,
+          side: THREE.DoubleSide 
+        });
+        const tailA = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 0.02), tailMat);
+        tailA.position.set(-0.4, 0, 0.4);
+        tailA.rotation.set(0.5, 0.5, 0);
+        tailA.castShadow = true;
+        bowGroup.add(tailA);
+
+        const tailB = tailA.clone();
+        tailB.position.set(0.4, 0, -0.4);
+        tailB.rotation.set(-0.5, -0.5, 0);
+        bowGroup.add(tailB);
+
+        lidBody.add(bowGroup);
+        return group;
+      }
+
+      const baseGroup = createBox();
+      giftRoot.add(baseGroup);
+
+      lidGroup = createLid();
+      giftRoot.add(lidGroup);
+
+      let isOpen = false;
+
+      function triggerConfetti() {
+        const spread = 1.6;
+        confetti.forEach((c) => {
+          c.mesh.position.set(
+            (Math.random() - 0.5) * spread,
+            Math.random() * 0.8,
+            (Math.random() - 0.5) * spread
+          );
+          c.vel.set(
+            (Math.random() - 0.35) * 2.8,
+            Math.random() * 5.8 + 3.6, // always upward
+            (Math.random() - 0.35) * 2.8
+          );
+          c.angVel.set(
+            (Math.random() - 0.5) * 8,
+            (Math.random() - 0.5) * 8,
+            (Math.random() - 0.5) * 8
+          );
+          c.life = 10.0; // 충분한 시간 확보 (바닥까지 떨어질 때까지)
+          const s = 0.9 + Math.random() * 1.7;
+          c.mesh.scale.set(s, s, s);
+          c.mesh.visible = true;
+        });
+      }
+
+      function resetConfetti() {
+        confetti.forEach((c) => {
+          c.mesh.position.set(0, 0, 0);
+          c.vel.set(0, 0, 0);
+          c.angVel.set(0, 0, 0);
+          c.life = 0;
+          c.mesh.visible = false;
+        });
+      }
+
+      function toggleByButton() {
+        if (!isOpen) {
+          isOpen = true;
+          triggerConfetti();
+          // setTimeout 제거 - 바닥에 닿으면 자연스럽게 사라지도록
+          document.getElementById("openBtn").textContent = "상자 닫기";
+        } else {
+          isOpen = false;
+          resetConfetti();
+          document.getElementById("openBtn").textContent = "상자 열기";
+        }
+      }
+
+      document.getElementById("openBtn").addEventListener("click", toggleByButton);
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+
+        // Smooth hinge rotation
+        const target = isOpen ? -Math.PI * 0.65 : 0;
+        if (lidGroup) {
+          const current = lidGroup.rotation.x;
+          lidGroup.rotation.x = THREE.MathUtils.lerp(current, target, delta * 3);
+        }
+
+        // Confetti physics
+        const gravity = new THREE.Vector3(0, -6, 0);
+        const floorHeight = -0.2; // turntable 높이 고려 (turntable이 -0.125에 있으므로 그 아래로)
+        confetti.forEach((c) => {
+          if (c.life > 0 && c.mesh.visible) {
+            c.vel.addScaledVector(gravity, delta);
+            c.mesh.position.addScaledVector(c.vel, delta);
+            c.mesh.rotation.x += c.angVel.x * delta;
+            c.mesh.rotation.y += c.angVel.y * delta;
+            c.mesh.rotation.z += c.angVel.z * delta;
+            
+            // 바닥에 닿으면 사라짐
+            if (c.mesh.position.y <= floorHeight) {
+              c.life = 0;
+              c.mesh.visible = false;
+              c.mesh.position.set(c.mesh.position.x, floorHeight, c.mesh.position.z);
+            }
+          }
+        });
+
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        const w = window.innerWidth, h = window.innerHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      });
+    })();
+  </script>
+</body>
+</html>
