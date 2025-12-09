@@ -864,4 +864,5 @@
     // 초기화 실행
     init();
 
+    window.openCheckoutModal = openCheckoutModal;
 })();

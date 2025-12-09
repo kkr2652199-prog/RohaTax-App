@@ -27,6 +27,53 @@
     <!-- Luxury Dark Showroom Theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_showroom.css') }}?v={{ timestamp }}">
     
+    <!-- 3D 선물 상자 스타일 -->
+    <style>
+        /* [1] 3D 전용 카드 스타일 (기존 product-card 덮어쓰기) */
+        .product-card.special-3d-card {
+            background: transparent !important;       /* 배경 투명화 */
+            border: none !important;                  /* 테두리 삭제 */
+            box-shadow: none !important;              /* 그림자 삭제 */
+            overflow: visible !important;             /* ★핵심: 상자가 밖으로 튀어나오게 허용 */
+            transform: none !important;               /* 3D 충돌 방지 */
+        }
+        
+        /* [2] 3D 상자 컨테이너 (무대) */
+        .gift-box-3d-target {
+            height: 400px !important;             /* 높이 강제 고정 (무한 스크롤 방지) */
+            width: 120%;                          /* 카드를 넘어서는 너비 */
+            margin-left: -10%;                    /* 중앙 정렬 보정 */
+            margin-top: -50px;                    /* 위로 솟구치게 */
+            overflow: visible !important;         /* ★핵심 */
+            position: relative;
+            z-index: 10;                          /* 다른 카드보다 위에 뜨게 */
+        }
+        
+        /* [3] 아이콘 래퍼 (overflow 제거) */
+        .icon-wrapper {
+            height: 400px !important;             /* gift-box-3d-target과 동일한 높이 */
+            width: 100%;
+            position: relative;
+            overflow: visible !important;          /* ★핵심: overflow 제거 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* [4] 텍스트/버튼 영역 (받침대) */
+        .product-info-3d {
+            background: rgba(0, 0, 0, 0.6);       /* 반투명 검정 받침대 */
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: -80px;                    /* 상자와 겹치게 */
+            position: relative;
+            z-index: 11;                          /* 상자보다 더 앞에 */
+            -webkit-backdrop-filter: blur(10px);  /* Safari 지원 */
+            backdrop-filter: blur(10px);          /* 고급스러운 블러 효과 */
+            border: 1px solid rgba(255, 215, 0, 0.3); /* 금색 테두리 살짝 */
+        }
+    </style>
+    
     <!-- 3D Card Effect Module -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_card_3d.css') }}?v={{ timestamp }}">
     
@@ -66,60 +113,88 @@
             <p class="shop-hero-subtitle">필요에 따라 토큰형/기간형 이벤트와 정식 요금제를 선택하세요</p>
         </div>
 
-        {# 이벤트 상품 섹션 - 탁자 위에 2개 상자 (하나의 3D 씬) #}
-        {% if event_products %}
-        <section class="event-section-fullscreen">
-            <div class="event-section-header">
-                <h2 class="event-section-title">🎁 신규 회원 한정 혜택</h2>
-                <p class="event-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
-            </div>
-            
-            {# 하나의 3D 씬에 탁자와 2개 상자 #}
-            <div class="event-products-3d-scene">
-                {# 3D 씬 컨테이너 #}
-                <div id="event-products-3d-container" class="gift-box-3d-fullscreen"></div>
-                
-                {# 상품 정보 (숨김, 구매 기능용) #}
-                <div class="event-products-data" style="display: none;">
-                    {% for product in event_products %}
-                    <div class="product-data" 
-                         data-id="{{ product.id }}"
-                         data-name="{{ product.name }}"
-                         data-price="{{ product.price or 0 }}"
-                         data-type="{{ product.type }}"
-                         data-token="{{ product.token_amount or 0 }}"
-                         data-duration="{{ product.duration_days or 0 }}"
-                         data-is-active="{{ 'true' if product.is_active else 'false' }}">
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                {# 구매 버튼들 (숨김, 3D 상자 클릭 시 트리거용) #}
-                <div class="event-products-buttons" style="display: none;">
-                    {% for product in event_products %}
-                    <button class="btn-purchase-fullscreen" 
-                            data-id="{{ product.id }}"
-                            data-name="{{ product.name }}"
-                            data-price="{{ product.price or 0 }}"
-                            data-type="{{ product.type }}"
-                            data-token="{{ product.token_amount or 0 }}"
-                            data-duration="{{ product.duration_days or 0 }}"
-                            {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
-                    </button>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
-        {% endif %}
+        {# 이벤트 상품 섹션 - 탁자 위에 2개 상자 (하나의 3D 씬) - 주석 처리됨 #}
+        {# 이전 이벤트 섹션은 제거되었고, 이제 product-grid에 통합되었습니다 #}
 
-        {# 유료 요금제 섹션 #}
-        {% if regular_products %}
-        <section class="product-section" id="regular-products">
+        {# 상품 진열대 (이벤트 + 일반 상품 통합) #}
+        {# 디버그: event_products 개수 = {{ event_products|length if event_products else 0 }}, regular_products 개수 = {{ regular_products|length if regular_products else 0 }} #}
+        {% if event_products or regular_products %}
+        <section class="product-section" id="all-products">
+            {% if regular_products %}
             <div class="product-section-header">
-                <h2 class="product-section-title">정식 요금제</h2>
-                <p class="product-section-subtitle">규모에 맞는 최적의 플랜을 선택하세요</p>
+                <h2 class="product-section-title">상품 목록</h2>
+                <p class="product-section-subtitle">이벤트 상품과 정식 요금제를 확인하세요</p>
             </div>
+            {% elif event_products %}
+            <div class="product-section-header">
+                <h2 class="product-section-title">🎁 신규 회원 한정 혜택</h2>
+                <p class="product-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
+            </div>
+            {% endif %}
             <div class="product-grid">
+                {# [1] 무료 상품 (Event Products) 먼저 배치 #}
+                {% if event_products %}
+                {% for product in event_products %}
+                <div class="product-card event special-3d-card" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
+                    {# 상단 아이콘 영역 (3D 상자 적용) #}
+                    <div class="icon-wrapper">
+                        <div id="gift-box-container-{{ product.id }}" 
+                             class="gift-box-3d-target"
+                             data-title="{{ product.name }}"
+                             data-color-box="#7b1113" 
+                             data-color-ribbon="#FFD700"
+                             data-token="{{ product.token_amount or 0 }}">
+                        </div>
+                    </div>
+                    
+                    {# 하단 텍스트/버튼 영역 (받침대) #}
+                    <div class="product-info-3d">
+                        <div class="product-tagline">신규 회원 한정!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">
+                            {% if product.token_amount %}
+                                {{ product.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                            {% elif product.duration_days %}
+                                {{ product.duration_days }}일간 무료 이용 가능
+                            {% else %}
+                                가입 즉시 혜택을 받아보세요
+                            {% endif %}
+                        </p>
+                        <div class="product-price">
+                            무료<span class="product-price-unit"> (이벤트)</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            {% if product.token_amount %}
+                            <li>{{ product.token_amount }}개의 무료 토큰 지급</li>
+                            <li>금액 부담 없이 즉시 사용</li>
+                            <li>관리자 승인 없이 자동 적용</li>
+                            {% elif product.duration_days %}
+                            <li>{{ product.duration_days }}일간 무제한 사용</li>
+                            <li>모든 기능 이용 가능</li>
+                            <li>자동 갱신 없음</li>
+                            {% else %}
+                            <li>신규 회원 전용 혜택</li>
+                            <li>가입 즉시 적용</li>
+                            <li>특별 이벤트</li>
+                            {% endif %}
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}"
+                                {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
+                            선택하기
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {# [2] 일반 상품 (Regular Products) 배치 #}
+                {% if regular_products %}
                 {% for product in regular_products %}
                     {# Standard 상품 #}
                     {% if product.name|lower|replace(' ', '') == 'standard' %}
@@ -239,6 +314,7 @@
                     </div>
                     {% endif %}
                 {% endfor %}
+                {% endif %}
             </div>
         </section>
         {% endif %}
@@ -343,5 +419,78 @@
     
     {# 주문 연동 스크립트 - 기존 유지 #}
     <script src="{{ url_for('static', filename='js/payment/shop.js') }}?v={{ timestamp }}"></script>
+    
+    {# [1] 라이브러리 로드 (순서 중요!) #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    {# 캐시 방지를 위해 ?v=1 추가 #}
+    <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v=1"></script>
+    
+    {# [2] 실행 코드 #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("3D Engine Starting..."); // 디버깅용 로그
+
+            // 1. 타겟 찾기
+            const containers = document.querySelectorAll('.gift-box-3d-target');
+            console.log("Found targets:", containers.length);
+
+            // 2. 루프 실행
+            containers.forEach((container, index) => {
+                // 안전장치: 높이가 없으면 강제로 줌
+                if (container.clientHeight === 0) {
+                    container.style.height = "300px"; 
+                }
+
+                // 색상 파싱 함수
+                const parseColor = (colorStr) => {
+                    if (!colorStr) return null;
+                    // # 제거하고 16진수로 변환
+                    return Number.parseInt(colorStr.replace('#', ''), 16);
+                };
+
+                // 옵션 구성
+                const options = {
+                    boxColor: parseColor(container.dataset.colorBox) || 0x7b1113,
+                    ribbonColor: parseColor(container.dataset.colorRibbon) || 0xFFD700,
+                    texts: {
+                        icon: "🎉",
+                        title: "토큰 이벤트",
+                        subTitle: "Welcome Event",
+                        mainBenefit: container.dataset.title || "신규 혜택",
+                        description1: "60개의 무료 토큰이",
+                        description2: "즉시 지급됩니다.",
+                        smallText: "금액 부담 없이 즉시 사용\n관리자 승인 없이 자동 적용"
+                    }
+                };
+
+                // 3. 생성 및 초기화
+                try {
+                    if (window.GiftBox3D === undefined) {
+                        console.error("GiftBox3D Class not found!");
+                        return;
+                    }
+                    const box = new window.GiftBox3D(container.id, options); // ID 전달
+                    box.init();
+                    console.log("Box initialized for:", container.id);
+                    
+                    // 인스턴스를 컨테이너에 저장 (나중에 dispose 호출 시 사용)
+                    container._giftBoxInstance = box;
+                } catch (e) {
+                    console.error("Error initializing box:", e);
+                }
+            });
+        });
+        
+        // 페이지 언로드 시 메모리 해제
+        window.addEventListener('beforeunload', function() {
+            const containers = document.querySelectorAll('.gift-box-3d-target');
+            containers.forEach(container => {
+                if (container._giftBoxInstance) {
+                    container._giftBoxInstance.dispose();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
