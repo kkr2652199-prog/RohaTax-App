@@ -89,6 +89,7 @@ def get_user_by_id(user_id: int) -> Dict:
         # 가장 최근 무료 토큰 이벤트 정보 조회 (event 타입이고 price=0인 상품, expires_at이 있는 grant 기록)
         # payment_history에서 event 타입이고 price=0인 상품의 결제를 찾고,
         # 해당 결제 시점의 token_history에서 expires_at이 있는 grant 기록 찾기
+        # 삭제된 기록은 제외 (meta에 deleted=1이 있는 경우 제외)
         token_event = conn.execute(
             """
             SELECT th.created_at, th.expires_at
@@ -102,6 +103,7 @@ def get_user_by_id(user_id: int) -> Dict:
               AND p.type = 'event'
               AND p.price = 0
               AND p.token_amount > 0
+              AND (th.meta IS NULL OR th.meta NOT LIKE '%"deleted": 1%')
             ORDER BY th.created_at DESC
             LIMIT 1
             """,

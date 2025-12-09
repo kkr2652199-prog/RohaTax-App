@@ -348,3 +348,5 @@ data-tilt-max-glare="0.5"   // 최대 빛 반사 강도 (기본: 1)
 **분석 대상**: `homepage1/templates/payment/shop.html`, `static/js/payment/shop.js`, `static/css/pages/shop.css`
 **결론**: ✅ **즉시 도입 권장 - 기능 안전성 100%, 시각적 효과 300% 향상**
 
+
+

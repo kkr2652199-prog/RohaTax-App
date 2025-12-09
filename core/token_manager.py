@@ -178,6 +178,17 @@ class TokenManager:
                         ).fetchone()
                         plan_type = user_plan['plan_type'] if user_plan else 'free'
                         
+                        # 각 만료 기록별 상세 정보 수집
+                        expired_details_list = []
+                        for record in expired_records:
+                            if record['amount'] > 0:
+                                expires_at_str = record['expires_at'] if record['expires_at'] else '알 수 없음'
+                                expired_details_list.append({
+                                    'amount': record['amount'],
+                                    'expires_at': expires_at_str,
+                                    'reason': f"무료 토큰 {record['amount']}개 만료 (만료일: {expires_at_str})"
+                                })
+                        
                         activity_data = {
                             'user_id': user_id,
                             'performed_by_id': user_id,  # 시스템 자동 처리
@@ -185,10 +196,12 @@ class TokenManager:
                             'activity_type': 'TOKEN_EXPIRED',
                             'details': {
                                 'type': 'free_token_expiration',  # 무료 토큰 만료 명시
-                                'reason': '무료 토큰 만료로 인한 자동 회수',
+                                'reason': f'무료 토큰 만료로 인한 자동 회수 (총 {total_deducted}개)',
                                 'expired_count': processed_count,
                                 'total_deducted': total_deducted,
-                                'note': '유료로 구매한 토큰은 만료일이 지나도 유지됩니다'
+                                'expired_details': expired_details_list,  # 각 항목별 상세 정보
+                                'note': '유료로 구매한 토큰은 만료일이 지나도 유지됩니다',
+                                'korean_reason': f'무료 토큰 {total_deducted}개가 만료되어 자동으로 회수되었습니다. (만료된 기록: {processed_count}건)'
                             },
                             'token_change': -total_deducted,
                             'potential_cost': 0,
@@ -205,6 +218,31 @@ class TokenManager:
                         except Exception as e:
                             logger.error(f"activity_logs 기록 중 오류: {str(e)}")
                             # activity_logs 기록 실패해도 토큰 차감은 계속 진행
+                        
+                        # usage_logs에도 한글 사유와 함께 기록
+                        try:
+                            usage_meta = json.dumps({
+                                'action': 'token_expired',
+                                'reason': f'무료 토큰 만료로 인한 자동 회수',
+                                'total_deducted': total_deducted,
+                                'expired_count': processed_count,
+                                'expired_details': expired_details_list,
+                                'korean_reason': f'무료 토큰 {total_deducted}개가 만료되어 자동으로 회수되었습니다. (만료된 기록: {processed_count}건)',
+                                'balance_before': balance_before,
+                                'balance_after': balance_after
+                            }, ensure_ascii=False)
+                            
+                            conn.execute(
+                                """
+                                INSERT INTO usage_logs (user_id, action, meta, created_at)
+                                VALUES (?, ?, ?, datetime('now', 'localtime'))
+                                """,
+                                (user_id, 'token_expired', usage_meta)
+                            )
+                            logger.info(f"usage_logs에 토큰 만료 기록 추가 완료: user_id={user_id}, total_deducted={total_deducted}")
+                        except Exception as e:
+                            logger.error(f"usage_logs 기록 중 오류: {str(e)}")
+                            # usage_logs 기록 실패해도 토큰 차감은 계속 진행
                     
                     conn.commit()
                     

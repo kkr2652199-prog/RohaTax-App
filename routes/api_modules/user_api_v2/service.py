@@ -380,11 +380,32 @@ class UserService:
                 expiration_type = details.get('type', '')
                 total_deducted = details.get('total_deducted', 0)
                 expired_count = details.get('expired_count', 0)
+                korean_reason = details.get('korean_reason', '')
+                expired_details = details.get('expired_details', [])
                 
+                # 한글 사유가 있으면 우선 사용
+                if korean_reason:
+                    return korean_reason
+                
+                # 각 항목별 상세 정보가 있으면 표시
+                if expired_details and len(expired_details) > 0:
+                    detail_reasons = []
+                    for detail in expired_details[:3]:  # 최대 3개만 표시
+                        reason = detail.get('reason', '')
+                        if reason:
+                            detail_reasons.append(reason)
+                    
+                    if detail_reasons:
+                        if len(expired_details) > 3:
+                            return f"무료 토큰 {total_deducted}개 만료로 자동 회수 ({expired_count}건)\n" + "\n".join(detail_reasons) + f"\n... 외 {len(expired_details) - 3}건"
+                        else:
+                            return f"무료 토큰 {total_deducted}개 만료로 자동 회수 ({expired_count}건)\n" + "\n".join(detail_reasons)
+                
+                # 기본 메시지
                 if expiration_type == 'free_token_expiration':
-                    return f"무료 토큰 {total_deducted}개 만료로 자동 회수 ({expired_count}건)"
+                    return f"무료 토큰 {total_deducted}개 만료로 자동 회수 (만료된 기록: {expired_count}건)"
                 else:
-                    return f"토큰 {total_deducted}개 만료 ({expired_count}건)"
+                    return f"토큰 {total_deducted}개 만료 (만료된 기록: {expired_count}건)"
             
             elif activity_type == 'FILE_CONVERT':
                 filename = details.get('filename', '파일')

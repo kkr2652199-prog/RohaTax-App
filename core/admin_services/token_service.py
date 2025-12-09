@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import sqlite3
+import logging
+import json
+from datetime import datetime
 from typing import Iterable, List, Sequence, Dict, Any
 
 from core.db import get_conn_optimized as get_conn
 from core.activity_service import record_activity  # 기록관 연동 모듈 추가
+
+logger = logging.getLogger(__name__)
 
 
 class TokenServiceError(Exception):
@@ -182,6 +187,63 @@ def reset_tokens(user_id: int, admin_user_id: int) -> None:
             """,
             (user_id,),
         )
+        
+        # 2-2. 무료 토큰 로그 삭제 (token_history에서 무료 토큰 기록 삭제)
+        # 일반사용자 관리 페이지에 남아있는 무료 토큰 로그도 함께 삭제
+        # SQLite는 json_set을 지원하지 않으므로 Python에서 처리
+        # source_type='FREE'인 기록과 무료 이벤트 상품(p.price=0, p.type='event')의 기록 모두 삭제
+        free_token_records = cursor.execute(
+            """
+            SELECT th.id, th.meta
+            FROM token_history th
+            LEFT JOIN payment_history ph ON ph.user_id = th.user_id 
+                AND ABS(JULIANDAY(ph.created_at) - JULIANDAY(th.created_at)) < 0.01
+            LEFT JOIN products p ON p.id = ph.product_id
+            WHERE th.user_id = ?
+              AND th.change_type IN ('grant', 'expire')
+              AND (
+                  COALESCE(th.source_type, 'PAID') = 'FREE'
+                  OR (p.type = 'event' AND p.price = 0 AND p.token_amount > 0)
+              )
+            """,
+            (user_id,)
+        ).fetchall()
+        
+        deleted_free_token_count = 0
+        for record in free_token_records:
+            try:
+                # 기존 meta 파싱
+                if record['meta']:
+                    try:
+                        meta_dict = json.loads(record['meta'])
+                    except (json.JSONDecodeError, TypeError):
+                        meta_dict = {}
+                else:
+                    meta_dict = {}
+                
+                # 삭제 정보 추가
+                meta_dict['deleted'] = 1
+                meta_dict['deleted_reason'] = '관리자에 의한 전체 초기화'
+                meta_dict['deleted_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                # 업데이트
+                cursor.execute(
+                    """
+                    UPDATE token_history
+                    SET meta = ?
+                    WHERE id = ?
+                    """,
+                    (json.dumps(meta_dict, ensure_ascii=False), record['id'])
+                )
+                deleted_free_token_count += 1
+            except Exception as e:
+                logger.error(f"무료 토큰 로그 삭제 중 오류 (record_id={record['id']}): {str(e)}")
+                continue
+        
+        if deleted_free_token_count > 0:
+            logger.info(
+                f"무료 토큰 로그 삭제 완료: 사용자 ID {user_id}, 삭제된 기록 {deleted_free_token_count}건"
+            )
         
         # --- [수정] 새로운 'activity_logs'에 기록 ---
         # 낡은 token_history 기록 로직은 제거합니다.

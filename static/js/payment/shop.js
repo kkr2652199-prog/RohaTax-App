@@ -674,9 +674,16 @@
      */
     function initPurchaseButtons() {
         document.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('btn-purchase')) {
+            // 일반 구매 버튼과 전체 화면 구매 버튼 모두 처리
+            if (e.target && (e.target.classList.contains('btn-purchase') || e.target.classList.contains('btn-purchase-fullscreen'))) {
                 e.preventDefault();
                 openCheckoutModal(e.target);
+            }
+            // 버튼 내부 요소 클릭 시에도 처리 (아이콘, 텍스트 등)
+            const btn = e.target.closest('.btn-purchase, .btn-purchase-fullscreen');
+            if (btn && !e.target.classList.contains('btn-purchase') && !e.target.classList.contains('btn-purchase-fullscreen')) {
+                e.preventDefault();
+                openCheckoutModal(btn);
             }
         });
     }
@@ -791,6 +798,49 @@
     }
 
     /**
+     * 3D 이벤트 상품 씬 초기화 (탁자 위에 2개 상자)
+     */
+    function init3DGiftBoxes() {
+        // 이벤트 상품 3D 씬 컨테이너 찾기
+        const container = document.getElementById('event-products-3d-container');
+        if (!container) {
+            // 이벤트 상품이 없거나 컨테이너가 없으면 초기화하지 않음
+            return;
+        }
+
+        // 상품 데이터 수집
+        const productDataElements = document.querySelectorAll('.product-data');
+        const productsData = [];
+        
+        productDataElements.forEach((element) => {
+            const product = {
+                id: element.getAttribute('data-id'),
+                name: element.getAttribute('data-name') || '',
+                price: parseFloat(element.getAttribute('data-price')) || 0,
+                type: element.getAttribute('data-type') || 'event',
+                token_amount: parseInt(element.getAttribute('data-token'), 10) || 0,
+                duration_days: parseInt(element.getAttribute('data-duration'), 10) || 0,
+                // 호환성을 위해 token, duration도 포함
+                token: parseInt(element.getAttribute('data-token'), 10) || 0,
+                duration: parseInt(element.getAttribute('data-duration'), 10) || 0,
+                is_active: element.getAttribute('data-is-active') === 'true'
+            };
+            productsData.push(product);
+        });
+
+        // 3D 씬 생성 (하나의 씬에 탁자와 2개 상자)
+        if (typeof EventProducts3DScene !== 'undefined' && productsData.length > 0) {
+            try {
+                const scene = new EventProducts3DScene('event-products-3d-container', productsData);
+                // 전역에 저장 (나중에 정리용)
+                window._eventProducts3DScene = scene;
+            } catch (error) {
+                console.error('3D 이벤트 상품 씬 초기화 실패:', error);
+            }
+        }
+    }
+
+    /**
      * 초기화
      */
     function init() {
@@ -800,11 +850,14 @@
                 initPurchaseButtons();
                 initModalEvents();
                 initUserDropdown();
+                // 3D 상자 초기화 (약간의 지연을 두어 DOM이 완전히 준비되도록)
+                setTimeout(init3DGiftBoxes, 100);
             });
         } else {
             initPurchaseButtons();
             initModalEvents();
             initUserDropdown();
+            setTimeout(init3DGiftBoxes, 100);
         }
     }
 

@@ -23,6 +23,30 @@
     
     <!-- Shop Page Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}?v={{ timestamp }}">
+    
+    <!-- Luxury Dark Showroom Theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_showroom.css') }}?v={{ timestamp }}">
+    
+    <!-- 3D Card Effect Module -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_card_3d.css') }}?v={{ timestamp }}">
+    
+    <!-- Three.js 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // OrbitControls를 THREE 네임스페이스에 추가 (CDN 로드 후)
+        (function() {
+            if (typeof THREE !== 'undefined') {
+                // OrbitControls가 전역으로 로드되면 THREE에 추가
+                if (typeof OrbitControls !== 'undefined' && typeof THREE.OrbitControls === 'undefined') {
+                    THREE.OrbitControls = OrbitControls;
+                }
+            }
+        })();
+    </script>
+    
+    <!-- 3D Event Products Scene (탁자 위에 2개 상자) -->
+    <script src="{{ url_for('static', filename='js/3d/event_products_3d_scene.js') }}?v={{ timestamp }}"></script>
 </head>
 <body class="shop-page">
     <!-- 전역 헤더 -->
@@ -42,37 +66,38 @@
             <p class="shop-hero-subtitle">필요에 따라 토큰형/기간형 이벤트와 정식 요금제를 선택하세요</p>
         </div>
 
-        {# 이벤트 상품 섹션 #}
+        {# 이벤트 상품 섹션 - 탁자 위에 2개 상자 (하나의 3D 씬) #}
         {% if event_products %}
-        <section class="event-section">
+        <section class="event-section-fullscreen">
             <div class="event-section-header">
                 <h2 class="event-section-title">🎁 신규 회원 한정 혜택</h2>
                 <p class="event-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
             </div>
-            <div class="event-grid">
-                {% for product in event_products %}
-                <div class="event-card {{ 'period' if product.type == 'event_period' else '' }} {{ '' if product.is_active else 'ended' }}" 
-                     {% if product.is_active %}data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05"{% endif %}>
-                    <div class="event-badge {{ 'period' if product.type == 'event_period' else 'token' }}">
-                        {% if product.type == 'event_period' %}
-                            ⏳ 기간 이벤트
-                        {% else %}
-                            🎉 토큰 이벤트
-                        {% endif %}
+            
+            {# 하나의 3D 씬에 탁자와 2개 상자 #}
+            <div class="event-products-3d-scene">
+                {# 3D 씬 컨테이너 #}
+                <div id="event-products-3d-container" class="gift-box-3d-fullscreen"></div>
+                
+                {# 상품 정보 (숨김, 구매 기능용) #}
+                <div class="event-products-data" style="display: none;">
+                    {% for product in event_products %}
+                    <div class="product-data" 
+                         data-id="{{ product.id }}"
+                         data-name="{{ product.name }}"
+                         data-price="{{ product.price or 0 }}"
+                         data-type="{{ product.type }}"
+                         data-token="{{ product.token_amount or 0 }}"
+                         data-duration="{{ product.duration_days or 0 }}"
+                         data-is-active="{{ 'true' if product.is_active else 'false' }}">
                     </div>
-                    <h3>{{ product.name }}</h3>
-                    {% if product.type == 'event' %}
-                        <p>신규 가입 혜택 ({{ product.token_amount or 0 }}토큰)</p>
-                        <p><strong>{{ product.token_amount or 0 }}개</strong>의 무료 토큰이 즉시 지급됩니다.</p>
-                    {% else %}
-                        <p>신규 가입 혜택 ({{ product.duration_days or 0 }}일 무료)</p>
-                        <p><strong>{{ product.duration_days or 0 }}일</strong> 동안 무료 체험이 제공됩니다.</p>
-                    {% endif %}
-                    <ul class="event-feature-list">
-                        <li>금액 부담 없이 즉시 사용</li>
-                        <li>관리자 승인 없이 자동 적용</li>
-                    </ul>
-                    <button class="btn-purchase" 
+                    {% endfor %}
+                </div>
+                
+                {# 구매 버튼들 (숨김, 3D 상자 클릭 시 트리거용) #}
+                <div class="event-products-buttons" style="display: none;">
+                    {% for product in event_products %}
+                    <button class="btn-purchase-fullscreen" 
                             data-id="{{ product.id }}"
                             data-name="{{ product.name }}"
                             data-price="{{ product.price or 0 }}"
@@ -80,14 +105,9 @@
                             data-token="{{ product.token_amount or 0 }}"
                             data-duration="{{ product.duration_days or 0 }}"
                             {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
-                        {% if product.is_active %}
-                            구매하기
-                        {% else %}
-                            이벤트 종료
-                        {% endif %}
                     </button>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </section>
         {% endif %}

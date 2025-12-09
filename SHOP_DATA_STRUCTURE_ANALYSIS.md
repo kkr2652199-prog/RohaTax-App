@@ -362,3 +362,5 @@ def shop():
 **보고서 작성일:** 2024-12-19
 **분석 대상:** `homepage1/routes/payment_routes.py`, `homepage1/templates/payment/shop.html`, `homepage1/templates/admin/tabs/product_management.html`
 
+
+
