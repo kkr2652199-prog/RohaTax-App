@@ -1,4 +1,6 @@
-﻿## [2025-12-07 14:44 KST] [COMMIT: 8ea69b5] [Pre-Showroom] | fix: 헤더 디자인 최종 보정 및 상점 리모델링 준비 완료
+﻿# [2025-12-09 11:29 KST] [9f84baf] - 3D 선물 상자 프로토타입 제작 완료 (디자인/애니메이션/물리엔진 100% 구현) [homepage1 워크트리]
+
+## [2025-12-07 14:44 KST] [COMMIT: 8ea69b5] [Pre-Showroom] | fix: 헤더 디자인 최종 보정 및 상점 리모델링 준비 완료
 
 - Global Header Fix:
 
