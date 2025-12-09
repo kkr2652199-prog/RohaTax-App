@@ -1,4 +1,4 @@
-﻿## [2025-12-07 14:44 KST] [COMMIT: Pre-Showroom] | fix: 헤더 디자인 최종 보정 및 상점 리모델링 준비 완료
+﻿## [2025-12-07 14:44 KST] [COMMIT: 8ea69b5] [Pre-Showroom] | fix: 헤더 디자인 최종 보정 및 상점 리모델링 준비 완료
 
 - Global Header Fix:
 
