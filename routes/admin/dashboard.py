@@ -79,6 +79,7 @@ def admin_dashboard():
             FROM token_history th
             JOIN users admin ON th.changed_by = admin.id
             JOIN users target ON th.user_id = target.id
+            WHERE (th.meta IS NULL OR th.meta NOT LIKE '%"deleted": 1%')
             ORDER BY th.created_at DESC
             LIMIT 20
             """

@@ -7,11 +7,11 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Core Styles -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
 <!-- Admin Page Styles -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}?v={{ timestamp }}">
 {% endblock %}
 {% block content %}
     <div id="adminDashboard" class="admin-wrap">
@@ -283,32 +283,32 @@
     </script>
     
     <!-- Admin Utils JS -->
-    <script src="{{ url_for('static', filename='js/admin/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/utils.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin User Management JS -->
-    <script src="{{ url_for('static', filename='js/admin/user_management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/user_management.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin Dashboard Core JS -->
-    <script src="{{ url_for('static', filename='js/admin/dashboard_core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/dashboard_core.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin Statistics JS -->
-    <script src="{{ url_for('static', filename='js/admin/stats.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/stats.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin Token History JS -->
-    <script src="{{ url_for('static', filename='js/admin/token_history.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/token_history.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin Management JS -->
-    <script src="{{ url_for('static', filename='js/admin/admin_management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin/admin_management.js') }}?v={{ timestamp }}"></script>
     
     <!-- Admin Activity Log JS -->
     <script src="{{ url_for('static', filename='js/admin/activity_log.js') }}?v={{ timestamp }}"></script>
     
            <!-- Admin Email Settings JS -->
-           <script src="{{ url_for('static', filename='js/admin/email_settings.js') }}"></script>
+           <script src="{{ url_for('static', filename='js/admin/email_settings.js') }}?v={{ timestamp }}"></script>
            
            <!-- Admin Payment Management JS -->
-           <script src="{{ url_for('static', filename='js/admin/payment.js') }}"></script>
-           <script src="{{ url_for('static', filename='js/admin/product.js') }}?v=FINAL_FIX_02"></script>
+           <script src="{{ url_for('static', filename='js/admin/payment.js') }}?v={{ timestamp }}"></script>
+           <script src="{{ url_for('static', filename='js/admin/product.js') }}?v={{ timestamp }}"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

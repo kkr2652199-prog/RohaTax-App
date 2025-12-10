@@ -72,7 +72,20 @@ echo ================================
 
 REM Start server
 set PORT=5000
+echo.
+echo ================================
+echo Starting Flask server on port 5000...
+echo ================================
 "%PYTHON_PATH%" app.py
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ==============================================
+    echo ERROR: Server failed to start!
+    echo Error Code: %ERRORLEVEL%
+    echo ==============================================
+    echo Please check the error messages above.
+    pause
+)
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

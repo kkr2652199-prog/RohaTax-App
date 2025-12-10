@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block head_extra %}
 <!-- Core Styles -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
 <!-- Conversion Page Styles -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/conversion.css') }}">
-<script src="{{ url_for('static', filename='js/components/token_alert_modal.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/conversion.css') }}?v={{ timestamp }}">
+<script src="{{ url_for('static', filename='js/components/token_alert_modal.js') }}?v={{ timestamp }}"></script>
 <style>
     .guest-overlay {
         position: fixed;
@@ -495,7 +495,7 @@
   sessionStorage.removeItem('vipToastSeen');
   sessionStorage.removeItem('vipNoticeSeen');
 </script>
-<script src="{{ url_for('static', filename='js/conversion.js') }}?v=20250112"></script>
+<script src="{{ url_for('static', filename='js/conversion.js') }}?v={{ timestamp }}"></script>
 {% endblock %}
 
 <!-- VIP 팝업 (전체 페이지 중앙 배치) -->

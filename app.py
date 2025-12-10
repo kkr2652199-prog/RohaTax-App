@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 import os
 
 # .env 파일 로드 (프로젝트 루트에서)
-load_dotenv()
+# override=True: 환경 변수가 .env 파일보다 우선순위를 갖도록 함
+load_dotenv(override=True)
 
 from flask import Flask, request, jsonify, render_template, session
 from werkzeug.exceptions import HTTPException
@@ -336,6 +337,18 @@ from routes.playground_routes.kweon21_routes import kweon21_bp
 if 'kweon21' not in app.blueprints:
     app.register_blueprint(kweon21_bp)
     print(f"[kweon21] AI 블로그 스튜디오 가동 완료! (URL Prefix: {kweon21_bp.url_prefix})")
+
+# Studio API (보안 프록시) 등록
+from routes.playground_routes.studio_api import studio_api_bp
+if 'studio_api' not in app.blueprints:
+    app.register_blueprint(studio_api_bp)
+    print(f"[studio_api] AI 블로그 스튜디오 보안 프록시 API 가동 완료! (URL Prefix: {studio_api_bp.url_prefix})")
+
+# Playground 대시보드 등록
+from routes.playground_routes import playground_bp
+if 'playground' not in app.blueprints:
+    app.register_blueprint(playground_bp)
+    print(f"[playground] 블로그 연구소 대시보드 가동 완료! (URL Prefix: {playground_bp.url_prefix})")
 
 
 @app.route('/')

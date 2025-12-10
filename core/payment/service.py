@@ -270,18 +270,24 @@ class PaymentService:
                             'tag': '(결제 연동)'
                         }, ensure_ascii=False)
                         
+                        # 무료/유료 토큰 구분
+                        # 이벤트 상품(type='event')이고 가격이 0원인 경우 무료 토큰
+                        # 그 외의 경우 유료 토큰
+                        source_type = 'FREE' if (product_type == 'event' and product_price == 0) else 'PAID'
+                        
                         conn.execute(
                             """
                             INSERT INTO token_history 
-                            (user_id, changed_by, amount, change_type, meta, expires_at, created_at)
-                            VALUES (?, ?, ?, 'grant', ?, ?, datetime('now', 'localtime'))
+                            (user_id, changed_by, amount, change_type, meta, expires_at, source_type, created_at)
+                            VALUES (?, ?, ?, 'grant', ?, ?, ?, datetime('now', 'localtime'))
                             """,
                             (
                                 user_id,
                                 admin_user_id,
                                 total_token_amount,
                                 meta,
-                                expires_at
+                                expires_at,
+                                source_type
                             )
                         )
                     
@@ -768,11 +774,13 @@ class PaymentService:
                         'tag': '(결제 취소/환불)'
                     }, ensure_ascii=False)
                     
+                    # 환불은 원래 토큰의 source_type을 유지 (기본값 'PAID')
+                    # 원래 토큰이 무료였으면 무료로, 유료였으면 유료로 회수
                     conn.execute(
                         """
                         INSERT INTO token_history 
-                        (user_id, changed_by, amount, change_type, meta, created_at)
-                        VALUES (?, ?, ?, 'REFUND', ?, datetime('now', 'localtime'))
+                        (user_id, changed_by, amount, change_type, meta, source_type, created_at)
+                        VALUES (?, ?, ?, 'REFUND', ?, 'PAID', datetime('now', 'localtime'))
                         """,
                         (
                             user_id,

@@ -111,6 +111,42 @@ def reset_tokens_via_payload():
     return success('Tokens fully reset (balance 0, used 0)')
 
 
+@admin_bp.route('/admin/api/users/<int:user_id>/tokens/reset-free-only', methods=['POST'])
+def reset_free_tokens_only_for_user(user_id: int):
+    """특정 사용자의 무료 토큰만 초기화한다 (유료 토큰은 유지)."""
+    admin_user_id, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    try:
+        token_service.reset_free_tokens_only(user_id, admin_user_id)
+    except TokenServiceError as exc:
+        return _handle_token_service_error(exc)
+
+    return success('Free tokens reset (paid tokens preserved)')
+
+
+@admin_bp.route('/admin/api/reset-free-tokens', methods=['POST'])
+def reset_free_tokens_via_payload():
+    """사용자 ID를 payload로 받아 무료 토큰만 초기화한다."""
+    admin_user_id, guard_response = ensure_admin_for_json()
+    if guard_response is not None:
+        return guard_response
+
+    data = request.get_json(silent=True) or {}
+    user_id = data.get('user_id')
+    if not user_id:
+        return error('User ID is required', status=400)
+
+    admin_user_id = current_user_id()
+    try:
+        token_service.reset_free_tokens_only(user_id, admin_user_id)
+    except TokenServiceError as exc:
+        return _handle_token_service_error(exc)
+
+    return success('Free tokens reset (paid tokens preserved)')
+
+
 def _handle_token_service_error(exc: TokenServiceError):
     message = str(exc)
     lowered = message.lower()
