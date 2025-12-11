@@ -1,7 +1,7 @@
-﻿# [2025-12-11 14:45 KST] [커밋 후 생성] - 3D 쇼룸 관련 작업 완료 (ProductFactory, Showroom, shop.html 및 라우트 수정)
+﻿# [2025-12-11 14:45 KST] [71f7c49] - 3D 쇼룸 관련 작업 완료 (ProductFactory, Showroom, shop.html 및 라우트 수정)
 
 *   **한국 시간/날짜:** 2025년 12월 11일 14:45 (KST)
-*   **해시 번호:** [커밋 후 생성될 실제 해시 번호 기입]
+*   **해시 번호:** 71f7c49
 *   **작업 내용:** 3D 쇼룸 관련 파일 수정 완료. ProductFactory.js, Showroom.js, shop.html 및 payment_routes.py, check_products.py 수정.
 *   **수정 파일:** check_products.py, routes/payment_routes.py, static/js/3d/ProductFactory.js, static/js/3d/Showroom.js, templates/payment/shop.html
 
