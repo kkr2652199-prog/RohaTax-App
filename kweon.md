@@ -1,4 +1,36 @@
-﻿# [2025-12-11 19:06 KST] [7018b1b] - WebGL 텍스처 유닛 초과 문제 임시 해결 (JewelryDisplay 주석 처리)
+﻿# [2025-12-12 09:55 KST] [a547e88] - 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 09:55 (KST)
+*   **해시 번호:** a547e88
+*   **작업 내용:** 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료. 파일 크기 분석 결과 5개 파일이 500줄 규칙 위반 확인 (Showroom.js 1,400줄, ShowroomBuilder.js 1,221줄, ProductFactory.js 700줄, GiftBox3D.js 1,019줄, event_products_3d_scene.js 596줄). 리팩토링 우선순위 제안 및 점검 보고서 작성. 기능적으로는 정상 작동하나 코드 품질 개선 여지 있음.
+*   **수정 파일:** SHOWROOM_AUDIT_REPORT.md (신규)
+*   **점검 결과:**
+  - Showroom.js: 책임 과다, 사용하지 않는 코드(deprecated) 존재
+  - ShowroomBuilder.js: 파일 크기 과다, 복잡한 메서드
+  - ProductFactory.js: 기능적으로 문제 없음 (파일 크기만 초과)
+  - GiftBox3D.js: 파일 크기 과다, 컨페티 애니메이션 분리 고려
+*   **리팩토링 우선순위:**
+  1. Showroom.js 정리 (사용하지 않는 코드 제거, 책임 분리)
+  2. ShowroomBuilder.js 모듈화 (연동 모듈로 확장)
+  3. GiftBox3D.js 모듈화 (컨페티 애니메이션 분리)
+
+# [2025-12-11 최신] [9e63986] - 대리석 바닥 텍스처 복원 및 본진과 동일한 색상 적용 (WebGL 최적화 유지)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 (KST)
+*   **해시 번호:** 9e63986
+*   **작업 내용:** 대리석 바닥 텍스처 복원 및 본진과 동일한 색상 적용. WebGL 텍스처 유닛 최적화를 위해 Static 공유 패턴을 유지하면서 대리석 텍스처를 복원. 바닥 Material 색상을 본진과 동일하게 `0x111111` (검은색)으로 변경하여 화이트 톤 문제 해결. `createMarbleTexture()` 메서드를 Static 메서드로 변경하여 텍스처 유닛 1개만 사용하도록 최적화.
+*   **수정 파일:** static/js/3d/ShowroomBuilder.js, static/js/3d/GiftBox3D.js, kweon.md
+*   **변경 사항:**
+  - `ShowroomBuilder.sharedFloorTexture` Static 속성 추가 (텍스처 공유)
+  - `createMarbleTexture()` 메서드를 Static 메서드로 변경
+  - 바닥 Material 색상: `0xFFFFFF` → `0x111111` (본진과 동일)
+  - WebGL 최적화 유지: Static Material 공유 패턴 유지
+*   **결과:**
+  - 대리석 바닥 텍스처 정상 복원
+  - 본진과 동일한 검은색 톤 적용
+  - 텍스처 유닛 1개만 사용하여 최적화 유지
+
+# [2025-12-11 19:06 KST] [7018b1b] - WebGL 텍스처 유닛 초과 문제 임시 해결 (JewelryDisplay 주석 처리)
 
 *   **한국 시간/날짜:** 2025년 12월 11일 19:06 (KST)
 *   **해시 번호:** 7018b1b

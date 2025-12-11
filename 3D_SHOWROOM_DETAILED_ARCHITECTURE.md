@@ -475,3 +475,4 @@ const texture = new THREE.CanvasTexture(canvas);
 **작성자**: AI Assistant  
 **검증 상태**: ✅ 코드베이스 실제 파일 기반 (추측 정보 없음)
 
+
