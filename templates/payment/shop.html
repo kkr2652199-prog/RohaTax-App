@@ -134,7 +134,7 @@
             <div class="product-grid">
                 {# [1] 무료 상품 (Event Products) 먼저 배치 #}
                 {% if event_products %}
-                    {% for product in event_products %}
+                {% for product in event_products %}
                 <div class="product-card event special-3d-card" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
                     {# 상단 아이콘 영역 (3D 상자 적용) #}
                     <div class="icon-wrapper">
@@ -162,7 +162,7 @@
                         </p>
                         <div class="product-price">
                             무료<span class="product-price-unit"> (이벤트)</span>
-                </div>
+                        </div>
                         <ul class="product-feature-list">
                             {% if product.token_amount %}
                             <li>{{ product.token_amount }}개의 무료 토큰 지급</li>
@@ -179,22 +179,22 @@
                             {% endif %}
                         </ul>
                         <button class="btn-purchase" 
-                            data-id="{{ product.id }}"
-                            data-name="{{ product.name }}"
-                            data-price="{{ product.price or 0 }}"
-                            data-type="{{ product.type }}"
-                            data-token="{{ product.token_amount or 0 }}"
-                            data-duration="{{ product.duration_days or 0 }}"
-                            {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}"
+                                {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
                             선택하기
-                    </button>
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
-        {% endif %}
+                {% endif %}
 
                 {# [2] 일반 상품 (Regular Products) 배치 #}
-        {% if regular_products %}
+                {% if regular_products %}
                 {% for product in regular_products %}
                     {# Standard 상품 #}
                     {% if product.name|lower|replace(' ', '') == 'standard' %}

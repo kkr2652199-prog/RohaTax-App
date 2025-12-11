@@ -24,58 +24,58 @@ def _ensure_free_trial_column(cursor):
 # 중복 라우트 방지를 위해 이 함수는 제거됨
 
 def _build_shop_context():
-        with get_conn() as conn:
-            conn.row_factory = sqlite3.Row
-            products = conn.execute(
-                """
-                SELECT id, name, description, price, token_amount, duration_days, 
-                       type, vat_included, is_active
-                FROM products
-                ORDER BY 
-                    CASE 
-                        WHEN type IN ('event', 'event_period') THEN 0
-                        ELSE 1
-                    END,
-                    id
-                """
-            ).fetchall()
-            
-            products_list = [dict(row) for row in products]
-            
-            event_products = [
-                p for p in products_list
-                if p.get('type') in ['event', 'event_period']
-            ]
-            regular_products = [
-                p for p in products_list
-                if p.get('type') not in ['event', 'event_period']
-                and (p.get('is_active') or 0) == 1
-            ]
-            
-            standard_product = next(
-                (p for p in products_list if p.get('name', '').strip().lower() == 'standard'), 
-                None
-            )
-            standard_price = standard_product.get('price', 500) if standard_product else 500
-            
-            premium_product = next(
-                (p for p in products_list if p.get('name', '').strip().lower() == 'premium'), 
-                None
-            )
-            discount_rate = 0
-            
-            if premium_product and standard_price > 0:
-                premium_token_amount = premium_product.get('token_amount', 0)
-                base_total = standard_price * premium_token_amount
-                if base_total > 0:
-                    premium_price = premium_product.get('price', 0)
-                    discount_rate = int(((base_total - premium_price) / base_total) * 100)
-                    discount_rate = max(0, discount_rate)
-            
-            premium_per_token_price = 0
-            if premium_product and premium_product.get('token_amount', 0) > 0:
-                premium_per_token_price = int(premium_product.get('price', 0) / premium_product.get('token_amount', 1))
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        products = conn.execute(
+            """
+            SELECT id, name, description, price, token_amount, duration_days, 
+                   type, vat_included, is_active
+            FROM products
+            ORDER BY 
+                CASE 
+                    WHEN type IN ('event', 'event_period') THEN 0
+                    ELSE 1
+                END,
+                id
+            """
+        ).fetchall()
+
+        products_list = [dict(row) for row in products]
         
+        event_products = [
+            p for p in products_list
+            if p.get('type') in ['event', 'event_period']
+        ]
+        regular_products = [
+            p for p in products_list
+            if p.get('type') not in ['event', 'event_period']
+            and (p.get('is_active') or 0) == 1
+        ]
+
+        standard_product = next(
+            (p for p in products_list if p.get('name', '').strip().lower() == 'standard'), 
+            None
+        )
+        standard_price = standard_product.get('price', 500) if standard_product else 500
+
+        premium_product = next(
+            (p for p in products_list if p.get('name', '').strip().lower() == 'premium'), 
+            None
+        )
+        discount_rate = 0
+
+        if premium_product and standard_price > 0:
+            premium_token_amount = premium_product.get('token_amount', 0)
+            base_total = standard_price * premium_token_amount
+            if base_total > 0:
+                premium_price = premium_product.get('price', 0)
+                discount_rate = int(((base_total - premium_price) / base_total) * 100)
+                discount_rate = max(0, discount_rate)
+
+        premium_per_token_price = 0
+        if premium_product and premium_product.get('token_amount', 0) > 0:
+            premium_per_token_price = int(premium_product.get('price', 0) / premium_product.get('token_amount', 1))
+
         user_info = {
             'user_id': session.get('user_id'),
             'username': session.get('username'),

@@ -111,7 +111,8 @@ class Showroom {
     this.wallLimitX = roomData.wallLimitX;
     this.wallLimitZ = roomData.wallLimitZ;
     
-    this.builder.createChandelier(); // 샹들리에 설치
+    // 샹들리에 삭제 (Commander 지시)
+    // this.builder.createChandelier();
 
     // 진열대 위치 정의 (U자형 배치용)
     this.pedestalPositions = [
@@ -143,19 +144,35 @@ class Showroom {
   }
 
   addLights() {
-    // 블랙 & 화이트 모던 라운지 - 화사한 조명
-    // 주변광 증가 (밝은 분위기)
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    // 블랙 이클립스 천장 - 틈새에서 빛이 쏟아지는 효과
+    // 블랙 패널이 빛을 가리므로 AmbientLight를 미세하게 조절하여 천장 테두리에서 빛이 쏟아지는 느낌 연출
+    const ambient = new THREE.AmbientLight(0xffffff, 0.75); // 0.7 -> 0.75 (미세 조정)
     this.scene.add(ambient);
 
-    // 천장 중앙 조명 (약한 PointLight) - 초소형 룸에 맞게
-    const ceilingLight = new THREE.PointLight(0xFFE4B5, 0.8, 20);
-    ceilingLight.position.set(0, 13, 0); // 낮아진 천장에 맞게 (15/2 - 2 = 5.5, 하지만 중앙이므로 13)
+    // 면조명 바로 아래에 넓은 범위의 PointLight 설치 (면조명 효과 강화)
+    // 블랙 패널 틈새에서 나오는 빛과 함께 사용
+    const areaLight1 = new THREE.PointLight(0xffffff, 1.8, 30);
+    areaLight1.position.set(-8, 15.1, -8);
+    this.scene.add(areaLight1);
+
+    const areaLight2 = new THREE.PointLight(0xffffff, 1.8, 30);
+    areaLight2.position.set(8, 15.1, -8);
+    this.scene.add(areaLight2);
+
+    const areaLight3 = new THREE.PointLight(0xffffff, 1.8, 30);
+    areaLight3.position.set(-8, 15.1, 8);
+    this.scene.add(areaLight3);
+
+    const areaLight4 = new THREE.PointLight(0xffffff, 1.8, 30);
+    areaLight4.position.set(8, 15.1, 8);
+    this.scene.add(areaLight4);
+
+    // 중앙 보조 조명 (약한 PointLight) - 면조명과 함께 사용
+    const ceilingLight = new THREE.PointLight(0xffffff, 0.6, 25);
+    ceilingLight.position.set(0, 15.1, 0);
     ceilingLight.castShadow = true;
     ceilingLight.shadow.mapSize.set(1024, 1024);
     this.scene.add(ceilingLight);
-    
-    // 보조 조명 제거 (SpotLight에 집중)
   }
   
   addProductSpotlight(position, color) {
@@ -506,61 +523,7 @@ class Showroom {
     ];
   }
 
-  createChandelier() {
-    // 모던 링 스타일 샹들리에 (블랙 & 화이트 모던 라운지)
-    const chandelierGroup = new THREE.Group();
-    
-    // 발광 재질 (스스로 강력하게 빛남)
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0xFFFFFF,
-      emissive: 0xFFFFFF,
-      emissiveIntensity: 2.0
-    });
-    
-    // 고리 3개 (크기가 다른 Torus)
-    const ring1 = new THREE.Mesh(
-      new THREE.TorusGeometry(3.0, 0.15, 16, 100),
-      ringMat
-    );
-    ring1.position.y = 0;
-    ring1.rotation.x = Math.PI / 2; // 수평으로 배치
-    chandelierGroup.add(ring1);
-    
-    const ring2 = new THREE.Mesh(
-      new THREE.TorusGeometry(2.0, 0.12, 16, 100),
-      ringMat
-    );
-    ring2.position.y = -0.3; // Y축으로 살짝 엇갈림
-    ring2.rotation.x = Math.PI / 2;
-    ring2.rotation.z = Math.PI / 6; // 각도 차이
-    chandelierGroup.add(ring2);
-    
-    const ring3 = new THREE.Mesh(
-      new THREE.TorusGeometry(1.0, 0.1, 16, 100),
-      ringMat
-    );
-    ring3.position.y = -0.6; // Y축으로 더 엇갈림
-    ring3.rotation.x = Math.PI / 2;
-    ring3.rotation.z = -Math.PI / 6; // 반대 각도
-    chandelierGroup.add(ring3);
-    
-    // 천장 중앙에 매달기 (방 높이 15, 천장 Y = 15)
-    chandelierGroup.position.set(0, 14.5, 0); // 천장에서 약 0.5 아래에 매달림
-    
-    // 실제 광원 (PointLight) - 방 전체를 밝히는 역할
-    const chandelierLight = new THREE.PointLight(0xFFFFFF, 2.0, 30);
-    chandelierLight.position.set(0, 14.5, 0);
-    chandelierLight.castShadow = true;
-    chandelierLight.shadow.mapSize.set(1024, 1024);
-    this.scene.add(chandelierLight);
-    
-    this.scene.add(chandelierGroup);
-    
-    // 애니메이션을 위한 참조 저장
-    this.chandelierRings = { ring1, ring2, ring3 };
-    
-    console.log("✅ [Showroom] 샹들리에 설치 완료");
-  }
+  // createChandelier() 메서드 삭제됨 (Commander 지시)
 
   layoutProducts() {
     const count = this.products.length;
@@ -1181,9 +1144,7 @@ class Showroom {
     this.camera.position.y = this.eyeLevel;
 
     // 연동 모듈 애니메이션 업데이트
-    if (this.builder) {
-      this.builder.updateChandelierAnimation();
-    }
+    // 샹들리에 애니메이션 삭제 (Commander 지시)
     if (this.factory) {
       this.factory.updateProductAnimations();
     }
@@ -1238,21 +1199,16 @@ class Showroom {
       }
     });
 
-    // 샹들리에 고리 회전 (각각 다른 각도로 천천히)
-    if (this.chandelierRings) {
-      if (this.chandelierRings.ring1) {
-        this.chandelierRings.ring1.rotation.y += 0.003; // 천천히 회전
-        this.chandelierRings.ring1.rotation.z += 0.001;
+    // 샹들리에 애니메이션 삭제됨 (Commander 지시)
+
+    // [Arc Reactor 애니메이션] 중앙 조명 발광 코어 회전 및 빛의 기둥 펄스
+    this.scene.traverse((obj) => {
+      // 발광 코어 링 회전 (서로 반대 방향)
+      if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
+        obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
       }
-      if (this.chandelierRings.ring2) {
-        this.chandelierRings.ring2.rotation.y += 0.004; // 다른 속도
-        this.chandelierRings.ring2.rotation.x += 0.002;
-      }
-      if (this.chandelierRings.ring3) {
-        this.chandelierRings.ring3.rotation.y += 0.005; // 더 빠른 속도
-        this.chandelierRings.ring3.rotation.x += 0.001;
-      }
-    }
+      
+    });
 
     // 렌더링
     this.renderer.render(this.scene, this.camera);
