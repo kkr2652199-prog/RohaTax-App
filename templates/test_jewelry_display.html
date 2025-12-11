@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JewelryDisplay 디자인 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 100;
+            min-width: 300px;
+        }
+        
+        .controls h2 {
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .control-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #2a2a2a;
+            color: #fff;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid #FFD700;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="controls">
+        <h2>🎨 JewelryDisplay 디자인 테스트</h2>
+        
+        <div class="control-group">
+            <label>Width (가로):</label>
+            <input type="number" id="width" value="2.5" step="0.1" min="0.5" max="5">
+        </div>
+        
+        <div class="control-group">
+            <label>Height (높이):</label>
+            <input type="number" id="height" value="1.8" step="0.1" min="0.5" max="5">
+        </div>
+        
+        <div class="control-group">
+            <label>Depth (깊이):</label>
+            <input type="number" id="depth" value="2" step="0.1" min="0.5" max="5">
+        </div>
+        
+        <button id="update-btn" style="width: 100%; padding: 10px; background: #FFD700; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;">
+            🔄 디자인 업데이트
+        </button>
+        
+        <div class="info">
+            <strong>💡 사용법:</strong><br>
+            1. 크기 값을 수정하고 "디자인 업데이트" 버튼 클릭<br>
+            2. 3D 뷰에서 실시간으로 확인<br>
+            3. 마음에 들면 Showroom.js에 배치만 추가
+        </div>
+    </div>
+
+    <!-- Three.js 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- JewelryDisplay 클래스 -->
+    <script src="{{ url_for('static', filename='js/3d/JewelryDisplay.js') }}?v={{ timestamp }}"></script>
+    
+    <script>
+        let scene, camera, renderer, display;
+        
+        function init() {
+            // 씬 생성
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            
+            // 카메라 설정
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 3, 5);
+            camera.lookAt(0, 1, 0);
+            
+            // 렌더러 설정
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // 조명 추가
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // 그리드 헬퍼 (바닥 표시)
+            const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+            scene.add(gridHelper);
+            
+            // 초기 진열대 생성
+            updateDisplay();
+            
+            // 마우스 컨트롤 (간단한 궤도 컨트롤)
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+            });
+            
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * 0.01);
+                    
+                    const verticalAxis = new THREE.Vector3(1, 0, 0);
+                    camera.position.applyAxisAngle(verticalAxis, deltaY * 0.01);
+                    
+                    camera.lookAt(0, 1, 0);
+                }
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            renderer.domElement.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // 업데이트 버튼 이벤트
+            document.getElementById('update-btn').addEventListener('click', updateDisplay);
+            
+            // 애니메이션 루프
+            animate();
+        }
+        
+        function updateDisplay() {
+            // 기존 진열대 제거
+            if (display && display.group) {
+                scene.remove(display.group);
+                display.remove();
+            }
+            
+            // 새로운 크기로 진열대 생성
+            const width = parseFloat(document.getElementById('width').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const depth = parseFloat(document.getElementById('depth').value);
+            
+            if (typeof window.JewelryDisplay !== 'undefined') {
+                display = new window.JewelryDisplay(
+                    scene,
+                    { x: 0, y: 0, z: 0 },
+                    { width, height, depth }
+                );
+                display.create();
+                console.log(`✅ [테스트] 진열대 생성: ${width} × ${height} × ${depth}`);
+            } else {
+                console.error('❌ [테스트] JewelryDisplay 클래스를 찾을 수 없습니다!');
+            }
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
+        // 윈도우 리사이즈
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 초기화
+        init();
+    </script>
+</body>
+</html>
+

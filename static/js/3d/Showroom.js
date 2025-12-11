@@ -137,6 +137,10 @@ class Showroom {
     this.clock = new THREE.Clock();
 
     this.layoutProducts();
+    
+    // 테스트: 보석상 스타일 유리 진열대 추가
+    this.addTestJewelryDisplay();
+    
     this.setupEvents();
     this.onResize();
     window.addEventListener("resize", () => this.onResize());
@@ -624,6 +628,180 @@ class Showroom {
     }
 
     console.log(`✅ [Showroom] 총 ${this.meshes.length}개 상품 배치 완료`);
+  }
+
+  /**
+   * 테스트: 보석상 스타일 유리 진열대 추가
+   */
+  /**
+   * 쇼룸에 진열대 배치 (배치만 담당 - 디자인은 JewelryDisplay.js에서)
+   * 
+   * 💡 아키텍처 원칙:
+   * - 쇼룸은 "진열만 하는 공간" (가구 생성/디자인 X)
+   * - 가구 디자인은 별도 테스트 파일(/test/jewelry-display)에서 작업
+   * - 워크플로우: 테스트 파일에서 디자인 → 확인 → 완성되면 쇼룸에 배치만 추가
+   */
+  addTestJewelryDisplay() {
+    console.log("💎 [Showroom] 진열대 배치 시작 (배치만 담당)...");
+    
+    if (typeof window.JewelryDisplay === "undefined") {
+      console.error("❌ [Showroom] JewelryDisplay 클래스를 찾을 수 없습니다!");
+      console.error("   - JewelryDisplay.js 파일이 로드되었는지 확인하세요.");
+      console.error("   - 디자인 테스트: /test/jewelry-display 페이지에서 확인하세요.");
+      return;
+    }
+
+    if (typeof THREE === "undefined") {
+      console.error("❌ [Showroom] THREE.js가 로드되지 않았습니다!");
+      return;
+    }
+
+    // 진열대 크기 (JewelryDisplay.js에서 정의된 디자인 사용)
+    const displaySize = { width: 2.5, height: 1.8, depth: 2 };
+    
+    // 방 크기 고려한 간격 계산 (벽 안쪽에 안전하게 배치)
+    const safeLimit = 14.0; // 안전한 최대 위치 (벽 안쪽 1m 여유)
+    const displayHalfWidth = displaySize.width / 2; // 1.25m
+    const maxPosition = safeLimit - displayHalfWidth; // 14.0 - 1.25 = 12.75
+    
+    // 5개를 일정한 간격으로 배치: 중앙 기준 좌우 대칭
+    const spacing = (maxPosition * 2) / 4; // 약 6.375m
+    
+    // 5개 진열대 배치 (배치만 담당)
+    const positions = [
+      { x: -spacing * 2, y: 0, z: 5, name: "좌측 끝" },
+      { x: -spacing, y: 0, z: 5, name: "좌측 중간" },
+      { x: 0, y: 0, z: 5, name: "중앙" },
+      { x: spacing, y: 0, z: 5, name: "우측 중간" },
+      { x: spacing * 2, y: 0, z: 5, name: "우측 끝" }
+    ];
+    
+    positions.forEach((pos, index) => {
+      try {
+        const display = new window.JewelryDisplay(
+          this.scene,
+          { x: pos.x, y: pos.y, z: pos.z },
+          displaySize
+        );
+        display.create();
+        console.log(`   ✅ 진열대 ${index + 1} (${pos.name}) 배치 완료: x=${pos.x.toFixed(2)}`);
+      } catch (error) {
+        console.error(`   ❌ 진열대 ${index + 1} (${pos.name}) 배치 실패:`, error);
+      }
+    });
+
+    console.log("✅ [Showroom] 진열대 배치 완료 (총 5개)");
+  }
+
+  /**
+   * ⚠️ 사용하지 않음 - 테스트 파일에서 디자인 확인 후 JewelryDisplay 클래스 사용
+   * 
+   * 이 메서드는 더 이상 사용하지 않습니다.
+   * 디자인은 /test/jewelry-display 페이지에서 테스트하고,
+   * 완성되면 JewelryDisplay 클래스를 사용하여 쇼룸에 배치만 합니다.
+   * 
+   * @deprecated 테스트 파일(/test/jewelry-display)에서 디자인 확인 후 JewelryDisplay 클래스 사용
+   */
+  createSimpleJewelryDisplay(x, y, z, width, height, depth) {
+    console.warn("⚠️ [Showroom] createSimpleJewelryDisplay()는 더 이상 사용하지 않습니다.");
+    console.warn("   - 디자인 테스트: /test/jewelry-display 페이지에서 확인하세요.");
+    console.warn("   - JewelryDisplay 클래스를 사용하여 배치하세요.");
+    return;
+    const group = new THREE.Group();
+    
+    // 골드 프레임 재질
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: 0xFFD700,
+      metalness: 1.0,
+      roughness: 0.1,
+      emissive: 0x332200,
+      emissiveIntensity: 0.2
+    });
+    
+    // 유리 재질
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5,
+      transmission: 0.8,
+      ior: 1.5,
+      thickness: 0.6,
+      roughness: 0.1,
+      metalness: 0.0
+    });
+    
+    const frameThickness = 0.02; // 2cm 얇은 프레임 (JewelryDisplay와 동일)
+    
+    // 4개 모서리 기둥 (둥근 기둥 - CylinderGeometry 사용)
+    const cornerRadius = frameThickness / 2; // 기둥 반지름 = 프레임 두께의 절반
+    const radialSegments = 16; // 원통의 세그먼트 수 (부드러운 곡면)
+    const cornerGeo = new THREE.CylinderGeometry(cornerRadius, cornerRadius, height, radialSegments);
+    
+    const corners = [
+      [-width/2, height/2, -depth/2],
+      [width/2, height/2, -depth/2],
+      [-width/2, height/2, depth/2],
+      [width/2, height/2, depth/2]
+    ];
+    
+    corners.forEach(pos => {
+      const corner = new THREE.Mesh(cornerGeo, goldMat);
+      corner.position.set(pos[0], pos[1], pos[2]);
+      group.add(corner);
+    });
+    
+    // 상단/하단 프레임
+    const topFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(width, frameThickness, depth),
+      goldMat
+    );
+    topFrame.position.set(0, height, 0);
+    group.add(topFrame);
+    
+    const bottomFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(width, frameThickness, depth),
+      goldMat
+    );
+    bottomFrame.position.set(0, 0, 0);
+    group.add(bottomFrame);
+    
+    // 유리 상자 (타원형 - Ellipsoid Geometry)
+    const glassWidth = width - frameThickness * 2;  // 프레임 두께 제외
+    const glassHeight = height - frameThickness * 2; // 프레임 두께 제외
+    const glassDepth = depth - frameThickness * 2;   // 프레임 두께 제외
+    
+    // 구 Geometry 생성 (반지름 1로 생성 후 scale로 타원체로 변형)
+    const segments = 32; // 타원체의 세그먼트 수 (부드러운 곡면)
+    const glassGeo = new THREE.SphereGeometry(1, segments, segments); // 반지름 1로 생성
+    
+    const glass = new THREE.Mesh(glassGeo, glassMat);
+    
+    // 타원체로 변형: 각 축에 대해 다른 scale 적용
+    // 반지름 1인 구를 각 축의 절반 크기로 scale
+    glass.scale.set(
+      glassWidth / 2,   // X축 scale (width 방향)
+      glassHeight / 2,  // Y축 scale (height 방향)
+      glassDepth / 2    // Z축 scale (depth 방향)
+    );
+    
+    glass.position.set(0, height/2, 0);
+    glass.castShadow = false;
+    glass.receiveShadow = false;
+    group.add(glass);
+    
+    // 내부 조명
+    const light1 = new THREE.PointLight(0xFFF0E0, 2.0, 5);
+    light1.position.set(0, height - 0.1, 0);
+    group.add(light1);
+    
+    const light2 = new THREE.PointLight(0xFFF0E0, 1.5, 4);
+    light2.position.set(0, 0.1, 0);
+    group.add(light2);
+    
+    group.position.set(x, y, z);
+    this.scene.add(group);
+    
+    console.log(`✅ [Showroom] 간단한 진열대 생성: 위치 (${x}, ${y}, ${z})`);
   }
 
   createEventProduct(product, position) {

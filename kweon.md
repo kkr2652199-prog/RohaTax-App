@@ -1,4 +1,11 @@
-﻿# [2025-12-11 14:50 KST] [커밋 후 생성] - 3D 쇼룸 분석 문서 및 임시 파일 추가
+﻿# [2025-12-11 16:19 KST] [edcd455] - 3D 쇼룸 리팩토링 계획 수립 및 작업장 구축 계획서 작성
+
+*   **한국 시간/날짜:** 2025년 12월 11일 16:19 (KST)
+*   **해시 번호:** edcd455
+*   **작업 내용:** 3D 쇼룸 리팩토링 및 작업장 구축 계획 수립. ProductFactory.js 내부의 3가지 유료 상품(Coin, Cube, Crown)을 독립 클래스로 분리하는 계획 수립. 새로운 작업장 페이지(furniture_workbench.html) 구축 계획 작성. UI/UX 비침해 보증 분석 완료 (모든 코드는 순수 시각적 요소만 담당, 실제 결제/토큰 로직 없음 확인).
+*   **수정 파일:** REFACTORING_PLAN.md (신규), static/js/3d/Showroom.js, templates/payment/showroom.html, static/js/3d/JewelryDisplay.js (신규), templates/test_jewelry_display.html (신규)
+
+# [2025-12-11 14:50 KST] [445f2dc] - 3D 쇼룸 분석 문서 및 임시 파일 추가
 
 *   **한국 시간/날짜:** 2025년 12월 11일 14:50 (KST)
 *   **해시 번호:** 445f2dc
