@@ -1,4 +1,20 @@
-﻿# [2025-12-11 16:19 KST] [edcd455] - 3D 쇼룸 리팩토링 계획 수립 및 작업장 구축 계획서 작성
+﻿# [2025-12-11 19:06 KST] [7018b1b] - WebGL 텍스처 유닛 초과 문제 임시 해결 (JewelryDisplay 주석 처리)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 19:06 (KST)
+*   **해시 번호:** 7018b1b
+*   **작업 내용:** WebGL 텍스처 유닛 초과로 인한 검정 화면 문제 임시 해결. JewelryDisplay 5개 생성 시 MeshPhysicalMaterial의 envMapIntensity 등으로 텍스처 유닛 16개 초과 문제 발견. addTestJewelryDisplay() 메서드 주석 처리하여 임시 해결. 본진(메인 프로젝트)과 homepage1 비교 분석 완료 - JewelryDisplay.js가 homepage1에만 존재하여 문제 발생 확인. 최적화 작업 전 안전한 상태로 커밋.
+*   **수정 파일:** static/js/3d/Showroom.js
+*   **문제 분석:**
+  - JewelryDisplay 5개 생성 시 Material 10개 생성 (goldFrameMat 5개 + glassMat 5개)
+  - 각 Material이 텍스처 유닛을 소비하여 16개 초과
+  - WebGL 하드웨어 제약: 최대 16개 텍스처 유닛만 사용 가능
+*   **해결 방안 (다음 단계):**
+  - Material 공유 (Static Materials) 적용 필요
+  - envMapIntensity 제거 또는 최소화
+  - MeshPhysicalMaterial → MeshStandardMaterial 변경
+  - GiftBox3D Material 최적화 (현재 2개 생성 시 약 50-70 유닛 사용)
+
+# [2025-12-11 16:19 KST] [edcd455] - 3D 쇼룸 리팩토링 계획 수립 및 작업장 구축 계획서 작성
 
 *   **한국 시간/날짜:** 2025년 12월 11일 16:19 (KST)
 *   **해시 번호:** edcd455

@@ -3,6 +3,19 @@
  * Showroom.js의 인테리어 요소 생성 기능을 담당
  */
 class ShowroomBuilder {
+  /**
+   * ✅ WebGL 텍스처 유닛 최적화: Static Material 공유
+   * 모든 ShowroomBuilder 인스턴스가 동일한 Material을 공유하여 텍스처 유닛 절약
+   */
+  static sharedFloorMat = null;        // 바닥 Material
+  static sharedFloorTexture = null;    // 바닥 대리석 텍스처 (Static 공유)
+  static sharedWallMat = null;         // 벽 Material
+  static sharedPedestalMat = null;      // 진열대 Material
+  static sharedGoldMat = null;          // 골드 Material
+  static sharedCctvMat = null;         // CCTV Material
+  static sharedRedDotMat = null;        // 빨간 점 Material
+  static sharedGrilleMat = null;        // 그릴 Material
+
   constructor(scene) {
     this.scene = scene;
     this.roomSize = { width: 30, height: 15, depth: 30 };
@@ -17,28 +30,31 @@ class ShowroomBuilder {
     this.wallLimitX = this.roomSize.width / 2 - 1; // ±14 (벽 두께 고려)
     this.wallLimitZ = this.roomSize.depth / 2 - 1; // ±14
 
-    // 바닥 텍스처 생성
-    const floorTexture = this.createMarbleTexture();
-    console.log("✅ [ShowroomBuilder] 바닥 텍스처:", floorTexture);
-
-    // 텍스처 반복 설정 (타일 크기 적당히)
-    floorTexture.wrapS = THREE.RepeatWrapping;
-    floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set(5, 5); // 타일 크기 (원본 설정)
+    // ✅ WebGL 최적화: Static 텍스처 공유 (한 번만 생성)
+    if (!ShowroomBuilder.sharedFloorTexture) {
+      ShowroomBuilder.sharedFloorTexture = ShowroomBuilder.createMarbleTexture();
+      console.log("✅ [ShowroomBuilder] 바닥 대리석 텍스처 생성 완료 (Static 공유)");
+    }
 
     // 단순 바닥 시공 (PlaneGeometry - 검은색 버그 원천 봉쇄)
     const floorSize = 30; // 벽과 동일한 크기
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     
-    // 바닥 재질 (원본 설정 복구)
-    const floorMat = new THREE.MeshPhysicalMaterial({
-      map: floorTexture,
-      color: 0x111111, // 검은색 바닥 (원본)
-      roughness: 0.05, // 매우 매끄러운 표면 (대리석 반사)
-      metalness: 0.2,
-      side: THREE.FrontSide,
-      flatShading: false
-    });
+    // ✅ WebGL 최적화: Static Material 공유 + 대리석 텍스처 복원
+    // 바닥 재질 (대리석 텍스처 적용, MeshStandardMaterial 사용)
+    // 본진과 동일한 색상 설정: color: 0x111111 (검은색 바닥)
+    if (!ShowroomBuilder.sharedFloorMat) {
+      ShowroomBuilder.sharedFloorMat = new THREE.MeshStandardMaterial({
+        map: ShowroomBuilder.sharedFloorTexture, // 대리석 텍스처 복원
+        color: 0x111111, // 검은색 바닥 (본진과 동일)
+        roughness: 0.05, // 매우 매끄러운 표면 (대리석 반사)
+        metalness: 0.2,
+        side: THREE.FrontSide,
+        flatShading: false
+        // envMapIntensity 제거: 텍스처 유닛 절약
+      });
+    }
+    const floorMat = ShowroomBuilder.sharedFloorMat;
     
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2; // 바닥에 눕힘
@@ -96,9 +112,10 @@ class ShowroomBuilder {
   }
 
   /**
-   * 대리석 바닥 텍스처 생성
+   * 대리석 바닥 텍스처 생성 (Static 메서드로 변경)
+   * WebGL 텍스처 유닛 절약을 위해 Static으로 공유
    */
-  createMarbleTexture() {
+  static createMarbleTexture() {
     const canvas = document.createElement("canvas");
     canvas.width = 2048;
     canvas.height = 2048;
@@ -195,11 +212,15 @@ class ShowroomBuilder {
     const wallCenterOffset = wallThickness / 2; // 벽 중심에서 안쪽 면까지: 0.5m
     const wallInnerEdge = 15.5 - wallCenterOffset; // 벽 안쪽 면: ±15.0
     
-    const wallMat = new THREE.MeshStandardMaterial({
-      color: 0xFFFFFF, // 벽과 동일한 화이트
-      roughness: 0.5,
-      side: THREE.DoubleSide
-    });
+    // ✅ WebGL 최적화: Static Material 공유
+    if (!ShowroomBuilder.sharedWallMat) {
+      ShowroomBuilder.sharedWallMat = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF, // 벽과 동일한 화이트
+        roughness: 0.5,
+        side: THREE.DoubleSide
+      });
+    }
+    const wallMat = ShowroomBuilder.sharedWallMat;
 
     // 1/4 원통 Geometry 생성 (90도 호)
     const coveGeo = new THREE.CylinderGeometry(
@@ -688,18 +709,19 @@ class ShowroomBuilder {
 
     // 메인 기둥 - 투명한 유리 재질 (이쁘게!)
     const pedestalGeo = new THREE.CylinderGeometry(pedestalRadius, pedestalRadius, pedestalHeight, 32);
-    const pedestalMat = new THREE.MeshPhysicalMaterial({
-      color: 0xe8f4f8, // 약간 푸른빛이 도는 흰색 (프로스트 글래스 느낌)
-      transparent: true,
-      opacity: 0.9, // 약간 더 보이도록 (유리 느낌 유지)
-      roughness: 0.05, // 매우 매끄러운 표면 (고급 유리)
-      metalness: 0.0, // 비금속
-      transmission: 0.92, // 거의 완전 투명 (유리 효과)
-      ior: 1.5, // 유리의 굴절률 (Glass Index of Refraction)
-      thickness: 0.6, // 두께감 (약간 증가하여 더 명확하게)
-      side: THREE.DoubleSide, // 양면 렌더링 (투명 재질 필수)
-      envMapIntensity: 1.2 // 환경 반사 강도 (유리가 주변을 반사하도록)
-    });
+    // ✅ WebGL 최적화: Static Material 공유 + envMapIntensity 제거
+    if (!ShowroomBuilder.sharedPedestalMat) {
+      ShowroomBuilder.sharedPedestalMat = new THREE.MeshStandardMaterial({
+        color: 0xe8f4f8, // 약간 푸른빛이 도는 흰색 (프로스트 글래스 느낌)
+        transparent: true,
+        opacity: 0.9, // 약간 더 보이도록 (유리 느낌 유지)
+        roughness: 0.05, // 매우 매끄러운 표면 (고급 유리)
+        metalness: 0.0, // 비금속
+        side: THREE.DoubleSide, // 양면 렌더링 (투명 재질 필수)
+        // transmission, ior, thickness, envMapIntensity 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
+      });
+    }
+    const pedestalMat = ShowroomBuilder.sharedPedestalMat;
     const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
     // 원기둥의 중심이 높이의 절반에 위치 (바닥면이 Y=0에 정확히 닿음)
     pedestal.position.y = pedestalHeight / 2; // 0.7 (바닥면이 Y=0.0에 정확히 닿음 - 물리법칙 준수)
@@ -709,13 +731,17 @@ class ShowroomBuilder {
 
     // 상단 금색 링 (진열대 상단에 정확히 배치) - 유리와 대비되는 세련된 금색
     const topRimGeo = new THREE.TorusGeometry(pedestalRadius, 0.045, 16, 32); // 링 두께 약간 증가 (더 눈에 띄게)
-    const goldMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      roughness: 0.1, // 매우 반짝이는 느낌 (고급 금속)
-      metalness: 0.98, // 거의 완전한 금속 느낌
-      emissive: 0xffd700, // 약간의 발광 효과
-      emissiveIntensity: 0.15 // 은은한 발광
-    });
+    // ✅ WebGL 최적화: Static Material 공유
+    if (!ShowroomBuilder.sharedGoldMat) {
+      ShowroomBuilder.sharedGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        roughness: 0.1, // 매우 반짝이는 느낌 (고급 금속)
+        metalness: 0.98, // 거의 완전한 금속 느낌
+        emissive: 0xffd700, // 약간의 발광 효과
+        emissiveIntensity: 0.15 // 은은한 발광
+      });
+    }
+    const goldMat = ShowroomBuilder.sharedGoldMat;
     const topRim = new THREE.Mesh(topRimGeo, goldMat);
     topRim.position.y = pedestalHeight; // 1.4 (진열대 상단)
     topRim.rotation.x = Math.PI / 2;
@@ -791,7 +817,8 @@ class ShowroomBuilder {
       curveSegments: 32
     });
 
-    const goldenWallMat = new THREE.MeshStandardMaterial({
+    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
+    const goldenWallMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
       color: 0xFFD700, // 골드
       metalness: 1.0,
       roughness: 0.2
@@ -814,12 +841,12 @@ class ShowroomBuilder {
       curveSegments: 32
     });
 
-    const lidMat = new THREE.MeshPhysicalMaterial({
+    // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    const lidMat = new THREE.MeshStandardMaterial({
       color: 0x050505, // 완전한 블랙
       roughness: 0.0, // 거울처럼 매끈하게
-      metalness: 0.1,
-      clearcoat: 1.0, // 자동차 도장 같은 광택
-      clearcoatRoughness: 0.0 // 완벽한 광택
+      metalness: 0.1
+      // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
 
     const lid = new THREE.Mesh(lidGeo, lidMat);
@@ -840,7 +867,8 @@ class ShowroomBuilder {
       16,
       64
     );
-    const baseRimMat = new THREE.MeshStandardMaterial({
+    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
+    const baseRimMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
       color: 0xFFD700, // 골드
       metalness: 1.0,
       roughness: 0.2
@@ -853,14 +881,14 @@ class ShowroomBuilder {
 
     // 다크 렌즈 (Dark Glass) - 검투명 유리
     const darkLensGeo = new THREE.CircleGeometry(sunRadius, 64);
-    const darkLensMat = new THREE.MeshPhysicalMaterial({
+    // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    const darkLensMat = new THREE.MeshStandardMaterial({
       color: 0x000000, // 검정색
       transparent: true,
       opacity: 0.5, // 투명도 0.5
       roughness: 0.1,
-      metalness: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1 // 반사율 높음
+      metalness: 0.3
+      // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
     const darkLens = new THREE.Mesh(darkLensGeo, darkLensMat);
     darkLens.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
@@ -879,7 +907,8 @@ class ShowroomBuilder {
         coreRadii[i] + coreThicknesses[i] / 2,
         64
       );
-      const coreRingMat = new THREE.MeshBasicMaterial({
+      // ✅ WebGL 최적화: MeshStandardMaterial로 변경 (MeshBasicMaterial은 emissive 지원 안 함)
+      const coreRingMat = new THREE.MeshStandardMaterial({
         color: coreColors[i],
         emissive: coreColors[i],
         emissiveIntensity: 1.0, // 강력한 발광
@@ -901,10 +930,19 @@ class ShowroomBuilder {
     const grilleThickness = 0.02;
     const grilleLength = sunRadius * 0.8;
     
+    // ✅ WebGL 최적화: Material 공유
+    if (!ShowroomBuilder.sharedGrilleMat) {
+      ShowroomBuilder.sharedGrilleMat = new THREE.MeshStandardMaterial({ 
+        color: 0x333333, 
+        metalness: 0.8, 
+        roughness: 0.3 
+      });
+    }
+    
     // 가로선
     const horizontalGrille = new THREE.Mesh(
       new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.3 })
+      ShowroomBuilder.sharedGrilleMat
     );
     horizontalGrille.rotation.z = Math.PI / 2;
     grilleGroup.add(horizontalGrille);
@@ -912,7 +950,7 @@ class ShowroomBuilder {
     // 세로선
     const verticalGrille = new THREE.Mesh(
       new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.3 })
+      ShowroomBuilder.sharedGrilleMat
     );
     verticalGrille.rotation.x = Math.PI / 2;
     grilleGroup.add(verticalGrille);
@@ -928,7 +966,8 @@ class ShowroomBuilder {
     const studOffset = lidSize / 2 - 2.0; // 패널 안쪽으로 조금 들어온 위치 (±10 정도)
 
     const studGeo = new THREE.CylinderGeometry(studRadius, studRadius, studHeight, 16);
-    const studMat = new THREE.MeshStandardMaterial({
+    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
+    const studMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
       color: 0xFFD700, // 골드
       metalness: 1.0,
       roughness: 0.2
@@ -972,6 +1011,8 @@ class ShowroomBuilder {
       const ventDepth = 8; // 세로 길이
       const ventY = lidY - 0.3; // y = 15.2 (블랙 패널 표면)
       
+      // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용, roughness만 다름)
+      // roughness가 다르므로 별도 Material 생성 (0.2 vs 0.4)
       const ventMat = new THREE.MeshStandardMaterial({
         color: 0xFFD700, // 골드
         metalness: 1.0,
@@ -1048,19 +1089,26 @@ class ShowroomBuilder {
     const cctvZ = 12;
     const cctvY = ceilingY + 0.1; // y = 15.1 (천장 프레임 위)
 
-    const cctvMat = new THREE.MeshPhysicalMaterial({
-      color: 0xEEEEEE, // 화이트/실버 (천장에서 눈에 띄게)
-      roughness: 0.1,
-      metalness: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1
-    });
+    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경
+    if (!ShowroomBuilder.sharedCctvMat) {
+      ShowroomBuilder.sharedCctvMat = new THREE.MeshStandardMaterial({
+        color: 0xEEEEEE, // 화이트/실버 (천장에서 눈에 띄게)
+        roughness: 0.1,
+        metalness: 0.3
+        // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
+      });
+    }
+    const cctvMat = ShowroomBuilder.sharedCctvMat;
 
-    const redDotMat = new THREE.MeshBasicMaterial({
-      color: 0xFF0000, // 빨간 점
-      emissive: 0xFF0000,
-      emissiveIntensity: 5.0 // 레이저처럼 강하게 빛남
-    });
+    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경 (MeshBasicMaterial은 emissive 지원 안 함)
+    if (!ShowroomBuilder.sharedRedDotMat) {
+      ShowroomBuilder.sharedRedDotMat = new THREE.MeshStandardMaterial({
+        color: 0xFF0000, // 빨간 점
+        emissive: 0xFF0000,
+        emissiveIntensity: 5.0 // 레이저처럼 강하게 빛남
+      });
+    }
+    const redDotMat = ShowroomBuilder.sharedRedDotMat;
 
     // 방 중앙을 바라보는 회전 계산 헬퍼 (45도 각도로 정확히 꺾임)
     const lookAtCenter = (cameraGroup, x, z) => {
