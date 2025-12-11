@@ -139,7 +139,9 @@ class Showroom {
     this.layoutProducts();
     
     // 테스트: 보석상 스타일 유리 진열대 추가
-    this.addTestJewelryDisplay();
+    // ⚠️ 주석 처리: WebGL 텍스처 유닛 초과로 인한 검정 화면 문제 해결
+    // JewelryDisplay 5개 생성 시 MeshPhysicalMaterial의 envMapIntensity 등으로 텍스처 유닛 16개 초과
+    // this.addTestJewelryDisplay();
     
     this.setupEvents();
     this.onResize();
