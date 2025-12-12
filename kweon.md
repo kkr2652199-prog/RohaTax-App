@@ -1,4 +1,48 @@
-﻿# [2025-12-12] #Mission1-Complete - 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
+﻿# [2025-12-12 20:30 KST] - 3D 쇼룸 이벤트 상품 결제 모달 버그 수정 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 20:30 (KST)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 3D 쇼룸에서 이벤트 상품 클릭 시 결제 모달 버그 수정 완료
+  1. [버그 수정] 이벤트 상품 클릭 시 결제 수단 섹션이 숨겨지지 않는 문제 해결
+  2. [버그 수정] product_id 필수 오류 해결 - data-id 속성 강제 주입 로직 추가
+  3. [개선] Showroom.js의 onClick 핸들러 개선 - ID, type, price 속성 명시적 설정
+  4. [개선] ProductFactory.js의 가격 라벨 표시 로직 개선 - EVENT/FREE 표시
+  5. [통합] showroom.html에 상품 데이터 JSON 주입 완료 (2D shop 로직 100% 이식)
+*   **수정 파일:**
+  - static/js/3d/Showroom.js (onClick 핸들러 개선, ID/type/price 속성 강제 주입)
+  - static/js/3d/ProductFactory.js (가격 라벨 EVENT/FREE 표시 로직 개선)
+  - templates/payment/showroom.html (상품 데이터 JSON 주입)
+*   **결과:**
+  - 이벤트 상품 클릭 시 결제 수단 섹션이 정상적으로 숨겨짐
+  - product_id 필수 오류 완전 해결
+  - 3D 쇼룸과 2D shop의 결제 로직 100% 동기화 완료
+  - 디버깅 로그 추가로 문제 추적 용이성 향상
+
+---
+
+# [2025-12-12 18:00 KST] [6a57722] - LuxeDisplay3D 진열대 상품 배치 및 애니메이션 수정 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 18:00 (KST)
+*   **해시 번호:** 6a57722
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** LuxeDisplay3D 진열대에 모든 상품 배치 및 회전 애니메이션 수정 완료
+  1. [배치] 무료 상품 2종을 LuxeDisplay3D 진열대 1, 2번째 원형 다이에 배치
+  2. [배치] 유료 3종 제품(토큰, 프리미엄, 골드)을 LuxeDisplay3D 진열대 3, 4, 5번째 원형 다이로 이동
+  3. [물리 법칙] 상품 상자 밑면이 원형 다이 윗면에 정확히 붙도록 위치 조정 (물리 법칙 준수)
+  4. [애니메이션] 회전 애니메이션 수정 - this.factory 인스턴스 통일로 유료 3종 제품 회전 정상화
+  5. [테스트] 검정색 동전 상품 수직 회전 시도 후 수평 회전으로 복원
+*   **수정 파일:**
+  - static/js/3d/Showroom.js (상품 배치 로직 수정, 애니메이션 수정)
+  - static/js/3d/ProductFactory.js (애니메이션 업데이트 메서드 개선)
+*   **결과:**
+  - LuxeDisplay3D 진열대에 5개 상품 모두 배치 완료
+  - 모든 상품 회전 애니메이션 정상 작동 확인
+  - 물리 법칙 준수로 상품 배치 위치 정확성 확보
+  - 38개 파일 변경, 2,612줄 추가, 154줄 삭제
+
+---
+
+# [2025-12-12] #Mission1-Complete - 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
 
 *   **한국 시간/날짜:** 2025년 12월 12일 (KST)
 *   **작업자:** Commander & The Architect Team

@@ -319,6 +319,11 @@ class ProductFactory {
     wrapperGroup.userData = wrapperGroup.userData || {};
     wrapperGroup.userData.productData = product;
     
+    // 가격 라벨 추가 (이벤트 상품은 "무료" 또는 "이벤트" 표시)
+    const label = this.createPriceLabel(product);
+    label.position.set(0, giftBoxHeight + 0.2, 0); // 상자 상단 위
+    wrapperGroup.add(label);
+    
     // 그룹 위치 설정: position.y는 진열대 상단 또는 원형 다이 윗면
     // 물리 법칙: 상품의 바닥면이 진열대 상단에 닿도록 조정
     wrapperGroup.position.set(position.x, position.y, position.z);
@@ -642,9 +647,29 @@ class ProductFactory {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     
-    const priceText = product.price === 0 
-      ? "무료" 
-      : `${product.price.toLocaleString()}원`;
+    // 실제 상품 데이터에서 가격 가져오기 (하드코딩 제거)
+    let priceText = "FREE";
+    
+    if (product) {
+      // 이벤트 상품 여부 확인 (우선순위: type 확인)
+      const isEventType = product.type === 'event' || product.type === 'event_period';
+      const isFreePrice = product.price === 0 || product.price === null || product.price === undefined;
+      
+      if (isEventType) {
+        // 이벤트 상품: "EVENT"로 명확하게 표시
+        priceText = "EVENT";
+      } else if (isFreePrice) {
+        // 무료 상품 (이벤트가 아닌 경우)
+        priceText = "FREE";
+      } else {
+        // 유료 상품: 실제 가격 표시
+        priceText = `${Number(product.price).toLocaleString('ko-KR')}원`;
+      }
+    } else {
+      console.warn("⚠️ [ProductFactory] 상품 정보가 없습니다:", product);
+      priceText = "N/A";
+    }
+    
     ctx.fillText(priceText, canvas.width / 2, canvas.height / 2);
     
     const texture = new THREE.CanvasTexture(canvas);

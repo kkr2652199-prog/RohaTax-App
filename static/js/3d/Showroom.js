@@ -13,9 +13,14 @@ class Showroom {
       return;
     }
 
-    if (!window.PRODUCT_DATA || !Array.isArray(window.PRODUCT_DATA)) {
+    // window.SHOWROOM_DATA 우선 사용, 없으면 window.PRODUCT_DATA 사용 (하위 호환성)
+    if (window.SHOWROOM_DATA) {
+      console.log("✅ [Showroom] window.SHOWROOM_DATA 사용");
+    } else if (window.PRODUCT_DATA && Array.isArray(window.PRODUCT_DATA)) {
+      console.warn("⚠️ [Showroom] window.SHOWROOM_DATA가 없습니다. window.PRODUCT_DATA를 사용합니다.");
+    } else {
       console.error(
-        "[Showroom] window.PRODUCT_DATA가 없습니다. 쇼룸이 렌더링되지 않습니다."
+        "[Showroom] window.SHOWROOM_DATA 또는 window.PRODUCT_DATA가 없습니다. 쇼룸이 렌더링되지 않습니다."
       );
       return;
     }
@@ -33,13 +38,19 @@ class Showroom {
       canvas: this.canvas,
       alpha: false, // 배경색을 보기 위해 alpha 비활성화
       antialias: true,
-      powerPreference: "high-performance" // 고성능 모드
+      powerPreference: "high-performance", // 고성능 모드
+      // 🚀 성능 최적화: 렌더링 최적화 설정
+      logarithmicDepthBuffer: false, // 로그 깊이 버퍼 비활성화 (성능 향상)
+      precision: "highp" // 높은 정밀도 (필요시)
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 🚀 2배율 제한으로 성능 향상
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 🚀 PCFSoftShadowMap: 품질과 성능의 균형
     this.renderer.outputEncoding = THREE.sRGBEncoding; // 색상 인코딩 개선
+    // 🚀 성능 최적화: 자동 정리 활성화 (메모리 관리)
+    this.renderer.autoClear = true;
+    this.renderer.sortObjects = true; // 객체 정렬 활성화 (투명도 처리 최적화)
     
     console.log(`[Showroom] 🎨 Renderer 생성: ${this.canvas.width}x${this.canvas.height}`);
 
@@ -78,6 +89,21 @@ class Showroom {
     this.velocityDamping = 0.88; // 감속 계수 (더 빠른 감속)
     this.maxVelocity = 0.15; // 최대 속도 제한
     this.isMouseDown = false; // 마우스 드래그 중인지
+    
+    // 🚀 성능 최적화: Frustum Culling 및 애니메이션 최적화
+    this.frustum = new THREE.Frustum();
+    this.cameraMatrix = new THREE.Matrix4();
+    this.lastFrameTime = 0;
+    this.frameCount = 0;
+    this.fps = 60; // 목표 FPS
+    this.animationUpdateInterval = 1; // 애니메이션 업데이트 간격 (프레임 단위)
+    this.visibleObjects = new Set(); // 카메라에 보이는 객체 캐시
+    this.frustumCullingEnabled = false; // Frustum Culling 비활성화 (안전장치 - 문제 발생 시 자동 비활성화)
+    
+    // 🚀 성능 최적화: 재사용 가능한 Vector3 객체 (매 프레임 생성 방지)
+    this._tempForward = new THREE.Vector3();
+    this._tempRight = new THREE.Vector3();
+    this._tempAcceleration = new THREE.Vector3();
 
     // OrbitControls를 시선 회전용으로만 사용 (줌 유지, 이동은 WASD)
     // FPS 컨트롤로 대체 (OrbitControls 제거)
@@ -123,7 +149,25 @@ class Showroom {
       new THREE.Vector3(7, 0, -1)         // 우측 끝: Event 2
     ];
 
-    this.products = window.PRODUCT_DATA;
+    // window.SHOWROOM_DATA에서 상품 데이터 추출
+    if (window.SHOWROOM_DATA) {
+      // regular_products와 event_products를 합쳐서 전체 상품 리스트 생성
+      this.products = [
+        ...(window.SHOWROOM_DATA.regular_products || []),
+        ...(window.SHOWROOM_DATA.event_products || [])
+      ];
+      this.showroomData = window.SHOWROOM_DATA; // 전체 데이터 저장 (할인율 등)
+      console.log(`✅ [Showroom] 상품 데이터 로드: 일반 ${window.SHOWROOM_DATA.regular_products?.length || 0}개, 이벤트 ${window.SHOWROOM_DATA.event_products?.length || 0}개`);
+    } else if (window.PRODUCT_DATA && Array.isArray(window.PRODUCT_DATA)) {
+      // 하위 호환성: window.PRODUCT_DATA 사용
+      this.products = window.PRODUCT_DATA;
+      this.showroomData = null;
+      console.log(`⚠️ [Showroom] window.PRODUCT_DATA 사용 (하위 호환성): ${this.products.length}개`);
+    } else {
+      this.products = [];
+      this.showroomData = null;
+      console.error("❌ [Showroom] 상품 데이터를 찾을 수 없습니다.");
+    }
     this.meshes = [];
     this.standardCoins = this.factory.standardCoins;
     this.premiumCubes = this.factory.premiumCubes;
@@ -467,17 +511,28 @@ class Showroom {
   // createChandelier() 메서드 삭제됨 (Commander 지시)
 
   layoutProducts() {
-    const count = this.products.length;
-    console.log(`💎 [Showroom] 프라이빗 보석함 배치 시작: ${count}개`);
+    // window.SHOWROOM_DATA에서 직접 상품 데이터 가져오기
+    let eventProducts = [];
+    let regularProducts = [];
     
-    if (count === 0) {
+    if (this.showroomData) {
+      // window.SHOWROOM_DATA 사용
+      eventProducts = this.showroomData.event_products || [];
+      regularProducts = this.showroomData.regular_products || [];
+      console.log(`💎 [Showroom] 프라이빗 보석함 배치 시작: 일반 ${regularProducts.length}개, 이벤트 ${eventProducts.length}개`);
+    } else {
+      // 하위 호환성: this.products에서 필터링
+      eventProducts = this.products.filter(p => p.type === 'event' || p.type === 'event_period');
+      regularProducts = this.products.filter(p => p.type !== 'event' && p.type !== 'event_period');
+      console.log(`💎 [Showroom] 프라이빗 보석함 배치 시작: 일반 ${regularProducts.length}개, 이벤트 ${eventProducts.length}개`);
+    }
+    
+    if (regularProducts.length === 0 && eventProducts.length === 0) {
       console.warn("⚠️ [Showroom] 상품이 없습니다.");
       return;
     }
 
-    // 상품 분류
-    const eventProducts = this.products.filter(p => p.type === 'event' || p.type === 'event_period');
-    const regularProducts = this.products.filter(p => p.type !== 'event' && p.type !== 'event_period');
+    // 상품 찾기
     const standard = regularProducts.find(p => p.name.toLowerCase().includes('standard'));
     const gold = regularProducts.find(p => p.name.toLowerCase().includes('gold'));
     const premium = regularProducts.find(p => p.name.toLowerCase().includes('premium'));
@@ -861,14 +916,106 @@ class Showroom {
     if (intersects.length === 0) {
       return;
     }
-    const target = intersects[0].object;
-    const productData =
-      (target.userData && target.userData.productData) ||
-      (target.parent && target.parent.userData && target.parent.userData.productData);
-    if (!productData || typeof window.openCheckoutModal !== "function") {
+    
+    // 클릭된 객체에서 productData 찾기 (재귀적으로 부모 그룹까지 탐색)
+    let target = intersects[0].object;
+    let productData = null;
+    
+    while (target && !productData) {
+      if (target.userData && target.userData.productData) {
+        productData = target.userData.productData;
+        break;
+      }
+      target = target.parent;
+    }
+    
+    if (!productData) {
+      console.log("⚠️ [Showroom] 클릭된 객체에 상품 데이터가 없습니다.");
       return;
     }
-    window.openCheckoutModal(productData);
+    
+    if (typeof window.openCheckoutModal !== "function") {
+      console.error("❌ [Showroom] window.openCheckoutModal 함수를 찾을 수 없습니다.");
+      return;
+    }
+    
+    // 🔍 디버깅: productData 전체 구조 확인
+    console.log(`🔍 [Showroom] 상품 데이터 전체:`, productData);
+    
+    // ⚠️ 치명적: product_id 필수 오류 방지 - ID 강제 주입
+    if (!productData.id && productData.id !== 0) {
+      console.error("❌ [Showroom] productData.id가 없습니다! productData:", productData);
+      // product_id도 확인 (혹시 다른 필드명을 사용하는 경우)
+      if (productData.product_id !== undefined) {
+        console.warn("⚠️ [Showroom] product_id 필드를 id로 매핑합니다.");
+        productData.id = productData.product_id;
+      } else {
+        console.error("❌ [Showroom] product_id도 없습니다. 결제 모달을 열 수 없습니다.");
+        return;
+      }
+    }
+    
+    // 이벤트 상품 여부 확인 (shop.js와 동일한 로직)
+    // ⚠️ 중요: productData.type이 null/undefined일 경우를 대비하여 빈 문자열로 처리
+    const productTypeRaw = (productData.type || '').trim();
+    const productType = productTypeRaw.toLowerCase();
+    const isEventType = productType === 'event' || productType === 'event_period';
+    
+    // 디버깅: productData.type 값 확인
+    console.log(`🔍 [Showroom] 상품 타입 확인:`, {
+      name: productData.name,
+      id: productData.id,
+      type: productData.type,
+      rawType: productTypeRaw,
+      normalizedType: productType,
+      isEventType: isEventType
+    });
+    
+    // 가상 버튼 생성 (shop.js의 openCheckoutModal이 버튼 엘리먼트를 기대함)
+    const virtualButton = document.createElement('button');
+    
+    // ⚠️ 치명적 수정 1: data-id 강제 주입 (product_id 필수 오류 방지)
+    virtualButton.setAttribute('data-id', String(productData.id));
+    console.log(`✅ [Showroom] data-id 설정: ${productData.id}`);
+    
+    virtualButton.setAttribute('data-name', productData.name || '');
+    
+    // ⚠️ 치명적 수정 2: 이벤트 상품은 data-price를 무조건 문자열 "0"으로 설정
+    if (isEventType) {
+      virtualButton.setAttribute('data-price', '0'); // 이벤트 상품은 무조건 0원 (문자열)
+      console.log(`🎁 [Showroom] 이벤트 상품 클릭: ${productData.name} (가격: 0원, 타입: ${productTypeRaw})`);
+    } else {
+      virtualButton.setAttribute('data-price', String(productData.price || 0)); // 유료 상품은 실제 가격 (문자열로 변환)
+      console.log(`🛒 [Showroom] 유료 상품 클릭: ${productData.name} (${productData.price?.toLocaleString()}원, 타입: ${productTypeRaw})`);
+    }
+    
+    // ⚠️ 치명적 수정 3: data-type 강제 주입 (shop.js가 인식할 수 있는 값으로 매핑)
+    // shop.js는 currentProduct.type === 'event' || currentProduct.type === 'event_period'를 확인
+    // 원본 값을 그대로 전달하되, 공백만 제거하고 대소문자는 유지
+    if (isEventType) {
+      // 이벤트 타입인 경우, 원본 값을 그대로 전달 (공백만 제거)
+      // 'event' 또는 'event_period' 둘 다 shop.js가 인식하므로 원본 유지
+      virtualButton.setAttribute('data-type', productTypeRaw || (productType === 'event_period' ? 'event_period' : 'event'));
+    } else {
+      // 일반 상품인 경우, 원본 값을 그대로 전달 (공백만 제거)
+      virtualButton.setAttribute('data-type', productTypeRaw || '');
+    }
+    
+    virtualButton.setAttribute('data-token', String(productData.token_amount || 0));
+    virtualButton.setAttribute('data-duration', String(productData.duration_days || 0));
+    
+    // 🔍 최종 확인: 가상 버튼의 모든 속성 로그
+    console.log(`✅ [Showroom] 가상 버튼 속성:`, {
+      'data-id': virtualButton.getAttribute('data-id'),
+      'data-name': virtualButton.getAttribute('data-name'),
+      'data-price': virtualButton.getAttribute('data-price'),
+      'data-type': virtualButton.getAttribute('data-type'),
+      'data-token': virtualButton.getAttribute('data-token'),
+      'data-duration': virtualButton.getAttribute('data-duration')
+    });
+    
+    // shop.js의 openCheckoutModal 호출
+    window.openCheckoutModal(virtualButton);
   }
 
   onResize() {
@@ -891,41 +1038,53 @@ class Showroom {
 
   animate() {
     requestAnimationFrame(() => this.animate());
+    const currentTime = performance.now();
+    const deltaTime = currentTime - this.lastFrameTime;
+    this.lastFrameTime = currentTime;
+    
+    // 🚀 성능 최적화: FPS 계산 및 자동 조절
+    this.frameCount++;
+    if (this.frameCount % 60 === 0) {
+      const actualFps = 1000 / (deltaTime || 16.67);
+      this.fps = actualFps;
+      
+      // 프레임 드롭 시 애니메이션 업데이트 빈도 자동 조절
+      if (actualFps < 30) {
+        this.animationUpdateInterval = Math.min(3, this.animationUpdateInterval + 1);
+      } else if (actualFps > 55 && this.animationUpdateInterval > 1) {
+        this.animationUpdateInterval = Math.max(1, this.animationUpdateInterval - 1);
+      }
+    }
+    
     const elapsed = this.clock.getElapsedTime();
+    const shouldUpdateAnimations = this.frameCount % this.animationUpdateInterval === 0;
 
     // [1] FPS 카메라 회전 적용
     this.camera.rotation.y = this.yaw;
     this.camera.rotation.x = this.pitch;
     
-    // [2] 이동 방향 계산 (카메라가 보는 방향 기준)
-    const forward = new THREE.Vector3();
-    forward.x = -Math.sin(this.yaw);
-    forward.z = -Math.cos(this.yaw);
-    forward.normalize();
+    // [2] 이동 방향 계산 (카메라가 보는 방향 기준) - 🚀 재사용 가능한 객체 사용
+    this._tempForward.set(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)).normalize();
+    this._tempRight.set(Math.cos(this.yaw), 0, -Math.sin(this.yaw)).normalize();
     
-    const right = new THREE.Vector3();
-    right.x = Math.cos(this.yaw);
-    right.z = -Math.sin(this.yaw);
-    right.normalize();
-    
-    // [3] WASD 이동 (부드러운 velocity 기반 이동)
-    const acceleration = new THREE.Vector3(0, 0, 0);
+    // [3] WASD 이동 (부드러운 velocity 기반 이동) - 🚀 재사용 가능한 객체 사용
+    this._tempAcceleration.set(0, 0, 0);
     
     if (this.moveForward) {
-      acceleration.addScaledVector(forward, this.moveSpeed);
+      this._tempAcceleration.addScaledVector(this._tempForward, this.moveSpeed);
     }
     if (this.moveBackward) {
-      acceleration.addScaledVector(forward, -this.moveSpeed);
+      this._tempAcceleration.addScaledVector(this._tempForward, -this.moveSpeed);
     }
     if (this.moveLeft) {
-      acceleration.addScaledVector(right, -this.moveSpeed);
+      this._tempAcceleration.addScaledVector(this._tempRight, -this.moveSpeed);
     }
     if (this.moveRight) {
-      acceleration.addScaledVector(right, this.moveSpeed);
+      this._tempAcceleration.addScaledVector(this._tempRight, this.moveSpeed);
     }
     
     // Velocity 업데이트 (부드러운 가속/감속)
-    this.velocity.add(acceleration);
+    this.velocity.add(this._tempAcceleration);
     this.velocity.multiplyScalar(this.velocityDamping); // 자연스러운 감속
     
     // 최대 속도 제한 (빠른 이동 방지)
@@ -961,17 +1120,41 @@ class Showroom {
     
     // [6] 눈높이 적용 (날아다니기 금지)
     this.camera.position.y = this.eyeLevel;
+    
+    // 카메라 행렬 업데이트 (Frustum Culling을 위해 필수)
+    this.camera.updateMatrixWorld();
 
-    // 연동 모듈 애니메이션 업데이트
+    // 🚀 성능 최적화: Frustum Culling - 카메라에 보이는 객체만 업데이트
+    // ⚠️ 안전장치: Frustum Culling이 실패할 경우를 대비해 try-catch 추가
+    try {
+      this.cameraMatrix.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
+      this.frustum.setFromProjectionMatrix(this.cameraMatrix);
+      this.visibleObjects.clear();
+    } catch (error) {
+      console.warn("[Showroom] Frustum Culling 계산 오류, 모든 객체 업데이트:", error);
+      // Frustum Culling 실패 시 모든 객체를 보이는 것으로 간주
+      this.visibleObjects.clear();
+    }
+    
+    // 🚀 성능 최적화: 연동 모듈 애니메이션 업데이트 (프레임 드롭 시 빈도 조절)
     // 샹들리에 애니메이션 삭제 (Commander 지시)
-    if (this.factory) {
-      this.factory.updateProductAnimations();
+    if (this.factory && shouldUpdateAnimations) {
+      // 🚀 성능 최적화: Frustum Culling 적용 - 보이는 객체만 업데이트
+      // ⚠️ 안전장치: Frustum Culling이 모든 객체를 필터링하는 경우를 방지
+      let visibleCount = 0;
       
       // Standard Coin 회전 애니메이션
       if (this.factory.standardCoins) {
         this.factory.standardCoins.forEach((group) => {
           if (group && group.rotation) {
-            group.rotation.y += 0.01;
+            // Frustum Culling: 카메라에 보이는 객체만 업데이트
+            // ⚠️ 안전장치: Frustum Culling 비활성화 시 모든 객체 업데이트
+            const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(group) : true;
+            if (isVisible) {
+              group.rotation.y += 0.01;
+              this.visibleObjects.add(group);
+              visibleCount++;
+            }
           }
         });
       }
@@ -980,13 +1163,19 @@ class Showroom {
       if (this.factory.premiumCubes) {
         this.factory.premiumCubes.forEach((cube) => {
           if (cube && cube.group) {
-            const scale = 1 + Math.sin(elapsed * 2 + (cube.offset || 0)) * 0.05;
-            cube.group.scale.setScalar(scale);
-            // 내부 큐브 반대 방향 빠른 회전
-            if (cube.inner) {
-              cube.inner.rotation.x -= 0.03; // 반대 방향, 빠르게
-              cube.inner.rotation.y -= 0.03;
-              cube.inner.rotation.z -= 0.03;
+            // Frustum Culling: 카메라에 보이는 객체만 업데이트
+            const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(cube.group) : true;
+            if (isVisible) {
+              const scale = 1 + Math.sin(elapsed * 2 + (cube.offset || 0)) * 0.05;
+              cube.group.scale.setScalar(scale);
+              // 내부 큐브 반대 방향 빠른 회전
+              if (cube.inner) {
+                cube.inner.rotation.x -= 0.03; // 반대 방향, 빠르게
+                cube.inner.rotation.y -= 0.03;
+                cube.inner.rotation.z -= 0.03;
+              }
+              this.visibleObjects.add(cube.group);
+              visibleCount++;
             }
           }
         });
@@ -996,50 +1185,69 @@ class Showroom {
       if (this.factory.goldCrowns) {
         this.factory.goldCrowns.forEach((crown) => {
           if (crown && crown.group) {
-            // 전체 그룹 회전 (느리게)
-            crown.group.rotation.y += 0.002;
-            
-            // 각 링이 독립적으로 회전
-            if (crown.ring1) {
-              crown.ring1.rotation.y += 0.01; // 수평 링
-              crown.ring1.rotation.z += 0.005;
-            }
-            if (crown.ring2) {
-              crown.ring2.rotation.x += 0.008; // 수직 링 1
-              crown.ring2.rotation.z += 0.01;
-            }
-            if (crown.ring3) {
-              crown.ring3.rotation.x += 0.012; // 수직 링 2 (다른 속도)
-              crown.ring3.rotation.y += 0.006;
-            }
-            
-            // 에너지 코어 회전
-            if (crown.core) {
-              crown.core.rotation.x += 0.02;
-              crown.core.rotation.y += 0.02;
-            }
-            
-            // 파티클 회전
-            if (crown.particles) {
-              crown.particles.rotation.y += 0.02;
+            // Frustum Culling: 카메라에 보이는 객체만 업데이트
+            const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(crown.group) : true;
+            if (isVisible) {
+              // 전체 그룹 회전 (느리게)
+              crown.group.rotation.y += 0.002;
+              
+              // 각 링이 독립적으로 회전
+              if (crown.ring1) {
+                crown.ring1.rotation.y += 0.01; // 수평 링
+                crown.ring1.rotation.z += 0.005;
+              }
+              if (crown.ring2) {
+                crown.ring2.rotation.x += 0.008; // 수직 링 1
+                crown.ring2.rotation.z += 0.01;
+              }
+              if (crown.ring3) {
+                crown.ring3.rotation.x += 0.012; // 수직 링 2 (다른 속도)
+                crown.ring3.rotation.y += 0.006;
+              }
+              
+              // 에너지 코어 회전
+              if (crown.core) {
+                crown.core.rotation.x += 0.02;
+                crown.core.rotation.y += 0.02;
+              }
+              
+              // 파티클 회전
+              if (crown.particles) {
+                crown.particles.rotation.y += 0.02;
+              }
+              this.visibleObjects.add(crown.group);
+              visibleCount++;
             }
           }
         });
+      }
+      
+      // ⚠️ 안전장치: 모든 객체가 필터링된 경우 경고 및 Frustum Culling 비활성화
+      if (visibleCount === 0 && (this.factory.standardCoins?.length > 0 || this.factory.premiumCubes?.length > 0 || this.factory.goldCrowns?.length > 0)) {
+        console.warn("[Showroom] ⚠️ Frustum Culling이 모든 객체를 필터링했습니다. Frustum Culling을 일시적으로 비활성화합니다.");
+        // 다음 프레임부터 Frustum Culling 비활성화
+        this.frustumCullingEnabled = false;
       }
     }
 
     // 샹들리에 애니메이션 삭제됨 (Commander 지시)
 
     // [Arc Reactor 애니메이션] 중앙 조명 발광 코어 회전 및 빛의 기둥 펄스
-    this.scene.traverse((obj) => {
-      // 발광 코어 링 회전 (서로 반대 방향)
-      if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
-        obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
-      }
-      
-    });
+    // 🚀 성능 최적화: traverse 대신 직접 접근 또는 캐시된 객체만 순회
+    if (shouldUpdateAnimations) {
+      this.scene.traverse((obj) => {
+        // 발광 코어 링 회전 (서로 반대 방향)
+        if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
+          // Frustum Culling: 카메라에 보이는 객체만 업데이트
+          const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(obj) : true;
+          if (isVisible) {
+            obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
+          }
+        }
+      });
+    }
 
-    // 렌더링
+    // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);
   }
 }
