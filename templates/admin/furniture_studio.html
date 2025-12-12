@@ -367,6 +367,9 @@
                         <button id="btn-neon" class="test-button" style="background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%);">
                             💍 Neon Ring
                         </button>
+                        <button id="btn-pedestal" class="test-button" style="background: linear-gradient(135deg, #8b7355 0%, #6b5d4f 100%);">
+                            🏛️ 진열대 (Pedestal)
+                        </button>
                     </div>
                 </div>
             </details>
@@ -409,6 +412,7 @@
     </script>
     
     <!-- 로컬 모듈 로드 (전역 변수 방식) -->
+    <script src="{{ url_for('static', filename='js/3d/Pedestal3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/NeonRing.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}"></script>
@@ -707,6 +711,31 @@
                     console.error('[Furniture Studio] 에러 메시지:', error.message);
                     console.error('[Furniture Studio] 스택 트레이스:', error.stack);
                     updateStatus('❌ Neon Ring 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Pedestal (진열대)
+            document.getElementById('btn-pedestal').onclick = () => {
+                try {
+                    // 진열대는 높이가 있으므로 y위치를 -2로 조정하여 뷰어 중앙에 오게 함
+                    const pos = { x: 0, y: -2, z: 0 };
+                    
+                    const group = factory.createPedestal(pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ 진열대 (Pedestal) 생성 완료');
+                    } else {
+                        throw new Error('진열대 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 진열대 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ 진열대 생성 실패: ' + error.message, true);
                 }
             };
         }

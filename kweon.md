@@ -1,4 +1,17 @@
-﻿# [2025-12-12] #Furniture-Studio-Launch - 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
+﻿# [2025-12-12] #Mission1-Complete - 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
+  1. [Core] 진열대(Pedestal) 로직을 'Pedestal3D.js'로 독립 분리 및 가구화
+  2. [Feat] 관리자 전용 '가구 디자인 스튜디오(/admin/studio)' 정식 오픈
+  3. [UX] 대시보드에 스튜디오 진입 탭 추가 및 아코디언 메뉴/실시간 제어 기능 구현
+  4. [Refactor] ShowroomBuilder 및 ProductFactory 구조 최적화 완료
+  5. [Cleanup] 개발 과정의 임시 분석 파일 및 테스트 코드 전량 정리
+
+---
+
+# [2025-12-12] #Furniture-Studio-Launch - 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
 
 *   **한국 시간/날짜:** 2025년 12월 12일 (KST)
 *   **작업자:** Commander & The Architect Team

@@ -682,6 +682,36 @@ class ProductFactory {
   }
 
   /**
+   * Pedestal (진열대) 생성
+   * @param {Object|THREE.Vector3} position - 위치 (x, y, z 또는 {x, y, z})
+   * @returns {THREE.Group} 진열대 그룹
+   */
+  createPedestal(position) {
+    console.log(`      → [ProductFactory] Pedestal 생성`);
+    
+    // Pedestal3D 클래스 확인
+    if (typeof Pedestal3D === 'undefined' && typeof window.Pedestal3D === 'undefined') {
+      console.error('      ❌ [ProductFactory] Pedestal3D 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    // 위치가 없으면 기본값 (0,0,0)
+    const pos = position || { x: 0, y: 0, z: 0 };
+    
+    // 전역 클래스 window.Pedestal3D 사용
+    const Pedestal3DClass = Pedestal3D || window.Pedestal3D;
+    const pedestal = new Pedestal3DClass(pos);
+    
+    if (!pedestal || !pedestal.group) {
+      console.error('      ❌ [ProductFactory] Pedestal 그룹 생성 실패!');
+      return null;
+    }
+    
+    console.log(`      ✅ [ProductFactory] Pedestal 생성 완료: 위치 (${pos.x}, ${pos.y}, ${pos.z})`);
+    return pedestal.group;
+  }
+
+  /**
    * Neon Ring 상품 생성
    * @param {Object} product - 상품 데이터
    * @param {THREE.Vector3} position - 위치

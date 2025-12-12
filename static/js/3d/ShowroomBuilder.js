@@ -10,7 +10,6 @@ class ShowroomBuilder {
   static sharedFloorMat = null;        // 바닥 Material
   static sharedFloorTexture = null;    // 바닥 대리석 텍스처 (Static 공유)
   static sharedWallMat = null;         // 벽 Material
-  static sharedPedestalMat = null;      // 진열대 Material
   static sharedGoldMat = null;          // 골드 Material
   static sharedCctvMat = null;         // CCTV Material
   static sharedRedDotMat = null;        // 빨간 점 Material
@@ -418,19 +417,11 @@ class ShowroomBuilder {
    * 벽 위치는 고정하고, 모서리 부분만 곡면으로 처리
    */
   createWallCornerCoves() {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:308',message:'createWallCornerCoves entry',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     const coveRadius = 4.0; // 코브 반지름 (천장과 동일한 4.0m)
     const wallHeight = 15; // 벽 높이
     const wallThickness = 1; // 벽 두께
     const wallCenterOffset = wallThickness / 2; // 벽 중심에서 안쪽 면까지: 0.5m
     const wallInnerEdge = 15.5 - wallCenterOffset; // 벽 안쪽 면: 15.0m
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:315',message:'벽 모서리 코브 계산값',data:{coveRadius,wallHeight,wallThickness,wallCenterOffset,wallInnerEdge},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     
     const wallMat = new THREE.MeshStandardMaterial({
       color: 0xFFFFFF, // 벽과 동일한 화이트
@@ -457,14 +448,6 @@ class ShowroomBuilder {
       Math.PI / 2,     // thetaStart: 90도부터 시작 (+Y 방향)
       Math.PI / 2      // thetaLength: 90도 호 (1/4 원, +Y에서 -X로)
     );
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:343',message:'CylinderGeometry 기본 방향 분석',data:{thetaStart:'Math.PI/2 (90도, +Y 방향)',thetaLength:'Math.PI/2 (90도, +Y에서 -X로)',note:'기본 방향: +Y에서 시작하여 -X로 가는 호'},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:331',message:'CylinderGeometry 생성 완료',data:{coveRadius,wallHeight,thetaStart:'Math.PI/2',thetaLength:'Math.PI/2'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
 
     // 4개의 벽 모서리 위치 (벽 안쪽 면 기준)
     // 천장의 곡면처럼 각 모서리에서 방 안쪽을 향하도록 배치
@@ -524,24 +507,8 @@ class ShowroomBuilder {
         rotation: { x: 0, y: Math.PI / 2 - (3 * Math.PI) / 4, z: 0 } // Y축 -45도 (90도 - 135도 = -45도)
       }
     ];
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:409',message:'벽 모서리 회전 방향 최종 계산',data:{wallCorners:wallCorners.map((c,i)=>({corner:i,position:c.position,rotationY:c.rotation.y,rotationDeg:c.rotation.y*180/Math.PI,baseRotation:'Math.PI/2 (90도)',additionalRotation:c.rotation.y - Math.PI/2})),note:'CylinderGeometry 기본 방향(+Y→-X)에서 천장 곡면 방향으로 회전'},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:397',message:'벽 모서리 회전 방향 재계산',data:{wallCorners:wallCorners.map((c,i)=>({corner:i,position:c.position,rotationY:c.rotation.y,rotationDeg:c.rotation.y*180/Math.PI})),note:'천장 곡면과 정확히 일치하도록 회전값 수정'},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'H'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:375',message:'벽 모서리 회전 방향 계산',data:{wallCorners:wallCorners.map(c=>({position:c.position,rotationY:c.rotation.y}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
 
     wallCorners.forEach((cornerConfig, index) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:365',message:'벽 모서리 코브 생성 시작',data:{cornerIndex:index,position:cornerConfig.position,rotation:cornerConfig.rotation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
       const cove = new THREE.Mesh(coveGeo, wallMat);
       cove.position.set(
         cornerConfig.position.x,
@@ -554,17 +521,9 @@ class ShowroomBuilder {
         cornerConfig.rotation.z
       );
       
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:377',message:'벽 모서리 코브 배치 완료',data:{cornerIndex:index,finalPosition:{x:cove.position.x,y:cove.position.y,z:cove.position.z},finalRotation:{x:cove.rotation.x,y:cove.rotation.y,z:cove.rotation.z}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
-      
       cove.receiveShadow = true;
       this.scene.add(cove);
     });
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ShowroomBuilder.js:382',message:'createWallCornerCoves exit',data:{totalCorners:wallCorners.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     
     console.log("✅ [ShowroomBuilder] 벽 모서리 곡면 처리 완료 (4개 수직 모서리)");
   }
@@ -701,71 +660,6 @@ class ShowroomBuilder {
   /**
    * 진열대 생성 (바닥에 정확히 붙음)
    */
-  createPedestal(position) {
-    const pedestalGroup = new THREE.Group();
-    const pedestalHeight = 1.4;
-    const pedestalRadius = 0.5; // ⚠️ 둘레를 작게: 0.6 → 0.5
-    const zFightingOffset = 0.001; // Z-Fighting 방지를 위한 최소 오프셋
-
-    // 메인 기둥 - 투명한 유리 재질 (이쁘게!)
-    const pedestalGeo = new THREE.CylinderGeometry(pedestalRadius, pedestalRadius, pedestalHeight, 32);
-    // ✅ WebGL 최적화: Static Material 공유 + envMapIntensity 제거
-    if (!ShowroomBuilder.sharedPedestalMat) {
-      ShowroomBuilder.sharedPedestalMat = new THREE.MeshStandardMaterial({
-        color: 0xe8f4f8, // 약간 푸른빛이 도는 흰색 (프로스트 글래스 느낌)
-        transparent: true,
-        opacity: 0.9, // 약간 더 보이도록 (유리 느낌 유지)
-        roughness: 0.05, // 매우 매끄러운 표면 (고급 유리)
-        metalness: 0.0, // 비금속
-        side: THREE.DoubleSide, // 양면 렌더링 (투명 재질 필수)
-        // transmission, ior, thickness, envMapIntensity 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
-      });
-    }
-    const pedestalMat = ShowroomBuilder.sharedPedestalMat;
-    const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
-    // 원기둥의 중심이 높이의 절반에 위치 (바닥면이 Y=0에 정확히 닿음)
-    pedestal.position.y = pedestalHeight / 2; // 0.7 (바닥면이 Y=0.0에 정확히 닿음 - 물리법칙 준수)
-    pedestal.castShadow = true;
-    pedestal.receiveShadow = true; // 유리는 그림자를 받을 수 있음
-    pedestalGroup.add(pedestal);
-
-    // 상단 금색 링 (진열대 상단에 정확히 배치) - 유리와 대비되는 세련된 금색
-    const topRimGeo = new THREE.TorusGeometry(pedestalRadius, 0.045, 16, 32); // 링 두께 약간 증가 (더 눈에 띄게)
-    // ✅ WebGL 최적화: Static Material 공유
-    if (!ShowroomBuilder.sharedGoldMat) {
-      ShowroomBuilder.sharedGoldMat = new THREE.MeshStandardMaterial({
-        color: 0xffd700,
-        roughness: 0.1, // 매우 반짝이는 느낌 (고급 금속)
-        metalness: 0.98, // 거의 완전한 금속 느낌
-        emissive: 0xffd700, // 약간의 발광 효과
-        emissiveIntensity: 0.15 // 은은한 발광
-      });
-    }
-    const goldMat = ShowroomBuilder.sharedGoldMat;
-    const topRim = new THREE.Mesh(topRimGeo, goldMat);
-    topRim.position.y = pedestalHeight; // 1.4 (진열대 상단)
-    topRim.rotation.x = Math.PI / 2;
-    topRim.castShadow = true;
-    pedestalGroup.add(topRim);
-
-    // 하단 금색 링 (바닥에서 최소한의 간격으로 Z-Fighting만 방지) - 상단과 동일한 세련된 금색
-    const bottomRim = new THREE.Mesh(topRimGeo, goldMat);
-    bottomRim.position.y = zFightingOffset; // 0.001 (바닥에 거의 붙어 있지만 Z-Fighting 방지)
-    bottomRim.rotation.x = Math.PI / 2;
-    bottomRim.castShadow = true;
-    pedestalGroup.add(bottomRim);
-
-    // 위치 설정 (그룹의 Y=0으로 설정하여 바닥에 정확히 붙음)
-    pedestalGroup.position.set(position.x, 0, position.z);
-
-    // ⚠️ 물리 법칙 준수: 진열대는 바닥과 정확히 90도 수직!
-    // lookAt()을 사용하면 진열대가 기울어질 수 있으므로 제거
-    // rotation은 기본값(0, 0, 0)으로 유지하여 완벽한 수직 상태 보장
-    pedestalGroup.rotation.set(0, 0, 0);
-
-    this.scene.add(pedestalGroup);
-    return pedestalGroup;
-  }
 
   /**
    * 모던 면조명 천장 (Luminous Ceiling) 시공

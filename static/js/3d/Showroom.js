@@ -503,7 +503,9 @@ class Showroom {
     // [1] 중앙 - Gold 상품 (왕관)
     if (gold && this.pedestalPositions[0]) {
       const pedestalPos = this.pedestalPositions[0];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, goldCrownHeight, pedestalPos.z);
       console.log(`   [중앙 진열대] "Gold" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(gold, productPos);
@@ -517,7 +519,9 @@ class Showroom {
     // [2] 좌측 중간 - Standard 상품 (코인)
     if (standard && this.pedestalPositions[1]) {
       const pedestalPos = this.pedestalPositions[1];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, standardCoinHeight, pedestalPos.z);
       console.log(`   [좌측 중간 진열대] "Standard" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(standard, productPos);
@@ -531,7 +535,9 @@ class Showroom {
     // [3] 우측 중간 - Premium 상품 (큐브)
     if (premium && this.pedestalPositions[2]) {
       const pedestalPos = this.pedestalPositions[2];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, premiumCubeHeight, pedestalPos.z);
       console.log(`   [우측 중간 진열대] "Premium" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(premium, productPos);
@@ -545,7 +551,9 @@ class Showroom {
     // [4] 좌측 끝 - Event 상품 1 (선물 상자)
     if (eventProducts[0] && this.pedestalPositions[3]) {
       const pedestalPos = this.pedestalPositions[3];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
       console.log(`   [좌측 끝 진열대] "${eventProducts[0].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createEventProduct(eventProducts[0], productPos);
@@ -558,7 +566,9 @@ class Showroom {
     // [5] 우측 끝 - Event 상품 2 (선물 상자)
     if (eventProducts[1] && this.pedestalPositions[4]) {
       const pedestalPos = this.pedestalPositions[4];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
       console.log(`   [우측 끝 진열대] "${eventProducts[1].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createEventProduct(eventProducts[1], productPos);
