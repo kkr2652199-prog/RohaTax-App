@@ -166,13 +166,77 @@
     {# [5] 기타 UI 라이브러리 #}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
     
-    {# [6] 데이터 주입 (전역 변수 등록) #}
+    {# [6] 상품 데이터 JSON 주입 (JavaScript에서 읽을 수 있도록) #}
+    <script id="showroom-data" type="application/json">
+    {
+        "regular_products": [
+            {% for p in regular_products %}
+            {
+                "id": {{ p.id }},
+                "name": "{{ p.name }}",
+                "description": {{ (p.description or '') | tojson | safe }},
+                "price": {{ p.price | default(0) }},
+                "token_amount": {{ p.token_amount | default(0) }},
+                "type": "{{ p.type }}",
+                "duration_days": {{ p.duration_days | default(0) }},
+                "vat_included": {{ (p.vat_included or 0) | int }},
+                "is_active": {{ (p.is_active or 0) | int }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        "event_products": [
+            {% for p in event_products %}
+            {
+                "id": {{ p.id }},
+                "name": "{{ p.name }}",
+                "description": {{ (p.description or '') | tojson | safe }},
+                "price": {{ p.price | default(0) }},
+                "token_amount": {{ p.token_amount | default(0) }},
+                "type": "{{ p.type }}",
+                "duration_days": {{ p.duration_days | default(0) }},
+                "vat_included": {{ (p.vat_included or 0) | int }},
+                "is_active": {{ (p.is_active or 0) | int }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        "discount_rate": {{ discount_rate | default(0) }},
+        "premium_per_token_price": {{ premium_per_token_price | default(0) }},
+        "user_info": {
+            "user_id": {{ user_info.user_id | default(null) | tojson | safe }},
+            "username": {{ user_info.username | default('') | tojson | safe }},
+            "is_admin": {{ user_info.is_admin | default(0) | int }}
+        }
+    }
+    </script>
+    
+    {# [6-1] JSON 데이터를 JavaScript 변수로 변환 #}
     <script>
-        window.PRODUCT_DATA = {{ products | tojson | safe }};
-        window.USER_INFO = {{ user_info | tojson | safe }};
-        console.log("📦 [Showroom] Data Injected into Window:");
-        console.log("   - Products:", window.PRODUCT_DATA ? window.PRODUCT_DATA.length + " items" : "NULL");
-        console.log("   - User Info:", window.USER_INFO);
+        (function() {
+            const dataScript = document.getElementById('showroom-data');
+            if (dataScript) {
+                try {
+                    const showroomData = JSON.parse(dataScript.textContent);
+                    // 전역 변수로 등록 (기존 코드와 호환성 유지)
+                    window.SHOWROOM_DATA = showroomData;
+                    window.PRODUCT_DATA = [
+                        ...(showroomData.regular_products || []),
+                        ...(showroomData.event_products || [])
+                    ];
+                    window.USER_INFO = showroomData.user_info;
+                    
+                    console.log("📦 [Showroom] 상품 데이터 주입 완료:");
+                    console.log("   - 일반 상품:", showroomData.regular_products ? showroomData.regular_products.length + "개" : "없음");
+                    console.log("   - 이벤트 상품:", showroomData.event_products ? showroomData.event_products.length + "개" : "없음");
+                    console.log("   - Premium 할인율:", showroomData.discount_rate + "%");
+                    console.log("   - Premium 토큰당 가격:", showroomData.premium_per_token_price + "원");
+                    console.log("   - 사용자 정보:", showroomData.user_info);
+                } catch (error) {
+                    console.error("❌ [Showroom] JSON 파싱 실패:", error);
+                }
+            } else {
+                console.error("❌ [Showroom] showroom-data 스크립트 태그를 찾을 수 없습니다.");
+            }
+        })();
     </script>
 
     {# [7] 3D 엔진 초기화 (가장 마지막!) #}
