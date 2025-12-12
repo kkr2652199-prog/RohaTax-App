@@ -370,6 +370,12 @@
                         <button id="btn-pedestal" class="test-button" style="background: linear-gradient(135deg, #8b7355 0%, #6b5d4f 100%);">
                             🏛️ 진열대 (Pedestal)
                         </button>
+                        <button id="btn-tv3d" class="test-button" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+                            📺 3D TV
+                        </button>
+                        <button id="btn-luxedisplay" class="test-button" style="background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);">
+                            💎 LuxeDisplay3D
+                        </button>
                     </div>
                 </div>
             </details>
@@ -403,11 +409,18 @@
     <!-- Three.js 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GLTFLoader (3D 모델 로드용) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     
-    <!-- OrbitControls를 THREE 네임스페이스에 추가 -->
+    <!-- OrbitControls 및 GLTFLoader를 THREE 네임스페이스에 추가 -->
     <script>
-        if (typeof THREE !== 'undefined' && typeof OrbitControls !== 'undefined') {
-            THREE.OrbitControls = OrbitControls;
+        if (typeof THREE !== 'undefined') {
+            if (typeof OrbitControls !== 'undefined') {
+                THREE.OrbitControls = OrbitControls;
+            }
+            if (typeof GLTFLoader !== 'undefined') {
+                THREE.GLTFLoader = GLTFLoader;
+            }
         }
     </script>
     
@@ -415,6 +428,8 @@
     <script src="{{ url_for('static', filename='js/3d/Pedestal3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/NeonRing.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/TV3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/LuxeDisplay3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/FurnitureViewer.js') }}?v={{ timestamp }}"></script>
     
@@ -736,6 +751,78 @@
                     console.error('[Furniture Studio] 에러 메시지:', error.message);
                     console.error('[Furniture Studio] 스택 트레이스:', error.stack);
                     updateStatus('❌ 진열대 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // 3D TV
+            document.getElementById('btn-tv3d').onclick = () => {
+                try {
+                    updateStatus('⏳ 3D TV 모델 로드 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    const productData = { name: '3D TV', price: 0 };
+                    
+                    // 모델 파일 경로 설정 (사용자가 나중에 변경 가능)
+                    // 기본값: /static/models/tv.glb
+                    // 또는 사용자가 지정한 경로: '/static/js/3d tv/models/tv.glb' 등
+                    const modelPath = '/static/models/tv.glb'; // 필요시 수정
+                    
+                    const group = factory.createTV3D(productData, pos, modelPath);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ 3D TV 생성 완료 (모델 로드 중일 수 있음)');
+                        
+                        // 자동 회전 애니메이션 제거 - TV는 사용자가 직접 조작할 때만 움직임 (OrbitControls 사용)
+                    } else {
+                        throw new Error('3D TV 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 3D TV 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ 3D TV 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // LuxeDisplay3D
+            document.getElementById('btn-luxedisplay').onclick = () => {
+                try {
+                    updateStatus('⏳ LuxeDisplay3D 생성 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    const productData = { name: 'LuxeDisplay3D', price: 0 };
+                    
+                    const group = factory.createLuxeDisplay3D(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ LuxeDisplay3D 생성 완료');
+                        
+                        // 회전 애니메이션 시작 (선택적)
+                        group.userData.isAnimating = true;
+                        const animateLuxeDisplay = () => {
+                            if (viewer && viewer.currentProduct && viewer.currentProduct.userData.isAnimating) {
+                                const LuxeDisplay3DClass = LuxeDisplay3D || window.LuxeDisplay3D;
+                                if (LuxeDisplay3DClass) {
+                                    LuxeDisplay3DClass.animate(viewer.currentProduct);
+                                }
+                                requestAnimationFrame(animateLuxeDisplay);
+                            }
+                        };
+                        animateLuxeDisplay();
+                    } else {
+                        throw new Error('LuxeDisplay3D 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] LuxeDisplay3D 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ LuxeDisplay3D 생성 실패: ' + error.message, true);
                 }
             };
         }

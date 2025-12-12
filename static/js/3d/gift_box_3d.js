@@ -38,9 +38,10 @@ class GiftBox3D {
         this.TEXT_COLOR = "#ffedcc";
 
         // 크기 설정
-        this.boxWidth = 2.0;
-        this.boxDepth = 2.0;
-        this.boxHeight = 1.8;
+        // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2, 높이 1.2
+        this.boxWidth = 1.2; // 골드무제한과 동일한 크기 (1.4 → 1.2)
+        this.boxDepth = 1.2; // 골드무제한과 동일한 크기 (1.4 → 1.2)
+        this.boxHeight = 0.9; // 골드무제한과 동일한 높이 (1.1 → 0.9, 총 높이 1.2)
         this.wallThickness = 0.15;
         this.ribbonWidth = 0.3;
         this.ribbonThick = 0.02;
