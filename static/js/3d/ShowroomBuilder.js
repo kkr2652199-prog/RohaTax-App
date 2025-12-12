@@ -45,9 +45,9 @@ class ShowroomBuilder {
     if (!ShowroomBuilder.sharedFloorMat) {
       ShowroomBuilder.sharedFloorMat = new THREE.MeshStandardMaterial({
         map: ShowroomBuilder.sharedFloorTexture, // 대리석 텍스처 복원
-        color: 0x111111, // 검은색 바닥 (본진과 동일)
-        roughness: 0.05, // 매우 매끄러운 표면 (대리석 반사)
-        metalness: 0.2,
+        color: 0x0d0d0d, // 더 진한 검은색 바닥 (0x111111 → 0x0d0d0d, 조금만 진하게)
+        roughness: 0.5, // 빛 반사 30% 감소 (0.3 → 0.5, 더 무광 처리)
+        metalness: 0.05, // 금속감 추가 감소 (0.1 → 0.05, 빛 반사 30% 감소)
         side: THREE.FrontSide,
         flatShading: false
         // envMapIntensity 제거: 텍스처 유닛 절약
@@ -275,18 +275,18 @@ class ShowroomBuilder {
    */
   createSimpleWalls() {
     // 투톤 벽 재질 정의
-    // 하단 벽 재질 (우드 색상 - 진한 갈색)
+    // 하단 벽 재질 (다크 월넛 - 더 짙은 갈색)
     const darkBaseMat = new THREE.MeshStandardMaterial({
-      color: 0x5C4A2F,       // 우드 색상 (진한 갈색)
+      color: 0x3E2723,       // 다크 월넛 (더 짙은 갈색, 0x5C4A2F → 0x3E2723)
       roughness: 0.8,        // 나무 질감을 위한 거칠기 증가
       metalness: 0.0,        // 비금속 (나무 느낌)
       side: THREE.DoubleSide
     });
 
-    // 상단 벽 재질 (화이트 - 고급 석고 질감)
+    // 상단 벽 재질 (다크 차콜 - 프리미엄 다크 라운지 스타일)
     const lightUpperMat = new THREE.MeshStandardMaterial({
-      color: 0xFFFFFF,       // 화이트
-      roughness: 0.8,
+      color: 0x262626,       // 짙은 차콜 (0xFFFFFF → 0x262626)
+      roughness: 0.9,        // 완전 무광 (0.8 → 0.9, 벽에 조명이 비쳐 번들거리지 않게 함)
       metalness: 0.1,
       side: THREE.DoubleSide
     });

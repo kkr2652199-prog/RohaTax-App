@@ -500,83 +500,184 @@ class Showroom {
     const goldCrownHeight = pedestalTop; // 1.4m (내부 오프셋 자동 처리)
     const giftBoxHeight = pedestalTop; // 1.4m (내부 오프셋 자동 처리)
 
-    // [1] 중앙 - Gold 상품 (왕관)
-    if (gold && this.pedestalPositions[0]) {
-      const pedestalPos = this.pedestalPositions[0];
-      const pedestal = new window.Pedestal3D(pedestalPos);
-      this.scene.add(pedestal.group);
-      this.meshes.push(pedestal.group);
-      const productPos = new THREE.Vector3(pedestalPos.x, goldCrownHeight, pedestalPos.z);
-      console.log(`   [중앙 진열대] "Gold" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
-      const productGroup = this.factory.createRegularProduct(gold, productPos);
-      if (productGroup) {
-        this.meshes.push(productGroup);
-        this.scene.add(productGroup); // 씬에 명시적으로 추가
-        this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
+    // [1] 중앙 - Gold 상품 (왕관) - 제거됨 (LuxeDisplay3D 5번째 다이로 이동)
+    // [2] 좌측 중간 - Standard 상품 (코인) - 제거됨 (LuxeDisplay3D 3번째 다이로 이동)
+    // [3] 우측 중간 - Premium 상품 (큐브) - 제거됨 (LuxeDisplay3D 4번째 다이로 이동)
+    // 기존 진열대는 유지하되 상품은 배치하지 않음 (LuxeDisplay3D 진열대에 배치)
+
+    // [4] 좌측 끝 - Event 상품 1 (선물 상자) - 제거됨
+    // 무료 상품은 이제 LuxeDisplay3D 진열대의 원형 다이 위에만 배치됩니다.
+    // 기존 진열대는 유지하되 상품은 배치하지 않음
+    
+    // [5] 우측 끝 - Event 상품 2 (선물 상자) - 제거됨
+    // 무료 상품은 이제 LuxeDisplay3D 진열대의 원형 다이 위에만 배치됩니다.
+    // 기존 진열대는 유지하되 상품은 배치하지 않음
+
+    // [6] 정면 벽 - TV 전시 (정면 벽에 붙여서 배치) - 대폭 확대된 TV
+    // 정면 벽 위치: z = 15.5, TV를 벽에 붙이기 위해 z = 15.0에 배치
+    // TV 높이: 3.15m (대폭 확대), 중심 기준이므로 Y = 7.075 정도 (바닥 방향으로 조금 내림)
+    if (typeof window.TV3D !== 'undefined') {
+      const tvPosition = new THREE.Vector3(0, 6.575, 15.0); // 정면 벽 중앙에 배치 (천장 방향으로 조금 더 올림, 6.075 → 6.575)
+      console.log(`   [정면 벽] "TV" → (${tvPosition.x}, ${tvPosition.y}, ${tvPosition.z})`);
+      
+      // TV 생성 (재생 상태로 설정)
+      const tvGroup = window.TV3D.createModel(null, tvPosition, true);
+      if (tvGroup) {
+        // TV를 사운드바 기준으로 180도 회전 (Y축 회전)
+        tvGroup.rotation.y = Math.PI; // 180도 회전
+        this.meshes.push(tvGroup);
+        this.scene.add(tvGroup);
+        // TV 조명 추가 (부드러운 조명)
+        this.addProductSpotlight(tvPosition, 0xffffff); // 화이트 조명
+        console.log(`   ✅ [정면 벽] TV 전시 완료 (180도 회전)`);
       }
+    } else {
+      console.warn(`   ⚠️ [정면 벽] TV3D 클래스를 찾을 수 없습니다.`);
     }
 
-    // [2] 좌측 중간 - Standard 상품 (코인)
-    if (standard && this.pedestalPositions[1]) {
-      const pedestalPos = this.pedestalPositions[1];
-      const pedestal = new window.Pedestal3D(pedestalPos);
-      this.scene.add(pedestal.group);
-      this.meshes.push(pedestal.group);
-      const productPos = new THREE.Vector3(pedestalPos.x, standardCoinHeight, pedestalPos.z);
-      console.log(`   [좌측 중간 진열대] "Standard" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
-      const productGroup = this.factory.createRegularProduct(standard, productPos);
-      if (productGroup) {
-        this.meshes.push(productGroup);
-        this.scene.add(productGroup); // 씬에 명시적으로 추가
-        this.addProductSpotlight(productPos, 0xc0c0c0); // 실버 조명
+    // [7] 뒷벽 - LuxeDisplay3D 진열대 전시 (TV 반대편 벽)
+    // TV 위치: z=15.0 (정면 벽)
+    // 쇼룸 깊이: 30 (z=-15 ~ z=15)
+    // 뒷벽: z=-15
+    // 진열대 폭: 21, 폭의 반: 10.5
+    // 진열대 z 위치: 벽쪽으로 조금 이동 (-4.5 → -6.5)
+    if (typeof window.LuxeDisplay3D !== 'undefined' && typeof window.ProductFactory !== 'undefined') {
+      const showcaseWidth = 21;
+      const showcaseHalfWidth = showcaseWidth / 2; // 10.5
+      const backWallZ = -15; // 뒷벽 위치
+      const luxeDisplayPosition = new THREE.Vector3(0, 0, backWallZ + showcaseHalfWidth - 6); // z = -10.5 (벽쪽으로 6만큼 이동)
+      console.log(`   [뒷벽] "LuxeDisplay3D" → (${luxeDisplayPosition.x}, ${luxeDisplayPosition.y}, ${luxeDisplayPosition.z})`);
+      
+      // ⚠️ 중요: this.factory를 사용하여 상품이 애니메이션 배열에 추가되도록 함
+      const productData = { name: 'LuxeDisplay3D', price: 0 };
+      const luxeDisplayGroup = this.factory.createLuxeDisplay3D(productData, luxeDisplayPosition);
+      
+      if (luxeDisplayGroup) {
+        this.meshes.push(luxeDisplayGroup);
+        console.log(`   ✅ [뒷벽] LuxeDisplay3D 진열대 전시 완료`);
+        
+        // 무료 상품 2종을 진열대 원형 다이 위에 올리기
+        // LuxeDisplay3D의 원형 다이 위치 계산 (로컬 좌표계 기준)
+        const showcaseHeight = 1.4; // 진열대 높이
+        const innerWidth = showcaseWidth - 3; // 18
+        const spacing = innerWidth / (5 - 1); // 4.5 (5개 원형 다이 간격)
+        const jewelryBoxHeight = 0.25; // 원형 다이 높이
+        // 원형 다이 중심 높이: showcaseHeight/2(0.7) + showcaseHeight/2(0.7) + jewelryBoxHeight/2(0.125) = 1.525
+        const jewelryBoxCenterY = showcaseHeight / 2 + showcaseHeight / 2 + jewelryBoxHeight / 2; // 1.525
+        // 원형 다이 윗면 높이: 중심 + 높이/2 = 1.525 + 0.125 = 1.65 (물리 법칙: 상자 밑면이 여기에 붙음)
+        const jewelryBoxTopY = jewelryBoxCenterY + jewelryBoxHeight / 2; // 1.65
+        
+        // 무료 상품 2종을 첫 번째와 두 번째 원형 다이 위에 올리기
+        // GiftBox 높이 계산 (boxHeight 0.9 + lidHeight 0.3 = 1.2, 스케일 0.9 적용)
+        const giftBoxHeight = 1.2 * 0.9; // 1.08m
+        const giftBoxHalfHeight = giftBoxHeight / 2; // 0.54m
+        
+        if (eventProducts.length >= 2) {
+          // 첫 번째 원형 다이 위치 (인덱스 0)
+          const firstBoxX = -innerWidth / 2 + (0 * spacing); // -9
+          // 물리 법칙: 상자 밑면이 원형 다이 윗면에 1:1로 붙어야 함
+          // createEventProduct에서 wrapperGroup.position.y가 상자의 바닥면이 되도록 설정됨
+          // (giftBoxGroup.position.y = 0이므로 상자 중심이 wrapperGroup 중심과 같고,
+          //  상자 바닥면 = position.y - giftBoxHalfHeight가 되지만,
+          //  주석에 "GiftBox의 바닥면이 그룹의 position.y에 오도록"이라고 되어 있으므로
+          //  실제로는 position.y가 상자 바닥면이 되어야 함)
+          const firstBoxPosition = new THREE.Vector3(
+            luxeDisplayPosition.x + firstBoxX,
+            luxeDisplayPosition.y + jewelryBoxTopY, // 원형 다이 윗면 높이 = 상자 바닥면 높이 (1:1 붙음)
+            luxeDisplayPosition.z
+          );
+          
+          // 두 번째 원형 다이 위치 (인덱스 1)
+          const secondBoxX = -innerWidth / 2 + (1 * spacing); // -4.5
+          // 물리 법칙: 상자 밑면이 원형 다이 윗면에 1:1로 붙어야 함
+          // createEventProduct에서 wrapperGroup.position.y가 상자의 바닥면이 되도록 설정됨
+          const secondBoxPosition = new THREE.Vector3(
+            luxeDisplayPosition.x + secondBoxX,
+            luxeDisplayPosition.y + jewelryBoxTopY, // 원형 다이 윗면 높이 = 상자 바닥면 높이 (1:1 붙음)
+            luxeDisplayPosition.z
+          );
+          
+          console.log(`   [뒷벽] 무료 상품 1 "${eventProducts[0].name}" → (${firstBoxPosition.x.toFixed(2)}, ${firstBoxPosition.y.toFixed(2)}, ${firstBoxPosition.z.toFixed(2)})`);
+          const firstEventProduct = this.factory.createEventProduct(eventProducts[0], firstBoxPosition);
+          if (firstEventProduct) {
+            this.meshes.push(firstEventProduct);
+            console.log(`   ✅ [뒷벽] 무료 상품 1 전시 완료`);
+          }
+          
+          console.log(`   [뒷벽] 무료 상품 2 "${eventProducts[1].name}" → (${secondBoxPosition.x.toFixed(2)}, ${secondBoxPosition.y.toFixed(2)}, ${secondBoxPosition.z.toFixed(2)})`);
+          const secondEventProduct = this.factory.createEventProduct(eventProducts[1], secondBoxPosition);
+          if (secondEventProduct) {
+            this.meshes.push(secondEventProduct);
+            console.log(`   ✅ [뒷벽] 무료 상품 2 전시 완료`);
+          }
+          
+          // [3] 3번째 원형 다이 - 토큰 상품 (Standard Coin)
+          if (standard) {
+            const thirdBoxX = -innerWidth / 2 + (2 * spacing); // 0 (3번째 다이)
+            // Standard Coin: coin.position.y = 0.6이므로, 그룹의 position.y = jewelryBoxTopY + 0.6
+            // 상품의 바닥면이 원형 다이 윗면에 붙도록: position.y = jewelryBoxTopY + 0.6
+            const thirdBoxPosition = new THREE.Vector3(
+              luxeDisplayPosition.x + thirdBoxX,
+              luxeDisplayPosition.y + jewelryBoxTopY + 0.6, // 원형 다이 윗면 + 코인 반지름
+              luxeDisplayPosition.z
+            );
+            console.log(`   [뒷벽] 토큰 상품 "${standard.name}" → (${thirdBoxPosition.x.toFixed(2)}, ${thirdBoxPosition.y.toFixed(2)}, ${thirdBoxPosition.z.toFixed(2)})`);
+            const standardProduct = this.factory.createRegularProduct(standard, thirdBoxPosition);
+            if (standardProduct) {
+              this.meshes.push(standardProduct);
+              this.scene.add(standardProduct);
+              this.addProductSpotlight(thirdBoxPosition, 0xc0c0c0); // 실버 조명
+              console.log(`   ✅ [뒷벽] 토큰 상품 전시 완료`);
+            }
+          }
+          
+          // [4] 4번째 원형 다이 - 프리미엄 상품 (Premium Cube)
+          if (premium) {
+            const fourthBoxX = -innerWidth / 2 + (3 * spacing); // 4.5 (4번째 다이)
+            // Premium Cube: lines.position.y = 0.6이므로, 그룹의 position.y = jewelryBoxTopY + 0.6
+            // 상품의 바닥면이 원형 다이 윗면에 붙도록: position.y = jewelryBoxTopY + 0.6
+            const fourthBoxPosition = new THREE.Vector3(
+              luxeDisplayPosition.x + fourthBoxX,
+              luxeDisplayPosition.y + jewelryBoxTopY + 0.6, // 원형 다이 윗면 + 큐브 반 높이
+              luxeDisplayPosition.z
+            );
+            console.log(`   [뒷벽] 프리미엄 상품 "${premium.name}" → (${fourthBoxPosition.x.toFixed(2)}, ${fourthBoxPosition.y.toFixed(2)}, ${fourthBoxPosition.z.toFixed(2)})`);
+            const premiumProduct = this.factory.createRegularProduct(premium, fourthBoxPosition);
+            if (premiumProduct) {
+              this.meshes.push(premiumProduct);
+              this.scene.add(premiumProduct);
+              this.addProductSpotlight(fourthBoxPosition, 0x00bfff); // 블루 조명
+              console.log(`   ✅ [뒷벽] 프리미엄 상품 전시 완료`);
+            }
+          }
+          
+          // [5] 5번째 원형 다이 - 골드 상품 (Gold Crown)
+          if (gold) {
+            const fifthBoxX = -innerWidth / 2 + (4 * spacing); // 9 (5번째 다이)
+            // Gold Crown: ring.position.y = 0.6이므로, 그룹의 position.y = jewelryBoxTopY + 0.6
+            // 상품의 바닥면이 원형 다이 윗면에 붙도록: position.y = jewelryBoxTopY + 0.6
+            const fifthBoxPosition = new THREE.Vector3(
+              luxeDisplayPosition.x + fifthBoxX,
+              luxeDisplayPosition.y + jewelryBoxTopY + 0.6, // 원형 다이 윗면 + 링 반지름
+              luxeDisplayPosition.z
+            );
+            console.log(`   [뒷벽] 골드 상품 "${gold.name}" → (${fifthBoxPosition.x.toFixed(2)}, ${fifthBoxPosition.y.toFixed(2)}, ${fifthBoxPosition.z.toFixed(2)})`);
+            const goldProduct = this.factory.createRegularProduct(gold, fifthBoxPosition);
+            if (goldProduct) {
+              this.meshes.push(goldProduct);
+              this.scene.add(goldProduct);
+              this.addProductSpotlight(fifthBoxPosition, 0xffd700); // 골드 조명
+              console.log(`   ✅ [뒷벽] 골드 상품 전시 완료`);
+            }
+          }
+        } else {
+          console.warn(`   ⚠️ [뒷벽] 무료 상품이 2개 미만입니다. (현재: ${eventProducts.length}개)`);
+        }
+      } else {
+        console.warn(`   ⚠️ [뒷벽] LuxeDisplay3D 생성 실패`);
       }
-    }
-
-    // [3] 우측 중간 - Premium 상품 (큐브)
-    if (premium && this.pedestalPositions[2]) {
-      const pedestalPos = this.pedestalPositions[2];
-      const pedestal = new window.Pedestal3D(pedestalPos);
-      this.scene.add(pedestal.group);
-      this.meshes.push(pedestal.group);
-      const productPos = new THREE.Vector3(pedestalPos.x, premiumCubeHeight, pedestalPos.z);
-      console.log(`   [우측 중간 진열대] "Premium" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
-      const productGroup = this.factory.createRegularProduct(premium, productPos);
-      if (productGroup) {
-        this.meshes.push(productGroup);
-        this.scene.add(productGroup); // 씬에 명시적으로 추가
-        this.addProductSpotlight(productPos, 0x00bfff); // 블루 조명
-      }
-    }
-
-    // [4] 좌측 끝 - Event 상품 1 (선물 상자)
-    if (eventProducts[0] && this.pedestalPositions[3]) {
-      const pedestalPos = this.pedestalPositions[3];
-      const pedestal = new window.Pedestal3D(pedestalPos);
-      this.scene.add(pedestal.group);
-      this.meshes.push(pedestal.group);
-      const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
-      console.log(`   [좌측 끝 진열대] "${eventProducts[0].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
-      const productGroup = this.factory.createEventProduct(eventProducts[0], productPos);
-      if (productGroup) {
-        this.meshes.push(productGroup);
-        this.scene.add(productGroup); // 씬에 명시적으로 추가
-        this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
-      }
-    }
-    // [5] 우측 끝 - Event 상품 2 (선물 상자)
-    if (eventProducts[1] && this.pedestalPositions[4]) {
-      const pedestalPos = this.pedestalPositions[4];
-      const pedestal = new window.Pedestal3D(pedestalPos);
-      this.scene.add(pedestal.group);
-      this.meshes.push(pedestal.group);
-      const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
-      console.log(`   [우측 끝 진열대] "${eventProducts[1].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
-      const productGroup = this.factory.createEventProduct(eventProducts[1], productPos);
-      if (productGroup) {
-        this.meshes.push(productGroup);
-        this.scene.add(productGroup); // 씬에 명시적으로 추가
-        this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
-      }
+    } else {
+      console.warn(`   ⚠️ [뒷벽] LuxeDisplay3D 또는 ProductFactory 클래스를 찾을 수 없습니다.`);
     }
 
     console.log(`✅ [Showroom] 총 ${this.meshes.length}개 상품 배치 완료`);
@@ -865,57 +966,67 @@ class Showroom {
     // 샹들리에 애니메이션 삭제 (Commander 지시)
     if (this.factory) {
       this.factory.updateProductAnimations();
+      
+      // Standard Coin 회전 애니메이션
+      if (this.factory.standardCoins) {
+        this.factory.standardCoins.forEach((group) => {
+          if (group && group.rotation) {
+            group.rotation.y += 0.01;
+          }
+        });
+      }
+      
+      // Premium 큐브: 외부 와이어프레임과 내부 큐브 반대 방향 회전
+      if (this.factory.premiumCubes) {
+        this.factory.premiumCubes.forEach((cube) => {
+          if (cube && cube.group) {
+            const scale = 1 + Math.sin(elapsed * 2 + (cube.offset || 0)) * 0.05;
+            cube.group.scale.setScalar(scale);
+            // 내부 큐브 반대 방향 빠른 회전
+            if (cube.inner) {
+              cube.inner.rotation.x -= 0.03; // 반대 방향, 빠르게
+              cube.inner.rotation.y -= 0.03;
+              cube.inner.rotation.z -= 0.03;
+            }
+          }
+        });
+      }
+      
+      // Gold 자이로스코프: 3개의 링이 각각 다른 방향으로 회전
+      if (this.factory.goldCrowns) {
+        this.factory.goldCrowns.forEach((crown) => {
+          if (crown && crown.group) {
+            // 전체 그룹 회전 (느리게)
+            crown.group.rotation.y += 0.002;
+            
+            // 각 링이 독립적으로 회전
+            if (crown.ring1) {
+              crown.ring1.rotation.y += 0.01; // 수평 링
+              crown.ring1.rotation.z += 0.005;
+            }
+            if (crown.ring2) {
+              crown.ring2.rotation.x += 0.008; // 수직 링 1
+              crown.ring2.rotation.z += 0.01;
+            }
+            if (crown.ring3) {
+              crown.ring3.rotation.x += 0.012; // 수직 링 2 (다른 속도)
+              crown.ring3.rotation.y += 0.006;
+            }
+            
+            // 에너지 코어 회전
+            if (crown.core) {
+              crown.core.rotation.x += 0.02;
+              crown.core.rotation.y += 0.02;
+            }
+            
+            // 파티클 회전
+            if (crown.particles) {
+              crown.particles.rotation.y += 0.02;
+            }
+          }
+        });
+      }
     }
-
-    // 상품 애니메이션 (기존 로직 유지 - 호환성)
-    this.standardCoins.forEach((group) => {
-      group.rotation.y += 0.01;
-    });
-
-    // Premium 큐브: 외부 와이어프레임과 내부 큐브 반대 방향 회전
-    this.premiumCubes.forEach(({ group, inner, offset }) => {
-      const scale = 1 + Math.sin(elapsed * 2 + offset) * 0.05;
-      group.scale.setScalar(scale);
-      // 외부 그룹 회전 (느리게)
-      group.rotation.y += 0.005;
-      // 내부 큐브 반대 방향 빠른 회전
-      if (inner) {
-        inner.rotation.x -= 0.03; // 반대 방향, 빠르게
-        inner.rotation.y -= 0.03;
-        inner.rotation.z -= 0.03;
-      }
-    });
-
-    // Gold 자이로스코프: 3개의 링이 각각 다른 방향으로 회전
-    this.goldCrowns.forEach(({ group, ring1, ring2, ring3, core, particles }) => {
-      // 전체 그룹 회전 (느리게)
-      group.rotation.y += 0.002;
-      
-      // 각 링이 독립적으로 회전
-      if (ring1) {
-        ring1.rotation.y += 0.01; // 수평 링
-        ring1.rotation.z += 0.005;
-      }
-      if (ring2) {
-        ring2.rotation.x += 0.008; // 수직 링 1
-        ring2.rotation.z += 0.01;
-      }
-      if (ring3) {
-        ring3.rotation.x += 0.012; // 수직 링 2 (다른 속도)
-        ring3.rotation.y += 0.006;
-      }
-      
-      // 에너지 코어 회전
-      if (core) {
-        core.rotation.x += 0.02;
-        core.rotation.y += 0.02;
-      }
-      
-      // 파티클 회전
-      if (particles) {
-        particles.rotation.y += 0.02;
-      }
-    });
 
     // 샹들리에 애니메이션 삭제됨 (Commander 지시)
 

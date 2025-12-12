@@ -74,14 +74,15 @@ class GiftBox3D {
     };
 
     // Dimensions (고정값)
+    // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2, 높이 1.2
     this.dimensions = {
-      boxWidth: 2.0,
-      boxDepth: 2.0,
-      boxHeight: 1.8,
+      boxWidth: 1.2, // 골드무제한과 동일한 크기 (1.4 → 1.2)
+      boxDepth: 1.2, // 골드무제한과 동일한 크기 (1.4 → 1.2)
+      boxHeight: 0.9, // 골드무제한과 동일한 높이 (1.1 → 0.9, 총 높이 1.2)
       wallThickness: 0.15,
       ribbonWidth: 0.26,
       ribbonThick: 0.05,
-      lidHeight: 0.3,
+      lidHeight: 0.3, // 총 높이 = 0.9 + 0.3 = 1.2
       lidOverhang: 0.1,
       boxRadius: 0.1,
       bevelSize: 0.03

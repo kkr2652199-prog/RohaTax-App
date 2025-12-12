@@ -303,22 +303,24 @@ class ProductFactory {
     });
     const giftBoxGroup = giftBox.createModel();
     
-    // GiftBox의 실제 높이 계산 (boxHeight 1.8 + lidHeight 0.3 = 2.1, 스케일 0.9 적용)
-    const giftBoxHeight = 2.1 * 0.9; // 1.89m
-    const giftBoxHalfHeight = giftBoxHeight / 2; // 0.945m
+    // GiftBox의 실제 높이 계산 (boxHeight 0.9 + lidHeight 0.3 = 1.2, 스케일 0.9 적용)
+    // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2, 높이 1.2
+    const giftBoxHeight = 1.2 * 0.9; // 1.08m (골드무제한 높이 1.2에 맞춤)
+    const giftBoxHalfHeight = giftBoxHeight / 2; // 0.54m
     
     // 래퍼 그룹 생성 (상품의 바닥면이 진열대 상단에 닿도록 조정)
     const wrapperGroup = new THREE.Group();
-    // GiftBox의 바닥면이 그룹의 position.y에 오도록 중심을 올림
-    giftBoxGroup.position.y = 0; // 그룹 중심 (진열대에 정확히 붙음)
+    // 물리 법칙: GiftBox의 바닥면이 그룹의 position.y에 오도록 중심을 올림
+    // GiftBox 중심을 giftBoxHalfHeight만큼 위로 올려서 바닥면이 position.y에 오도록 함
+    giftBoxGroup.position.y = giftBoxHalfHeight; // 상자 중심을 위로 올림 (바닥면이 position.y에 붙음)
     giftBoxGroup.scale.set(0.9, 0.9, 0.9);
     wrapperGroup.add(giftBoxGroup);
     
     wrapperGroup.userData = wrapperGroup.userData || {};
     wrapperGroup.userData.productData = product;
     
-    // 그룹 위치 설정: position.y는 진열대 상단(1.4m)
-    // 상품의 바닥면이 진열대 상단에 닿도록 조정
+    // 그룹 위치 설정: position.y는 진열대 상단 또는 원형 다이 윗면
+    // 물리 법칙: 상품의 바닥면이 진열대 상단에 닿도록 조정
     wrapperGroup.position.set(position.x, position.y, position.z);
     
     // ⚠️ 물리 법칙: 진열대와 평행하게 유지 (기울이지 않음)
@@ -377,8 +379,9 @@ class ProductFactory {
    */
   createStandardCoin(product, position) {
     const group = new THREE.Group();
+    // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2 (반지름 0.6)
     const coinHeight = 0.25; // 코인 높이
-    const coinRadius = 1.2;
+    const coinRadius = 0.6; // 골드무제한과 동일한 크기 (0.7 → 0.6)
     
     // ✅ WebGL 최적화: 공유 Material 사용
     const coinMat = ProductFactory.getCoinMaterial();
@@ -397,7 +400,7 @@ class ProductFactory {
     // ✅ WebGL 최적화: 공유 Material 사용
     const toothMat = ProductFactory.getToothMaterial();
     const toothCount = 24;
-    const radius = 1.2;
+    const radius = 0.6; // 골드무제한과 동일한 크기 (0.7 → 0.6)
     const toothHeight = 0.15;
     const toothWidth = 0.08;
     
@@ -421,7 +424,7 @@ class ProductFactory {
     // ✅ WebGL 최적화: 공유 Material 사용
     const rimMat = ProductFactory.getRimMaterial();
     const rim = new THREE.Mesh(
-      ProductFactory.getRimGeometry(1.25, 0.08),
+      ProductFactory.getRimGeometry(0.65, 0.08), // 골드무제한과 동일한 크기 (0.75 → 0.65)
       rimMat
     );
     rim.rotation.x = Math.PI / 2;
@@ -447,8 +450,9 @@ class ProductFactory {
    */
   createPremiumCube(product, position) {
     const group = new THREE.Group();
-    const outerSize = 1.6;
-    const cubeHalfHeight = outerSize / 2; // 0.8
+    // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2
+    const outerSize = 1.2; // 골드무제한과 동일한 크기 (1.4 → 1.2)
+    const cubeHalfHeight = outerSize / 2; // 0.6
     
     // 외부 와이어프레임 (네온 시안)
     // ✅ WebGL 최적화: 공유 Material 사용
@@ -512,9 +516,10 @@ class ProductFactory {
    */
   createGoldCrown(product, position) {
     const group = new THREE.Group();
-    const ringRadius = 0.7; // 링 반지름
+    // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2 (반지름 0.6)
+    const ringRadius = 0.6; // 링 반지름 조금 줄임 (0.7 → 0.6, 가로폭/세로폭 1.4 → 1.2)
     const ringThickness = 0.12; // 링 두께
-    const crownHalfHeight = ringRadius; // 0.7 (가장 낮은 부분이 -0.7, 가장 높은 부분이 +0.7)
+    const crownHalfHeight = ringRadius; // 0.6 (가장 낮은 부분이 -0.6, 가장 높은 부분이 +0.6)
     
     // 골드 재질
     // ✅ WebGL 최적화: MeshPhysicalMaterial → MeshStandardMaterial 변경 및 공유 Material 사용
@@ -656,6 +661,13 @@ class ProductFactory {
    * 상품 애니메이션 업데이트
    */
   updateProductAnimations() {
+    // Standard Coin 회전
+    this.standardCoins.forEach(group => {
+      if (group && group.rotation) {
+        group.rotation.y += 0.01;
+      }
+    });
+
     // Premium 큐브 회전
     this.premiumCubes.forEach(cube => {
       cube.outerRotation += 0.01;
@@ -671,12 +683,27 @@ class ProductFactory {
 
     // Gold 자이로스코프 회전
     this.goldCrowns.forEach(crown => {
-      if (crown.ring1) crown.ring1.rotation.y += 0.01;
-      if (crown.ring2) crown.ring2.rotation.x += 0.015;
-      if (crown.ring3) crown.ring3.rotation.z += 0.012;
+      if (crown.group) {
+        crown.group.rotation.y += 0.002; // 전체 그룹 회전 (느리게)
+      }
+      if (crown.ring1) {
+        crown.ring1.rotation.y += 0.01;
+        crown.ring1.rotation.z += 0.005;
+      }
+      if (crown.ring2) {
+        crown.ring2.rotation.x += 0.015;
+        crown.ring2.rotation.z += 0.01;
+      }
+      if (crown.ring3) {
+        crown.ring3.rotation.x += 0.012;
+        crown.ring3.rotation.y += 0.006;
+      }
       if (crown.core) {
         crown.core.rotation.x += 0.02;
         crown.core.rotation.y += 0.02;
+      }
+      if (crown.particles) {
+        crown.particles.rotation.y += 0.02;
       }
     });
   }
@@ -712,6 +739,48 @@ class ProductFactory {
   }
 
   /**
+   * 3D TV 상품 생성 (GLTFLoader 사용)
+   * @param {Object} product - 상품 데이터
+   * @param {THREE.Vector3|Object} position - 위치
+   * @param {string} modelPath - 모델 파일 경로 (선택적)
+   * @returns {THREE.Group} TV 모델 그룹
+   */
+  createTV3D(product, position, modelPath = null) {
+    console.log(`      → [ProductFactory] 3D TV 생성: "${product?.name || '3D TV'}"`);
+    
+    // TV3D 클래스 확인
+    if (typeof TV3D === 'undefined' && typeof window.TV3D === 'undefined') {
+      console.error('      ❌ [ProductFactory] TV3D 클래스를 찾을 수 없습니다.');
+      return this.createFallbackProduct(product, position);
+    }
+    
+    const TV3DClass = TV3D || window.TV3D;
+    
+    // 위치 변환
+    const pos = position instanceof THREE.Vector3 
+      ? position 
+      : new THREE.Vector3(
+          position?.x || 0, 
+          position?.y || 0, 
+          position?.z || 0
+        );
+    
+    // TV 모델 생성
+    const group = TV3DClass.createModel(product, pos, modelPath);
+    
+    if (!group) {
+      console.error('      ❌ [ProductFactory] 3D TV 그룹 생성 실패!');
+      return this.createFallbackProduct(product, pos);
+    }
+    
+    // 씬에 추가
+    this.scene.add(group);
+    
+    console.log(`      ✅ [ProductFactory] 3D TV 추가됨: 위치 (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})`);
+    return group;
+  }
+
+  /**
    * Neon Ring 상품 생성
    * @param {Object} product - 상품 데이터
    * @param {THREE.Vector3} position - 위치
@@ -741,6 +810,53 @@ class ProductFactory {
     
     console.log(`      ✅ [ProductFactory] Neon Ring 추가됨: 위치 (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
     return group;
+  }
+
+  /**
+   * LuxeDisplay3D 상품 생성 (순수 Three.js 구현)
+   * @param {Object} product - 상품 데이터
+   * @param {THREE.Vector3|Object} position - 위치
+   * @returns {THREE.Group} 모델 그룹
+   */
+  createLuxeDisplay3D(product, position) {
+    console.log(`      → [ProductFactory] LuxeDisplay3D 생성: "${product?.name || 'LuxeDisplay3D'}"`);
+    
+    // LuxeDisplay3D 클래스 확인
+    if (typeof LuxeDisplay3D === 'undefined' && typeof window.LuxeDisplay3D === 'undefined') {
+      console.error('      ❌ [ProductFactory] LuxeDisplay3D 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const LuxeDisplay3DClass = LuxeDisplay3D || window.LuxeDisplay3D;
+    
+    // 위치 변환
+    const pos = position instanceof THREE.Vector3 
+      ? position 
+      : new THREE.Vector3(
+          position?.x || 0, 
+          position?.y || 0, 
+          position?.z || 0
+        );
+    
+    try {
+      // 모델 생성 (동기)
+      const group = LuxeDisplay3DClass.createModel(product, pos);
+      
+      if (!group) {
+        console.error('      ❌ [ProductFactory] LuxeDisplay3D 그룹 생성 실패!');
+        return null;
+      }
+      
+      // 씬에 추가
+      this.scene.add(group);
+      
+      console.log(`      ✅ [ProductFactory] LuxeDisplay3D 추가됨: 위치 (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})`);
+      return group;
+      
+    } catch (error) {
+      console.error('      ❌ [ProductFactory] LuxeDisplay3D 생성 중 오류:', error);
+      return null;
+    }
   }
 
   /**
