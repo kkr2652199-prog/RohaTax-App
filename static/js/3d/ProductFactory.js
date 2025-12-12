@@ -682,6 +682,38 @@ class ProductFactory {
   }
 
   /**
+   * Neon Ring 상품 생성
+   * @param {Object} product - 상품 데이터
+   * @param {THREE.Vector3} position - 위치
+   * @returns {THREE.Group} 네온 링 그룹
+   */
+  createNeonRing(product, position) {
+    console.log(`      → [ProductFactory] Neon Ring 생성: "${product.name || 'Neon Ring'}"`);
+    
+    // NeonRing 클래스 확인
+    if (typeof NeonRing === 'undefined' && typeof window.NeonRing === 'undefined') {
+      console.error('      ❌ [ProductFactory] NeonRing 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const NeonRingClass = NeonRing || window.NeonRing;
+    
+    // 네온 링 모델 생성
+    const group = NeonRingClass.createModel(product, position);
+    
+    if (!group) {
+      console.error('      ❌ [ProductFactory] Neon Ring 그룹 생성 실패!');
+      return null;
+    }
+    
+    // 씬에 추가
+    this.scene.add(group);
+    
+    console.log(`      ✅ [ProductFactory] Neon Ring 추가됨: 위치 (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
+    return group;
+  }
+
+  /**
    * 모든 상품 메시 배열 반환
    */
   getAllMeshes() {

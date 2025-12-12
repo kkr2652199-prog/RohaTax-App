@@ -1,4 +1,29 @@
-﻿# [2025-12-12 11:03 KST] [25dd9ba] - 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
+﻿# [2025-12-12] #Furniture-Studio-Launch - 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
+  1. 가구 전용 뷰어 모듈 'FurnitureViewer.js' 개발 (독립적 3D 렌더링 환경)
+  2. 외부 코드 변환 시스템(Protocol Alchemy) 검증 및 샘플 가구(Neon Ring) 제작
+  3. 관리자 페이지 '/admin/studio' 개설 및 UI/UX 구현 (아코디언 메뉴, 실시간 제어)
+  4. 관리자 대시보드에 스튜디오 진입 버튼(탭) 추가 및 연동 완료
+  5. 임시 테스트 파일 정리
+*   **수정 파일:**
+  - static/js/3d/FurnitureViewer.js (신규 - 가구 전용 3D 뷰어)
+  - static/js/3d/NeonRing.js (신규 - 네온 링 가구)
+  - static/js/3d/ProductFactory.js (createNeonRing 메서드 추가)
+  - templates/admin/furniture_studio.html (신규 - 관리자 전용 스튜디오)
+  - templates/admin/partials/_tabs.html (가구 스튜디오 버튼 추가)
+  - app.py (라우트 추가: /admin/studio)
+  - templates/test_factory.html (삭제 - 임시 파일 정리)
+*   **결과:**
+  - 관리자 전용 3D 가구 디자인 스튜디오 구축 완료
+  - FurnitureViewer.js 독립 모듈 개발 (281줄)
+  - NeonRing.js 신규 가구 제작 (124줄)
+  - 아코디언 메뉴 및 실시간 크기 조절 기능 구현
+  - 관리자 대시보드와 완전 연동
+
+# [2025-12-12 11:03 KST] [25dd9ba] - 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
 
 *   **한국 시간/날짜:** 2025년 12월 12일 11:03 (KST)
 *   **작업자:** Commander & The Architect Team
