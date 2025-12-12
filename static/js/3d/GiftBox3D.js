@@ -18,6 +18,15 @@
  */
 class GiftBox3D {
   /**
+   * ✅ WebGL 텍스처 유닛 최적화: Static Material 공유
+   * 모든 GiftBox3D 인스턴스가 동일한 Material을 공유하여 텍스처 유닛 절약
+   */
+  static sharedBoxMat = {};          // 상자 Material (색상별 공유)
+  static sharedLinerMat = null;      // 내부 라이너 Material (골드)
+  static sharedRibbonMat = {};       // 리본 Material (색상별 공유)
+  static sharedConfettiMats = {};    // 컨페티 Material (색상별 공유)
+
+  /**
    * @param {string} containerId - 3D 캔버스가 들어갈 HTML 요소의 ID
    * @param {Object} options - 설정 객체
    * @param {number} [options.boxColor=0x5D0016] - 상자 색상 (기본값: Deep Velvet Wine)
@@ -250,6 +259,23 @@ class GiftBox3D {
   }
 
   /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 컨페티 Material 가져오기 (색상별 공유)
+   */
+  static getConfettiMaterial(color) {
+    const colorKey = color.toString();
+    if (!GiftBox3D.sharedConfettiMats[colorKey]) {
+      GiftBox3D.sharedConfettiMats[colorKey] = new THREE.MeshStandardMaterial({
+        color: color,
+        metalness: 0.2,
+        roughness: 0.4,
+        side: THREE.DoubleSide
+      });
+    }
+    return GiftBox3D.sharedConfettiMats[colorKey];
+  }
+
+  /**
    * Confetti 초기화
    */
   buildConfettiGroup() {
@@ -262,13 +288,10 @@ class GiftBox3D {
     this.confetti = [];
 
     for (let i = 0; i < confettiCount; i++) {
-      const mat = new THREE.MeshStandardMaterial({
-        color: confettiColors[i % confettiColors.length],
-        metalness: 0.2,
-        roughness: 0.4,
-        side: THREE.DoubleSide
-      });
-      this.materials.push(mat);
+      const color = confettiColors[i % confettiColors.length];
+      // ✅ Static Material 공유 사용 (색상별 공유)
+      const mat = GiftBox3D.getConfettiMaterial(color);
+      // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
       const m = new THREE.Mesh(confettiGeo, mat);
       m.castShadow = true;
       m.rotation.set(
@@ -299,6 +322,63 @@ class GiftBox3D {
   }
 
   /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 상자 Material 가져오기 (색상별 공유)
+   */
+  static getBoxMaterial(boxColor) {
+    const colorKey = boxColor instanceof THREE.Color ? boxColor.getHex() : boxColor;
+    if (!GiftBox3D.sharedBoxMat) {
+      GiftBox3D.sharedBoxMat = {};
+    }
+    if (!GiftBox3D.sharedBoxMat[colorKey]) {
+      GiftBox3D.sharedBoxMat[colorKey] = new THREE.MeshStandardMaterial({
+        color: boxColor,
+        roughness: 0.5,
+        metalness: 0.0
+        // envMapIntensity 제거: 텍스처 유닛 절약
+      });
+    }
+    return GiftBox3D.sharedBoxMat[colorKey];
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 라이너 Material 가져오기 (공유)
+   */
+  static getLinerMaterial() {
+    if (!GiftBox3D.sharedLinerMat) {
+      GiftBox3D.sharedLinerMat = new THREE.MeshStandardMaterial({
+        color: 0xdab15a,
+        metalness: 0.65,
+        roughness: 0.2,
+        side: THREE.DoubleSide
+        // clearcoat 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
+      });
+    }
+    return GiftBox3D.sharedLinerMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 리본 Material 가져오기 (색상별 공유)
+   */
+  static getRibbonMaterial(ribbonColor) {
+    const colorKey = ribbonColor instanceof THREE.Color ? ribbonColor.getHex() : ribbonColor;
+    if (!GiftBox3D.sharedRibbonMat) {
+      GiftBox3D.sharedRibbonMat = {};
+    }
+    if (!GiftBox3D.sharedRibbonMat[colorKey]) {
+      GiftBox3D.sharedRibbonMat[colorKey] = new THREE.MeshStandardMaterial({
+        color: ribbonColor,
+        metalness: 0.3,
+        roughness: 0.15
+        // envMapIntensity 제거: 텍스처 유닛 절약
+      });
+    }
+    return GiftBox3D.sharedRibbonMat[colorKey];
+  }
+
+  /**
    * 상자 모델 생성
    */
   createBox() {
@@ -307,15 +387,9 @@ class GiftBox3D {
     // Walls
     const boxGeometry = this.createBoxGeometry();
     const boxColor = new THREE.Color(this.config.boxColor);
-    const boxMaterial = new THREE.MeshPhysicalMaterial({
-      color: boxColor,
-      roughness: 0.5,
-      metalness: 0.0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.4,
-      envMapIntensity: 0.5
-    });
-    this.materials.push(boxMaterial);
+    // ✅ Static Material 공유 사용
+    const boxMaterial = GiftBox3D.getBoxMaterial(boxColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const walls = new THREE.Mesh(boxGeometry, boxMaterial);
     walls.rotation.x = -Math.PI / 2;
     walls.castShadow = true;
@@ -349,15 +423,9 @@ class GiftBox3D {
     floorGeo.center();
     this.geometries.push(floorGeo);
     const floorColor = new THREE.Color(this.config.boxColor);
-    const floorMat = new THREE.MeshPhysicalMaterial({
-      color: floorColor,
-      roughness: 0.5,
-      metalness: 0.0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.4,
-      envMapIntensity: 0.5
-    });
-    this.materials.push(floorMat);
+    // ✅ Static Material 공유 사용 (boxMaterial과 동일한 속성)
+    const floorMat = GiftBox3D.getBoxMaterial(floorColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = this.dimensions.wallThickness / 2;
@@ -377,15 +445,9 @@ class GiftBox3D {
     });
     linerGeo.center();
     this.geometries.push(linerGeo);
-    const linerMat = new THREE.MeshPhysicalMaterial({
-      color: 0xdab15a,
-      metalness: 0.65,
-      roughness: 0.2,
-      clearcoat: 0.6,
-      clearcoatRoughness: 0.15,
-      side: THREE.DoubleSide
-    });
-    this.materials.push(linerMat);
+    // ✅ Static Material 공유 사용
+    const linerMat = GiftBox3D.getLinerMaterial();
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const liner = new THREE.Mesh(linerGeo, linerMat);
     liner.rotation.x = -Math.PI / 2;
     liner.position.y = this.dimensions.wallThickness * 0.9;
@@ -564,15 +626,9 @@ class GiftBox3D {
 
     // Lid material
     const lidColor = new THREE.Color(this.config.boxColor);
-    const lidMat = new THREE.MeshPhysicalMaterial({
-      color: lidColor,
-      roughness: 0.5,
-      metalness: 0.0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.4,
-      envMapIntensity: 0.5
-    });
-    this.materials.push(lidMat);
+    // ✅ Static Material 공유 사용 (boxMaterial과 동일한 속성)
+    const lidMat = GiftBox3D.getBoxMaterial(lidColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
 
     // Rounded lid via Shape + Extrude
     const lidShape = new THREE.Shape();
@@ -609,15 +665,9 @@ class GiftBox3D {
 
     // Ribbon material
     const ribbonColor = new THREE.Color(this.config.ribbonColor);
-    const ribbonMatLid = new THREE.MeshPhysicalMaterial({
-      color: ribbonColor,
-      metalness: 0.3,
-      roughness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      envMapIntensity: 1.5
-    });
-    this.materials.push(ribbonMatLid);
+    // ✅ Static Material 공유 사용
+    const ribbonMatLid = GiftBox3D.getRibbonMaterial(ribbonColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const ribbonProtrusion = 0.05;
 
     // Cross ribbons on lid
@@ -731,15 +781,9 @@ class GiftBox3D {
     bowGroup.position.set(0, this.dimensions.lidHeight / 2 + 0.1, 0);
 
     const torusColor = new THREE.Color(this.config.ribbonColor);
-    const torusMat = new THREE.MeshPhysicalMaterial({
-      color: torusColor,
-      metalness: 0.3,
-      roughness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      envMapIntensity: 1.5
-    });
-    this.materials.push(torusMat);
+    // ✅ Static Material 공유 사용 (ribbonMatLid와 동일한 속성)
+    const torusMat = GiftBox3D.getRibbonMaterial(torusColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const loopA = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.12, 16, 32), torusMat);
     loopA.position.set(-0.35, 0.15, 0);
     loopA.rotation.z = 0.6;
@@ -752,31 +796,19 @@ class GiftBox3D {
     bowGroup.add(loopB);
 
     const knotColor = new THREE.Color(this.config.boxColor);
-    const knotMat = new THREE.MeshPhysicalMaterial({
-      color: knotColor,
-      metalness: 0.0,
-      roughness: 0.5,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.4,
-      envMapIntensity: 0.5
-    });
-    this.materials.push(knotMat);
+    // ✅ Static Material 공유 사용 (boxMaterial과 동일한 속성)
+    const knotMat = GiftBox3D.getBoxMaterial(knotColor);
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const knot = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), knotMat);
     knot.position.set(0, 0.05, 0);
     knot.castShadow = true;
     bowGroup.add(knot);
 
     const tailColor = new THREE.Color(this.config.ribbonColor);
-    const tailMat = new THREE.MeshPhysicalMaterial({
-      color: tailColor,
-      metalness: 0.3,
-      roughness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      envMapIntensity: 1.5,
-      side: THREE.DoubleSide
-    });
-    this.materials.push(tailMat);
+    // ✅ Static Material 공유 사용 (ribbonMatLid와 동일한 속성, side만 추가)
+    const tailMat = GiftBox3D.getRibbonMaterial(tailColor);
+    tailMat.side = THREE.DoubleSide; // tailMat만 양면 렌더링 필요
+    // this.materials.push 제거: 공유 Material이므로 인스턴스별로 관리하지 않음
     const tailA = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 0.02), tailMat);
     tailA.position.set(-0.4, 0, 0.4);
     tailA.rotation.set(0.5, 0.5, 0);

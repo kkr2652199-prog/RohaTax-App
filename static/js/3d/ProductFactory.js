@@ -3,11 +3,287 @@
  * Showroom.js의 상품 생성 기능을 담당
  */
 class ProductFactory {
+  /**
+   * ✅ WebGL 텍스처 유닛 최적화: Static Material 공유
+   * 모든 ProductFactory 인스턴스가 동일한 Material을 공유하여 텍스처 유닛 절약
+   */
+  static sharedCoinMat = null;          // Standard 코인 Material
+  static sharedToothMat = null;          // 톱니바퀴 Material
+  static sharedRimMat = null;            // 림 Material
+  static sharedCubeCoreMat = null;       // Premium 큐브 코어 Material
+  static sharedCubeLineMat = null;       // Premium 큐브 와이어프레임 Material
+  static sharedCubeLineMatTransparent = null; // Premium 큐브 와이어프레임 Material (투명)
+  static sharedGoldMat = null;            // Gold 크라운 Material
+  static sharedGoldCoreMat = null;        // Gold 크라운 코어 Material
+  static sharedGoldParticleMat = null;   // Gold 파티클 Material
+  static sharedFallbackMat = null;        // Fallback Material
+  
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * 모든 ProductFactory 인스턴스가 동일한 Geometry를 공유하여 메모리 절약
+   */
+  static sharedCoinGeo = null;           // Standard 코인 Geometry
+  static sharedToothGeo = null;          // 톱니바퀴 Geometry
+  static sharedRimGeo = null;            // 림 Geometry
+  static sharedCubeGeo = null;           // Premium 큐브 Geometry
+  static sharedCubeInnerGeo = null;      // Premium 큐브 내부 Geometry
+  static sharedRingGeo = null;           // Gold 링 Geometry
+  static sharedCoreGeo = null;           // Gold 코어 Geometry
+  static sharedFallbackGeo = null;       // Fallback Geometry
+
   constructor(scene) {
     this.scene = scene;
     this.standardCoins = [];
     this.premiumCubes = [];
     this.goldCrowns = [];
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Standard 코인 Material 가져오기
+   */
+  static getCoinMaterial() {
+    if (!ProductFactory.sharedCoinMat) {
+      ProductFactory.sharedCoinMat = new THREE.MeshStandardMaterial({
+        color: 0xc0c0c0,
+        metalness: 1.0,
+        roughness: 0.2
+      });
+    }
+    return ProductFactory.sharedCoinMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 톱니바퀴 Material 가져오기
+   */
+  static getToothMaterial() {
+    if (!ProductFactory.sharedToothMat) {
+      ProductFactory.sharedToothMat = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        metalness: 0.8,
+        roughness: 0.3
+      });
+    }
+    return ProductFactory.sharedToothMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * 림 Material 가져오기
+   */
+  static getRimMaterial() {
+    if (!ProductFactory.sharedRimMat) {
+      ProductFactory.sharedRimMat = new THREE.MeshStandardMaterial({
+        color: 0xfffff0,
+        metalness: 1,
+        roughness: 0.1
+      });
+    }
+    return ProductFactory.sharedRimMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Premium 큐브 코어 Material 가져오기 (MeshStandardMaterial로 변경)
+   */
+  static getCubeCoreMaterial() {
+    if (!ProductFactory.sharedCubeCoreMat) {
+      ProductFactory.sharedCubeCoreMat = new THREE.MeshStandardMaterial({
+        color: 0x00FFFF,
+        roughness: 0.1,
+        metalness: 0.8,
+        emissive: 0x004444,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.8
+        // MeshPhysicalMaterial의 transmission, clearcoat 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
+      });
+    }
+    return ProductFactory.sharedCubeCoreMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Premium 큐브 와이어프레임 Material 가져오기
+   */
+  static getCubeLineMaterial() {
+    if (!ProductFactory.sharedCubeLineMat) {
+      ProductFactory.sharedCubeLineMat = new THREE.LineBasicMaterial({ 
+        color: 0x00FFFF // 네온 시안
+      });
+    }
+    return ProductFactory.sharedCubeLineMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Premium 큐브 와이어프레임 Material 가져오기 (투명)
+   */
+  static getCubeLineMaterialTransparent() {
+    if (!ProductFactory.sharedCubeLineMatTransparent) {
+      ProductFactory.sharedCubeLineMatTransparent = new THREE.LineBasicMaterial({ 
+        color: 0x00FFFF, 
+        transparent: true, 
+        opacity: 0.5 
+      });
+    }
+    return ProductFactory.sharedCubeLineMatTransparent;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Gold 크라운 Material 가져오기 (MeshStandardMaterial로 변경)
+   */
+  static getGoldMaterial() {
+    if (!ProductFactory.sharedGoldMat) {
+      ProductFactory.sharedGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xFFD700,
+        metalness: 1.0,
+        roughness: 0.1,
+        emissive: 0x332200,
+        emissiveIntensity: 0.3
+        // MeshPhysicalMaterial의 clearcoat 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
+      });
+    }
+    return ProductFactory.sharedGoldMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Gold 크라운 코어 Material 가져오기 (MeshStandardMaterial로 변경)
+   */
+  static getGoldCoreMaterial() {
+    if (!ProductFactory.sharedGoldCoreMat) {
+      ProductFactory.sharedGoldCoreMat = new THREE.MeshStandardMaterial({
+        color: 0xFFD700,
+        metalness: 0.8,
+        roughness: 0.1,
+        emissive: 0xFFAA00,
+        emissiveIntensity: 0.8,
+        transparent: true,
+        opacity: 0.9
+      });
+    }
+    return ProductFactory.sharedGoldCoreMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Gold 파티클 Material 가져오기
+   */
+  static getGoldParticleMaterial() {
+    if (!ProductFactory.sharedGoldParticleMat) {
+      ProductFactory.sharedGoldParticleMat = new THREE.PointsMaterial({ 
+        color: 0xFFD700, 
+        size: 0.05,
+        transparent: true,
+        opacity: 0.8
+      });
+    }
+    return ProductFactory.sharedGoldParticleMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Material 공유
+   * Fallback Material 가져오기
+   */
+  static getFallbackMaterial() {
+    if (!ProductFactory.sharedFallbackMat) {
+      ProductFactory.sharedFallbackMat = new THREE.MeshStandardMaterial({ 
+        color: 0x808080, 
+        roughness: 0.4 
+      });
+    }
+    return ProductFactory.sharedFallbackMat;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Standard 코인 Geometry 가져오기
+   */
+  static getCoinGeometry(radius = 1.2, height = 0.25) {
+    if (!ProductFactory.sharedCoinGeo) {
+      ProductFactory.sharedCoinGeo = new THREE.CylinderGeometry(radius, radius, height, 64);
+    }
+    return ProductFactory.sharedCoinGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * 톱니바퀴 Geometry 가져오기
+   */
+  static getToothGeometry(width = 0.08, height = 0.15) {
+    if (!ProductFactory.sharedToothGeo) {
+      ProductFactory.sharedToothGeo = new THREE.BoxGeometry(width, height, width);
+    }
+    return ProductFactory.sharedToothGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * 림 Geometry 가져오기
+   */
+  static getRimGeometry(radius = 1.25, tube = 0.08) {
+    if (!ProductFactory.sharedRimGeo) {
+      ProductFactory.sharedRimGeo = new THREE.TorusGeometry(radius, tube, 16, 100);
+    }
+    return ProductFactory.sharedRimGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Premium 큐브 Geometry 가져오기
+   */
+  static getCubeGeometry(size = 1.6) {
+    if (!ProductFactory.sharedCubeGeo) {
+      ProductFactory.sharedCubeGeo = new THREE.BoxGeometry(size, size, size);
+    }
+    return ProductFactory.sharedCubeGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Premium 큐브 내부 Geometry 가져오기
+   */
+  static getCubeInnerGeometry(size = 1) {
+    if (!ProductFactory.sharedCubeInnerGeo) {
+      ProductFactory.sharedCubeInnerGeo = new THREE.BoxGeometry(size, size, size);
+    }
+    return ProductFactory.sharedCubeInnerGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Gold 링 Geometry 가져오기
+   */
+  static getRingGeometry(radius = 0.7, tube = 0.12) {
+    if (!ProductFactory.sharedRingGeo) {
+      ProductFactory.sharedRingGeo = new THREE.TorusGeometry(radius, tube, 32, 100);
+    }
+    return ProductFactory.sharedRingGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Gold 코어 Geometry 가져오기
+   */
+  static getCoreGeometry(radius = 0.25) {
+    if (!ProductFactory.sharedCoreGeo) {
+      ProductFactory.sharedCoreGeo = new THREE.SphereGeometry(radius, 32, 32);
+    }
+    return ProductFactory.sharedCoreGeo;
+  }
+
+  /**
+   * ✅ WebGL 최적화: Static Geometry 공유
+   * Fallback Geometry 가져오기
+   */
+  static getFallbackGeometry(size = 0.9) {
+    if (!ProductFactory.sharedFallbackGeo) {
+      ProductFactory.sharedFallbackGeo = new THREE.BoxGeometry(size, size, size);
+    }
+    return ProductFactory.sharedFallbackGeo;
   }
 
   /**
@@ -104,13 +380,10 @@ class ProductFactory {
     const coinHeight = 0.25; // 코인 높이
     const coinRadius = 1.2;
     
-    const coinMat = new THREE.MeshStandardMaterial({
-      color: 0xc0c0c0,
-      metalness: 1.0,
-      roughness: 0.2
-    });
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const coinMat = ProductFactory.getCoinMaterial();
     const coin = new THREE.Mesh(
-      new THREE.CylinderGeometry(coinRadius, coinRadius, coinHeight, 64),
+      ProductFactory.getCoinGeometry(coinRadius, coinHeight),
       coinMat
     );
     coin.rotation.x = Math.PI / 2; // 옆으로 눕힘 (원기둥을 Z축 방향으로)
@@ -121,11 +394,8 @@ class ProductFactory {
     group.add(coin);
 
     // 옆면 톱니바퀴 디테일
-    const toothMat = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.8,
-      roughness: 0.3
-    });
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const toothMat = ProductFactory.getToothMaterial();
     const toothCount = 24;
     const radius = 1.2;
     const toothHeight = 0.15;
@@ -134,7 +404,7 @@ class ProductFactory {
     for (let i = 0; i < toothCount; i++) {
       const angle = (i / toothCount) * Math.PI * 2;
       const tooth = new THREE.Mesh(
-        new THREE.BoxGeometry(toothWidth, toothHeight, toothWidth),
+        ProductFactory.getToothGeometry(toothWidth, toothHeight),
         toothMat
       );
       tooth.position.set(
@@ -148,13 +418,10 @@ class ProductFactory {
     }
 
     // 림 (테두리)
-    const rimMat = new THREE.MeshStandardMaterial({
-      color: 0xfffff0,
-      metalness: 1,
-      roughness: 0.1
-    });
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const rimMat = ProductFactory.getRimMaterial();
     const rim = new THREE.Mesh(
-      new THREE.TorusGeometry(1.25, 0.08, 16, 100),
+      ProductFactory.getRimGeometry(1.25, 0.08),
       rimMat
     );
     rim.rotation.x = Math.PI / 2;
@@ -184,45 +451,34 @@ class ProductFactory {
     const cubeHalfHeight = outerSize / 2; // 0.8
     
     // 외부 와이어프레임 (네온 시안)
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const lineMat = ProductFactory.getCubeLineMaterial();
     const lines = new THREE.LineSegments(
       new THREE.EdgesGeometry(
-        new THREE.BoxGeometry(outerSize, outerSize, outerSize)
+        ProductFactory.getCubeGeometry(outerSize)
       ),
-      new THREE.LineBasicMaterial({ 
-        color: 0x00FFFF // 네온 시안
-      })
+      lineMat
     );
     // ⚠️ 물리 법칙: 큐브의 가장 낮은 면(Y = -cubeHalfHeight)이 Y=0에 닿도록 올림
     lines.position.y = cubeHalfHeight; // 0.8m (큐브 밑면이 진열대 상단에 정확히 붙음)
     group.add(lines);
-    
+
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const lineMatTransparent = ProductFactory.getCubeLineMaterialTransparent();
     const lines2 = new THREE.LineSegments(
       new THREE.EdgesGeometry(
-        new THREE.BoxGeometry(outerSize * 0.98, outerSize * 0.98, outerSize * 0.98)
+        ProductFactory.getCubeGeometry(outerSize * 0.98)
       ),
-      new THREE.LineBasicMaterial({ 
-        color: 0x00FFFF, 
-        transparent: true, 
-        opacity: 0.5 
-      })
+      lineMatTransparent
     );
     lines2.position.y = cubeHalfHeight; // 0.8m (큐브 밑면이 진열대 상단에 정확히 붙음)
     group.add(lines2);
 
     // 내부 큐브 (반대 방향으로 빠르게 회전)
-    const coreMat = new THREE.MeshPhysicalMaterial({
-      color: 0x00FFFF,
-      transmission: 0.8,
-      transparent: true,
-      roughness: 0.1,
-      metalness: 0.8,
-      emissive: 0x004444,
-      emissiveIntensity: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
+    // ✅ WebGL 최적화: MeshPhysicalMaterial → MeshStandardMaterial 변경 및 공유 Material 사용
+    const coreMat = ProductFactory.getCubeCoreMaterial();
     const inner = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
+      ProductFactory.getCubeInnerGeometry(1),
       coreMat
     );
     inner.position.set(0, cubeHalfHeight - 0.1, 0); // 큐브 중심에서 살짝 아래
@@ -261,20 +517,14 @@ class ProductFactory {
     const crownHalfHeight = ringRadius; // 0.7 (가장 낮은 부분이 -0.7, 가장 높은 부분이 +0.7)
     
     // 골드 재질
-    const goldMat = new THREE.MeshPhysicalMaterial({
-      color: 0xFFD700,
-      metalness: 1.0,
-      roughness: 0.1,
-      emissive: 0x332200,
-      emissiveIntensity: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
+    // ✅ WebGL 최적화: MeshPhysicalMaterial → MeshStandardMaterial 변경 및 공유 Material 사용
+    const goldMat = ProductFactory.getGoldMaterial();
     
     // 3개의 교차하는 Torus 링
     // ⚠️ 물리 법칙: 링의 가장 낮은 면(Y = -ringRadius)이 Y=0에 닿도록 올림
+    // ✅ WebGL 최적화: 공유 Geometry 사용
     const ring1 = new THREE.Mesh(
-      new THREE.TorusGeometry(ringRadius, ringThickness, 32, 100),
+      ProductFactory.getRingGeometry(ringRadius, ringThickness),
       goldMat
     );
     ring1.rotation.x = Math.PI / 2;
@@ -283,7 +533,7 @@ class ProductFactory {
     group.add(ring1);
     
     const ring2 = new THREE.Mesh(
-      new THREE.TorusGeometry(ringRadius, ringThickness, 32, 100),
+      ProductFactory.getRingGeometry(ringRadius, ringThickness),
       goldMat
     );
     ring2.rotation.y = Math.PI / 2;
@@ -293,7 +543,7 @@ class ProductFactory {
     group.add(ring2);
     
     const ring3 = new THREE.Mesh(
-      new THREE.TorusGeometry(ringRadius, ringThickness, 32, 100),
+      ProductFactory.getRingGeometry(ringRadius, ringThickness),
       goldMat
     );
     ring3.rotation.x = Math.PI / 4;
@@ -303,17 +553,10 @@ class ProductFactory {
     group.add(ring3);
     
     // 중앙 에너지 코어
-    const coreMat = new THREE.MeshPhysicalMaterial({
-      color: 0xFFD700,
-      metalness: 0.8,
-      roughness: 0.1,
-      emissive: 0xFFAA00,
-      emissiveIntensity: 0.8,
-      transparent: true,
-      opacity: 0.9
-    });
+    // ✅ WebGL 최적화: MeshPhysicalMaterial → MeshStandardMaterial 변경 및 공유 Material 사용
+    const coreMat = ProductFactory.getGoldCoreMaterial();
     const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 32, 32),
+      ProductFactory.getCoreGeometry(0.25),
       coreMat
     );
     core.position.y = ringRadius; // 0.7m (링과 같은 높이)
@@ -337,14 +580,11 @@ class ProductFactory {
       "position",
       new THREE.Float32BufferAttribute(positions, 3)
     );
+    // ✅ WebGL 최적화: 공유 Material 사용
+    const particleMat = ProductFactory.getGoldParticleMaterial();
     const particles = new THREE.Points(
       particleGeo,
-      new THREE.PointsMaterial({ 
-        color: 0xFFD700, 
-        size: 0.05,
-        transparent: true,
-        opacity: 0.8
-      })
+      particleMat
     );
     group.add(particles);
 
@@ -366,11 +606,9 @@ class ProductFactory {
    */
   createFallbackProduct(product, position) {
     const group = new THREE.Group();
-    const geometry = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0x808080, 
-      roughness: 0.4 
-    });
+    // ✅ WebGL 최적화: 공유 Material 및 Geometry 사용
+    const geometry = ProductFactory.getFallbackGeometry(0.9);
+    const material = ProductFactory.getFallbackMaterial();
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     group.add(mesh);
@@ -441,6 +679,68 @@ class ProductFactory {
         crown.core.rotation.y += 0.02;
       }
     });
+  }
+
+  /**
+   * Pedestal (진열대) 생성
+   * @param {Object|THREE.Vector3} position - 위치 (x, y, z 또는 {x, y, z})
+   * @returns {THREE.Group} 진열대 그룹
+   */
+  createPedestal(position) {
+    console.log(`      → [ProductFactory] Pedestal 생성`);
+    
+    // Pedestal3D 클래스 확인
+    if (typeof Pedestal3D === 'undefined' && typeof window.Pedestal3D === 'undefined') {
+      console.error('      ❌ [ProductFactory] Pedestal3D 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    // 위치가 없으면 기본값 (0,0,0)
+    const pos = position || { x: 0, y: 0, z: 0 };
+    
+    // 전역 클래스 window.Pedestal3D 사용
+    const Pedestal3DClass = Pedestal3D || window.Pedestal3D;
+    const pedestal = new Pedestal3DClass(pos);
+    
+    if (!pedestal || !pedestal.group) {
+      console.error('      ❌ [ProductFactory] Pedestal 그룹 생성 실패!');
+      return null;
+    }
+    
+    console.log(`      ✅ [ProductFactory] Pedestal 생성 완료: 위치 (${pos.x}, ${pos.y}, ${pos.z})`);
+    return pedestal.group;
+  }
+
+  /**
+   * Neon Ring 상품 생성
+   * @param {Object} product - 상품 데이터
+   * @param {THREE.Vector3} position - 위치
+   * @returns {THREE.Group} 네온 링 그룹
+   */
+  createNeonRing(product, position) {
+    console.log(`      → [ProductFactory] Neon Ring 생성: "${product.name || 'Neon Ring'}"`);
+    
+    // NeonRing 클래스 확인
+    if (typeof NeonRing === 'undefined' && typeof window.NeonRing === 'undefined') {
+      console.error('      ❌ [ProductFactory] NeonRing 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const NeonRingClass = NeonRing || window.NeonRing;
+    
+    // 네온 링 모델 생성
+    const group = NeonRingClass.createModel(product, position);
+    
+    if (!group) {
+      console.error('      ❌ [ProductFactory] Neon Ring 그룹 생성 실패!');
+      return null;
+    }
+    
+    // 씬에 추가
+    this.scene.add(group);
+    
+    console.log(`      ✅ [ProductFactory] Neon Ring 추가됨: 위치 (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
+    return group;
   }
 
   /**

@@ -59,8 +59,11 @@ CREATE TABLE IF NOT EXISTS token_history (
   user_id INTEGER NOT NULL,
   changed_by INTEGER,
   amount INTEGER NOT NULL,
-  change_type TEXT NOT NULL, -- grant, use, reset, revoke
+  change_type TEXT NOT NULL, -- grant, use, reset, revoke, expire, REFUND
   meta TEXT,
+  expires_at TEXT, -- 토큰 만료일 (무료 토큰의 경우)
+  is_expired_processed INTEGER DEFAULT 0, -- 만료 처리 여부 (0: 미처리, 1: 처리됨)
+  source_type TEXT DEFAULT 'PAID', -- 토큰 출처: 'FREE' (무료), 'PAID' (유료)
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY(user_id) REFERENCES users(id),
   FOREIGN KEY(changed_by) REFERENCES users(id)

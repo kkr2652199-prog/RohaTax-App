@@ -153,7 +153,9 @@
     {# [3] 3D 컴포넌트 라이브러리 (순서 중요!) #}
     <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v=100" onload="console.log('✅ [GiftBox3D.js] 로딩 완료')" onerror="console.error('❌ [GiftBox3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ShowroomBuilder.js') }}?v={{ timestamp }}" onload="console.log('✅ [ShowroomBuilder.js] v{{ timestamp }} 로딩:', typeof window.ShowroomBuilder)" onerror="console.error('❌ [ShowroomBuilder.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/Pedestal3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [Pedestal3D.js] v{{ timestamp }} 로딩:', typeof window.Pedestal3D)" onerror="console.error('❌ [Pedestal3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}" onload="console.log('✅ [ProductFactory.js] v{{ timestamp }} 로딩:', typeof window.ProductFactory)" onerror="console.error('❌ [ProductFactory.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/JewelryDisplay.js') }}?v={{ timestamp }}" onload="console.log('✅ [JewelryDisplay.js] v{{ timestamp }} 로딩:', typeof window.JewelryDisplay)" onerror="console.error('❌ [JewelryDisplay.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/Showroom.js') }}?v={{ timestamp }}" onload="console.log('✅ [Showroom.js] v{{ timestamp }} (250cm 눈높이 + Shift 앉기):', typeof window.Showroom)" onerror="console.error('❌ [Showroom.js] 로딩 실패:', this.src)"></script>
     
     {# [4] 결제 모달 로직 (window.openCheckoutModal 노출) #}

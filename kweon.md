@@ -1,12 +1,165 @@
-﻿# [2025-12-09 20:34 KST] [76f1d06] - 3D 쇼룸 구축 및 디자인 고도화
+﻿# [2025-12-12] #Mission1-Complete - 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
 
-- [System] 3D 쇼룸 페이지(/showroom) 신규 개설 및 파일 모듈화 (Showroom, Builder, Factory)
-- [UX] 1인칭 FPS 이동 컨트롤(WASD) 및 시점 높이(350cm 서있음/140cm 앉음) 최적화
-- [Design] '미드나잇 럭셔리 & 블랙/화이트' 컨셉 적용 (대리석 바닥, 몰딩, 샹들리에)
-- [Feature] 상품 5종 배치 및 투명 유리 진열대(Pedestal) 구축
-- [Physics] 물리 법칙 준수 (거치대 90도 수직, 상품 평평하게 배치, Z-Fighting 방지)
-- [Interaction] Shift 키로 앉기/일어서기 전환 기능 구현 (부드러운 애니메이션)
-- [Visual] 인간 시점 물리 법칙 적용 (FOV 50도, 자연스러운 원근법)
+*   **한국 시간/날짜:** 2025년 12월 12일 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 미션 1 '중앙 정보국 설립' - 가구 스튜디오 구축 완료
+  1. [Core] 진열대(Pedestal) 로직을 'Pedestal3D.js'로 독립 분리 및 가구화
+  2. [Feat] 관리자 전용 '가구 디자인 스튜디오(/admin/studio)' 정식 오픈
+  3. [UX] 대시보드에 스튜디오 진입 탭 추가 및 아코디언 메뉴/실시간 제어 기능 구현
+  4. [Refactor] ShowroomBuilder 및 ProductFactory 구조 최적화 완료
+  5. [Cleanup] 개발 과정의 임시 분석 파일 및 테스트 코드 전량 정리
+
+---
+
+# [2025-12-12] #Furniture-Studio-Launch - 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 관리자 전용 '3D 가구 디자인 스튜디오' 구축 완료
+  1. 가구 전용 뷰어 모듈 'FurnitureViewer.js' 개발 (독립적 3D 렌더링 환경)
+  2. 외부 코드 변환 시스템(Protocol Alchemy) 검증 및 샘플 가구(Neon Ring) 제작
+  3. 관리자 페이지 '/admin/studio' 개설 및 UI/UX 구현 (아코디언 메뉴, 실시간 제어)
+  4. 관리자 대시보드에 스튜디오 진입 버튼(탭) 추가 및 연동 완료
+  5. 임시 테스트 파일 정리
+*   **수정 파일:**
+  - static/js/3d/FurnitureViewer.js (신규 - 가구 전용 3D 뷰어)
+  - static/js/3d/NeonRing.js (신규 - 네온 링 가구)
+  - static/js/3d/ProductFactory.js (createNeonRing 메서드 추가)
+  - templates/admin/furniture_studio.html (신규 - 관리자 전용 스튜디오)
+  - templates/admin/partials/_tabs.html (가구 스튜디오 버튼 추가)
+  - app.py (라우트 추가: /admin/studio)
+  - templates/test_factory.html (삭제 - 임시 파일 정리)
+*   **결과:**
+  - 관리자 전용 3D 가구 디자인 스튜디오 구축 완료
+  - FurnitureViewer.js 독립 모듈 개발 (281줄)
+  - NeonRing.js 신규 가구 제작 (124줄)
+  - 아코디언 메뉴 및 실시간 크기 조절 기능 구현
+  - 관리자 대시보드와 완전 연동
+
+# [2025-12-12 11:03 KST] [25dd9ba] - 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
+
+*   **한국 시간/날짜:** 2025년 12월 12일 11:03 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
+  1. Showroom.js 내 중복 가구 생성 메서드 6종(약 300줄) 전면 삭제
+     - `createEventProduct()`, `createRegularProduct()`, `createStandardCoin()`, `createPremiumCube()`, `createGoldCrown()`, `createFallbackProduct()` 삭제
+  2. 모든 가구 생성을 'ProductFactory' 패턴으로 단일화 (유지보수성 극대화)
+     - Factory Pattern 경로만 사용하도록 통일
+     - 중복 코드 제거로 코드 일관성 확보
+  3. ProductFactory 사용 시 조명 및 Scene 추가 누락 문제 해결 (정상 작동 확인)
+     - `this.scene.add(productGroup)` 명시적 추가 (5개 상품 모두)
+     - `this.addProductSpotlight()` 조명 추가 확인
+     - "유령 가구" 현상 해결
+  4. WebGL 텍스처 유닛 최적화 구조 확립
+     - Static Material 공유 시스템으로 텍스처 유닛 절약
+     - 하드코딩 메서드 제거로 개별 Material 생성 위험 제거
+*   **수정 파일:** 
+  - static/js/3d/Showroom.js (중복 메서드 삭제, scene.add 추가)
+  - FURNITURE_FACTORY_ANALYSIS.md (신규 - 가구 공장 패턴 분석 보고서)
+*   **결과:**
+  - 코드 중복 제거: 약 300줄 삭제
+  - Factory Pattern 통일: 모든 가구 생성 경로 단일화
+  - 렌더링 문제 해결: scene.add 명시적 추가로 화면 정상 표시
+  - WebGL 안전성 확보: Static Material 공유로 텍스처 유닛 초과 위험 제거
+
+# [2025-12-12 09:55 KST] [d5ff5e5] - 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료
+
+*   **한국 시간/날짜:** 2025년 12월 12일 09:55 (KST)
+*   **해시 번호:** d5ff5e5
+*   **작업 내용:** 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료. 파일 크기 분석 결과 5개 파일이 500줄 규칙 위반 확인 (Showroom.js 1,400줄, ShowroomBuilder.js 1,221줄, ProductFactory.js 700줄, GiftBox3D.js 1,019줄, event_products_3d_scene.js 596줄). 리팩토링 우선순위 제안 및 점검 보고서 작성. 기능적으로는 정상 작동하나 코드 품질 개선 여지 있음.
+*   **수정 파일:** SHOWROOM_AUDIT_REPORT.md (신규)
+*   **점검 결과:**
+  - Showroom.js: 책임 과다, 사용하지 않는 코드(deprecated) 존재
+  - ShowroomBuilder.js: 파일 크기 과다, 복잡한 메서드
+  - ProductFactory.js: 기능적으로 문제 없음 (파일 크기만 초과)
+  - GiftBox3D.js: 파일 크기 과다, 컨페티 애니메이션 분리 고려
+*   **리팩토링 우선순위:**
+  1. Showroom.js 정리 (사용하지 않는 코드 제거, 책임 분리)
+  2. ShowroomBuilder.js 모듈화 (연동 모듈로 확장)
+  3. GiftBox3D.js 모듈화 (컨페티 애니메이션 분리)
+
+# [2025-12-11 최신] [9e63986] - 대리석 바닥 텍스처 복원 및 본진과 동일한 색상 적용 (WebGL 최적화 유지)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 (KST)
+*   **해시 번호:** 9e63986
+*   **작업 내용:** 대리석 바닥 텍스처 복원 및 본진과 동일한 색상 적용. WebGL 텍스처 유닛 최적화를 위해 Static 공유 패턴을 유지하면서 대리석 텍스처를 복원. 바닥 Material 색상을 본진과 동일하게 `0x111111` (검은색)으로 변경하여 화이트 톤 문제 해결. `createMarbleTexture()` 메서드를 Static 메서드로 변경하여 텍스처 유닛 1개만 사용하도록 최적화.
+*   **수정 파일:** static/js/3d/ShowroomBuilder.js, static/js/3d/GiftBox3D.js, kweon.md
+*   **변경 사항:**
+  - `ShowroomBuilder.sharedFloorTexture` Static 속성 추가 (텍스처 공유)
+  - `createMarbleTexture()` 메서드를 Static 메서드로 변경
+  - 바닥 Material 색상: `0xFFFFFF` → `0x111111` (본진과 동일)
+  - WebGL 최적화 유지: Static Material 공유 패턴 유지
+*   **결과:**
+  - 대리석 바닥 텍스처 정상 복원
+  - 본진과 동일한 검은색 톤 적용
+  - 텍스처 유닛 1개만 사용하여 최적화 유지
+
+# [2025-12-11 19:06 KST] [7018b1b] - WebGL 텍스처 유닛 초과 문제 임시 해결 (JewelryDisplay 주석 처리)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 19:06 (KST)
+*   **해시 번호:** 7018b1b
+*   **작업 내용:** WebGL 텍스처 유닛 초과로 인한 검정 화면 문제 임시 해결. JewelryDisplay 5개 생성 시 MeshPhysicalMaterial의 envMapIntensity 등으로 텍스처 유닛 16개 초과 문제 발견. addTestJewelryDisplay() 메서드 주석 처리하여 임시 해결. 본진(메인 프로젝트)과 homepage1 비교 분석 완료 - JewelryDisplay.js가 homepage1에만 존재하여 문제 발생 확인. 최적화 작업 전 안전한 상태로 커밋.
+*   **수정 파일:** static/js/3d/Showroom.js
+*   **문제 분석:**
+  - JewelryDisplay 5개 생성 시 Material 10개 생성 (goldFrameMat 5개 + glassMat 5개)
+  - 각 Material이 텍스처 유닛을 소비하여 16개 초과
+  - WebGL 하드웨어 제약: 최대 16개 텍스처 유닛만 사용 가능
+*   **해결 방안 (다음 단계):**
+  - Material 공유 (Static Materials) 적용 필요
+  - envMapIntensity 제거 또는 최소화
+  - MeshPhysicalMaterial → MeshStandardMaterial 변경
+  - GiftBox3D Material 최적화 (현재 2개 생성 시 약 50-70 유닛 사용)
+
+# [2025-12-11 16:19 KST] [edcd455] - 3D 쇼룸 리팩토링 계획 수립 및 작업장 구축 계획서 작성
+
+*   **한국 시간/날짜:** 2025년 12월 11일 16:19 (KST)
+*   **해시 번호:** edcd455
+*   **작업 내용:** 3D 쇼룸 리팩토링 및 작업장 구축 계획 수립. ProductFactory.js 내부의 3가지 유료 상품(Coin, Cube, Crown)을 독립 클래스로 분리하는 계획 수립. 새로운 작업장 페이지(furniture_workbench.html) 구축 계획 작성. UI/UX 비침해 보증 분석 완료 (모든 코드는 순수 시각적 요소만 담당, 실제 결제/토큰 로직 없음 확인).
+*   **수정 파일:** REFACTORING_PLAN.md (신규), static/js/3d/Showroom.js, templates/payment/showroom.html, static/js/3d/JewelryDisplay.js (신규), templates/test_jewelry_display.html (신규)
+
+# [2025-12-11 14:50 KST] [445f2dc] - 3D 쇼룸 분석 문서 및 임시 파일 추가
+
+*   **한국 시간/날짜:** 2025년 12월 11일 14:50 (KST)
+*   **해시 번호:** 445f2dc
+*   **작업 내용:** 3D 쇼룸 분석 문서 및 임시 파일 추가. 3D_SHOWROOM_CORNER_ROUNDING_ANALYSIS.md, 3D_SHOWROOM_DETAILED_ARCHITECTURE.md, 3D_SHOWROOM_FILE_INVENTORY.md, static/docs/ 디렉토리, temp_main_showroom.js 추가.
+*   **수정 파일:** 3D_SHOWROOM_CORNER_ROUNDING_ANALYSIS.md, 3D_SHOWROOM_DETAILED_ARCHITECTURE.md, 3D_SHOWROOM_FILE_INVENTORY.md, static/docs/, temp_main_showroom.js
+
+*   **한국 시간/날짜:** 2025년 12월 11일 14:50 (KST)
+*   **해시 번호:** [커밋 후 생성될 실제 해시 번호 기입]
+*   **작업 내용:** 3D 쇼룸 분석 문서 및 임시 파일 추가. Corner Rounding Analysis, Detailed Architecture, File Inventory 문서와 static/docs/ 디렉토리, temp_main_showroom.js 추가.
+*   **수정 파일:** 3D_SHOWROOM_CORNER_ROUNDING_ANALYSIS.md, 3D_SHOWROOM_DETAILED_ARCHITECTURE.md, 3D_SHOWROOM_FILE_INVENTORY.md, static/docs/, temp_main_showroom.js
+
+# [2025-12-11 14:50 KST] [커밋 후 생성] - 3D 쇼룸 분석 문서 및 임시 파일 추가
+
+*   **한국 시간/날짜:** 2025년 12월 11일 14:50 (KST)
+*   **해시 번호:** [커밋 후 생성될 실제 해시 번호 기입]
+*   **작업 내용:** 3D 쇼룸 분석 문서 및 임시 파일 추가. Corner Rounding Analysis, Detailed Architecture, File Inventory 문서 및 static/docs/ 디렉토리, temp_main_showroom.js 추가.
+*   **수정 파일:** 3D_SHOWROOM_CORNER_ROUNDING_ANALYSIS.md, 3D_SHOWROOM_DETAILED_ARCHITECTURE.md, 3D_SHOWROOM_FILE_INVENTORY.md, static/docs/, temp_main_showroom.js
+
+# [2025-12-11 14:45 KST] [71f7c49] - 3D 쇼룸 관련 작업 완료 (ProductFactory, Showroom, shop.html 및 라우트 수정)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 14:45 (KST)
+*   **해시 번호:** 71f7c49
+*   **작업 내용:** 3D 쇼룸 관련 파일 수정 완료. ProductFactory.js, Showroom.js, shop.html 및 payment_routes.py, check_products.py 수정.
+*   **수정 파일:** check_products.py, routes/payment_routes.py, static/js/3d/ProductFactory.js, static/js/3d/Showroom.js, templates/payment/shop.html
+
+# [2025-12-11 14:40 KST] [67caf46] - 3D 쇼룸 인테리어 - 투톤 벽면 완성 (구조적 완성)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 14:40 (KST)
+*   **해시 번호:** 67caf46
+*   **작업 내용:** 3D 쇼룸 벽면 인테리어를 투톤 방식으로 변경하여 실사 및 고급스러움 구현. createSimpleWalls() 수정: 하단 1.0m는 우드 색상 (0x5C4A2F), 상단 14.0m는 고급 White (0xFFFFFF)의 8개 BoxGeometry로 대체. 모든 모서리(벽-벽, 벽-바닥) 라운딩 코브 유지.
+*   **수정 파일:** static/js/3d/ShowroomBuilder.js, homepage1/kweon.md
+
+# [2025-12-11 11:30 KST] [76f1d06] - 3D 쇼룸 모서리 라운딩 1차 시도 (배치 오류 발생)
+
+*   **한국 시간/날짜:** 2025년 12월 11일 11:30 (KST)
+*   **해시 번호:** 76f1d06 (최근 커밋 기준, 현재 작업은 아직 커밋 전)
+*   **작업 내용:** 3D 쇼룸 바닥-벽 모서리 라운딩(코브) 구현 시도. ShowroomBuilder.js에 createFloorCornerCoves() 및 createWallCornerCoves() 메서드 추가. **결과: 수평 코브 Geometry 배치 오류로 인해 방 중앙을 가로지르는 흰색 면 발생.**
+*   **수정 파일:** static/js/3d/ShowroomBuilder.js
+*   **현재 상태:** 
+    - `createFloorCornerCoves()`: 2개 코브만 생성 (왼벽, 오른벽)
+    - `createWallCornerCoves()`: 삭제됨 (사용자 요청)
+    - 수평 코브 배치 오류 수정 완료 (벽 안쪽 면에 정확히 배치)
 
 # [2025-12-09 11:34 KST] [94cb713] - homepage1 워크트리 작업 완료 (토큰 서비스 개선, 상점 UI 업데이트, 분석 문서 정리) [32개 파일 변경, 1534줄 추가]
 

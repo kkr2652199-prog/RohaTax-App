@@ -137,6 +137,12 @@ class Showroom {
     this.clock = new THREE.Clock();
 
     this.layoutProducts();
+    
+    // 테스트: 보석상 스타일 유리 진열대 추가
+    // ⚠️ 주석 처리: WebGL 텍스처 유닛 초과로 인한 검정 화면 문제 해결
+    // JewelryDisplay 5개 생성 시 MeshPhysicalMaterial의 envMapIntensity 등으로 텍스처 유닛 16개 초과
+    // this.addTestJewelryDisplay();
+    
     this.setupEvents();
     this.onResize();
     window.addEventListener("resize", () => this.onResize());
@@ -243,71 +249,6 @@ class Showroom {
     return podiumGroup;
   }
 
-  createMarbleTexture() {
-    // 블랙 마블 텍스처 (검은색 바탕에 흰색/회색 줄무늬) - 미드나잇 럭셔리
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 2048;
-    const ctx = canvas.getContext('2d');
-    
-    // 베이스 색상 (거의 검정)
-    ctx.fillStyle = '#111111'; // 블랙 마블 베이스
-    ctx.fillRect(0, 0, 2048, 2048);
-    
-    // 타일 격자 그리기 (흰색/회색 줄무늬)
-    const tileSize = 128;
-    ctx.strokeStyle = '#888888'; // 회색 줄무늬
-    ctx.lineWidth = 4;
-    
-    for (let i = 0; i <= 16; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * tileSize, 0);
-      ctx.lineTo(i * tileSize, 2048);
-      ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(0, i * tileSize);
-      ctx.lineTo(2048, i * tileSize);
-      ctx.stroke();
-    }
-    
-    // 대리석 무늬 (흰색/회색 베인) - 블랙 마블 특유의 줄무늬
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; // 흰색 베인
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 80; i++) {
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * 2048, Math.random() * 2048);
-      for (let j = 0; j < 8; j++) {
-        ctx.lineTo(Math.random() * 2048, Math.random() * 2048);
-      }
-      ctx.stroke();
-    }
-    
-    // 추가 회색 베인
-    ctx.strokeStyle = 'rgba(200, 200, 200, 0.15)';
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 50; i++) {
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * 2048, Math.random() * 2048);
-      for (let j = 0; j < 5; j++) {
-        ctx.lineTo(Math.random() * 2048, Math.random() * 2048);
-      }
-      ctx.stroke();
-    }
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.minFilter = THREE.LinearMipmapLinearFilter; // Mipmap 필터링
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = true; // Mipmap 생성
-    texture.anisotropy = 16; // 이방성 필터링 (깨짐 방지)
-    texture.repeat.set(5, 5); // 반복 횟수 감소 (더 큰 타일)
-    texture.needsUpdate = true; // 강제 업데이트
-    
-    console.log("✅ [Showroom] 대리석 타일 텍스처 생성 완료:", texture);
-    return texture;
-  }
 
   createWallTexture() {
     // 벽면 미세 텍스처 (딥 차콜) - 미드나잇 럭셔리
@@ -352,7 +293,7 @@ class Showroom {
     this.wallLimitZ = roomSize.depth / 2 - 1; // ±14
     
     // 바닥 텍스처 생성 (블랙 마블 유지)
-    const floorTexture = this.createMarbleTexture();
+    const floorTexture = ShowroomBuilder.createMarbleTexture();
     console.log("✅ [Showroom] 바닥 텍스처:", floorTexture);
     
     // 벽면 텍스처는 사용하지 않음 (순수 흰색)
@@ -562,12 +503,15 @@ class Showroom {
     // [1] 중앙 - Gold 상품 (왕관)
     if (gold && this.pedestalPositions[0]) {
       const pedestalPos = this.pedestalPositions[0];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, goldCrownHeight, pedestalPos.z);
       console.log(`   [중앙 진열대] "Gold" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(gold, productPos);
       if (productGroup) {
         this.meshes.push(productGroup);
+        this.scene.add(productGroup); // 씬에 명시적으로 추가
         this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
       }
     }
@@ -575,12 +519,15 @@ class Showroom {
     // [2] 좌측 중간 - Standard 상품 (코인)
     if (standard && this.pedestalPositions[1]) {
       const pedestalPos = this.pedestalPositions[1];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, standardCoinHeight, pedestalPos.z);
       console.log(`   [좌측 중간 진열대] "Standard" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(standard, productPos);
       if (productGroup) {
         this.meshes.push(productGroup);
+        this.scene.add(productGroup); // 씬에 명시적으로 추가
         this.addProductSpotlight(productPos, 0xc0c0c0); // 실버 조명
       }
     }
@@ -588,12 +535,15 @@ class Showroom {
     // [3] 우측 중간 - Premium 상품 (큐브)
     if (premium && this.pedestalPositions[2]) {
       const pedestalPos = this.pedestalPositions[2];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, premiumCubeHeight, pedestalPos.z);
       console.log(`   [우측 중간 진열대] "Premium" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createRegularProduct(premium, productPos);
       if (productGroup) {
         this.meshes.push(productGroup);
+        this.scene.add(productGroup); // 씬에 명시적으로 추가
         this.addProductSpotlight(productPos, 0x00bfff); // 블루 조명
       }
     }
@@ -601,24 +551,30 @@ class Showroom {
     // [4] 좌측 끝 - Event 상품 1 (선물 상자)
     if (eventProducts[0] && this.pedestalPositions[3]) {
       const pedestalPos = this.pedestalPositions[3];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
       console.log(`   [좌측 끝 진열대] "${eventProducts[0].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createEventProduct(eventProducts[0], productPos);
       if (productGroup) {
         this.meshes.push(productGroup);
+        this.scene.add(productGroup); // 씬에 명시적으로 추가
         this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
       }
     }
     // [5] 우측 끝 - Event 상품 2 (선물 상자)
     if (eventProducts[1] && this.pedestalPositions[4]) {
       const pedestalPos = this.pedestalPositions[4];
-      this.builder.createPedestal(pedestalPos);
+      const pedestal = new window.Pedestal3D(pedestalPos);
+      this.scene.add(pedestal.group);
+      this.meshes.push(pedestal.group);
       const productPos = new THREE.Vector3(pedestalPos.x, giftBoxHeight, pedestalPos.z);
       console.log(`   [우측 끝 진열대] "${eventProducts[1].name}" → (${productPos.x}, ${productPos.y}, ${productPos.z})`);
       const productGroup = this.factory.createEventProduct(eventProducts[1], productPos);
       if (productGroup) {
         this.meshes.push(productGroup);
+        this.scene.add(productGroup); // 씬에 명시적으로 추가
         this.addProductSpotlight(productPos, 0xffd700); // 골드 조명
       }
     }
@@ -626,305 +582,67 @@ class Showroom {
     console.log(`✅ [Showroom] 총 ${this.meshes.length}개 상품 배치 완료`);
   }
 
-  createEventProduct(product, position) {
-    if (typeof GiftBox3D === "undefined") {
-      console.error("❌ GiftBox3D 클래스를 찾을 수 없습니다!");
+  /**
+   * 테스트: 보석상 스타일 유리 진열대 추가
+   */
+  /**
+   * 쇼룸에 진열대 배치 (배치만 담당 - 디자인은 JewelryDisplay.js에서)
+   * 
+   * 💡 아키텍처 원칙:
+   * - 쇼룸은 "진열만 하는 공간" (가구 생성/디자인 X)
+   * - 가구 디자인은 별도 테스트 파일(/test/jewelry-display)에서 작업
+   * - 워크플로우: 테스트 파일에서 디자인 → 확인 → 완성되면 쇼룸에 배치만 추가
+   */
+  addTestJewelryDisplay() {
+    console.log("💎 [Showroom] 진열대 배치 시작 (배치만 담당)...");
+    
+    if (typeof window.JewelryDisplay === "undefined") {
+      console.error("❌ [Showroom] JewelryDisplay 클래스를 찾을 수 없습니다!");
+      console.error("   - JewelryDisplay.js 파일이 로드되었는지 확인하세요.");
+      console.error("   - 디자인 테스트: /test/jewelry-display 페이지에서 확인하세요.");
       return;
     }
 
-    console.log(`      → 이벤트 상품 생성: "${product.name}"`);
-    const giftBox = new GiftBox3D(null, {
-      boxColor: 0x7b1113,
-      ribbonColor: 0xffd700
-    });
-    const group = giftBox.createModel();
-    group.position.copy(position);
-    group.userData = group.userData || {};
-    group.userData.productData = product;
-    group.scale.set(0.9, 0.9, 0.9);
-    
-    // 사용자를 향해 회전
-    const lookAtTarget = new THREE.Vector3(0, 3.8, 12); // 카메라 높이에 맞춤
-    group.lookAt(lookAtTarget);
-    
-    this.scene.add(group);
-    this.meshes.push(group);
-    // 스포트라이트 추가 (상품 강조)
-    this.addProductSpotlight(position, 0xffd700); // 골드 조명
-    
-    console.log(`      ✅ 선물 상자 추가됨: 위치 (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
-  }
-
-  createRegularProduct(product, position, index) {
-    console.log(`      → 일반 상품 생성: "${product.name}"`);
-    const normalized = product.name.toLowerCase().replace(/\s+/g, "");
-    console.log(`         정규화된 이름: "${normalized}"`);
-    
-    let group = null;
-    if (normalized === "standard") {
-      group = this.createStandardCoin(product, position);
-      console.log(`         ✨ Standard 코인 생성됨`);
-    } else if (normalized === "premium") {
-      group = this.createPremiumCube(product, position);
-      console.log(`         ✨ Premium 큐브 생성됨`);
-    } else if (normalized === "gold") {
-      group = this.createGoldCrown(product, position);
-      console.log(`         ✨ Gold 크라운 생성됨`);
-    } else {
-      group = this.createFallbackProduct(product, position);
-      console.log(`         ✨ 기본 오브젝트 생성됨`);
-    }
-
-    if (!group) {
-      console.error(`      ❌ 그룹 생성 실패!`);
+    if (typeof THREE === "undefined") {
+      console.error("❌ [Showroom] THREE.js가 로드되지 않았습니다!");
       return;
     }
 
-    group.userData.productData = product;
+    // 진열대 크기 (JewelryDisplay.js에서 정의된 디자인 사용)
+    const displaySize = { width: 2.5, height: 1.8, depth: 2 };
     
-    // 사용자를 향해 회전
-    const lookAtTarget = new THREE.Vector3(0, 3.8, 12); // 카메라 높이에 맞춤
-    group.lookAt(lookAtTarget);
+    // 방 크기 고려한 간격 계산 (벽 안쪽에 안전하게 배치)
+    const safeLimit = 14.0; // 안전한 최대 위치 (벽 안쪽 1m 여유)
+    const displayHalfWidth = displaySize.width / 2; // 1.25m
+    const maxPosition = safeLimit - displayHalfWidth; // 14.0 - 1.25 = 12.75
     
-    this.scene.add(group);
-    this.meshes.push(group);
+    // 5개를 일정한 간격으로 배치: 중앙 기준 좌우 대칭
+    const spacing = (maxPosition * 2) / 4; // 약 6.375m
     
-    // 스포트라이트 추가 (상품별 색상)
-    let lightColor = 0xffffff;
-    if (normalized === "standard") lightColor = 0xc0c0c0; // 실버
-    else if (normalized === "premium") lightColor = 0x00bfff; // 블루
-    else if (normalized === "gold") lightColor = 0xffd700; // 골드
-    this.addProductSpotlight(position, lightColor);
+    // 5개 진열대 배치 (배치만 담당)
+    const positions = [
+      { x: -spacing * 2, y: 0, z: 5, name: "좌측 끝" },
+      { x: -spacing, y: 0, z: 5, name: "좌측 중간" },
+      { x: 0, y: 0, z: 5, name: "중앙" },
+      { x: spacing, y: 0, z: 5, name: "우측 중간" },
+      { x: spacing * 2, y: 0, z: 5, name: "우측 끝" }
+    ];
     
-    console.log(`      ✅ 씬에 추가됨: 위치 (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
-  }
-
-  createStandardCoin(product, position) {
-    // 은색 코인 + 옆면 톱니바퀴 디테일
-    const group = new THREE.Group();
-    const coinMat = new THREE.MeshStandardMaterial({
-      color: 0xc0c0c0,
-      metalness: 1.0,
-      roughness: 0.2
+    positions.forEach((pos, index) => {
+      try {
+        const display = new window.JewelryDisplay(
+          this.scene,
+          { x: pos.x, y: pos.y, z: pos.z },
+          displaySize
+        );
+        display.create();
+        console.log(`   ✅ 진열대 ${index + 1} (${pos.name}) 배치 완료: x=${pos.x.toFixed(2)}`);
+      } catch (error) {
+        console.error(`   ❌ 진열대 ${index + 1} (${pos.name}) 배치 실패:`, error);
+      }
     });
-    const coin = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.25, 64), coinMat);
-    coin.rotation.x = Math.PI / 2;
-    coin.castShadow = true;
-    coin.receiveShadow = true;
-    group.add(coin);
 
-    // 옆면 톱니바퀴 디테일 (톱니 모양)
-    const toothMat = new THREE.MeshStandardMaterial({
-      color: 0x888888, // 어두운 회색 (대비)
-      metalness: 0.8,
-      roughness: 0.3
-    });
-    const toothCount = 24; // 톱니 개수
-    const radius = 1.2;
-    const toothHeight = 0.15;
-    const toothWidth = 0.08;
-    
-    for (let i = 0; i < toothCount; i++) {
-      const angle = (i / toothCount) * Math.PI * 2;
-      const tooth = new THREE.Mesh(
-        new THREE.BoxGeometry(toothWidth, toothHeight, toothWidth),
-        toothMat
-      );
-      // 톱니를 코인 옆면에 배치
-      tooth.position.set(
-        Math.cos(angle) * radius,
-        0,
-        Math.sin(angle) * radius
-      );
-      // 톱니가 바깥쪽을 향하도록 회전
-      tooth.rotation.y = angle + Math.PI / 2;
-      tooth.castShadow = true;
-      group.add(tooth);
-    }
-
-    const rimMat = new THREE.MeshStandardMaterial({
-      color: 0xfffff0,
-      metalness: 1,
-      roughness: 0.1
-    });
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.08, 16, 100), rimMat);
-    rim.rotation.x = Math.PI / 2;
-    group.add(rim);
-
-    const label = this.createPriceLabel(product);
-    label.position.set(0, 0.9, 0);
-    group.add(label);
-
-    group.position.copy(position);
-    group.userData.productData = product;
-    this.standardCoins.push(group);
-    return group;
-  }
-
-  createPremiumCube(product, position) {
-    // 테크 큐브: 네온 시안 와이어프레임 + 반대 방향 회전 내부 큐브
-    const group = new THREE.Group();
-    const outerSize = 1.6;
-    
-    // 외부 와이어프레임 (네온 시안 - 두께 강화)
-    const lines = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(outerSize, outerSize, outerSize)),
-      new THREE.LineBasicMaterial({ 
-        color: 0x00FFFF, // 네온 시안 (Cyan)
-        linewidth: 3 // 두께 강화 (WebGL에서는 실제로는 작동하지 않지만 의도 표시)
-      })
-    );
-    // 두께를 시각적으로 강화하기 위해 여러 레이어 추가
-    const lines2 = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(outerSize * 0.98, outerSize * 0.98, outerSize * 0.98)),
-      new THREE.LineBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.5 })
-    );
-    group.add(lines);
-    group.add(lines2);
-
-    // 내부 큐브 (반대 방향으로 빠르게 회전)
-    const coreMat = new THREE.MeshPhysicalMaterial({
-      color: 0x00FFFF, // 네온 시안
-      transmission: 0.8,
-      transparent: true,
-      roughness: 0.1,
-      metalness: 0.8,
-      emissive: 0x004444, // 약한 발광
-      emissiveIntensity: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
-    const inner = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), coreMat);
-    inner.position.set(0, -0.1, 0);
-    inner.castShadow = true;
-    group.add(inner);
-
-    const label = this.createPriceLabel(product);
-    label.position.set(0, 1.6, 0);
-    group.add(label);
-
-    group.position.copy(position);
-    // 반대 방향 회전을 위한 속도 저장
-    this.premiumCubes.push({ 
-      group, 
-      inner, // 내부 큐브 참조
-      outerRotation: 0, // 외부 회전 속도
-      innerRotation: 0, // 내부 회전 속도 (반대 방향, 더 빠름)
-      offset: Math.random() * Math.PI 
-    });
-    group.userData.productData = product;
-    return group;
-  }
-
-  createGoldCrown(product, position) {
-    // 자이로스코프: 서로 교차하여 회전하는 3개의 링 + 중앙 에너지 코어
-    const group = new THREE.Group();
-    
-    // 골드 재질 (순금, 자체 발광)
-    const goldMat = new THREE.MeshPhysicalMaterial({
-      color: 0xFFD700, // 순금
-      metalness: 1.0,
-      roughness: 0.1,
-      emissive: 0x332200, // 자체 발광 (어두운 골드)
-      emissiveIntensity: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
-    
-    // [1] 3개의 교차하는 Torus 링
-    const ring1 = new THREE.Mesh(
-      new THREE.TorusGeometry(0.7, 0.12, 32, 100),
-      goldMat
-    );
-    ring1.rotation.x = Math.PI / 2; // 수평
-    ring1.castShadow = true;
-    group.add(ring1);
-    
-    const ring2 = new THREE.Mesh(
-      new THREE.TorusGeometry(0.7, 0.12, 32, 100),
-      goldMat
-    );
-    ring2.rotation.y = Math.PI / 2; // 수직 (Y축)
-    ring2.rotation.z = Math.PI / 4; // 45도 기울임
-    ring2.castShadow = true;
-    group.add(ring2);
-    
-    const ring3 = new THREE.Mesh(
-      new THREE.TorusGeometry(0.7, 0.12, 32, 100),
-      goldMat
-    );
-    ring3.rotation.x = Math.PI / 4; // 45도 기울임
-    ring3.rotation.z = Math.PI / 2; // 수직 (Z축)
-    ring3.castShadow = true;
-    group.add(ring3);
-    
-    // [2] 중앙 에너지 코어 (빛나는 구체)
-    const coreMat = new THREE.MeshPhysicalMaterial({
-      color: 0xFFD700,
-      metalness: 0.8,
-      roughness: 0.1,
-      emissive: 0xFFAA00, // 밝은 골드 발광
-      emissiveIntensity: 0.8,
-      transparent: true,
-      opacity: 0.9
-    });
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 32, 32),
-      coreMat
-    );
-    core.castShadow = true;
-    group.add(core);
-    
-    // 파티클 효과 (에너지 코어 주변)
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = [];
-    for (let i = 0; i < 50; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-      const radius = 0.3 + Math.random() * 0.3;
-      positions.push(
-        radius * Math.sin(phi) * Math.cos(theta),
-        radius * Math.cos(phi),
-        radius * Math.sin(phi) * Math.sin(theta)
-      );
-    }
-    particleGeo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    const particles = new THREE.Points(
-      particleGeo,
-      new THREE.PointsMaterial({ 
-        color: 0xFFD700, 
-        size: 0.05,
-        transparent: true,
-        opacity: 0.8
-      })
-    );
-    group.add(particles);
-
-    const label = this.createPriceLabel(product);
-    label.position.set(0, 2.2, 0);
-    group.add(label);
-
-    group.position.copy(position);
-    this.goldCrowns.push({ group, ring1, ring2, ring3, core, particles });
-    group.userData.productData = product;
-    return group;
-  }
-
-  createFallbackProduct(product, position) {
-    const group = new THREE.Group();
-    const geometry = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-    const material = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.4 });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.castShadow = true;
-    group.add(mesh);
-    group.position.copy(position); // position은 이미 올바른 높이로 설정됨
-
-    const label = this.createPriceLabel(product);
-    label.position.set(position.x, 1.5, position.z);
-    group.add(label);
-
-    group.userData.productData = product;
-    return group;
+    console.log("✅ [Showroom] 진열대 배치 완료 (총 5개)");
   }
 
   createPriceLabel(product) {
