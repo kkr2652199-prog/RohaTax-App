@@ -1,4 +1,30 @@
-﻿# [2025-12-12 09:55 KST] [d5ff5e5] - 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료
+﻿# [2025-12-12 11:03 KST] [580da6a] - 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
+
+*   **한국 시간/날짜:** 2025년 12월 12일 11:03 (KST)
+*   **작업자:** Commander & The Architect Team
+*   **작업 내용:** 쇼룸 코드 대규모 리팩토링 및 안정화 (1단계 완료)
+  1. Showroom.js 내 중복 가구 생성 메서드 6종(약 300줄) 전면 삭제
+     - `createEventProduct()`, `createRegularProduct()`, `createStandardCoin()`, `createPremiumCube()`, `createGoldCrown()`, `createFallbackProduct()` 삭제
+  2. 모든 가구 생성을 'ProductFactory' 패턴으로 단일화 (유지보수성 극대화)
+     - Factory Pattern 경로만 사용하도록 통일
+     - 중복 코드 제거로 코드 일관성 확보
+  3. ProductFactory 사용 시 조명 및 Scene 추가 누락 문제 해결 (정상 작동 확인)
+     - `this.scene.add(productGroup)` 명시적 추가 (5개 상품 모두)
+     - `this.addProductSpotlight()` 조명 추가 확인
+     - "유령 가구" 현상 해결
+  4. WebGL 텍스처 유닛 최적화 구조 확립
+     - Static Material 공유 시스템으로 텍스처 유닛 절약
+     - 하드코딩 메서드 제거로 개별 Material 생성 위험 제거
+*   **수정 파일:** 
+  - static/js/3d/Showroom.js (중복 메서드 삭제, scene.add 추가)
+  - FURNITURE_FACTORY_ANALYSIS.md (신규 - 가구 공장 패턴 분석 보고서)
+*   **결과:**
+  - 코드 중복 제거: 약 300줄 삭제
+  - Factory Pattern 통일: 모든 가구 생성 경로 단일화
+  - 렌더링 문제 해결: scene.add 명시적 추가로 화면 정상 표시
+  - WebGL 안전성 확보: Static Material 공유로 텍스처 유닛 초과 위험 제거
+
+# [2025-12-12 09:55 KST] [d5ff5e5] - 3D 쇼룸 구조 점검 및 리팩토링 필요성 평가 완료
 
 *   **한국 시간/날짜:** 2025년 12월 12일 09:55 (KST)
 *   **해시 번호:** d5ff5e5
