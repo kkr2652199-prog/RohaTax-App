@@ -351,3 +351,4 @@ pytest tests/ --cov=core --cov=routes --cov-report=html
 
 **다음 단계:** 실제 테스트 코드 작성 시작할까요?
 
+
