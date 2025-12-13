@@ -8,9 +8,9 @@ class MagicFire {
     this.options = {
       imageUrl: options.imageUrl || 'https://assets.codepen.io/12550455/good-place-2.jpg',
       particleCount: options.particleCount || 25, // 50 -> 25로 반으로 줄임
-      frameWidth: options.frameWidth || 2,      // 4 -> 2로 축소
-      frameHeight: options.frameHeight || 1.125, // 2.25 -> 1.125로 축소
-      frameDepth: options.frameDepth || 0.1
+      frameWidth: options.frameWidth || 50,      // TV(14.0)보다 크게: 50
+      frameHeight: options.frameHeight || 28,     // TV(8.4)보다 크게: 28
+      frameDepth: options.frameDepth || 2.0      // 깊이 유지: 2.0
     };
     
     this.particles = [];
