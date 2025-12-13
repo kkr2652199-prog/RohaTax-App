@@ -674,17 +674,17 @@ class ProductFactory {
       metalness: 0.7
     });
     
-    // 앞면(Index 4)에만 텍스처 적용 (발광 효과)
+    // 앞면(Index 4)에만 텍스처 적용 (발광 효과 + 완전 무반사)
     const frontMaterial = new THREE.MeshStandardMaterial({
       map: texture,
       transparent: true,
       opacity: 1.0,
       side: THREE.FrontSide,
-      roughness: 0.2,        // 매끈한 유리 느낌
-      metalness: 0.5,         // 약간의 금속성
-      emissive: 0xffffff,     // 발광 색상 (흰색)
-      emissiveMap: texture,   // 텍스처 자체가 빛나게 함
-      emissiveIntensity: 0.5  // 은은하게 스스로 빛남
+      roughness: 1.0,        // 완전 무광 (0.2 → 1.0, 빛 반사 완전 제거)
+      metalness: 0.0,        // 비금속 (0.5 → 0.0, 반사 없음)
+      emissive: 0xffffff,     // 발광 색상 (흰색) - 유지
+      emissiveMap: texture,   // 텍스처 자체가 빛나게 함 - 유지
+      emissiveIntensity: 0.5  // 은은하게 스스로 빛남 - 유지
     });
     
     // 재질 배열: [오른쪽, 왼쪽, 위, 아래, 앞, 뒤]
