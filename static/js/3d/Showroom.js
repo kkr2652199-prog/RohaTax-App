@@ -53,6 +53,50 @@ class Showroom {
     this.renderer.sortObjects = true; // 객체 정렬 활성화 (투명도 처리 최적화)
     
     console.log(`[Showroom] 🎨 Renderer 생성: ${this.canvas.width}x${this.canvas.height}`);
+    
+    // ✅ CSS2DRenderer 초기화 (고해상도 HTML 라벨링용)
+    try {
+      const CSS2DRenderer = window.CSS2DRenderer || (typeof THREE !== 'undefined' && THREE.CSS2DRenderer);
+      if (CSS2DRenderer) {
+        this.css2dRenderer = new CSS2DRenderer();
+        this.css2dRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.css2dRenderer.domElement.style.position = 'absolute';
+        this.css2dRenderer.domElement.style.top = '0';
+        this.css2dRenderer.domElement.style.left = '0';
+        this.css2dRenderer.domElement.style.pointerEvents = 'none';
+        this.css2dRenderer.domElement.style.zIndex = '1000';
+        this.container.appendChild(this.css2dRenderer.domElement);
+        console.log('✅ [Showroom] CSS2DRenderer 초기화 완료');
+      } else {
+        console.warn('⚠️ [Showroom] CSS2DRenderer를 사용할 수 없습니다.');
+        this.css2dRenderer = null;
+      }
+    } catch (error) {
+      console.error('❌ [Showroom] CSS2DRenderer 초기화 실패:', error);
+      this.css2dRenderer = null;
+    }
+    
+    // ✅ CSS3DRenderer 초기화 (3D 홀로그램 콘솔용)
+    try {
+      const CSS3DRenderer = window.CSS3DRenderer || (typeof THREE !== 'undefined' && THREE.CSS3DRenderer);
+      if (CSS3DRenderer) {
+        this.css3dRenderer = new CSS3DRenderer();
+        this.css3dRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.css3dRenderer.domElement.style.position = 'absolute';
+        this.css3dRenderer.domElement.style.top = '0';
+        this.css3dRenderer.domElement.style.left = '0';
+        this.css3dRenderer.domElement.style.pointerEvents = 'none';
+        this.css3dRenderer.domElement.style.zIndex = '999';
+        this.container.appendChild(this.css3dRenderer.domElement);
+        console.log('✅ [Showroom] CSS3DRenderer 초기화 완료');
+      } else {
+        console.warn('⚠️ [Showroom] CSS3DRenderer를 사용할 수 없습니다.');
+        this.css3dRenderer = null;
+      }
+    } catch (error) {
+      console.error('❌ [Showroom] CSS3DRenderer 초기화 실패:', error);
+      this.css3dRenderer = null;
+    }
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0a0a); // 미드나잇 럭셔리 - 어두운 배경
@@ -912,6 +956,54 @@ class Showroom {
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.pointer, this.camera);
+    
+    // ✅ 메뉴판 클릭 감지 (우선 처리)
+    const menuIntersects = this.raycaster.intersectObjects(this.scene.children, true);
+    for (const intersect of menuIntersects) {
+      if (intersect.object.userData && intersect.object.userData.isMenu) {
+        const menuMesh = intersect.object;
+        const productData = menuMesh.userData.productData;
+        
+        if (!productData) {
+          console.warn("⚠️ [Showroom] 메뉴판에 상품 데이터가 없습니다.");
+          continue;
+        }
+        
+        // ✅ 앞면(Material Index 4)만 클릭 허용 (BoxGeometry: 인덱스 4=앞면)
+        if (intersect.face && intersect.face.materialIndex !== 4) {
+          console.log('ℹ️ [Showroom] 메뉴판 뒷면/옆면 클릭됨 (무시, materialIndex:', intersect.face.materialIndex, ')');
+          continue; // 앞면이 아니면 무시
+        }
+        
+        // ✅ 버튼 영역 UV 좌표 확인
+        const uv = intersect.uv;
+        
+        // 디버깅: UV 좌표 출력
+        console.log('🔍 [Showroom] 클릭된 UV 좌표:', {
+          x: uv.x,
+          y: uv.y,
+          productName: productData.name || 'Unknown'
+        });
+        
+        // 버튼은 Canvas 하단에 그려졌으므로, UV y 좌표가 0에 가까울수록 하단
+        // 4K 해상도(1024x700) 기준, 버튼은 하단 100px 영역 (700-100 ~ 700)
+        // UV 좌표계에서 y=0이 하단이므로, y < (100/700) = 0.143
+        const isButtonClick = uv.y < 0.15; // 하단 15% 영역 (버튼 영역)
+        
+        if (isButtonClick) {
+          console.log('✅ [Showroom] 메뉴판 버튼 클릭됨:', productData.name || 'Unknown');
+          
+          // 가상 버튼 생성 및 openCheckoutModal 호출
+          this._handleMenuButtonClick(productData);
+          return; // 메뉴판 클릭 처리 완료
+        } else {
+          console.log('ℹ️ [Showroom] 메뉴판 클릭됨 (버튼 영역 아님, UV y:', uv.y, ')');
+          return; // 메뉴판이지만 버튼이 아니면 무시
+        }
+      }
+    }
+    
+    // ✅ 기존 상품 클릭 처리 (메뉴판이 아닌 경우)
     const intersects = this.raycaster.intersectObjects(this.meshes, true);
     if (intersects.length === 0) {
       return;
@@ -1017,6 +1109,56 @@ class Showroom {
     // shop.js의 openCheckoutModal 호출
     window.openCheckoutModal(virtualButton);
   }
+  
+  /**
+   * 메뉴판 버튼 클릭 처리 (내부 메서드)
+   * @param {Object} productData - 상품 데이터
+   */
+  _handleMenuButtonClick(productData) {
+    if (typeof window.openCheckoutModal !== "function") {
+      console.error("❌ [Showroom] window.openCheckoutModal 함수를 찾을 수 없습니다.");
+      return;
+    }
+    
+    // 이벤트 상품 여부 확인
+    const productTypeRaw = (productData.type || '').trim();
+    const productType = productTypeRaw.toLowerCase();
+    const isEventType = productType === 'event' || productType === 'event_period';
+    
+    // 가상 버튼 생성 (shop.js의 openCheckoutModal이 버튼 엘리먼트를 기대함)
+    const virtualButton = document.createElement('button');
+    
+    // 필수 데이터 속성 주입
+    virtualButton.setAttribute('data-id', String(productData.id || productData.product_id || ''));
+    virtualButton.setAttribute('data-name', productData.name || '');
+    
+    // 가격 설정 (이벤트 상품은 "0")
+    if (isEventType) {
+      virtualButton.setAttribute('data-price', '0');
+    } else {
+      virtualButton.setAttribute('data-price', String(productData.price || 0));
+    }
+    
+    // 타입 설정
+    if (isEventType) {
+      virtualButton.setAttribute('data-type', productTypeRaw || (productType === 'event_period' ? 'event_period' : 'event'));
+    } else {
+      virtualButton.setAttribute('data-type', productTypeRaw || '');
+    }
+    
+    virtualButton.setAttribute('data-token', String(productData.token_amount || 0));
+    virtualButton.setAttribute('data-duration', String(productData.duration_days || 0));
+    
+    console.log('✅ [Showroom] 메뉴판 버튼 클릭 처리:', {
+      id: virtualButton.getAttribute('data-id'),
+      name: virtualButton.getAttribute('data-name'),
+      price: virtualButton.getAttribute('data-price'),
+      type: virtualButton.getAttribute('data-type')
+    });
+    
+    // shop.js의 openCheckoutModal 호출
+    window.openCheckoutModal(virtualButton);
+  }
 
   onResize() {
     if (!this.container || !this.camera || !this.renderer) {
@@ -1034,6 +1176,16 @@ class Showroom {
     this.renderer.setSize(width, height);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+    
+    // ✅ CSS2DRenderer 리사이즈
+    if (this.css2dRenderer) {
+      this.css2dRenderer.setSize(width, height);
+    }
+    
+    // ✅ CSS3DRenderer 리사이즈
+    if (this.css3dRenderer) {
+      this.css3dRenderer.setSize(width, height);
+    }
   }
 
   animate() {
@@ -1249,6 +1401,16 @@ class Showroom {
 
     // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);
+    
+    // ✅ CSS2DRenderer 렌더링 (고해상도 HTML 라벨링)
+    if (this.css2dRenderer) {
+      this.css2dRenderer.render(this.scene, this.camera);
+    }
+    
+    // ✅ CSS3DRenderer 렌더링 (3D 홀로그램 콘솔)
+    if (this.css3dRenderer) {
+      this.css3dRenderer.render(this.scene, this.camera);
+    }
   }
 }
 

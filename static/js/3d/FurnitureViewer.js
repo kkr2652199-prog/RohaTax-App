@@ -23,8 +23,16 @@ class FurnitureViewer {
     this.controls = null;
     this.currentProduct = null;
     this.animationId = null;
+    this.factory = null; // ProductFactory 참조 (선택적)
 
     this.init();
+  }
+  
+  /**
+   * ProductFactory 참조 설정 (애니메이션용)
+   */
+  setFactory(factory) {
+    this.factory = factory;
   }
 
   /**
@@ -213,6 +221,11 @@ class FurnitureViewer {
     // OrbitControls 업데이트
     if (this.controls) {
       this.controls.update();
+    }
+    
+    // ProductFactory 애니메이션 업데이트 (MagicFire 등)
+    if (this.factory && typeof this.factory.updateProductAnimations === 'function') {
+      this.factory.updateProductAnimations();
     }
 
     // 렌더링

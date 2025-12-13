@@ -376,6 +376,9 @@
                         <button id="btn-luxedisplay" class="test-button" style="background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);">
                             💎 LuxeDisplay3D
                         </button>
+                        <button id="btn-magicfire" class="test-button" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">
+                            🔥 Magic Fire (불꽃 액자)
+                        </button>
                     </div>
                 </div>
             </details>
@@ -430,6 +433,7 @@
     <script src="{{ url_for('static', filename='js/3d/NeonRing.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/TV3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/LuxeDisplay3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/MagicFire.js') }}?v={{ timestamp }}" onload="console.log('✅ [MagicFire.js] 로딩:', typeof window.MagicFire)" onerror="console.error('❌ [MagicFire.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/FurnitureViewer.js') }}?v={{ timestamp }}"></script>
     
@@ -475,6 +479,12 @@
                 
                 const ProductFactoryClass = ProductFactory || window.ProductFactory;
                 factory = new ProductFactoryClass(viewer.scene);
+                
+                // FurnitureViewer에 factory 참조 설정 (애니메이션용)
+                if (viewer && typeof viewer.setFactory === 'function') {
+                    viewer.setFactory(factory);
+                }
+                
                 updateStatus('✅ ProductFactory 초기화 완료');
                 
                 // 3. 버튼 이벤트 리스너 설정
@@ -823,6 +833,41 @@
                     console.error('[Furniture Studio] 에러 메시지:', error.message);
                     console.error('[Furniture Studio] 스택 트레이스:', error.stack);
                     updateStatus('❌ LuxeDisplay3D 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Magic Fire (불꽃 액자)
+            document.getElementById('btn-magicfire').onclick = () => {
+                try {
+                    updateStatus('⏳ Magic Fire 생성 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    
+                    // 이미지 URL 옵션 (기본값 사용)
+                    const options = {
+                        imageUrl: 'https://assets.codepen.io/12550455/good-place-2.jpg',
+                        particleCount: 25,   // 50 -> 25로 반으로 줄임
+                        frameWidth: 2,      // 4 -> 2로 축소
+                        frameHeight: 1.125, // 2.25 -> 1.125로 축소
+                        frameDepth: 0.1
+                    };
+                    
+                    const group = factory.createMagicFire(pos, options);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Magic Fire 생성 완료');
+                        // 불꽃 애니메이션은 ProductFactory.updateProductAnimations()에서 자동으로 처리됨
+                    } else {
+                        throw new Error('Magic Fire 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Magic Fire 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Magic Fire 생성 실패: ' + error.message, true);
                 }
             };
         }
