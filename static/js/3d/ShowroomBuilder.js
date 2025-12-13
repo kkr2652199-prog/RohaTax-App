@@ -83,8 +83,8 @@ class ShowroomBuilder {
     // 단순 박스 벽 시공 (검은색 버그 원천 봉쇄)
     this.createSimpleWalls();
 
-    // 벽면 매립형 수직 간접 조명 추가
-    this.createWallLightStrips();
+    // ✅ 벽면 PointLight 제거됨 (얼룩 반사 제거, HemisphereLight로 대체)
+    // this.createWallLightStrips();
 
     // 벽 모서리 곡면 처리 (디버깅 중)
     this.createWallCornerCoves();
@@ -376,40 +376,12 @@ class ShowroomBuilder {
   }
 
   /**
-   * 벽면 수직 간접 조명 (PointLight 광원)
-   * 왼벽과 오른벽에 각각 2개씩, 총 4개의 PointLight 배치
+   * 벽면 수직 간접 조명 (PointLight 광원) - 삭제됨
+   * ✅ 얼룩 반사 제거: 벽면 PointLight 4개 제거, HemisphereLight로 대체
    */
-  createWallLightStrips() {
-    const wallInnerEdge = 15.0; // 벽 안쪽 면
-    const lightY = 7.5; // 조명 Y 위치 (벽 높이 중앙)
-    
-    // 왼벽 PointLight 2개
-    const leftWallLights = [
-      { position: { x: -wallInnerEdge, y: lightY, z: 5 } },   // 왼벽 조명 1
-      { position: { x: -wallInnerEdge, y: lightY, z: -5 } }   // 왼벽 조명 2
-    ];
-
-    // 오른벽 PointLight 2개
-    const rightWallLights = [
-      { position: { x: wallInnerEdge, y: lightY, z: 5 } },     // 오른벽 조명 1
-      { position: { x: wallInnerEdge, y: lightY, z: -5 } }    // 오른벽 조명 2
-    ];
-
-    // 모든 PointLight 생성 및 배치
-    [...leftWallLights, ...rightWallLights].forEach((lightConfig) => {
-      const pointLight = new THREE.PointLight(0xFFFFFF, 0.8, 15); // 흰색, 강도 0.8, 거리 15m
-      pointLight.position.set(
-        lightConfig.position.x,
-        lightConfig.position.y,
-        lightConfig.position.z
-      );
-      // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
-      pointLight.castShadow = false;
-      this.scene.add(pointLight);
-    });
-
-    console.log("✅ [ShowroomBuilder] 벽면 수직 간접 조명 추가 완료 (PointLight 4개)");
-  }
+  // createWallLightStrips() {
+  //   // 벽면 PointLight 제거됨 (얼룩 반사 제거)
+  // }
 
   /**
    * 벽 모서리 곡면 처리 (4개 수직 모서리만)
@@ -788,108 +760,11 @@ class ShowroomBuilder {
     darkLens.position.y = sunY; // y = 16.35
     ceilingGroup.add(darkLens);
 
-    // 발광 코어 (Glowing Core) - RingGeometry 3개 겹쳐서 배치
-    const coreRings = [];
-    const coreColors = [0xFFFFFF, 0x00FFFF, 0xFFFFFF]; // 화이트-시안-화이트
-    const coreRadii = [1.2, 0.8, 0.4]; // 내부에서 외부로
-    const coreThicknesses = [0.15, 0.12, 0.1]; // 두께
+    // ✅ 발광 코어 3개 삭제됨 (불빛 점 제거)
 
-    for (let i = 0; i < 3; i++) {
-      const coreRingGeo = new THREE.RingGeometry(
-        coreRadii[i] - coreThicknesses[i] / 2,
-        coreRadii[i] + coreThicknesses[i] / 2,
-        64
-      );
-      // ✅ WebGL 최적화: MeshStandardMaterial로 변경 (MeshBasicMaterial은 emissive 지원 안 함) + 성능 최적화: 발광 강도 감소
-      // ✅ 빛 누출 차단: DoubleSide → FrontSide로 변경하여 위쪽 발광 차단 (쇼룸 내부로만 빛 발산)
-      const coreRingMat = new THREE.MeshStandardMaterial({
-        color: coreColors[i],
-        emissive: coreColors[i],
-        emissiveIntensity: 0.5, // 은은한 발광 (1.0 → 0.5, 성능 최적화)
-        transparent: true,
-        opacity: 0.9,
-        side: THREE.FrontSide // DoubleSide → FrontSide (위쪽 발광 차단, 쇼룸 내부로만 빛 발산)
-      });
-      const coreRing = new THREE.Mesh(coreRingGeo, coreRingMat);
-      coreRing.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
-      coreRing.position.y = sunY + 0.001 * (i + 1); // 살짝씩 위로 올림
-      coreRing.userData.isArcReactorCore = true; // 애니메이션용 태그
-      coreRing.userData.rotationSpeed = (i % 2 === 0 ? 1 : -1) * 0.005; // 반대 방향 회전
-      ceilingGroup.add(coreRing);
-      coreRings.push(coreRing);
-    }
+    // ✅ 십자 그릴망 삭제됨 (그릴 프레임 제거)
 
-    // 그릴망 (The Grille) - 십자가 모양 금속 프레임
-    const grilleGroup = new THREE.Group();
-    const grilleThickness = 0.02;
-    const grilleLength = sunRadius * 0.8;
-    
-    // ✅ WebGL 최적화: Material 공유
-    if (!ShowroomBuilder.sharedGrilleMat) {
-      ShowroomBuilder.sharedGrilleMat = new THREE.MeshStandardMaterial({ 
-        color: 0x333333, 
-        metalness: 0.8, 
-        roughness: 0.3 
-      });
-    }
-    
-    // 가로선
-    const horizontalGrille = new THREE.Mesh(
-      new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      ShowroomBuilder.sharedGrilleMat
-    );
-    horizontalGrille.rotation.z = Math.PI / 2;
-    grilleGroup.add(horizontalGrille);
-    
-    // 세로선
-    const verticalGrille = new THREE.Mesh(
-      new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      ShowroomBuilder.sharedGrilleMat
-    );
-    verticalGrille.rotation.x = Math.PI / 2;
-    grilleGroup.add(verticalGrille);
-    
-    grilleGroup.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
-    grilleGroup.position.y = sunY + 0.002; // 렌즈 위에 살짝 올림
-    ceilingGroup.add(grilleGroup);
-
-    // [Step 3-1] 코너 장식 (Gold Studs) - 블랙 패널 네 귀퉁이에 황금 볼트 4개
-    const studRadius = 0.3; // 볼트 반지름
-    const studHeight = 0.1; // 볼트 높이 (납작한 원기둥)
-    const studY = lidY + lidThickness / 2; // y = 16.45 (패널에 박혀있는 느낌)
-    const studOffset = lidSize / 2 - 2.0; // 패널 안쪽으로 조금 들어온 위치 (±10 정도)
-
-    const studGeo = new THREE.CylinderGeometry(studRadius, studRadius, studHeight, 16);
-    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
-    const studMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
-      color: 0xFFD700, // 골드
-      metalness: 1.0,
-      roughness: 0.2
-    });
-
-    // 앞쪽 좌측 볼트
-    const stud1 = new THREE.Mesh(studGeo, studMat);
-    stud1.rotation.x = Math.PI / 2; // 눕히기
-    stud1.position.set(-studOffset, studY, studOffset);
-    ceilingGroup.add(stud1);
-
-    // 앞쪽 우측 볼트
-    const stud2 = new THREE.Mesh(studGeo, studMat);
-    stud2.rotation.x = Math.PI / 2;
-    stud2.position.set(studOffset, studY, studOffset);
-    ceilingGroup.add(stud2);
-
-    // 뒷쪽 좌측 볼트
-    const stud3 = new THREE.Mesh(studGeo, studMat);
-    stud3.rotation.x = Math.PI / 2;
-    stud3.position.set(-studOffset, studY, -studOffset);
-    ceilingGroup.add(stud3);
-
-    // 뒷쪽 우측 볼트
-    const stud4 = new THREE.Mesh(studGeo, studMat);
-    stud4.rotation.x = Math.PI / 2;
-    stud4.position.set(studOffset, studY, -studOffset);
-    ceilingGroup.add(stud4);
+    // ✅ 천장 황금 볼트 4개 삭제됨 (장식 요소 제거)
 
     // [Step 5] 황금 환풍구 (Golden Vents) - 리얼한 그릴 스타일
     /**
@@ -977,14 +852,7 @@ class ShowroomBuilder {
     const rightVent = createVent(8, 0);
     ceilingGroup.add(rightVent);
 
-    // 중앙 PointLight - 황금 벽을 비추는 조명 (조도 최적화: 강도 대폭 감소)
-    // ✅ 빛 누출 차단: 천장 위(y=16) → 천장 아래(y=14.5)로 위치 하강하여 쇼룸 내부로만 빛 발산
-    // ✅ 사거리 축소: 거리 30m → 20m로 축소하여 외부 빛 누출 방지
-    const centerLight = new THREE.PointLight(0xFFFFFF, 0.5, 20); // 강도 2.0 → 0.5 (75% 감소), 거리 30 → 20 (33% 감소)
-    centerLight.position.set(0, ceilingY - 0.5, 0); // y = 14.5 (천장 아래로 내려와 쇼룸 내부 직접 비춤)
-    // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
-    centerLight.castShadow = false;
-    this.scene.add(centerLight);
+    // ✅ 천장 유령 조명 삭제: centerLight 제거됨 (가구 조명만 사용)
 
     // 천장 그룹을 씬에 추가
     this.scene.add(ceilingGroup);

@@ -238,44 +238,32 @@ class Showroom {
   }
 
   addLights() {
-    // 블랙 이클립스 천장 - 틈새에서 빛이 쏟아지는 효과
-    // 조도 최적화: 전역 조명 강도 대폭 감소 (어두워야 상품과 메뉴판이 산다)
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4); // 0.75 → 0.4 (47% 감소)
+    // ✅ 얼룩 없는 부드러운 공간감: HemisphereLight 도입 (반구 조명)
+    // 하늘색(Sky): 약간 푸른빛, 낮 느낌
+    // 바닥색(Ground): 어두운 바닥 반사광
+    const hemisphereLight = new THREE.HemisphereLight(
+      0xddeeff,  // 하늘색 (Sky) - 약간 푸른빛
+      0x0f0e0d,  // 바닥색 (Ground) - 어두운 바닥 반사광
+      0.6        // 강도 (기존 AmbientLight보다 입체감 있음)
+    );
+    this.scene.add(hemisphereLight);
+
+    // ✅ 보조 전역 조명: AmbientLight 강도 대폭 감소 (HemisphereLight가 주 조명)
+    const ambient = new THREE.AmbientLight(0xffffff, 0.1); // 0.2 → 0.1 (아주 낮춤)
     this.scene.add(ambient);
 
-    // 면조명 바로 아래에 넓은 범위의 PointLight 설치 (면조명 효과 강화)
-    // 조도 최적화: 면조명 강도 감소
-    // ✅ 빛 누출 차단: 사거리 30m → 15m로 축소하여 외부 빛 누출 방지
-    // 블랙 패널 틈새에서 나오는 빛과 함께 사용
-    const areaLight1 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
-    areaLight1.position.set(-8, 15.1, -8);
-    this.scene.add(areaLight1);
-
-    const areaLight2 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
-    areaLight2.position.set(8, 15.1, -8);
-    this.scene.add(areaLight2);
-
-    const areaLight3 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
-    areaLight3.position.set(-8, 15.1, 8);
-    this.scene.add(areaLight3);
-
-    const areaLight4 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
-    areaLight4.position.set(8, 15.1, 8);
-    this.scene.add(areaLight4);
-
-    // 중앙 보조 조명 (약한 PointLight) - 면조명과 함께 사용
-    // 조도 최적화: 보조 조명 강도 미세 조정
-    // ✅ 빛 누출 차단: 사거리 25m → 15m로 축소하여 외부 빛 누출 방지
-    const ceilingLight = new THREE.PointLight(0xffffff, 0.4, 15); // 0.6 → 0.4 (33% 감소), 거리 25 → 15 (40% 감소)
-    ceilingLight.position.set(0, 15.1, 0);
-    ceilingLight.castShadow = true;
-    ceilingLight.shadow.mapSize.set(1024, 1024);
-    this.scene.add(ceilingLight);
+    // ✅ 천장 유령 조명 삭제: areaLight1-4, ceilingLight 제거됨 (가구 조명만 사용)
+    // ✅ 벽면 PointLight 삭제됨: 얼룩 반사 제거 (HemisphereLight로 대체)
+    // 가구 조명(상품 스포트라이트 등)은 addProductSpotlight에서 생성되므로 유지됨
   }
   
   addProductSpotlight(position, color) {
-    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지 - 성능 최적화: 그림자 비활성화)
-    const spotlight = new THREE.SpotLight(color, 3.5, 15, Math.PI / 6, 0.2, 2);
+    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지)
+    // ✅ 핀포인트 조명: 강도 50% 축소 (25.0 -> 12.0), 조사 각도 축소 (30도 -> 20도)
+    // 바닥 반사 최소화: 좁은 각도로 상품만 정확히 조명, 바닥에 과도한 반사 방지
+    // ✅ 물리법칙 준수: 역제곱 감쇠 법칙 (decay: 2) 적용
+    // ✅ 부드러운 빛 확산: penumbra 0.5 (가장자리 흐림, 바닥에 칼같은 자국 방지)
+    const spotlight = new THREE.SpotLight(color, 12.0, 30, Math.PI / 9, 0.5, 2);
     spotlight.position.set(position.x, position.y + 4, position.z); // 진열대 위에서 비춤
     
     // Target을 별도 Object3D로 생성하여 scene에 추가
@@ -284,8 +272,15 @@ class Showroom {
     this.scene.add(target);
     spotlight.target = target;
     
-    // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
-    spotlight.castShadow = false;
+    // ✅ 물리법칙 준수: 상품은 그림자가 있어야 함 (리얼리티 확보)
+    spotlight.castShadow = true;
+    // 그림자 품질 설정: 1024x1024 (512는 너무 거칠고 2048은 무거움. 타협점)
+    spotlight.shadow.mapSize.width = 1024;
+    spotlight.shadow.mapSize.height = 1024;
+    spotlight.shadow.camera.near = 0.1;
+    spotlight.shadow.camera.far = 50;
+    spotlight.shadow.bias = -0.0001; // 그림자 아티팩트 방지
+    
     this.scene.add(spotlight);
     this.spotLights.push(spotlight); // 배열에 추가 (나중에 제어 가능)
   }
