@@ -956,6 +956,54 @@ class Showroom {
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.pointer, this.camera);
+    
+    // ✅ 메뉴판 클릭 감지 (우선 처리)
+    const menuIntersects = this.raycaster.intersectObjects(this.scene.children, true);
+    for (const intersect of menuIntersects) {
+      if (intersect.object.userData && intersect.object.userData.isMenu) {
+        const menuMesh = intersect.object;
+        const productData = menuMesh.userData.productData;
+        
+        if (!productData) {
+          console.warn("⚠️ [Showroom] 메뉴판에 상품 데이터가 없습니다.");
+          continue;
+        }
+        
+        // ✅ 앞면(Material Index 4)만 클릭 허용 (BoxGeometry: 인덱스 4=앞면)
+        if (intersect.face && intersect.face.materialIndex !== 4) {
+          console.log('ℹ️ [Showroom] 메뉴판 뒷면/옆면 클릭됨 (무시, materialIndex:', intersect.face.materialIndex, ')');
+          continue; // 앞면이 아니면 무시
+        }
+        
+        // ✅ 버튼 영역 UV 좌표 확인
+        const uv = intersect.uv;
+        
+        // 디버깅: UV 좌표 출력
+        console.log('🔍 [Showroom] 클릭된 UV 좌표:', {
+          x: uv.x,
+          y: uv.y,
+          productName: productData.name || 'Unknown'
+        });
+        
+        // 버튼은 Canvas 하단에 그려졌으므로, UV y 좌표가 0에 가까울수록 하단
+        // 4K 해상도(1024x700) 기준, 버튼은 하단 100px 영역 (700-100 ~ 700)
+        // UV 좌표계에서 y=0이 하단이므로, y < (100/700) = 0.143
+        const isButtonClick = uv.y < 0.15; // 하단 15% 영역 (버튼 영역)
+        
+        if (isButtonClick) {
+          console.log('✅ [Showroom] 메뉴판 버튼 클릭됨:', productData.name || 'Unknown');
+          
+          // 가상 버튼 생성 및 openCheckoutModal 호출
+          this._handleMenuButtonClick(productData);
+          return; // 메뉴판 클릭 처리 완료
+        } else {
+          console.log('ℹ️ [Showroom] 메뉴판 클릭됨 (버튼 영역 아님, UV y:', uv.y, ')');
+          return; // 메뉴판이지만 버튼이 아니면 무시
+        }
+      }
+    }
+    
+    // ✅ 기존 상품 클릭 처리 (메뉴판이 아닌 경우)
     const intersects = this.raycaster.intersectObjects(this.meshes, true);
     if (intersects.length === 0) {
       return;
@@ -1056,6 +1104,56 @@ class Showroom {
       'data-type': virtualButton.getAttribute('data-type'),
       'data-token': virtualButton.getAttribute('data-token'),
       'data-duration': virtualButton.getAttribute('data-duration')
+    });
+    
+    // shop.js의 openCheckoutModal 호출
+    window.openCheckoutModal(virtualButton);
+  }
+  
+  /**
+   * 메뉴판 버튼 클릭 처리 (내부 메서드)
+   * @param {Object} productData - 상품 데이터
+   */
+  _handleMenuButtonClick(productData) {
+    if (typeof window.openCheckoutModal !== "function") {
+      console.error("❌ [Showroom] window.openCheckoutModal 함수를 찾을 수 없습니다.");
+      return;
+    }
+    
+    // 이벤트 상품 여부 확인
+    const productTypeRaw = (productData.type || '').trim();
+    const productType = productTypeRaw.toLowerCase();
+    const isEventType = productType === 'event' || productType === 'event_period';
+    
+    // 가상 버튼 생성 (shop.js의 openCheckoutModal이 버튼 엘리먼트를 기대함)
+    const virtualButton = document.createElement('button');
+    
+    // 필수 데이터 속성 주입
+    virtualButton.setAttribute('data-id', String(productData.id || productData.product_id || ''));
+    virtualButton.setAttribute('data-name', productData.name || '');
+    
+    // 가격 설정 (이벤트 상품은 "0")
+    if (isEventType) {
+      virtualButton.setAttribute('data-price', '0');
+    } else {
+      virtualButton.setAttribute('data-price', String(productData.price || 0));
+    }
+    
+    // 타입 설정
+    if (isEventType) {
+      virtualButton.setAttribute('data-type', productTypeRaw || (productType === 'event_period' ? 'event_period' : 'event'));
+    } else {
+      virtualButton.setAttribute('data-type', productTypeRaw || '');
+    }
+    
+    virtualButton.setAttribute('data-token', String(productData.token_amount || 0));
+    virtualButton.setAttribute('data-duration', String(productData.duration_days || 0));
+    
+    console.log('✅ [Showroom] 메뉴판 버튼 클릭 처리:', {
+      id: virtualButton.getAttribute('data-id'),
+      name: virtualButton.getAttribute('data-name'),
+      price: virtualButton.getAttribute('data-price'),
+      type: virtualButton.getAttribute('data-type')
     });
     
     // shop.js의 openCheckoutModal 호출

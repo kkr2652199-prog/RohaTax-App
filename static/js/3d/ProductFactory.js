@@ -631,12 +631,12 @@ class ProductFactory {
   }
 
   /**
-   * 가격 라벨 생성 (3D 홀로그램 콘솔 UI - CSS3DObject 기반)
+   * 가격 라벨 생성 (Real 3D Mesh - CanvasTexture 기반)
    * @param {Object} product - 상품 데이터
    * @param {Object|THREE.Vector3} position - 상품의 월드 좌표 위치
    */
   createPriceLabel(product, position) {
-    // ✅ MarketingCopy 모듈 사용 (HTML 생성 로직 분리)
+    // ✅ MarketingCopy 모듈 사용 (CanvasTexture 생성)
     if (typeof window.MarketingCopy === 'undefined' && typeof MarketingCopy === 'undefined') {
       console.error('❌ [ProductFactory] MarketingCopy 모듈을 찾을 수 없습니다.');
       return null;
@@ -644,125 +644,108 @@ class ProductFactory {
     
     const MarketingCopyClass = window.MarketingCopy || MarketingCopy;
     
-    // ✅ HTML/CSS 구조화 (3D 홀로그램 콘솔 UI)
-    const consoleDiv = document.createElement('div');
-    consoleDiv.className = 'smart-console';
-    
-    // MarketingCopy에서 HTML 콘텐츠 가져오기
-    const innerHTML = MarketingCopyClass.getLabelContent(product);
-    consoleDiv.innerHTML = innerHTML;
-    
-    // ✅ 구매 버튼 클릭 이벤트 연결 (innerHTML 설정 직후)
-    const actionBtn = consoleDiv.querySelector('.action-btn');
-    if (actionBtn) {
-      // ✅ 필수 데이터 속성 강제 주입 (Showroom.js와 동일한 로직)
-      const productType = (product?.type || '').trim().toLowerCase();
-      const isEventType = productType === 'event' || productType === 'event_period';
-      
-      // data-id: product.id 또는 product.product_id (문자열로 변환)
-      const productId = product?.id || product?.product_id || '';
-      actionBtn.setAttribute('data-id', String(productId));
-      
-      // data-name: product.name
-      actionBtn.setAttribute('data-name', product?.name || '');
-      
-      // data-token: product.token_amount
-      actionBtn.setAttribute('data-token', String(product?.token_amount || 0));
-      
-      // data-duration: product.duration_days
-      actionBtn.setAttribute('data-duration', String(product?.duration_days || 0));
-      
-      // data-price: 이벤트 상품은 "0", 일반 상품은 product.price
-      if (isEventType) {
-        actionBtn.setAttribute('data-price', '0');
-      } else {
-        actionBtn.setAttribute('data-price', String(product?.price || 0));
-      }
-      
-      // data-type: 이벤트 상품은 정규화된 productType, 일반 상품은 product.type
-      if (isEventType) {
-        actionBtn.setAttribute('data-type', productType);
-      } else {
-        actionBtn.setAttribute('data-type', product?.type || '');
-      }
-      
-      // 검증 로그
-      console.log('✅ [ProductFactory] 메뉴판 버튼 데이터 주입 완료:', {
-        id: productId,
-        name: product?.name || '',
-        price: isEventType ? '0' : String(product?.price || 0),
-        type: isEventType ? productType : (product?.type || ''),
-        token: product?.token_amount || 0,
-        duration: product?.duration_days || 0
-      });
-      
-      // 클릭 이벤트 리스너 추가
-      actionBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // 디버깅용 로그
-        console.log('✅ [ProductFactory] 메뉴판 버튼 클릭됨:', product?.name || 'Unknown');
-        // 가상 버튼처럼 작동하도록 window.openCheckoutModal 호출
-        if (typeof window.openCheckoutModal === 'function') {
-          window.openCheckoutModal(actionBtn);
-        } else {
-          console.warn('⚠️ [ProductFactory] openCheckoutModal 함수를 찾을 수 없습니다.');
-        }
-      });
-    } else {
-      console.warn('⚠️ [ProductFactory] .action-btn 요소를 찾을 수 없습니다.');
-    }
-    
-    // ✅ CSS3DObject 생성 (원근감이 적용되는 3D 방식)
+    // ✅ CanvasTexture 생성
+    let texture;
     try {
-      // CSS3DObject가 사용 가능한지 확인
-      const CSS3DObject = window.CSS3DObject || (typeof THREE !== 'undefined' && THREE.CSS3DObject);
-      
-      if (CSS3DObject) {
-        const css3dObject = new CSS3DObject(consoleDiv);
-        // ✅ 3D 공간에 맞게 축소 (1/200 스케일)
-        css3dObject.scale.set(0.005, 0.005, 0.005);
-        
-        // ✅ 월드 좌표로 위치 설정 (상품 앞쪽 하단에 배치)
-        const pos = position instanceof THREE.Vector3 
-          ? position 
-          : new THREE.Vector3(
-              position?.x || 0, 
-              position?.y || 0, 
-              position?.z || 0
-            );
-        
-        // ✅ 무료 상품(이벤트) 메뉴판 높이를 골드 상품과 동일하게 조정
-        // 골드 상품: position.y = jewelryBoxTopY + 0.6, 메뉴판 = pos.y - 1.0 = jewelryBoxTopY - 0.4
-        // 무료 상품: position.y = jewelryBoxTopY, 메뉴판 = pos.y - 1.0 = jewelryBoxTopY - 1.0
-        // → 무료 상품 메뉴판을 골드와 동일하게: pos.y - 0.4
-        const productType = (product?.type || '').trim().toLowerCase();
-        const isEventType = productType === 'event' || productType === 'event_period';
-        const labelYOffset = isEventType ? -0.4 : -1.0; // 무료 상품은 -0.4, 유료 상품은 -1.0
-        
-        css3dObject.position.set(pos.x, pos.y + labelYOffset, pos.z + 2.0);
-        
-        // ✅ 사용자가 내려다보기 편하게 기울임
-        css3dObject.rotation.x = -0.5;
-        css3dObject.userData.isLabel = true;
-        css3dObject.userData.isPriceLabel = true;
-        css3dObject.userData.productData = product;
-        
-        // ✅ Scene에 직접 추가 (회전하는 그룹에서 분리)
-        if (this.scene) {
-          this.scene.add(css3dObject);
-        }
-        
-        return css3dObject;
-      } else {
-        // CSS3DObject가 없으면 기존 Sprite 방식으로 fallback
-        console.warn('⚠️ [ProductFactory] CSS3DObject를 사용할 수 없습니다. Sprite로 fallback합니다.');
-        return this._createPriceLabelSprite(product, cardContent);
-      }
+      texture = MarketingCopyClass.getMenuTexture(product);
     } catch (error) {
-      console.error('❌ [ProductFactory] CSS3DObject 생성 실패:', error);
-      return this._createPriceLabelSprite(product, cardContent);
+      console.error('❌ [ProductFactory] CanvasTexture 생성 실패:', error);
+      return null;
     }
+    
+    // ✅ 텍스처 설정 초기화 (기본값)
+    texture.center.set(0, 0);     // 기본값
+    texture.repeat.set(1, 1);     // 기본값
+    texture.rotation = 0;         // 기본값
+    texture.flipY = true;         // Three.js는 Canvas Y축과 반대이므로 true가 정석
+    
+    // ✅ 텍스처 필터링 최상급 설정 (4K 해상도 최적화)
+    texture.minFilter = THREE.LinearMipMapLinearFilter; // 최상급 필터링
+    texture.magFilter = THREE.LinearFilter;             // 확대 시 선명도 유지
+    texture.anisotropy = 16;                            // 기울여서 봐도 선명하게 (최대값)
+    
+    // ✅ BoxGeometry 생성 (가로 1.5m, 세로 1.0m, 두께 0.1m) - 4K 해상도(1024x700) 비율에 맞게 조정
+    const geometry = new THREE.BoxGeometry(1.5, 1.0, 0.1);
+    
+    // ✅ 재질 배열 생성 (BoxGeometry: [right, left, top, bottom, front, back])
+    const sideMaterial = new THREE.MeshStandardMaterial({
+      color: 0x333333, // 다크 메탈
+      roughness: 0.4,
+      metalness: 0.7
+    });
+    
+    // 앞면(Index 4)에만 텍스처 적용 (발광 효과)
+    const frontMaterial = new THREE.MeshStandardMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 1.0,
+      side: THREE.FrontSide,
+      roughness: 0.2,        // 매끈한 유리 느낌
+      metalness: 0.5,         // 약간의 금속성
+      emissive: 0xffffff,     // 발광 색상 (흰색)
+      emissiveMap: texture,   // 텍스처 자체가 빛나게 함
+      emissiveIntensity: 0.5  // 은은하게 스스로 빛남
+    });
+    
+    // 재질 배열: [오른쪽, 왼쪽, 위, 아래, 앞, 뒤]
+    const materials = [
+      sideMaterial, // 0: 오른쪽
+      sideMaterial, // 1: 왼쪽
+      sideMaterial, // 2: 위
+      sideMaterial, // 3: 아래
+      frontMaterial, // 4: 앞면 (텍스처)
+      sideMaterial   // 5: 뒤
+    ];
+    
+    // ✅ Mesh 생성 (재질 배열 사용)
+    const menuMesh = new THREE.Mesh(geometry, materials);
+    
+    // ✅ 월드 좌표로 위치 설정 (상품 앞쪽 하단에 배치)
+    const pos = position instanceof THREE.Vector3 
+      ? position 
+      : new THREE.Vector3(
+          position?.x || 0, 
+          position?.y || 0, 
+          position?.z || 0
+        );
+    
+    // ✅ 무료 상품(이벤트) 메뉴판 높이를 골드 상품과 동일하게 조정
+    const productType = (product?.type || '').trim().toLowerCase();
+    const isEventType = productType === 'event' || productType === 'event_period';
+    const labelYOffset = isEventType ? -0.4 : -1.0; // 무료 상품은 -0.4, 유료 상품은 -1.0
+    
+    // ✅ 천장 방향으로 조금 올림 (Y축 +0.3)
+    // ✅ 유리 장식장(LuxeDisplay3D) 방향으로 조금 이동 (Z축 -0.5)
+    menuMesh.position.set(pos.x, pos.y + labelYOffset + 0.3, pos.z + 1.5);
+    
+    // ✅ 사용자가 내려다보기 편하게 기울임 (물리적 회전)
+    menuMesh.rotation.x = -0.5;      // 보기 편한 각도 기울기
+    menuMesh.rotation.y = 0;         // Y축 회전 없음
+    menuMesh.rotation.z = 0;         // 일단 0으로 두고, 결과 보고 뒤집혔으면 그때 돌린다
+    
+    // ✅ 클릭 감지용 userData 설정
+    menuMesh.userData.isMenu = true;
+    menuMesh.userData.isLabel = true;
+    menuMesh.userData.isPriceLabel = true;
+    menuMesh.userData.productData = product;
+    
+    // ✅ 버튼 영역 UV 좌표 저장 (클릭 감지용)
+    // Canvas 크기: 512x300, 버튼 영역: 하단 20% (y: 240-290)
+    menuMesh.userData.buttonUVRect = {
+      x: 0.05,      // 좌측 여백 5%
+      y: 0.8,       // 하단 20% 시작 (240/300)
+      width: 0.9,   // 너비 90%
+      height: 0.167 // 높이 16.7% (50/300)
+    };
+    
+    // ✅ Scene에 직접 추가 (회전하는 그룹에서 분리)
+    if (this.scene) {
+      this.scene.add(menuMesh);
+    }
+    
+    console.log('✅ [ProductFactory] Real 3D Mesh 메뉴판 생성 완료:', product?.name || 'Unknown');
+    
+    return menuMesh;
   }
   
   /**

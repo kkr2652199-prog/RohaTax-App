@@ -243,6 +243,169 @@ class MarketingCopy {
       document.head.appendChild(style);
     }
   }
+  
+  /**
+   * 상품별 혜택 리스트 가져오기
+   * @param {Object} product - 상품 데이터
+   * @returns {Array<string>} - 혜택 리스트
+   */
+  static getProductBenefits(product) {
+    const productType = (product?.type || '').trim().toLowerCase();
+    const productName = (product?.name || '').trim().toLowerCase();
+    const tokenAmount = product?.token_amount || 0;
+    const price = product?.price || 0;
+    
+    // 상품 타입별 혜택 리스트
+    if (productType === 'event' || productType === 'event_period') {
+      // 이벤트 상품
+      if (tokenAmount > 0) {
+        return [
+          `✔ 토큰 ${tokenAmount}개 즉시 지급`,
+          '✔ 평생 소장 가능',
+          '✔ VIP 전용 서포트'
+        ];
+      } else {
+        return [
+          '✔ 무료 기간 즉시 시작',
+          '✔ 모든 기능 무제한 이용',
+          '✔ 기간 내 무료 서포트'
+        ];
+      }
+    } else if (productType === 'basic') {
+      // Standard 상품
+      return [
+        '✔ 급할 때 한 건씩 부담 없는 시작',
+        '✔ 소상공인을 위한 맞춤형 플랜',
+        '✔ 건당 투자 대비 최고의 효율'
+      ];
+    } else if (productType === 'package') {
+      // Premium Package 상품
+      return [
+        '✔ 대량 처리 전문가의 선택',
+        '✔ 100건 패키지 시간 절약의 달인',
+        '✔ 건당 50% 할인 혜택으로 절약'
+      ];
+    } else if (productType === 'subscription') {
+      // Gold Membership 상품
+      return [
+        '✔ 전문가를 위한 프리미엄 솔루션',
+        '✔ 무제한 이용으로 자유로운 업무',
+        '✔ 우선 지원 및 전용 서포트'
+      ];
+    }
+    
+    // 기본 혜택
+    return [
+      '✔ 즉시 사용 가능',
+      '✔ 안전한 결제 시스템',
+      '✔ 전문 고객 지원'
+    ];
+  }
+
+  /**
+   * 메뉴판 CanvasTexture 생성 (4K 해상도 - Real 3D Mesh용)
+   * @param {Object} product - 상품 데이터
+   * @returns {THREE.CanvasTexture} - 메뉴판 텍스처
+   */
+  static getMenuTexture(product) {
+    // Canvas 생성 (1024x700 해상도 - 4배 증가)
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 700;
+    const ctx = canvas.getContext('2d');
+    
+    // 상품 정보 가져오기
+    const cardContent = MarketingCopy.getCardContent(product);
+    const productType = (product?.type || '').trim().toLowerCase();
+    const isFree = (product?.price === 0 || product?.price === null || cardContent.price === 'FREE');
+    const buttonText = isFree ? '🎁 무료 체험' : '지금 시작하기';
+    
+    // 배경 (완전한 검정에 가까운 다크 그레이)
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, 1024, 700);
+    
+    // 골드 테두리 (2px 두께)
+    ctx.strokeStyle = '#D4AF37';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(16, 16, 992, 668, 32);
+    ctx.stroke();
+    
+    // 패딩 설정
+    const paddingX = 48;
+    const paddingY = 48;
+    
+    // 헤더: 상품 타입 (좌측 상단)
+    ctx.fillStyle = '#888888';
+    ctx.font = 'bold 24px Pretendard, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const typeText = cardContent.type.toUpperCase();
+    ctx.fillText(typeText, paddingX, paddingY);
+    
+    // 메인 타이틀: 상품명 (아주 크게)
+    const titleY = paddingY + 50;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 60px Pretendard, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(cardContent.title.toUpperCase(), paddingX, titleY);
+    
+    // 구분선 (얇은 실선)
+    const dividerY = titleY + 90;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingX, dividerY);
+    ctx.lineTo(1024 - paddingX, dividerY);
+    ctx.stroke();
+    
+    // 혜택 리스트 (체크리스트 형태)
+    const benefits = MarketingCopy.getProductBenefits(product);
+    const benefitsY = dividerY + 50;
+    ctx.fillStyle = '#DDDDDD';
+    ctx.font = '400 36px Pretendard, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    
+    benefits.forEach((benefit, index) => {
+      const benefitY = benefitsY + index * 60;
+      ctx.fillText(benefit, paddingX, benefitY);
+    });
+    
+    // 가격 (우측 하단 또는 중앙 하단, 매우 크게)
+    const priceY = 700 - 180; // 하단에서 180px 위
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 80px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cardContent.price, 512, priceY);
+    
+    // 버튼 (하단 Full-width 스타일)
+    const buttonY = 700 - 100;
+    const buttonHeight = 80;
+    const buttonPadding = 32;
+    
+    // 버튼 배경 (브랜드 블루)
+    ctx.fillStyle = '#3366FF';
+    ctx.beginPath();
+    ctx.roundRect(buttonPadding, buttonY, 1024 - buttonPadding * 2, buttonHeight, 16);
+    ctx.fill();
+    
+    // 버튼 텍스트
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 32px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(buttonText, 512, buttonY + buttonHeight / 2);
+    
+    // CanvasTexture 생성 및 반환
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    texture.flipY = false; // UV 좌표 맞추기
+    
+    return texture;
+  }
 }
 
 // 전역 노출 (ES6 모듈이 아닌 경우 대비)
