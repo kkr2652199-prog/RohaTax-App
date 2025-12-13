@@ -11,8 +11,6 @@ class ShowroomBuilder {
   static sharedFloorTexture = null;    // 바닥 대리석 텍스처 (Static 공유)
   static sharedWallMat = null;         // 벽 Material
   static sharedGoldMat = null;          // 골드 Material
-  static sharedCctvMat = null;         // CCTV Material
-  static sharedRedDotMat = null;        // 빨간 점 Material
   static sharedGrilleMat = null;        // 그릴 Material
 
   constructor(scene) {
@@ -405,7 +403,8 @@ class ShowroomBuilder {
         lightConfig.position.y,
         lightConfig.position.z
       );
-      pointLight.castShadow = true;
+      // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
+      pointLight.castShadow = false;
       this.scene.add(pointLight);
     });
 
@@ -761,11 +760,11 @@ class ShowroomBuilder {
       16,
       64
     );
-    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
+    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용) + 성능 최적화: 무광 처리
     const baseRimMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
       color: 0xFFD700, // 골드
       metalness: 1.0,
-      roughness: 0.2
+      roughness: 0.7 // 반사광 제거 (0.2 → 0.7, 무광 처리)
     });
     const baseRim = new THREE.Mesh(baseRimGeo, baseRimMat);
     baseRim.rotation.x = Math.PI / 2; // 수평으로 배치
@@ -775,12 +774,12 @@ class ShowroomBuilder {
 
     // 다크 렌즈 (Dark Glass) - 검투명 유리
     const darkLensGeo = new THREE.CircleGeometry(sunRadius, 64);
-    // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    // ✅ WebGL 최적화: MeshStandardMaterial로 변경 + 성능 최적화: 무광 처리
     const darkLensMat = new THREE.MeshStandardMaterial({
       color: 0x000000, // 검정색
       transparent: true,
-      opacity: 0.5, // 투명도 0.5
-      roughness: 0.1,
+      opacity: 0.8, // 투명도 0.8 (0.5 → 0.8, 더 불투명하게)
+      roughness: 0.9, // 완전 무광 (0.1 → 0.9, 반사 제거)
       metalness: 0.3
       // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
@@ -801,14 +800,15 @@ class ShowroomBuilder {
         coreRadii[i] + coreThicknesses[i] / 2,
         64
       );
-      // ✅ WebGL 최적화: MeshStandardMaterial로 변경 (MeshBasicMaterial은 emissive 지원 안 함)
+      // ✅ WebGL 최적화: MeshStandardMaterial로 변경 (MeshBasicMaterial은 emissive 지원 안 함) + 성능 최적화: 발광 강도 감소
+      // ✅ 빛 누출 차단: DoubleSide → FrontSide로 변경하여 위쪽 발광 차단 (쇼룸 내부로만 빛 발산)
       const coreRingMat = new THREE.MeshStandardMaterial({
         color: coreColors[i],
         emissive: coreColors[i],
-        emissiveIntensity: 1.0, // 강력한 발광
+        emissiveIntensity: 0.5, // 은은한 발광 (1.0 → 0.5, 성능 최적화)
         transparent: true,
         opacity: 0.9,
-        side: THREE.DoubleSide
+        side: THREE.FrontSide // DoubleSide → FrontSide (위쪽 발광 차단, 쇼룸 내부로만 빛 발산)
       });
       const coreRing = new THREE.Mesh(coreRingGeo, coreRingMat);
       coreRing.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
@@ -977,121 +977,13 @@ class ShowroomBuilder {
     const rightVent = createVent(8, 0);
     ceilingGroup.add(rightVent);
 
-    // [Step 6] 돔형 CCTV (Security Cameras) - 천장 프레임 네 귀퉁이
-    const cctvRadius = 0.5; // CCTV 반지름
-    const cctvX = 12; // 천장 프레임 귀퉁이 위치
-    const cctvZ = 12;
-    const cctvY = ceilingY + 0.1; // y = 15.1 (천장 프레임 위)
-
-    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경
-    if (!ShowroomBuilder.sharedCctvMat) {
-      ShowroomBuilder.sharedCctvMat = new THREE.MeshStandardMaterial({
-        color: 0xEEEEEE, // 화이트/실버 (천장에서 눈에 띄게)
-        roughness: 0.1,
-        metalness: 0.3
-        // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
-      });
-    }
-    const cctvMat = ShowroomBuilder.sharedCctvMat;
-
-    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경 (MeshBasicMaterial은 emissive 지원 안 함)
-    if (!ShowroomBuilder.sharedRedDotMat) {
-      ShowroomBuilder.sharedRedDotMat = new THREE.MeshStandardMaterial({
-        color: 0xFF0000, // 빨간 점
-        emissive: 0xFF0000,
-        emissiveIntensity: 5.0 // 레이저처럼 강하게 빛남
-      });
-    }
-    const redDotMat = ShowroomBuilder.sharedRedDotMat;
-
-    // 방 중앙을 바라보는 회전 계산 헬퍼 (45도 각도로 정확히 꺾임)
-    const lookAtCenter = (cameraGroup, x, z) => {
-      const centerX = 0;
-      const centerZ = 0;
-      const dx = centerX - x;
-      const dz = centerZ - z;
-      const angle = Math.atan2(dx, dz);
-      cameraGroup.rotation.y = angle; // Y축 회전 (수평)
-      // 아래를 보도록 약간 기울임 (45도 각도)
-      cameraGroup.rotation.x = -Math.PI / 4; // -45도
-    };
-
-    // 앞쪽 좌측 CCTV
-    const cctv1Group = new THREE.Group();
-    const cctv1 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv1.rotation.x = Math.PI; // 아래를 보게 뒤집기
-    cctv1Group.add(cctv1);
-    // 빨간 점 (크기 증가)
-    const redDot1 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가 (0.05 -> 0.08)
-      redDotMat
-    );
-    redDot1.position.set(0, -cctvRadius * 0.7, 0); // 반구 중앙 아래
-    cctv1Group.add(redDot1);
-    cctv1Group.position.set(-cctvX, cctvY, cctvZ);
-    lookAtCenter(cctv1Group, -cctvX, cctvZ);
-    ceilingGroup.add(cctv1Group);
-
-    // 앞쪽 우측 CCTV
-    const cctv2Group = new THREE.Group();
-    const cctv2 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv2.rotation.x = Math.PI;
-    cctv2Group.add(cctv2);
-    const redDot2 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot2.position.set(0, -cctvRadius * 0.7, 0);
-    cctv2Group.add(redDot2);
-    cctv2Group.position.set(cctvX, cctvY, cctvZ);
-    lookAtCenter(cctv2Group, cctvX, cctvZ);
-    ceilingGroup.add(cctv2Group);
-
-    // 뒷쪽 좌측 CCTV
-    const cctv3Group = new THREE.Group();
-    const cctv3 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv3.rotation.x = Math.PI;
-    cctv3Group.add(cctv3);
-    const redDot3 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot3.position.set(0, -cctvRadius * 0.7, 0);
-    cctv3Group.add(redDot3);
-    cctv3Group.position.set(-cctvX, cctvY, -cctvZ);
-    lookAtCenter(cctv3Group, -cctvX, -cctvZ);
-    ceilingGroup.add(cctv3Group);
-
-    // 뒷쪽 우측 CCTV
-    const cctv4Group = new THREE.Group();
-    const cctv4 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv4.rotation.x = Math.PI;
-    cctv4Group.add(cctv4);
-    const redDot4 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot4.position.set(0, -cctvRadius * 0.7, 0);
-    cctv4Group.add(redDot4);
-    cctv4Group.position.set(cctvX, cctvY, -cctvZ);
-    lookAtCenter(cctv4Group, cctvX, -cctvZ);
-    ceilingGroup.add(cctv4Group);
-
-    // 중앙 PointLight - 황금 벽을 비추는 강한 조명
-    const centerLight = new THREE.PointLight(0xFFFFFF, 2.0, 30);
-    centerLight.position.set(0, ceilingY + 1.0, 0); // y = 16 (황금 벽 중간)
+    // 중앙 PointLight - 황금 벽을 비추는 조명 (조도 최적화: 강도 대폭 감소)
+    // ✅ 빛 누출 차단: 천장 위(y=16) → 천장 아래(y=14.5)로 위치 하강하여 쇼룸 내부로만 빛 발산
+    // ✅ 사거리 축소: 거리 30m → 20m로 축소하여 외부 빛 누출 방지
+    const centerLight = new THREE.PointLight(0xFFFFFF, 0.5, 20); // 강도 2.0 → 0.5 (75% 감소), 거리 30 → 20 (33% 감소)
+    centerLight.position.set(0, ceilingY - 0.5, 0); // y = 14.5 (천장 아래로 내려와 쇼룸 내부 직접 비춤)
+    // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
+    centerLight.castShadow = false;
     this.scene.add(centerLight);
 
     // 천장 그룹을 씬에 추가

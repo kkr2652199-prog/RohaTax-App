@@ -239,30 +239,34 @@ class Showroom {
 
   addLights() {
     // 블랙 이클립스 천장 - 틈새에서 빛이 쏟아지는 효과
-    // 블랙 패널이 빛을 가리므로 AmbientLight를 미세하게 조절하여 천장 테두리에서 빛이 쏟아지는 느낌 연출
-    const ambient = new THREE.AmbientLight(0xffffff, 0.75); // 0.7 -> 0.75 (미세 조정)
+    // 조도 최적화: 전역 조명 강도 대폭 감소 (어두워야 상품과 메뉴판이 산다)
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4); // 0.75 → 0.4 (47% 감소)
     this.scene.add(ambient);
 
     // 면조명 바로 아래에 넓은 범위의 PointLight 설치 (면조명 효과 강화)
+    // 조도 최적화: 면조명 강도 감소
+    // ✅ 빛 누출 차단: 사거리 30m → 15m로 축소하여 외부 빛 누출 방지
     // 블랙 패널 틈새에서 나오는 빛과 함께 사용
-    const areaLight1 = new THREE.PointLight(0xffffff, 1.8, 30);
+    const areaLight1 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
     areaLight1.position.set(-8, 15.1, -8);
     this.scene.add(areaLight1);
 
-    const areaLight2 = new THREE.PointLight(0xffffff, 1.8, 30);
+    const areaLight2 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
     areaLight2.position.set(8, 15.1, -8);
     this.scene.add(areaLight2);
 
-    const areaLight3 = new THREE.PointLight(0xffffff, 1.8, 30);
+    const areaLight3 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
     areaLight3.position.set(-8, 15.1, 8);
     this.scene.add(areaLight3);
 
-    const areaLight4 = new THREE.PointLight(0xffffff, 1.8, 30);
+    const areaLight4 = new THREE.PointLight(0xffffff, 0.6, 15); // 1.8 → 0.6 (67% 감소), 거리 30 → 15 (50% 감소)
     areaLight4.position.set(8, 15.1, 8);
     this.scene.add(areaLight4);
 
     // 중앙 보조 조명 (약한 PointLight) - 면조명과 함께 사용
-    const ceilingLight = new THREE.PointLight(0xffffff, 0.6, 25);
+    // 조도 최적화: 보조 조명 강도 미세 조정
+    // ✅ 빛 누출 차단: 사거리 25m → 15m로 축소하여 외부 빛 누출 방지
+    const ceilingLight = new THREE.PointLight(0xffffff, 0.4, 15); // 0.6 → 0.4 (33% 감소), 거리 25 → 15 (40% 감소)
     ceilingLight.position.set(0, 15.1, 0);
     ceilingLight.castShadow = true;
     ceilingLight.shadow.mapSize.set(1024, 1024);
@@ -270,7 +274,7 @@ class Showroom {
   }
   
   addProductSpotlight(position, color) {
-    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지 - 선명한 그림자)
+    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지 - 성능 최적화: 그림자 비활성화)
     const spotlight = new THREE.SpotLight(color, 3.5, 15, Math.PI / 6, 0.2, 2);
     spotlight.position.set(position.x, position.y + 4, position.z); // 진열대 위에서 비춤
     
@@ -280,11 +284,8 @@ class Showroom {
     this.scene.add(target);
     spotlight.target = target;
     
-    spotlight.castShadow = true;
-    spotlight.shadow.mapSize.width = 2048; // 그림자 품질 대폭 향상 (밝은 방에서 선명하게)
-    spotlight.shadow.mapSize.height = 2048;
-    spotlight.shadow.bias = -0.0001; // 그림자 깨짐 방지
-    spotlight.shadow.radius = 4; // 그림자 가장자리 부드러움 (선명하게)
+    // 🚀 성능 최적화: 그림자 비활성화 (프레임 드랍 해결)
+    spotlight.castShadow = false;
     this.scene.add(spotlight);
     this.spotLights.push(spotlight); // 배열에 추가 (나중에 제어 가능)
   }
@@ -1385,19 +1386,20 @@ class Showroom {
     // 샹들리에 애니메이션 삭제됨 (Commander 지시)
 
     // [Arc Reactor 애니메이션] 중앙 조명 발광 코어 회전 및 빛의 기둥 펄스
-    // 🚀 성능 최적화: traverse 대신 직접 접근 또는 캐시된 객체만 순회
-    if (shouldUpdateAnimations) {
-      this.scene.traverse((obj) => {
-        // 발광 코어 링 회전 (서로 반대 방향)
-        if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
-          // Frustum Culling: 카메라에 보이는 객체만 업데이트
-          const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(obj) : true;
-          if (isVisible) {
-            obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
-          }
-        }
-      });
-    }
+    // 🚀 성능 최적화: 회전 애니메이션 제거 (프레임 드랍 해결)
+    // ⚠️ 주석 처리: scene.traverse()가 매 프레임 실행되어 렌더링 부하 발생
+    // if (shouldUpdateAnimations) {
+    //   this.scene.traverse((obj) => {
+    //     // 발광 코어 링 회전 (서로 반대 방향)
+    //     if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
+    //       // Frustum Culling: 카메라에 보이는 객체만 업데이트
+    //       const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(obj) : true;
+    //       if (isVisible) {
+    //         obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
+    //       }
+    //     }
+    //   });
+    // }
 
     // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);
