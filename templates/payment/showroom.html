@@ -150,12 +150,20 @@
     {# [2] Three.js 확장 (OrbitControls) #}
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
+    {# [2-1] CSS2DRenderer (고해상도 HTML 라벨링용) #}
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    
+    {# [2-2] CSS3DRenderer (3D 홀로그램 콘솔용) #}
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
+    
     {# [3] 3D 컴포넌트 라이브러리 (순서 중요!) #}
     <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v=100" onload="console.log('✅ [GiftBox3D.js] 로딩 완료')" onerror="console.error('❌ [GiftBox3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ShowroomBuilder.js') }}?v={{ timestamp }}" onload="console.log('✅ [ShowroomBuilder.js] v{{ timestamp }} 로딩:', typeof window.ShowroomBuilder)" onerror="console.error('❌ [ShowroomBuilder.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/Pedestal3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [Pedestal3D.js] v{{ timestamp }} 로딩:', typeof window.Pedestal3D)" onerror="console.error('❌ [Pedestal3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/TV3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [TV3D.js] v{{ timestamp }} 로딩:', typeof window.TV3D)" onerror="console.error('❌ [TV3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/LuxeDisplay3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [LuxeDisplay3D.js] v{{ timestamp }} 로딩:', typeof window.LuxeDisplay3D)" onerror="console.error('❌ [LuxeDisplay3D.js] 로딩 실패:', this.src)"></script>
+    {# [3-1] MarketingCopy (ProductFactory보다 먼저 로드) #}
+    <script src="{{ url_for('static', filename='js/3d/MarketingCopy.js') }}?v={{ timestamp }}" onload="console.log('✅ [MarketingCopy.js] v{{ timestamp }} 로딩:', typeof window.MarketingCopy)" onerror="console.error('❌ [MarketingCopy.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}" onload="console.log('✅ [ProductFactory.js] v{{ timestamp }} 로딩:', typeof window.ProductFactory)" onerror="console.error('❌ [ProductFactory.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/JewelryDisplay.js') }}?v={{ timestamp }}" onload="console.log('✅ [JewelryDisplay.js] v{{ timestamp }} 로딩:', typeof window.JewelryDisplay)" onerror="console.error('❌ [JewelryDisplay.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/Showroom.js') }}?v={{ timestamp }}" onload="console.log('✅ [Showroom.js] v{{ timestamp }} (250cm 눈높이 + Shift 앉기):', typeof window.Showroom)" onerror="console.error('❌ [Showroom.js] 로딩 실패:', this.src)"></script>

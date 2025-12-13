@@ -303,30 +303,29 @@ class ProductFactory {
     });
     const giftBoxGroup = giftBox.createModel();
     
-    // GiftBox의 실제 높이 계산 (boxHeight 0.9 + lidHeight 0.3 = 1.2, 스케일 0.9 적용)
+    // GiftBox의 실제 높이 계산 (boxHeight 0.9 + lidHeight 0.3 = 1.2, 유료 상품과 동일한 높이)
     // 골드무제한 상품 크기 기준: 가로폭 1.2, 세로폭 1.2, 높이 1.2
-    const giftBoxHeight = 1.2 * 0.9; // 1.08m (골드무제한 높이 1.2에 맞춤)
-    const giftBoxHalfHeight = giftBoxHeight / 2; // 0.54m
+    const giftBoxHeight = 1.2; // 1.2m (유료 상품과 동일한 높이)
+    const giftBoxHalfHeight = giftBoxHeight / 2; // 0.6m
     
     // 래퍼 그룹 생성 (상품의 바닥면이 진열대 상단에 닿도록 조정)
     const wrapperGroup = new THREE.Group();
     // 물리 법칙: GiftBox의 바닥면이 그룹의 position.y에 오도록 중심을 올림
     // GiftBox 중심을 giftBoxHalfHeight만큼 위로 올려서 바닥면이 position.y에 오도록 함
     giftBoxGroup.position.y = giftBoxHalfHeight; // 상자 중심을 위로 올림 (바닥면이 position.y에 붙음)
-    giftBoxGroup.scale.set(0.9, 0.9, 0.9);
+    giftBoxGroup.scale.set(1.0, 1.0, 1.0); // 스케일 1.0으로 변경하여 유료 상품과 동일한 높이 확보
     wrapperGroup.add(giftBoxGroup);
     
     wrapperGroup.userData = wrapperGroup.userData || {};
     wrapperGroup.userData.productData = product;
     
-    // 가격 라벨 추가 (이벤트 상품은 "무료" 또는 "이벤트" 표시)
-    const label = this.createPriceLabel(product);
-    label.position.set(0, giftBoxHeight + 0.2, 0); // 상자 상단 위
-    wrapperGroup.add(label);
-    
     // 그룹 위치 설정: position.y는 진열대 상단 또는 원형 다이 윗면
     // 물리 법칙: 상품의 바닥면이 진열대 상단에 닿도록 조정
     wrapperGroup.position.set(position.x, position.y, position.z);
+    
+    // 가격 라벨 추가 (3D 홀로그램 콘솔) - Scene에 직접 추가 (회전 분리)
+    // createPriceLabel 내부에서 scene.add()를 수행하므로 여기서는 호출만
+    this.createPriceLabel(product, position);
     
     // ⚠️ 물리 법칙: 진열대와 평행하게 유지 (기울이지 않음)
     // lookAt() 제거 - 상품은 바닥과 평행해야 함
@@ -436,14 +435,14 @@ class ProductFactory {
     rim.position.y = coinRadius; // 1.2m (코인과 같은 높이)
     group.add(rim);
 
-    // 가격 라벨 (코인 위에 배치)
-    const label = this.createPriceLabel(product);
-    label.position.set(0, coinHeight / 2 + 0.9, 0);
-    group.add(label);
-
     // 그룹 위치 설정: position.y는 진열대 상단(1.4m) + 상품 높이의 절반
     // 상품의 바닥면이 진열대 상단에 닿도록 조정
     group.position.set(position.x, position.y, position.z);
+    
+    // 가격 라벨 (3D 홀로그램 콘솔) - Scene에 직접 추가 (회전 분리)
+    // createPriceLabel 내부에서 scene.add()를 수행하므로 여기서는 호출만
+    this.createPriceLabel(product, position);
+    
     group.userData.productData = product;
     this.standardCoins.push(group);
     return group;
@@ -494,14 +493,13 @@ class ProductFactory {
     inner.castShadow = true;
     group.add(inner);
 
-    // 가격 라벨 (큐브 위에 배치)
-    const label = this.createPriceLabel(product);
-    label.position.set(0, outerSize + 0.2, 0); // 큐브 상단 위
-    group.add(label);
-
     // 그룹 위치 설정: position.y는 진열대 상단(1.4m) + 상품 높이의 절반
     // 상품의 바닥면이 진열대 상단에 닿도록 조정
     group.position.set(position.x, position.y, position.z);
+    
+    // 가격 라벨 (3D 홀로그램 콘솔) - Scene에 직접 추가 (회전 분리)
+    // createPriceLabel 내부에서 scene.add()를 수행하므로 여기서는 호출만
+    this.createPriceLabel(product, position);
     
     // 반대 방향 회전을 위한 속도 저장
     this.premiumCubes.push({ 
@@ -598,14 +596,14 @@ class ProductFactory {
     );
     group.add(particles);
 
-    // 가격 라벨 (크라운 위에 배치)
-    const label = this.createPriceLabel(product);
-    label.position.set(0, ringRadius * 2 + 0.2, 0); // 크라운 상단 위
-    group.add(label);
-
     // 그룹 위치 설정: position.y는 진열대 상단(1.4m) + 상품 높이의 절반
     // 상품의 바닥면이 진열대 상단에 닿도록 조정
     group.position.set(position.x, position.y, position.z);
+    
+    // 가격 라벨 (3D 홀로그램 콘솔) - Scene에 직접 추가 (회전 분리)
+    // createPriceLabel 내부에서 scene.add()를 수행하므로 여기서는 호출만
+    this.createPriceLabel(product, position);
+    
     this.goldCrowns.push({ group, ring1, ring2, ring3, core, particles });
     group.userData.productData = product;
     return group;
@@ -624,60 +622,199 @@ class ProductFactory {
     group.add(mesh);
     group.position.copy(position);
 
-    const label = this.createPriceLabel(product);
-    label.position.set(position.x, 1.5, position.z);
-    group.add(label);
+    // ✅ 3D 홀로그램 콘솔 생성 (상품 앞쪽 하단에 배치) - Scene에 직접 추가 (회전 분리)
+    // createPriceLabel 내부에서 scene.add()를 수행하므로 여기서는 호출만
+    this.createPriceLabel(product, position);
 
     group.userData.productData = product;
     return group;
   }
 
   /**
-   * 가격 라벨 생성
+   * 가격 라벨 생성 (3D 홀로그램 콘솔 UI - CSS3DObject 기반)
+   * @param {Object} product - 상품 데이터
+   * @param {Object|THREE.Vector3} position - 상품의 월드 좌표 위치
    */
-  createPriceLabel(product) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 128;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = "bold 28px 'Pretendard'";
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    
-    // 실제 상품 데이터에서 가격 가져오기 (하드코딩 제거)
-    let priceText = "FREE";
-    
-    if (product) {
-      // 이벤트 상품 여부 확인 (우선순위: type 확인)
-      const isEventType = product.type === 'event' || product.type === 'event_period';
-      const isFreePrice = product.price === 0 || product.price === null || product.price === undefined;
-      
-      if (isEventType) {
-        // 이벤트 상품: "EVENT"로 명확하게 표시
-        priceText = "EVENT";
-      } else if (isFreePrice) {
-        // 무료 상품 (이벤트가 아닌 경우)
-        priceText = "FREE";
-      } else {
-        // 유료 상품: 실제 가격 표시
-        priceText = `${Number(product.price).toLocaleString('ko-KR')}원`;
-      }
-    } else {
-      console.warn("⚠️ [ProductFactory] 상품 정보가 없습니다:", product);
-      priceText = "N/A";
+  createPriceLabel(product, position) {
+    // ✅ MarketingCopy 모듈 사용 (HTML 생성 로직 분리)
+    if (typeof window.MarketingCopy === 'undefined' && typeof MarketingCopy === 'undefined') {
+      console.error('❌ [ProductFactory] MarketingCopy 모듈을 찾을 수 없습니다.');
+      return null;
     }
     
-    ctx.fillText(priceText, canvas.width / 2, canvas.height / 2);
+    const MarketingCopyClass = window.MarketingCopy || MarketingCopy;
+    
+    // ✅ HTML/CSS 구조화 (3D 홀로그램 콘솔 UI)
+    const consoleDiv = document.createElement('div');
+    consoleDiv.className = 'smart-console';
+    
+    // MarketingCopy에서 HTML 콘텐츠 가져오기
+    const innerHTML = MarketingCopyClass.getLabelContent(product);
+    consoleDiv.innerHTML = innerHTML;
+    
+    // ✅ 구매 버튼 클릭 이벤트 연결 (innerHTML 설정 직후)
+    const actionBtn = consoleDiv.querySelector('.action-btn');
+    if (actionBtn) {
+      // ✅ 필수 데이터 속성 강제 주입 (Showroom.js와 동일한 로직)
+      const productType = (product?.type || '').trim().toLowerCase();
+      const isEventType = productType === 'event' || productType === 'event_period';
+      
+      // data-id: product.id 또는 product.product_id (문자열로 변환)
+      const productId = product?.id || product?.product_id || '';
+      actionBtn.setAttribute('data-id', String(productId));
+      
+      // data-name: product.name
+      actionBtn.setAttribute('data-name', product?.name || '');
+      
+      // data-token: product.token_amount
+      actionBtn.setAttribute('data-token', String(product?.token_amount || 0));
+      
+      // data-duration: product.duration_days
+      actionBtn.setAttribute('data-duration', String(product?.duration_days || 0));
+      
+      // data-price: 이벤트 상품은 "0", 일반 상품은 product.price
+      if (isEventType) {
+        actionBtn.setAttribute('data-price', '0');
+      } else {
+        actionBtn.setAttribute('data-price', String(product?.price || 0));
+      }
+      
+      // data-type: 이벤트 상품은 정규화된 productType, 일반 상품은 product.type
+      if (isEventType) {
+        actionBtn.setAttribute('data-type', productType);
+      } else {
+        actionBtn.setAttribute('data-type', product?.type || '');
+      }
+      
+      // 검증 로그
+      console.log('✅ [ProductFactory] 메뉴판 버튼 데이터 주입 완료:', {
+        id: productId,
+        name: product?.name || '',
+        price: isEventType ? '0' : String(product?.price || 0),
+        type: isEventType ? productType : (product?.type || ''),
+        token: product?.token_amount || 0,
+        duration: product?.duration_days || 0
+      });
+      
+      // 클릭 이벤트 리스너 추가
+      actionBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // 디버깅용 로그
+        console.log('✅ [ProductFactory] 메뉴판 버튼 클릭됨:', product?.name || 'Unknown');
+        // 가상 버튼처럼 작동하도록 window.openCheckoutModal 호출
+        if (typeof window.openCheckoutModal === 'function') {
+          window.openCheckoutModal(actionBtn);
+        } else {
+          console.warn('⚠️ [ProductFactory] openCheckoutModal 함수를 찾을 수 없습니다.');
+        }
+      });
+    } else {
+      console.warn('⚠️ [ProductFactory] .action-btn 요소를 찾을 수 없습니다.');
+    }
+    
+    // ✅ CSS3DObject 생성 (원근감이 적용되는 3D 방식)
+    try {
+      // CSS3DObject가 사용 가능한지 확인
+      const CSS3DObject = window.CSS3DObject || (typeof THREE !== 'undefined' && THREE.CSS3DObject);
+      
+      if (CSS3DObject) {
+        const css3dObject = new CSS3DObject(consoleDiv);
+        // ✅ 3D 공간에 맞게 축소 (1/200 스케일)
+        css3dObject.scale.set(0.005, 0.005, 0.005);
+        
+        // ✅ 월드 좌표로 위치 설정 (상품 앞쪽 하단에 배치)
+        const pos = position instanceof THREE.Vector3 
+          ? position 
+          : new THREE.Vector3(
+              position?.x || 0, 
+              position?.y || 0, 
+              position?.z || 0
+            );
+        css3dObject.position.set(pos.x, pos.y - 1.0, pos.z + 2.0);
+        
+        // ✅ 사용자가 내려다보기 편하게 기울임
+        css3dObject.rotation.x = -0.5;
+        css3dObject.userData.isLabel = true;
+        css3dObject.userData.isPriceLabel = true;
+        css3dObject.userData.productData = product;
+        
+        // ✅ Scene에 직접 추가 (회전하는 그룹에서 분리)
+        if (this.scene) {
+          this.scene.add(css3dObject);
+        }
+        
+        return css3dObject;
+      } else {
+        // CSS3DObject가 없으면 기존 Sprite 방식으로 fallback
+        console.warn('⚠️ [ProductFactory] CSS3DObject를 사용할 수 없습니다. Sprite로 fallback합니다.');
+        return this._createPriceLabelSprite(product, cardContent);
+      }
+    } catch (error) {
+      console.error('❌ [ProductFactory] CSS3DObject 생성 실패:', error);
+      return this._createPriceLabelSprite(product, cardContent);
+    }
+  }
+  
+  /**
+   * 가격 라벨 Sprite 생성 (Fallback)
+   */
+  _createPriceLabelSprite(product, cardContent) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 400;
+    canvas.height = 200;
+    const ctx = canvas.getContext("2d");
+    
+    // 배경
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    const radius = 20;
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(canvas.width - radius, 0);
+    ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+    ctx.lineTo(canvas.width, canvas.height - radius);
+    ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+    ctx.lineTo(radius, canvas.height);
+    ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // 테두리
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 텍스트 렌더링 (간단한 버전)
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "700 24px 'Pretendard', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(cardContent.title, canvas.width / 2, 40);
+    
+    ctx.fillStyle = "#c0c0c0";
+    ctx.font = "500 18px 'Pretendard', sans-serif";
+    ctx.fillText(cardContent.sub, canvas.width / 2, 70);
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "400 20px 'Pretendard', sans-serif";
+    ctx.fillText(cardContent.detail.replace(/<[^>]*>/g, ''), canvas.width / 2, 110);
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 36px 'Pretendard', sans-serif";
+    ctx.fillText(cardContent.price.replace(/<[^>]*>/g, ''), canvas.width / 2, 160);
     
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
     
-    const spriteMat = new THREE.SpriteMaterial({ map: texture });
+    const spriteMat = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true,
+      opacity: 0.95
+    });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(1.5, 0.75, 1);
+    sprite.scale.set(2.0, 1.0, 1);
+    sprite.userData.isLabel = true;
     
     return sprite;
   }
@@ -731,6 +868,15 @@ class ProductFactory {
         crown.particles.rotation.y += 0.02;
       }
     });
+    
+    // MagicFire 불꽃 애니메이션
+    if (this.magicFires) {
+      this.magicFires.forEach(magicFire => {
+        if (magicFire && typeof magicFire.animate === 'function') {
+          magicFire.animate();
+        }
+      });
+    }
   }
 
   /**
@@ -880,6 +1026,57 @@ class ProductFactory {
       
     } catch (error) {
       console.error('      ❌ [ProductFactory] LuxeDisplay3D 생성 중 오류:', error);
+      return null;
+    }
+  }
+
+  /**
+   * MagicFire 가구 생성 (불꽃 효과가 있는 액자)
+   */
+  createMagicFire(position, options = {}) {
+    if (typeof MagicFire === 'undefined' && typeof window.MagicFire === 'undefined') {
+      console.error('      ❌ [ProductFactory] MagicFire 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const MagicFireClass = MagicFire || window.MagicFire;
+    
+    // 위치 변환
+    const pos = position instanceof THREE.Vector3 
+      ? position 
+      : new THREE.Vector3(
+          position?.x || 0, 
+          position?.y || 0, 
+          position?.z || 0
+        );
+    
+    try {
+      // MagicFire 인스턴스 생성
+      const magicFire = new MagicFireClass(options);
+      const group = magicFire.getGroup();
+      
+      if (!group) {
+        console.error('      ❌ [ProductFactory] MagicFire 그룹 생성 실패!');
+        return null;
+      }
+      
+      // 위치 설정
+      group.position.copy(pos);
+      
+      // 씬에 추가
+      this.scene.add(group);
+      
+      // 애니메이션을 위한 참조 저장
+      if (!this.magicFires) {
+        this.magicFires = [];
+      }
+      this.magicFires.push(magicFire);
+      
+      console.log(`      ✅ [ProductFactory] MagicFire 추가됨: 위치 (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})`);
+      return group;
+      
+    } catch (error) {
+      console.error('      ❌ [ProductFactory] MagicFire 생성 중 오류:', error);
       return null;
     }
   }
