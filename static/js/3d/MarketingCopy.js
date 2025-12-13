@@ -132,17 +132,20 @@ class MarketingCopy {
   static getStyles() {
     return `
       .smart-console {
-        width: 300px;
-        background: rgba(0, 0, 0, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 20px;
+        width: 280px;
+        background: linear-gradient(145deg, rgba(20, 20, 25, 0.98) 0%, rgba(30, 30, 40, 0.95) 100%);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 24px;
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         color: #ffffff;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
+        transform: translateY(0);
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         pointer-events: auto !important;
         user-select: none;
+        will-change: transform;
+        backface-visibility: hidden;
       }
       .smart-console .console-header {
         display: flex;
@@ -151,45 +154,46 @@ class MarketingCopy {
         margin-bottom: 12px;
       }
       .smart-console .badge {
-        padding: 4px 10px;
-        background: rgba(16, 185, 129, 0.2);
-        border: 1px solid #10b981;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        color: #10b981;
+        background: rgba(255, 215, 0, 0.15);
+        color: #FFD700;
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
       }
       .smart-console .title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #ffd700;
+        font-size: 18px;
+        font-weight: 800;
+        color: #FFD700;
+        text-transform: uppercase;
         letter-spacing: 1px;
         margin: 0;
-        text-transform: uppercase;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 4px rgba(255, 215, 0, 0.5);
+        margin-bottom: 4px;
       }
       .smart-console .console-body {
         margin-bottom: 16px;
       }
       .smart-console .desc {
-        font-size: 14px;
-        color: #ffffff;
-        line-height: 1.4;
-        margin: 0 0 10px 0;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+        font-size: 13px;
+        color: #a0a0b0;
+        line-height: 1.5;
+        margin: 0 0 16px 0;
       }
       .smart-console .price-tag {
-        font-size: 24px;
-        font-weight: 800;
+        font-size: 26px;
+        font-weight: 700;
         color: #ffffff;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 6px rgba(255, 255, 255, 0.3);
+        text-align: center;
+        margin: 15px 0;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
       .smart-console .highlight {
         color: #00ffff;
         font-weight: 700;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 255, 255, 0.8);
       }
       .smart-console .discount {
         background: #ff0055;
@@ -199,32 +203,31 @@ class MarketingCopy {
         font-weight: 700;
         color: #ffffff;
         margin-left: 3px;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
       }
       .smart-console .console-footer {
         margin-top: 16px;
       }
       .smart-console .action-btn {
         width: 100%;
-        padding: 12px;
-        background: #007aff;
+        padding: 14px;
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
         color: white;
-        border: none;
+        font-weight: 700;
         border-radius: 8px;
-        font-size: 18px;
-        font-weight: bold;
+        border: none;
         cursor: pointer;
-        transition: background 0.3s ease, transform 0.1s ease;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+        transition: transform 0.2s ease;
         pointer-events: auto !important;
+        font-size: 16px;
+        will-change: transform;
+        backface-visibility: hidden;
       }
       .smart-console .action-btn:hover {
-        background: #0051d5;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
       }
       .smart-console .action-btn:active {
         transform: translateY(0);
-        background: #003d9e;
       }
     `;
   }

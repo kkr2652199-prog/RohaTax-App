@@ -277,23 +277,20 @@ from routes.admin import admin_bp
 from routes.admin.activity_log_api import activity_log_bp
 from routes.admin.tax_api import admin_tax_bp
 from routes.api_modules.admin_api import admin_api_bp
-
 # 기존 user_api (비상시 롤백용으로 보존)
 # from routes.api_modules.user_api import user_api_bp
 # 신형 엔진 (user_api_v2)
 from routes.api_modules.user_api_v2 import user_api_v2_bp
-
 # from routes.conversion import conversion_bp  # 제거됨 - conversion_engine_routes로 이동
-from routes.conversion_modules.conversion_engine_routes import conversion_engine_bp
-from routes.conversion_modules.gold_customers_routes import (
-    gold_customers_bp,
-)  # noop-reload
+from routes.conversion_modules.conversion_engine_routes import \
+    conversion_engine_bp
+from routes.conversion_modules.gold_customers_routes import \
+    gold_customers_bp  # noop-reload
 from routes.conversion_modules.guideline_routes import guideline_bp
 from routes.conversion_modules.page_routes import page_bp
 from routes.conversion_modules.security_routes import security_bp
 from routes.conversion_modules.token_routes import token_bp
 from routes.conversion_modules.user_routes import user_bp
-
 # 블루프린트 등록
 from routes.home import home_bp
 from routes.home_modules.api_routes import home_api_bp

@@ -53,6 +53,50 @@ class Showroom {
     this.renderer.sortObjects = true; // 객체 정렬 활성화 (투명도 처리 최적화)
     
     console.log(`[Showroom] 🎨 Renderer 생성: ${this.canvas.width}x${this.canvas.height}`);
+    
+    // ✅ CSS2DRenderer 초기화 (고해상도 HTML 라벨링용)
+    try {
+      const CSS2DRenderer = window.CSS2DRenderer || (typeof THREE !== 'undefined' && THREE.CSS2DRenderer);
+      if (CSS2DRenderer) {
+        this.css2dRenderer = new CSS2DRenderer();
+        this.css2dRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.css2dRenderer.domElement.style.position = 'absolute';
+        this.css2dRenderer.domElement.style.top = '0';
+        this.css2dRenderer.domElement.style.left = '0';
+        this.css2dRenderer.domElement.style.pointerEvents = 'none';
+        this.css2dRenderer.domElement.style.zIndex = '1000';
+        this.container.appendChild(this.css2dRenderer.domElement);
+        console.log('✅ [Showroom] CSS2DRenderer 초기화 완료');
+      } else {
+        console.warn('⚠️ [Showroom] CSS2DRenderer를 사용할 수 없습니다.');
+        this.css2dRenderer = null;
+      }
+    } catch (error) {
+      console.error('❌ [Showroom] CSS2DRenderer 초기화 실패:', error);
+      this.css2dRenderer = null;
+    }
+    
+    // ✅ CSS3DRenderer 초기화 (3D 홀로그램 콘솔용)
+    try {
+      const CSS3DRenderer = window.CSS3DRenderer || (typeof THREE !== 'undefined' && THREE.CSS3DRenderer);
+      if (CSS3DRenderer) {
+        this.css3dRenderer = new CSS3DRenderer();
+        this.css3dRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.css3dRenderer.domElement.style.position = 'absolute';
+        this.css3dRenderer.domElement.style.top = '0';
+        this.css3dRenderer.domElement.style.left = '0';
+        this.css3dRenderer.domElement.style.pointerEvents = 'none';
+        this.css3dRenderer.domElement.style.zIndex = '999';
+        this.container.appendChild(this.css3dRenderer.domElement);
+        console.log('✅ [Showroom] CSS3DRenderer 초기화 완료');
+      } else {
+        console.warn('⚠️ [Showroom] CSS3DRenderer를 사용할 수 없습니다.');
+        this.css3dRenderer = null;
+      }
+    } catch (error) {
+      console.error('❌ [Showroom] CSS3DRenderer 초기화 실패:', error);
+      this.css3dRenderer = null;
+    }
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0a0a); // 미드나잇 럭셔리 - 어두운 배경
@@ -1034,6 +1078,16 @@ class Showroom {
     this.renderer.setSize(width, height);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+    
+    // ✅ CSS2DRenderer 리사이즈
+    if (this.css2dRenderer) {
+      this.css2dRenderer.setSize(width, height);
+    }
+    
+    // ✅ CSS3DRenderer 리사이즈
+    if (this.css3dRenderer) {
+      this.css3dRenderer.setSize(width, height);
+    }
   }
 
   animate() {
@@ -1249,6 +1303,16 @@ class Showroom {
 
     // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);
+    
+    // ✅ CSS2DRenderer 렌더링 (고해상도 HTML 라벨링)
+    if (this.css2dRenderer) {
+      this.css2dRenderer.render(this.scene, this.camera);
+    }
+    
+    // ✅ CSS3DRenderer 렌더링 (3D 홀로그램 콘솔)
+    if (this.css3dRenderer) {
+      this.css3dRenderer.render(this.scene, this.camera);
+    }
   }
 }
 

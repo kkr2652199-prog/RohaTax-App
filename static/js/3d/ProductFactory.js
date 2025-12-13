@@ -731,7 +731,16 @@ class ProductFactory {
               position?.y || 0, 
               position?.z || 0
             );
-        css3dObject.position.set(pos.x, pos.y - 1.0, pos.z + 2.0);
+        
+        // ✅ 무료 상품(이벤트) 메뉴판 높이를 골드 상품과 동일하게 조정
+        // 골드 상품: position.y = jewelryBoxTopY + 0.6, 메뉴판 = pos.y - 1.0 = jewelryBoxTopY - 0.4
+        // 무료 상품: position.y = jewelryBoxTopY, 메뉴판 = pos.y - 1.0 = jewelryBoxTopY - 1.0
+        // → 무료 상품 메뉴판을 골드와 동일하게: pos.y - 0.4
+        const productType = (product?.type || '').trim().toLowerCase();
+        const isEventType = productType === 'event' || productType === 'event_period';
+        const labelYOffset = isEventType ? -0.4 : -1.0; // 무료 상품은 -0.4, 유료 상품은 -1.0
+        
+        css3dObject.position.set(pos.x, pos.y + labelYOffset, pos.z + 2.0);
         
         // ✅ 사용자가 내려다보기 편하게 기울임
         css3dObject.rotation.x = -0.5;
