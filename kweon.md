@@ -1,4 +1,53 @@
+<<<<<<< HEAD
 ﻿# [2025-01-14 12:30:00 KST] - TV 비디오플레이어 Play/Pause 버튼 동적 업데이트 및 네비게이션에 3D 쇼룸 링크 추가
+=======
+﻿# [2025-12-14 17:54:06 KST] - 시네마 모드 카메라 위치 최적화 및 TV 화질 개선
+
+*   **한국 시간/날짜:** 2025년 12월 14일 17:54:06 (KST)
+*   **커밋 해시:** f484c29
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 시네마 모드 카메라 위치 최적화, 조명 대폭 감소, TV 테두리 블랙 변경, 비디오 화질 개선
+  1. [시네마 모드 카메라 위치 최적화] TV 앞 13.2m, 높이 6.275m 위치로 설정, 수평 시선 유지, 180도 회전 적용
+  2. [조명 대폭 감소] 시네마 모드 진입 시 조명을 원래 밝기의 5%로 감소 (영상 집중도 향상)
+  3. [TV 테두리 색상 변경] Gold Trim Border를 블랙(0x000000)으로 변경, 발광 효과 제거
+  4. [비디오 화질 개선] VideoTexture에 ClampToEdgeWrapping, RGBAFormat 설정, generateMipmaps 비활성화
+  5. [카메라 위치 계산 문서] CINEMA_CAMERA_CALCULATION.md 생성 (TV와 사운드바 모두 보이는 최적 위치 계산)
+*   **수정 파일:**
+  - static/js/3d/CinemaController.js (카메라 위치 (0, 6.275, 1.8), 조명 5%로 감소)
+  - static/js/3d/TV3D.js (TV 테두리 블랙, 비디오 텍스처 고화질 설정)
+  - CINEMA_CAMERA_CALCULATION.md (카메라 위치 계산 문서 신규 생성)
+*   **결과:**
+  - 시네마 모드 진입 시 TV와 사운드바가 모두 보이는 최적 카메라 위치 설정
+  - 조명 5%로 감소하여 영상 집중도 대폭 향상
+  - TV 테두리 블랙으로 변경하여 화면에 집중 가능
+  - 비디오 텍스처 고화질 설정으로 영상 화질 개선
+
+---
+
+# [2025-12-14 15:03:03 KST] - 시네마 모드 구현 실패 후 구조 분석 및 개선 방안 도출
+
+*   **한국 시간/날짜:** 2025년 12월 14일 15:03:03 (KST)
+*   **커밋 해시:** db8caf0 (분석 시점)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 시네마 모드 구현 실패 후 Showroom.js 구조 정밀 분석 및 안전한 구현을 위한 개선 방안 도출
+  1. [카메라 제어부 분석] constructor에서 초기화 확인, OrbitControls 미사용 (FPS 컨트롤 사용), controls = null
+  2. [조명 관리부 문제 발견] hemisphereLight와 ambient가 지역 변수로만 선언되어 외부 제어 불가 - 시네마 모드 구현 시 this.hemisphereLight, this.ambientLight로 저장 필요
+  3. [렌더링 루프 간섭 확인] 매 프레임 this.camera.position.y = this.eyeLevel 강제 적용으로 시네마 모드 카메라 이동과 충돌 가능성 발견
+  4. [개선 방안 도출] 조명 접근성 개선, eyeLevel 강제 적용 조건화, 시네마 모드 전환 중 카메라 제어 보호 필요
+*   **분석 결과:**
+  - 카메라 초기 위치: (0, 3.5, 10), 회전 순서: YXZ
+  - 조명: hemisphereLight, ambient는 지역 변수 (this.xxx로 저장 필요)
+  - spotLights는 배열로 저장되어 제어 가능
+  - animate 루프에서 매 프레임 eyeLevel 강제 적용으로 시네마 모드와 충돌 가능
+*   **수정 제안:**
+  - addLights()에서 this.hemisphereLight, this.ambientLight로 저장
+  - eyeLevel 강제 적용을 시네마 모드가 아닐 때만 실행
+  - 시네마 모드 전환 중 카메라 제어 보호 로직 추가
+
+---
+
+# [2025-01-14 12:30:00 KST] - TV 비디오플레이어 Play/Pause 버튼 동적 업데이트 및 네비게이션에 3D 쇼룸 링크 추가
+>>>>>>> 29a1143 (2025-12-14 17:54:06 [1Tax App] kweon.md ?낅뜲?댄듃 - ?쒕꽕留?紐⑤뱶 移대찓???꾩튂 理쒖쟻??諛?TV ?붿쭏 媛쒖꽑 湲곕줉)
 
 *   **한국 시간/날짜:** 2025년 1월 14일 12:30:00 (KST)
 *   **커밋 해시:** 3f3e330
