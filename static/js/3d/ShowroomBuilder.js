@@ -11,8 +11,6 @@ class ShowroomBuilder {
   static sharedFloorTexture = null;    // 바닥 대리석 텍스처 (Static 공유)
   static sharedWallMat = null;         // 벽 Material
   static sharedGoldMat = null;          // 골드 Material
-  static sharedCctvMat = null;         // CCTV Material
-  static sharedRedDotMat = null;        // 빨간 점 Material
   static sharedGrilleMat = null;        // 그릴 Material
 
   constructor(scene) {
@@ -85,8 +83,8 @@ class ShowroomBuilder {
     // 단순 박스 벽 시공 (검은색 버그 원천 봉쇄)
     this.createSimpleWalls();
 
-    // 벽면 매립형 수직 간접 조명 추가
-    this.createWallLightStrips();
+    // ✅ 벽면 PointLight 제거됨 (얼룩 반사 제거, HemisphereLight로 대체)
+    // this.createWallLightStrips();
 
     // 벽 모서리 곡면 처리 (디버깅 중)
     this.createWallCornerCoves();
@@ -378,39 +376,12 @@ class ShowroomBuilder {
   }
 
   /**
-   * 벽면 수직 간접 조명 (PointLight 광원)
-   * 왼벽과 오른벽에 각각 2개씩, 총 4개의 PointLight 배치
+   * 벽면 수직 간접 조명 (PointLight 광원) - 삭제됨
+   * ✅ 얼룩 반사 제거: 벽면 PointLight 4개 제거, HemisphereLight로 대체
    */
-  createWallLightStrips() {
-    const wallInnerEdge = 15.0; // 벽 안쪽 면
-    const lightY = 7.5; // 조명 Y 위치 (벽 높이 중앙)
-    
-    // 왼벽 PointLight 2개
-    const leftWallLights = [
-      { position: { x: -wallInnerEdge, y: lightY, z: 5 } },   // 왼벽 조명 1
-      { position: { x: -wallInnerEdge, y: lightY, z: -5 } }   // 왼벽 조명 2
-    ];
-
-    // 오른벽 PointLight 2개
-    const rightWallLights = [
-      { position: { x: wallInnerEdge, y: lightY, z: 5 } },     // 오른벽 조명 1
-      { position: { x: wallInnerEdge, y: lightY, z: -5 } }    // 오른벽 조명 2
-    ];
-
-    // 모든 PointLight 생성 및 배치
-    [...leftWallLights, ...rightWallLights].forEach((lightConfig) => {
-      const pointLight = new THREE.PointLight(0xFFFFFF, 0.8, 15); // 흰색, 강도 0.8, 거리 15m
-      pointLight.position.set(
-        lightConfig.position.x,
-        lightConfig.position.y,
-        lightConfig.position.z
-      );
-      pointLight.castShadow = true;
-      this.scene.add(pointLight);
-    });
-
-    console.log("✅ [ShowroomBuilder] 벽면 수직 간접 조명 추가 완료 (PointLight 4개)");
-  }
+  // createWallLightStrips() {
+  //   // 벽면 PointLight 제거됨 (얼룩 반사 제거)
+  // }
 
   /**
    * 벽 모서리 곡면 처리 (4개 수직 모서리만)
@@ -736,9 +707,10 @@ class ShowroomBuilder {
     });
 
     // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    // ✅ 완전 무광 처리: 반사 제거로 "형체 없는 빛" 효과 제거
     const lidMat = new THREE.MeshStandardMaterial({
       color: 0x050505, // 완전한 블랙
-      roughness: 0.0, // 거울처럼 매끈하게
+      roughness: 0.9, // 완전 무광 (반사 제거)
       metalness: 0.1
       // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
@@ -761,11 +733,11 @@ class ShowroomBuilder {
       16,
       64
     );
-    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
+    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용) + 성능 최적화: 무광 처리
     const baseRimMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
       color: 0xFFD700, // 골드
       metalness: 1.0,
-      roughness: 0.2
+      roughness: 0.7 // 반사광 제거 (0.2 → 0.7, 무광 처리)
     });
     const baseRim = new THREE.Mesh(baseRimGeo, baseRimMat);
     baseRim.rotation.x = Math.PI / 2; // 수평으로 배치
@@ -775,12 +747,12 @@ class ShowroomBuilder {
 
     // 다크 렌즈 (Dark Glass) - 검투명 유리
     const darkLensGeo = new THREE.CircleGeometry(sunRadius, 64);
-    // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    // ✅ WebGL 최적화: MeshStandardMaterial로 변경 + 성능 최적화: 무광 처리
     const darkLensMat = new THREE.MeshStandardMaterial({
       color: 0x000000, // 검정색
       transparent: true,
-      opacity: 0.5, // 투명도 0.5
-      roughness: 0.1,
+      opacity: 0.8, // 투명도 0.8 (0.5 → 0.8, 더 불투명하게)
+      roughness: 0.9, // 완전 무광 (0.1 → 0.9, 반사 제거)
       metalness: 0.3
       // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
@@ -789,107 +761,11 @@ class ShowroomBuilder {
     darkLens.position.y = sunY; // y = 16.35
     ceilingGroup.add(darkLens);
 
-    // 발광 코어 (Glowing Core) - RingGeometry 3개 겹쳐서 배치
-    const coreRings = [];
-    const coreColors = [0xFFFFFF, 0x00FFFF, 0xFFFFFF]; // 화이트-시안-화이트
-    const coreRadii = [1.2, 0.8, 0.4]; // 내부에서 외부로
-    const coreThicknesses = [0.15, 0.12, 0.1]; // 두께
+    // ✅ 발광 코어 3개 삭제됨 (불빛 점 제거)
 
-    for (let i = 0; i < 3; i++) {
-      const coreRingGeo = new THREE.RingGeometry(
-        coreRadii[i] - coreThicknesses[i] / 2,
-        coreRadii[i] + coreThicknesses[i] / 2,
-        64
-      );
-      // ✅ WebGL 최적화: MeshStandardMaterial로 변경 (MeshBasicMaterial은 emissive 지원 안 함)
-      const coreRingMat = new THREE.MeshStandardMaterial({
-        color: coreColors[i],
-        emissive: coreColors[i],
-        emissiveIntensity: 1.0, // 강력한 발광
-        transparent: true,
-        opacity: 0.9,
-        side: THREE.DoubleSide
-      });
-      const coreRing = new THREE.Mesh(coreRingGeo, coreRingMat);
-      coreRing.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
-      coreRing.position.y = sunY + 0.001 * (i + 1); // 살짝씩 위로 올림
-      coreRing.userData.isArcReactorCore = true; // 애니메이션용 태그
-      coreRing.userData.rotationSpeed = (i % 2 === 0 ? 1 : -1) * 0.005; // 반대 방향 회전
-      ceilingGroup.add(coreRing);
-      coreRings.push(coreRing);
-    }
+    // ✅ 십자 그릴망 삭제됨 (그릴 프레임 제거)
 
-    // 그릴망 (The Grille) - 십자가 모양 금속 프레임
-    const grilleGroup = new THREE.Group();
-    const grilleThickness = 0.02;
-    const grilleLength = sunRadius * 0.8;
-    
-    // ✅ WebGL 최적화: Material 공유
-    if (!ShowroomBuilder.sharedGrilleMat) {
-      ShowroomBuilder.sharedGrilleMat = new THREE.MeshStandardMaterial({ 
-        color: 0x333333, 
-        metalness: 0.8, 
-        roughness: 0.3 
-      });
-    }
-    
-    // 가로선
-    const horizontalGrille = new THREE.Mesh(
-      new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      ShowroomBuilder.sharedGrilleMat
-    );
-    horizontalGrille.rotation.z = Math.PI / 2;
-    grilleGroup.add(horizontalGrille);
-    
-    // 세로선
-    const verticalGrille = new THREE.Mesh(
-      new THREE.BoxGeometry(grilleLength, grilleThickness, grilleThickness),
-      ShowroomBuilder.sharedGrilleMat
-    );
-    verticalGrille.rotation.x = Math.PI / 2;
-    grilleGroup.add(verticalGrille);
-    
-    grilleGroup.rotation.x = -Math.PI / 2; // 바닥을 보게 눕힘
-    grilleGroup.position.y = sunY + 0.002; // 렌즈 위에 살짝 올림
-    ceilingGroup.add(grilleGroup);
-
-    // [Step 3-1] 코너 장식 (Gold Studs) - 블랙 패널 네 귀퉁이에 황금 볼트 4개
-    const studRadius = 0.3; // 볼트 반지름
-    const studHeight = 0.1; // 볼트 높이 (납작한 원기둥)
-    const studY = lidY + lidThickness / 2; // y = 16.45 (패널에 박혀있는 느낌)
-    const studOffset = lidSize / 2 - 2.0; // 패널 안쪽으로 조금 들어온 위치 (±10 정도)
-
-    const studGeo = new THREE.CylinderGeometry(studRadius, studRadius, studHeight, 16);
-    // ✅ WebGL 최적화: Static Material 공유 (sharedGoldMat 사용)
-    const studMat = ShowroomBuilder.sharedGoldMat || new THREE.MeshStandardMaterial({
-      color: 0xFFD700, // 골드
-      metalness: 1.0,
-      roughness: 0.2
-    });
-
-    // 앞쪽 좌측 볼트
-    const stud1 = new THREE.Mesh(studGeo, studMat);
-    stud1.rotation.x = Math.PI / 2; // 눕히기
-    stud1.position.set(-studOffset, studY, studOffset);
-    ceilingGroup.add(stud1);
-
-    // 앞쪽 우측 볼트
-    const stud2 = new THREE.Mesh(studGeo, studMat);
-    stud2.rotation.x = Math.PI / 2;
-    stud2.position.set(studOffset, studY, studOffset);
-    ceilingGroup.add(stud2);
-
-    // 뒷쪽 좌측 볼트
-    const stud3 = new THREE.Mesh(studGeo, studMat);
-    stud3.rotation.x = Math.PI / 2;
-    stud3.position.set(-studOffset, studY, -studOffset);
-    ceilingGroup.add(stud3);
-
-    // 뒷쪽 우측 볼트
-    const stud4 = new THREE.Mesh(studGeo, studMat);
-    stud4.rotation.x = Math.PI / 2;
-    stud4.position.set(studOffset, studY, -studOffset);
-    ceilingGroup.add(stud4);
+    // ✅ 천장 황금 볼트 4개 삭제됨 (장식 요소 제거)
 
     // [Step 5] 황금 환풍구 (Golden Vents) - 리얼한 그릴 스타일
     /**
@@ -977,122 +853,7 @@ class ShowroomBuilder {
     const rightVent = createVent(8, 0);
     ceilingGroup.add(rightVent);
 
-    // [Step 6] 돔형 CCTV (Security Cameras) - 천장 프레임 네 귀퉁이
-    const cctvRadius = 0.5; // CCTV 반지름
-    const cctvX = 12; // 천장 프레임 귀퉁이 위치
-    const cctvZ = 12;
-    const cctvY = ceilingY + 0.1; // y = 15.1 (천장 프레임 위)
-
-    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경
-    if (!ShowroomBuilder.sharedCctvMat) {
-      ShowroomBuilder.sharedCctvMat = new THREE.MeshStandardMaterial({
-        color: 0xEEEEEE, // 화이트/실버 (천장에서 눈에 띄게)
-        roughness: 0.1,
-        metalness: 0.3
-        // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
-      });
-    }
-    const cctvMat = ShowroomBuilder.sharedCctvMat;
-
-    // ✅ WebGL 최적화: Static Material 공유 + MeshStandardMaterial 변경 (MeshBasicMaterial은 emissive 지원 안 함)
-    if (!ShowroomBuilder.sharedRedDotMat) {
-      ShowroomBuilder.sharedRedDotMat = new THREE.MeshStandardMaterial({
-        color: 0xFF0000, // 빨간 점
-        emissive: 0xFF0000,
-        emissiveIntensity: 5.0 // 레이저처럼 강하게 빛남
-      });
-    }
-    const redDotMat = ShowroomBuilder.sharedRedDotMat;
-
-    // 방 중앙을 바라보는 회전 계산 헬퍼 (45도 각도로 정확히 꺾임)
-    const lookAtCenter = (cameraGroup, x, z) => {
-      const centerX = 0;
-      const centerZ = 0;
-      const dx = centerX - x;
-      const dz = centerZ - z;
-      const angle = Math.atan2(dx, dz);
-      cameraGroup.rotation.y = angle; // Y축 회전 (수평)
-      // 아래를 보도록 약간 기울임 (45도 각도)
-      cameraGroup.rotation.x = -Math.PI / 4; // -45도
-    };
-
-    // 앞쪽 좌측 CCTV
-    const cctv1Group = new THREE.Group();
-    const cctv1 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv1.rotation.x = Math.PI; // 아래를 보게 뒤집기
-    cctv1Group.add(cctv1);
-    // 빨간 점 (크기 증가)
-    const redDot1 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가 (0.05 -> 0.08)
-      redDotMat
-    );
-    redDot1.position.set(0, -cctvRadius * 0.7, 0); // 반구 중앙 아래
-    cctv1Group.add(redDot1);
-    cctv1Group.position.set(-cctvX, cctvY, cctvZ);
-    lookAtCenter(cctv1Group, -cctvX, cctvZ);
-    ceilingGroup.add(cctv1Group);
-
-    // 앞쪽 우측 CCTV
-    const cctv2Group = new THREE.Group();
-    const cctv2 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv2.rotation.x = Math.PI;
-    cctv2Group.add(cctv2);
-    const redDot2 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot2.position.set(0, -cctvRadius * 0.7, 0);
-    cctv2Group.add(redDot2);
-    cctv2Group.position.set(cctvX, cctvY, cctvZ);
-    lookAtCenter(cctv2Group, cctvX, cctvZ);
-    ceilingGroup.add(cctv2Group);
-
-    // 뒷쪽 좌측 CCTV
-    const cctv3Group = new THREE.Group();
-    const cctv3 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv3.rotation.x = Math.PI;
-    cctv3Group.add(cctv3);
-    const redDot3 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot3.position.set(0, -cctvRadius * 0.7, 0);
-    cctv3Group.add(redDot3);
-    cctv3Group.position.set(-cctvX, cctvY, -cctvZ);
-    lookAtCenter(cctv3Group, -cctvX, -cctvZ);
-    ceilingGroup.add(cctv3Group);
-
-    // 뒷쪽 우측 CCTV
-    const cctv4Group = new THREE.Group();
-    const cctv4 = new THREE.Mesh(
-      new THREE.SphereGeometry(cctvRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      cctvMat
-    );
-    cctv4.rotation.x = Math.PI;
-    cctv4Group.add(cctv4);
-    const redDot4 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 16, 16), // 크기 증가
-      redDotMat
-    );
-    redDot4.position.set(0, -cctvRadius * 0.7, 0);
-    cctv4Group.add(redDot4);
-    cctv4Group.position.set(cctvX, cctvY, -cctvZ);
-    lookAtCenter(cctv4Group, cctvX, -cctvZ);
-    ceilingGroup.add(cctv4Group);
-
-    // 중앙 PointLight - 황금 벽을 비추는 강한 조명
-    const centerLight = new THREE.PointLight(0xFFFFFF, 2.0, 30);
-    centerLight.position.set(0, ceilingY + 1.0, 0); // y = 16 (황금 벽 중간)
-    this.scene.add(centerLight);
+    // ✅ 천장 유령 조명 삭제: centerLight 제거됨 (가구 조명만 사용)
 
     // 천장 그룹을 씬에 추가
     this.scene.add(ceilingGroup);

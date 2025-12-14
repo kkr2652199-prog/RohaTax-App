@@ -379,6 +379,9 @@
                         <button id="btn-magicfire" class="test-button" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">
                             🔥 Magic Fire (불꽃 액자)
                         </button>
+                        <button id="btn-chandelier" class="test-button" style="background: linear-gradient(135deg, #dda520 0%, #b8860b 100%);">
+                            💡 3D Chandelier (샹들리에)
+                        </button>
                     </div>
                 </div>
             </details>
@@ -434,6 +437,7 @@
     <script src="{{ url_for('static', filename='js/3d/TV3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/LuxeDisplay3D.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/MagicFire.js') }}?v={{ timestamp }}" onload="console.log('✅ [MagicFire.js] 로딩:', typeof window.MagicFire)" onerror="console.error('❌ [MagicFire.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/Chandelier3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [Chandelier3D.js] 로딩:', typeof window.Chandelier3D)" onerror="console.error('❌ [Chandelier3D.js] 로딩 실패:', this.src)"></script>
     <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}"></script>
     <script src="{{ url_for('static', filename='js/3d/FurnitureViewer.js') }}?v={{ timestamp }}"></script>
     
@@ -868,6 +872,48 @@
                     console.error('[Furniture Studio] 에러 메시지:', error.message);
                     console.error('[Furniture Studio] 스택 트레이스:', error.stack);
                     updateStatus('❌ Magic Fire 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Chandelier3D (샹들리에)
+            document.getElementById('btn-chandelier').onclick = () => {
+                try {
+                    // 샹들리에는 createModel 내부에서 허브를 y=2에 배치하므로, 위치는 (0, 0, 0)으로 설정
+                    const pos = { x: 0, y: 0, z: 0 };
+                    
+                    const group = factory.createChandelier(pos);
+                    if (group) {
+                        // 샹들리에는 크기가 작을 수 있으므로 스케일을 2배로 키움
+                        group.scale.set(2.0, 2.0, 2.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Chandelier3D 생성 완료');
+                        
+                        // 회전 애니메이션 시작
+                        let lastTime = performance.now();
+                        const animateChandelier = () => {
+                            if (viewer && viewer.currentProduct && viewer.currentProduct.userData.isRotating) {
+                                const currentTime = performance.now();
+                                const delta = (currentTime - lastTime) / 1000; // 초 단위
+                                lastTime = currentTime;
+                                
+                                const Chandelier3DClass = Chandelier3D || window.Chandelier3D;
+                                if (Chandelier3DClass) {
+                                    Chandelier3DClass.animate(viewer.currentProduct, delta);
+                                }
+                                requestAnimationFrame(animateChandelier);
+                            }
+                        };
+                        animateChandelier();
+                    } else {
+                        throw new Error('Chandelier3D 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Chandelier3D 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Chandelier3D 생성 실패: ' + error.message, true);
                 }
             };
         }

@@ -238,40 +238,32 @@ class Showroom {
   }
 
   addLights() {
-    // 블랙 이클립스 천장 - 틈새에서 빛이 쏟아지는 효과
-    // 블랙 패널이 빛을 가리므로 AmbientLight를 미세하게 조절하여 천장 테두리에서 빛이 쏟아지는 느낌 연출
-    const ambient = new THREE.AmbientLight(0xffffff, 0.75); // 0.7 -> 0.75 (미세 조정)
+    // ✅ 얼룩 없는 부드러운 공간감: HemisphereLight 도입 (반구 조명)
+    // 하늘색(Sky): 약간 푸른빛, 낮 느낌
+    // 바닥색(Ground): 어두운 바닥 반사광
+    const hemisphereLight = new THREE.HemisphereLight(
+      0xddeeff,  // 하늘색 (Sky) - 약간 푸른빛
+      0x0f0e0d,  // 바닥색 (Ground) - 어두운 바닥 반사광
+      0.6        // 강도 (기존 AmbientLight보다 입체감 있음)
+    );
+    this.scene.add(hemisphereLight);
+
+    // ✅ 보조 전역 조명: AmbientLight 강도 대폭 감소 (HemisphereLight가 주 조명)
+    const ambient = new THREE.AmbientLight(0xffffff, 0.1); // 0.2 → 0.1 (아주 낮춤)
     this.scene.add(ambient);
 
-    // 면조명 바로 아래에 넓은 범위의 PointLight 설치 (면조명 효과 강화)
-    // 블랙 패널 틈새에서 나오는 빛과 함께 사용
-    const areaLight1 = new THREE.PointLight(0xffffff, 1.8, 30);
-    areaLight1.position.set(-8, 15.1, -8);
-    this.scene.add(areaLight1);
-
-    const areaLight2 = new THREE.PointLight(0xffffff, 1.8, 30);
-    areaLight2.position.set(8, 15.1, -8);
-    this.scene.add(areaLight2);
-
-    const areaLight3 = new THREE.PointLight(0xffffff, 1.8, 30);
-    areaLight3.position.set(-8, 15.1, 8);
-    this.scene.add(areaLight3);
-
-    const areaLight4 = new THREE.PointLight(0xffffff, 1.8, 30);
-    areaLight4.position.set(8, 15.1, 8);
-    this.scene.add(areaLight4);
-
-    // 중앙 보조 조명 (약한 PointLight) - 면조명과 함께 사용
-    const ceilingLight = new THREE.PointLight(0xffffff, 0.6, 25);
-    ceilingLight.position.set(0, 15.1, 0);
-    ceilingLight.castShadow = true;
-    ceilingLight.shadow.mapSize.set(1024, 1024);
-    this.scene.add(ceilingLight);
+    // ✅ 천장 유령 조명 삭제: areaLight1-4, ceilingLight 제거됨 (가구 조명만 사용)
+    // ✅ 벽면 PointLight 삭제됨: 얼룩 반사 제거 (HemisphereLight로 대체)
+    // 가구 조명(상품 스포트라이트 등)은 addProductSpotlight에서 생성되므로 유지됨
   }
   
   addProductSpotlight(position, color) {
-    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지 - 선명한 그림자)
-    const spotlight = new THREE.SpotLight(color, 3.5, 15, Math.PI / 6, 0.2, 2);
+    // 진열대 위에서 상품을 비추는 핀 조명 (블랙 & 화이트 모던 라운지)
+    // ✅ 핀포인트 조명: 강도 50% 축소 (25.0 -> 12.0), 조사 각도 축소 (30도 -> 20도)
+    // 바닥 반사 최소화: 좁은 각도로 상품만 정확히 조명, 바닥에 과도한 반사 방지
+    // ✅ 물리법칙 준수: 역제곱 감쇠 법칙 (decay: 2) 적용
+    // ✅ 부드러운 빛 확산: penumbra 0.5 (가장자리 흐림, 바닥에 칼같은 자국 방지)
+    const spotlight = new THREE.SpotLight(color, 12.0, 30, Math.PI / 9, 0.5, 2);
     spotlight.position.set(position.x, position.y + 4, position.z); // 진열대 위에서 비춤
     
     // Target을 별도 Object3D로 생성하여 scene에 추가
@@ -280,11 +272,16 @@ class Showroom {
     this.scene.add(target);
     spotlight.target = target;
     
-    spotlight.castShadow = true;
-    spotlight.shadow.mapSize.width = 2048; // 그림자 품질 대폭 향상 (밝은 방에서 선명하게)
-    spotlight.shadow.mapSize.height = 2048;
-    spotlight.shadow.bias = -0.0001; // 그림자 깨짐 방지
-    spotlight.shadow.radius = 4; // 그림자 가장자리 부드러움 (선명하게)
+    // ✅ 깜빡거림 제거: 그림자 비활성화 (길쭉한 무언가 깜빡거림 현상 해결)
+    // spotlight.castShadow = true; // 그림자 비활성화로 깜빡거림 제거
+    spotlight.castShadow = false; // 깜빡거림 현상 해결을 위해 그림자 비활성화
+    // 그림자 품질 설정 (비활성화됨)
+    // spotlight.shadow.mapSize.width = 1024;
+    // spotlight.shadow.mapSize.height = 1024;
+    // spotlight.shadow.camera.near = 0.1;
+    // spotlight.shadow.camera.far = 50;
+    // spotlight.shadow.bias = -0.0001; // 그림자 아티팩트 방지
+    
     this.scene.add(spotlight);
     this.spotLights.push(spotlight); // 배열에 추가 (나중에 제어 가능)
   }
@@ -777,6 +774,37 @@ class Showroom {
       }
     } else {
       console.warn(`   ⚠️ [뒷벽] LuxeDisplay3D 또는 ProductFactory 클래스를 찾을 수 없습니다.`);
+    }
+
+    // [8] 천장 중앙 - 샹들리에는 (천장 내부 중앙에 배치, 봉 윗면이 천장에 붙도록)
+    // 천장 높이: y = 15
+    // 샹들리에는 구조: 그룹 내부 허브 중심 y=2.0, 봉 높이 4.5, 스케일 0.5
+    // 봉 윗면 (스케일 적용 후): y = (2.0 + 0.2 + 4.5) * 0.5 = 3.35
+    // createModel에서 group.position.y = position.y + 2.0이므로:
+    // 실제 봉 윗면 = position.y + 2.0 + 3.35 = position.y + 5.35
+    // 봉 윗면이 천장에 붙으려면: position.y + 5.35 = 15
+    // position.y = 15 - 5.35 = 9.65
+    // 천장 방향으로 0.5 올림: position.y = 10.15
+    if (typeof window.Chandelier3D !== 'undefined' && typeof window.ProductFactory !== 'undefined') {
+      const ceilingHeight = 15; // 천장 높이
+      const chandelierRodTop = 3.35; // 그룹 내부 봉 윗면 위치 (스케일 적용 후)
+      const hubOffset = 2.0; // createModel에서 허브 중심 오프셋
+      const upwardOffset = 2.0; // 천장 방향으로 올리는 오프셋 (1.5 -> 2.0으로 증가)
+      const chandelierPositionY = ceilingHeight - chandelierRodTop - hubOffset + upwardOffset; // 15 - 3.35 - 2.0 + 2.0 = 11.65
+      const chandelierPosition = new THREE.Vector3(0, chandelierPositionY, 0); // 천장 중앙
+      
+      console.log(`   [천장 중앙] "Chandelier3D" → (${chandelierPosition.x}, ${chandelierPosition.y.toFixed(2)}, ${chandelierPosition.z})`);
+      
+      const chandelierGroup = this.factory.createChandelier(chandelierPosition);
+      if (chandelierGroup) {
+        this.meshes.push(chandelierGroup);
+        this.scene.add(chandelierGroup);
+        console.log(`   ✅ [천장 중앙] 샹들리에는 전시 완료 (봉 윗면이 천장에 붙음)`);
+      } else {
+        console.warn(`   ⚠️ [천장 중앙] 샹들리에는 생성 실패`);
+      }
+    } else {
+      console.warn(`   ⚠️ [천장 중앙] Chandelier3D 또는 ProductFactory 클래스를 찾을 수 없습니다.`);
     }
 
     console.log(`✅ [Showroom] 총 ${this.meshes.length}개 상품 배치 완료`);
@@ -1312,14 +1340,16 @@ class Showroom {
       }
       
       // Premium 큐브: 외부 와이어프레임과 내부 큐브 반대 방향 회전
+      // ✅ 깜빡거림 제거: 스케일 애니메이션 비활성화 (길쭉한 무언가 깜빡거림 현상 해결)
       if (this.factory.premiumCubes) {
         this.factory.premiumCubes.forEach((cube) => {
           if (cube && cube.group) {
             // Frustum Culling: 카메라에 보이는 객체만 업데이트
             const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(cube.group) : true;
             if (isVisible) {
-              const scale = 1 + Math.sin(elapsed * 2 + (cube.offset || 0)) * 0.05;
-              cube.group.scale.setScalar(scale);
+              // ✅ 스케일 애니메이션 제거: 깜빡거림 현상 해결
+              // const scale = 1 + Math.sin(elapsed * 2 + (cube.offset || 0)) * 0.05;
+              // cube.group.scale.setScalar(scale);
               // 내부 큐브 반대 방향 빠른 회전
               if (cube.inner) {
                 cube.inner.rotation.x -= 0.03; // 반대 방향, 빠르게
@@ -1385,19 +1415,20 @@ class Showroom {
     // 샹들리에 애니메이션 삭제됨 (Commander 지시)
 
     // [Arc Reactor 애니메이션] 중앙 조명 발광 코어 회전 및 빛의 기둥 펄스
-    // 🚀 성능 최적화: traverse 대신 직접 접근 또는 캐시된 객체만 순회
-    if (shouldUpdateAnimations) {
-      this.scene.traverse((obj) => {
-        // 발광 코어 링 회전 (서로 반대 방향)
-        if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
-          // Frustum Culling: 카메라에 보이는 객체만 업데이트
-          const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(obj) : true;
-          if (isVisible) {
-            obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
-          }
-        }
-      });
-    }
+    // 🚀 성능 최적화: 회전 애니메이션 제거 (프레임 드랍 해결)
+    // ⚠️ 주석 처리: scene.traverse()가 매 프레임 실행되어 렌더링 부하 발생
+    // if (shouldUpdateAnimations) {
+    //   this.scene.traverse((obj) => {
+    //     // 발광 코어 링 회전 (서로 반대 방향)
+    //     if (obj.userData.isArcReactorCore && obj.userData.rotationSpeed) {
+    //       // Frustum Culling: 카메라에 보이는 객체만 업데이트
+    //       const isVisible = this.frustumCullingEnabled && this.frustum.intersectsObject ? this.frustum.intersectsObject(obj) : true;
+    //       if (isVisible) {
+    //         obj.rotation.z += obj.userData.rotationSpeed; // 천천히 회전
+    //       }
+    //     }
+    //   });
+    // }
 
     // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);

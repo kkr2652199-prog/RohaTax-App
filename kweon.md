@@ -1,4 +1,77 @@
-﻿# [2025-12-13 15:30 KST] - 4K 해상도 메뉴판 업그레이드 및 위치 조정 완료
+﻿# [2025-12-14 11:19:01 KST] - 샹들리에는 3D 모델 추가 및 조명 시스템 개선, 메뉴판 앞면 가독성 향상
+
+*   **한국 시간/날짜:** 2025년 12월 14일 11:19:01 (KST)
+*   **커밋 해시:** 949744c
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 샹들리에는 3D 모델 추가 및 조명 시스템 개선, 메뉴판 앞면 가독성 향상
+  1. [샹들리에는 3D 모델 추가] Chandelier3D.js 클래스 생성 (8개 팔, 중앙 허브, 천장 고정 봉 포함)
+  2. [샹들리에는 쇼룸 배치] 쇼룸 천장 중앙에 샹들리에는 배치 (봉 윗면이 천장에 붙도록 위치 계산)
+  3. [장식용 전구 조정] PointLight 강도 1.0 → 2.0, 거리 5 → 3 (빛 누출 방지)
+  4. [메인 조명 추가] SpotLight 추가 (intensity 15.0, distance 28.0, 하향 조사)
+  5. [메인 조명 위치 하강] y: -1 → -3.0 (팔에 가려지지 않게, 벽 그림자 간섭 제거)
+  6. [천장 전용 조명 추가] ceilingGlow PointLight 추가 (intensity 8.0, distance 30, 천장 밝기 확보)
+  7. [메뉴판 앞면 재질 교체] MeshStandardMaterial → MeshBasicMaterial (빛 반사 및 그림자 영향 100% 차단)
+  8. [showroom.html 스크립트 로드] Chandelier3D.js 스크립트 로드 추가
+*   **수정 파일:**
+  - static/js/3d/Chandelier3D.js (신규, 샹들리에는 3D 모델 및 조명 시스템)
+  - static/js/3d/Showroom.js (샹들리에는 배치 로직)
+  - static/js/3d/ProductFactory.js (메뉴판 앞면 재질 교체, 그림자 차단)
+  - templates/payment/showroom.html (Chandelier3D.js 스크립트 로드 추가)
+*   **결과:**
+  - 샹들리에는 쇼룸 천장 중앙에 정확히 배치 완료
+  - 조명 시스템 개선: 장식용 미광 + 메인 조명 + 천장 전용 조명
+  - 벽 그림자 간섭 제거 (메인 조명 위치 하강)
+  - 천장 전체 밝기 확보 (ceilingGlow)
+  - 메뉴판 앞면 가독성 향상 (빛 반사 및 그림자 영향 차단)
+
+---
+
+# [2025-12-13 20:25 KST] - 조명 시스템 최적화: 벽면 PointLight 제거 및 HemisphereLight 도입, 스포트라이트 핀포인트 조명 설정
+
+*   **한국 시간/날짜:** 2025년 12월 13일 20:25 (KST)
+*   **커밋 해시:** de61af5
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 벽면 얼룩 반사 제거 및 부드러운 공간감 확보, 스포트라이트 핀포인트 조명 설정
+  1. [벽면 PointLight 제거] 벽면 PointLight 4개 완전 삭제 (얼룩 반사 제거)
+  2. [HemisphereLight 도입] 반구 조명 추가 (하늘색 0xddeeff, 바닥색 0x0f0e0d, 강도 0.6)
+  3. [AmbientLight 강도 조정] 0.2 → 0.1 (HemisphereLight가 주 조명)
+  4. [스포트라이트 핀포인트 조명] 강도 25.0 → 12.0 (50% 축소), 각도 30도 → 20도 (바닥 반사 최소화)
+  5. [Penumbra 유지] 0.5 유지 (부드러운 빛 확산, 바닥에 칼같은 자국 방지)
+*   **수정 파일:**
+  - static/js/3d/ShowroomBuilder.js (벽면 PointLight 제거)
+  - static/js/3d/Showroom.js (HemisphereLight 도입, 스포트라이트 핀포인트 조명 설정)
+*   **결과:**
+  - 벽면 얼룩 반사 완전 제거
+  - 부드러운 공간감 확보 (HemisphereLight)
+  - 바닥 반사 최소화 (스포트라이트 핀포인트 조명)
+  - 상품 중심 조명 강화
+  - 물리법칙 준수 (HemisphereLight는 실제 하늘/바닥 반사 모델)
+
+---
+
+# [2025-12-13 최신] - 천장 조명 최적화: 빛 누출 차단 및 사거리 축소 완료
+
+*   **한국 시간/날짜:** 2025년 12월 13일 (KST)
+*   **커밋 해시:** 7f694d3
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 천장 조명 최적화로 빛 누출 차단 및 렌더링 부하 감소
+  1. [발광 코어 단면화] DoubleSide → FrontSide 변경 (위쪽 발광 차단, 쇼룸 내부로만 빛 발산)
+  2. [중앙 조명 위치 조정] centerLight 위치 하강 (y=16 → y=14.5, 천장 아래로 내려와 쇼룸 내부 직접 비춤)
+  3. [중앙 조명 사거리 축소] centerLight 거리 축소 (30m → 20m, 33% 감소)
+  4. [면조명 사거리 축소] areaLight1-4 거리 축소 (30m → 15m, 50% 감소)
+  5. [보조 조명 사거리 축소] ceilingLight 거리 축소 (25m → 15m, 40% 감소)
+*   **수정 파일:**
+  - static/js/3d/ShowroomBuilder.js (발광 코어 단면화, centerLight 위치/거리 조정)
+  - static/js/3d/Showroom.js (areaLight1-4, ceilingLight 사거리 축소)
+*   **결과:**
+  - 천장 위로 빛 누출 완전 차단
+  - 렌더링 부하 감소 (불필요한 외부 영역 계산 제거)
+  - 조명 효율 향상 (쇼룸 내부에만 집중)
+  - 프레임 드랍 개선 예상
+
+---
+
+# [2025-12-13 15:30 KST] - 4K 해상도 메뉴판 업그레이드 및 위치 조정 완료
 
 *   **한국 시간/날짜:** 2025년 12월 13일 15:30 (KST)
 *   **커밋 해시:** eb9a596

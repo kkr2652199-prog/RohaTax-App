@@ -674,17 +674,10 @@ class ProductFactory {
       metalness: 0.7
     });
     
-    // 앞면(Index 4)에만 텍스처 적용 (발광 효과)
-    const frontMaterial = new THREE.MeshStandardMaterial({
+    // 앞면(Index 4)에만 텍스처 적용 (MeshBasicMaterial: 조명 영향 없이 항상 선명하게)
+    const frontMaterial = new THREE.MeshBasicMaterial({
       map: texture,
-      transparent: true,
-      opacity: 1.0,
-      side: THREE.FrontSide,
-      roughness: 0.2,        // 매끈한 유리 느낌
-      metalness: 0.5,         // 약간의 금속성
-      emissive: 0xffffff,     // 발광 색상 (흰색)
-      emissiveMap: texture,   // 텍스처 자체가 빛나게 함
-      emissiveIntensity: 0.5  // 은은하게 스스로 빛남
+      transparent: true
     });
     
     // 재질 배열: [오른쪽, 왼쪽, 위, 아래, 앞, 뒤]
@@ -699,6 +692,10 @@ class ProductFactory {
     
     // ✅ Mesh 생성 (재질 배열 사용)
     const menuMesh = new THREE.Mesh(geometry, materials);
+    
+    // ✅ 그림자 차단 (빛 반사 및 그림자 영향 100% 차단)
+    menuMesh.castShadow = false;
+    menuMesh.receiveShadow = false;
     
     // ✅ 월드 좌표로 위치 설정 (상품 앞쪽 하단에 배치)
     const pos = position instanceof THREE.Vector3 
@@ -1069,6 +1066,61 @@ class ProductFactory {
       
     } catch (error) {
       console.error('      ❌ [ProductFactory] MagicFire 생성 중 오류:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Chandelier3D 가구 생성 (고급 샹들리에)
+   */
+  createChandelier(position, options = {}) {
+    if (typeof Chandelier3D === 'undefined' && typeof window.Chandelier3D === 'undefined') {
+      console.error('      ❌ [ProductFactory] Chandelier3D 클래스를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const Chandelier3DClass = Chandelier3D || window.Chandelier3D;
+    
+    // 위치 변환
+    const pos = position instanceof THREE.Vector3 
+      ? position 
+      : new THREE.Vector3(
+          position?.x || 0, 
+          position?.y || 0, 
+          position?.z || 0
+        );
+    
+    try {
+      // 모델 생성
+      const group = Chandelier3DClass.createModel(null, pos, true);
+      
+      if (!group) {
+        console.error('      ❌ [ProductFactory] Chandelier3D 그룹 생성 실패!');
+        return null;
+      }
+      
+      // 바운딩 박스 확인 (성능 최적화: userData에서 재사용)
+      const bbox = group.userData.boundingBox;
+      if (bbox) {
+        const { size, center } = bbox;
+        console.log(`      📦 [ProductFactory] Chandelier3D 바운딩 박스: 크기 (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)}), 중심 (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`);
+      } else {
+        // 폴백: userData에 없으면 계산 (하지만 이미 createModel에서 계산했으므로 발생하지 않아야 함)
+        const box = new THREE.Box3().setFromObject(group);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        console.log(`      📦 [ProductFactory] Chandelier3D 바운딩 박스 (재계산): 크기 (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)}), 중심 (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`);
+      }
+      
+      // Furniture Studio에서는 FurnitureViewer가 씬에 추가하므로 여기서는 추가하지 않음
+      // (Pedestal과 동일한 패턴)
+      
+      console.log(`      ✅ [ProductFactory] Chandelier3D 생성 완료: 위치 (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}), 그룹 위치 (${group.position.x.toFixed(1)}, ${group.position.y.toFixed(1)}, ${group.position.z.toFixed(1)})`);
+      return group;
+      
+    } catch (error) {
+      console.error('      ❌ [ProductFactory] Chandelier3D 생성 중 오류:', error);
+      console.error('      ❌ [ProductFactory] 에러 스택:', error.stack);
       return null;
     }
   }
