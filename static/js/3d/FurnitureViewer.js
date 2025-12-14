@@ -190,8 +190,13 @@ class FurnitureViewer {
     // 가구의 최대 크기 계산
     const maxSize = Math.max(size.x, size.y, size.z);
     
-    // 카메라 거리 계산 (가구 크기의 2.5배 정도)
-    const distance = maxSize * 2.5;
+    // 디버깅: 바운딩 박스 정보 출력
+    console.log(`[FurnitureViewer] adjustCamera - 크기: (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)}), 중심: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}), maxSize: ${maxSize.toFixed(2)}`);
+    
+    // 샹들리에는 크기가 작을 수 있으므로 최소 거리 보장
+    const minDistance = 5.0;
+    const calculatedDistance = maxSize * 2.5;
+    const distance = Math.max(calculatedDistance, minDistance);
     
     // 카메라 위치 설정 (가구를 앞에서 위로 비춤)
     this.camera.position.set(
@@ -208,6 +213,8 @@ class FurnitureViewer {
       this.controls.target.copy(center);
       this.controls.update();
     }
+    
+    console.log(`[FurnitureViewer] 카메라 위치: (${this.camera.position.x.toFixed(2)}, ${this.camera.position.y.toFixed(2)}, ${this.camera.position.z.toFixed(2)}), 거리: ${distance.toFixed(2)}`);
 
     console.log(`[FurnitureViewer] 카메라 거리 조정: ${distance.toFixed(2)}m, 가구 크기: ${maxSize.toFixed(2)}m`);
   }

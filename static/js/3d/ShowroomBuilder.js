@@ -707,9 +707,10 @@ class ShowroomBuilder {
     });
 
     // ✅ WebGL 최적화: MeshStandardMaterial로 변경
+    // ✅ 완전 무광 처리: 반사 제거로 "형체 없는 빛" 효과 제거
     const lidMat = new THREE.MeshStandardMaterial({
       color: 0x050505, // 완전한 블랙
-      roughness: 0.0, // 거울처럼 매끈하게
+      roughness: 0.9, // 완전 무광 (반사 제거)
       metalness: 0.1
       // clearcoat, clearcoatRoughness 제거: MeshStandardMaterial로 변경하여 텍스처 유닛 절약
     });
