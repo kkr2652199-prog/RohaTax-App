@@ -444,32 +444,35 @@ class TV3D {
     playPauseBtnGroup.add(playPauseBtn);
     
     // 아이콘 표현 (플레이/일시정지) - 항상 레드색 - 4배 확대 + 10% 추가 확대
-    if (isPlaying) {
-      // 일시정지 상태: 두 개의 세로 막대 (||) - 레드색
-      const pauseBar1 = new THREE.Mesh(
-        new THREE.BoxGeometry(0.066, 0.176, 0.022), // 4배 확대 + 10% 추가 (0.06 → 0.066, 0.16 → 0.176, 0.02 → 0.022)
-        new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
-      );
-      pauseBar1.position.set(-0.066, 0, 0.053); // 4배 확대 + 10% 추가 (-0.06 → -0.066, 0.048 → 0.053)
-      playPauseBtnGroup.add(pauseBar1);
-      
-      const pauseBar2 = new THREE.Mesh(
-        new THREE.BoxGeometry(0.066, 0.176, 0.022), // 4배 확대 + 10% 추가 (0.06 → 0.066, 0.16 → 0.176, 0.02 → 0.022)
-        new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
-      );
-      pauseBar2.position.set(0.066, 0, 0.053); // 4배 확대 + 10% 추가 (0.06 → 0.066, 0.048 → 0.053)
-      playPauseBtnGroup.add(pauseBar2);
-    } else {
-      // 재생 상태: 삼각형 (▶) - 레드색
-      const playTriangle = new THREE.Mesh(
-        new THREE.ConeGeometry(0.11, 0.198, 3), // 4배 확대 + 10% 추가 (0.1 → 0.11, 0.18 → 0.198)
-        new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
-      );
-      playTriangle.rotation.x = Math.PI / 2;
-      playTriangle.rotation.z = -Math.PI / 2;
-      playTriangle.position.set(0.044, 0, 0.053); // 4배 확대 + 10% 추가 (0.04 → 0.044, 0.048 → 0.053)
-      playPauseBtnGroup.add(playTriangle);
-    }
+    // 두 아이콘을 모두 생성하고 visible로 제어 (동적 업데이트 가능)
+    
+    // 일시정지 아이콘: 두 개의 세로 막대 (||) - 레드색 (크기 20% 증가)
+    const pauseBar1 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.079, 0.211, 0.026), // 크기 20% 증가 (0.066 → 0.079, 0.176 → 0.211, 0.022 → 0.026)
+      new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
+    );
+    pauseBar1.position.set(-0.066, 0, 0.053); // 4배 확대 + 10% 추가 (-0.06 → -0.066, 0.048 → 0.053)
+    pauseBar1.visible = false; // 초기 상태: 숨김 (Play 버튼 우선 노출)
+    playPauseBtnGroup.add(pauseBar1);
+    
+    const pauseBar2 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.079, 0.211, 0.026), // 크기 20% 증가 (0.066 → 0.079, 0.176 → 0.211, 0.022 → 0.026)
+      new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
+    );
+    pauseBar2.position.set(0.066, 0, 0.053); // 4배 확대 + 10% 추가 (0.06 → 0.066, 0.048 → 0.053)
+    pauseBar2.visible = false; // 초기 상태: 숨김 (Play 버튼 우선 노출)
+    playPauseBtnGroup.add(pauseBar2);
+    
+    // 재생 아이콘: 삼각형 (▶) - 레드색 (크기 20% 증가)
+    const playTriangle = new THREE.Mesh(
+      new THREE.ConeGeometry(0.132, 0.238, 3), // 크기 20% 증가 (0.11 → 0.132, 0.198 → 0.238)
+      new THREE.MeshBasicMaterial({ color: 0xff0000 }) // 레드색
+    );
+    playTriangle.rotation.x = Math.PI / 2;
+    playTriangle.rotation.z = -Math.PI / 2;
+    playTriangle.position.set(0.044, 0, 0.053); // 4배 확대 + 10% 추가 (0.04 → 0.044, 0.048 → 0.053)
+    playTriangle.visible = true; // 초기 상태: 표시 (Play 버튼 우선 노출)
+    playPauseBtnGroup.add(playTriangle);
     
     controlGroup.add(playPauseBtnGroup);
 
@@ -507,7 +510,8 @@ class TV3D {
     // 애니메이션 플래그 설정 (기본값: false - 사용자가 직접 제어할 때만 회전)
     group.userData.isAnimating = false; // 자동 회전 비활성화
     group.userData.rotationSpeed = 0.005;
-    group.userData.isPlaying = isPlaying;
+    // 초기 상태 명시적으로 설정 (Play 버튼 우선 노출 보장)
+    group.userData.isPlaying = false; // 항상 false로 시작 (Play 아이콘 표시)
     
     // 비디오 및 타임라인 참조 저장 (외부 제어용)
     group.userData.videoElement = video;
@@ -521,6 +525,13 @@ class TV3D {
       rewind: rewindBtn,
       playPause: playPauseBtn,
       forward: forwardBtn
+    };
+    
+    // 아이콘 참조 저장 (동적 업데이트용)
+    group.userData.playPauseIcons = {
+      pauseBar1: pauseBar1,
+      pauseBar2: pauseBar2,
+      playTriangle: playTriangle
     };
     
     // 스크린 참조 저장

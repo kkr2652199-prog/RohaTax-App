@@ -925,8 +925,8 @@ class ProductFactory {
           position?.z || 0
         );
     
-    // TV 모델 생성
-    const group = TV3DClass.createModel(product, pos, modelPath);
+    // TV 모델 생성 (isPlaying = false로 명시: 초기 상태는 정지, Play 아이콘 표시)
+    const group = TV3DClass.createModel(product, pos, false);
     
     if (!group) {
       console.error('      ❌ [ProductFactory] 3D TV 그룹 생성 실패!');

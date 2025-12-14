@@ -7,7 +7,8 @@
         <div class="nav-menu">
             <a href="#features" class="nav-link">기능 소개</a>
             <a href="#testimonials" class="nav-link">성공 사례</a>
-            <a href="/shop" class="nav-link">멤버십</a>
+            <a href="/shop" class="nav-link">유료 상점</a>
+            <a href="/showroom" class="nav-link">3D 체험 상점 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
             <a href="/studio" class="nav-link">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
             <a href="#faq" class="nav-link">고객 지원</a>
             {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
@@ -30,7 +31,11 @@
                         </a>
                         <a href="/shop" class="user-menu-dropdown-item">
                             <span class="keycap-icon">🛍️</span>
-                            <span class="keycap-text">상점</span>
+                            <span class="keycap-text">유료 상점</span>
+                        </a>
+                        <a href="/showroom" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">📦</span>
+                            <span class="keycap-text">3D 상점</span>
                         </a>
                         <a href="/studio" class="user-menu-dropdown-item">
                             <span class="keycap-icon">📝</span>
