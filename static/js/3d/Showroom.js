@@ -1031,8 +1031,84 @@ class Showroom {
       }
     }
     
+    // ✅ TV/사운드바 버튼 클릭 처리 (우선 처리)
+    const allIntersects = this.raycaster.intersectObjects(this.meshes, true);
+    for (const intersect of allIntersects) {
+      const clickedObject = intersect.object;
+      
+      // 사운드바 버튼 클릭 감지
+      if (clickedObject.userData && clickedObject.userData.type === 'soundbarButton') {
+        // TV 그룹 찾기 (부모 그룹 탐색)
+        let tvGroup = clickedObject.parent;
+        while (tvGroup && !tvGroup.userData.videoElement) {
+          tvGroup = tvGroup.parent;
+        }
+        
+        if (!tvGroup || !tvGroup.userData.videoElement) {
+          console.warn('⚠️ [Showroom] TV 그룹을 찾을 수 없습니다.');
+          continue;
+        }
+        
+        const video = tvGroup.userData.videoElement;
+        const buttonType = clickedObject.userData.buttonType;
+        
+        console.log(`✅ [Showroom] 사운드바 버튼 클릭: ${buttonType}`);
+        
+        if (buttonType === 'playPause') {
+          // 재생/일시정지 토글
+          if (video.paused) {
+            // 첫 클릭 시 음소거 해제 (자동 재생을 위해 음소거 상태였음)
+            if (video.muted) {
+              video.muted = false;
+            }
+            video.play().catch(err => {
+              console.warn('[Showroom] 비디오 재생 실패:', err);
+            });
+            tvGroup.userData.isPlaying = true;
+          } else {
+            video.pause();
+            tvGroup.userData.isPlaying = false;
+          }
+        } else if (buttonType === 'rewind') {
+          // 10초 뒤로
+          video.currentTime = Math.max(0, video.currentTime - 10);
+        } else if (buttonType === 'forward') {
+          // 10초 앞으로
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        }
+        
+        return; // 버튼 클릭 처리 완료
+      }
+      
+      // 타임라인 클릭 감지 (Seek 기능)
+      if (clickedObject.userData && clickedObject.userData.isProgressBar) {
+        // TV 그룹 찾기
+        let tvGroup = clickedObject.parent;
+        while (tvGroup && !tvGroup.userData.videoElement) {
+          tvGroup = tvGroup.parent;
+        }
+        
+        if (!tvGroup || !tvGroup.userData.videoElement) {
+          console.warn('⚠️ [Showroom] TV 그룹을 찾을 수 없습니다.');
+          continue;
+        }
+        
+        const video = tvGroup.userData.videoElement;
+        const uv = intersect.uv;
+        
+        // UV x 좌표 (0~1)를 시간으로 변환
+        if (video.duration > 0) {
+          const seekTime = video.duration * uv.x;
+          video.currentTime = Math.max(0, Math.min(video.duration, seekTime));
+          console.log(`✅ [Showroom] 타임라인 클릭: ${seekTime.toFixed(2)}초로 이동`);
+        }
+        
+        return; // 타임라인 클릭 처리 완료
+      }
+    }
+    
     // ✅ 기존 상품 클릭 처리 (메뉴판이 아닌 경우)
-    const intersects = this.raycaster.intersectObjects(this.meshes, true);
+    const intersects = allIntersects.length > 0 ? allIntersects : this.raycaster.intersectObjects(this.meshes, true);
     if (intersects.length === 0) {
       return;
     }
@@ -1429,6 +1505,35 @@ class Showroom {
     //     }
     //   });
     // }
+
+    // [TV 타임라인 업데이트] 비디오 재생 중 타임라인 실시간 업데이트
+    if (shouldUpdateAnimations) {
+      this.meshes.forEach((mesh) => {
+        // TV 비디오 텍스처 갱신 (필수)
+        if (mesh.userData && mesh.userData.videoTexture && mesh.userData.videoElement) {
+          const video = mesh.userData.videoElement;
+          if (video.readyState >= video.HAVE_CURRENT_DATA) {
+            mesh.userData.videoTexture.needsUpdate = true;
+          }
+        }
+        
+        // 타임라인 업데이트
+        if (mesh.userData && mesh.userData.videoElement && mesh.userData.drawProgressBar) {
+          const video = mesh.userData.videoElement;
+          const drawProgressBar = mesh.userData.drawProgressBar;
+          const progressTexture = mesh.userData.progressTexture;
+          
+          if (video && !video.paused && video.duration > 0) {
+            // 타임라인 그리기
+            drawProgressBar(video.currentTime, video.duration);
+            // 텍스처 업데이트
+            if (progressTexture) {
+              progressTexture.needsUpdate = true;
+            }
+          }
+        }
+      });
+    }
 
     // 🚀 성능 최적화: 렌더링 (Three.js 내부적으로 Frustum Culling 자동 적용)
     this.renderer.render(this.scene, this.camera);
