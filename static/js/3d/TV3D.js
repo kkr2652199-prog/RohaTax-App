@@ -147,15 +147,15 @@ class TV3D {
     tvFrame.receiveShadow = true;
     tvGroup.add(tvFrame);
 
-    // Gold Trim Border (TV 정면 테두리 패널 - 진한 금장색) - 프레임에 맞춰 4배 확대 + 10% 추가 확대
+    // Gold Trim Border (TV 정면 테두리 패널 - 블랙) - 프레임에 맞춰 4배 확대 + 10% 추가 확대
     const goldTrim = new THREE.Mesh(
       new THREE.BoxGeometry(15.4, 9.3, 0.035), // 4배 확대 + 10% 추가 (14.02 → 15.4, 8.42 → 9.3, 0.032 → 0.035)
       new THREE.MeshStandardMaterial({
-        color: TV3D.THEME.GOLD, // 진한 금장색 (색상 유지)
-        metalness: 0.7, // 빛 반사 효과 30% 감소 (1.0 → 0.7)
-        roughness: 0.3, // 빛 반사 효과 30% 감소 (0.1 → 0.3)
-        emissive: TV3D.THEME.GOLD, // 발광도 진한 금장색으로 (색상 유지)
-        emissiveIntensity: 0.14 // 발광 강도 30% 감소 (0.2 → 0.14)
+        color: 0x000000, // 블랙
+        metalness: 0.7,
+        roughness: 0.3,
+        emissive: 0x000000, // 블랙
+        emissiveIntensity: 0.0
       })
     );
     goldTrim.position.z = 0.164; // 4배 확대에 맞춰 위치 조정 (0.041 → 0.164)
@@ -194,17 +194,28 @@ class TV3D {
     video.playsInline = true;
     video.muted = true; // 자동 재생을 위해 음소거 (사용자 클릭 시 해제)
     video.preload = 'auto';
+    // 비디오 재생 품질 향상 설정
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
     
-    // 비디오 텍스처 생성
+    // 비디오 텍스처 생성 (고화질 설정)
     const videoTexture = new THREE.VideoTexture(video);
+    // 고화질 필터 설정 (부드러운 보간)
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
+    // 텍스처 경계 처리 (ClampToEdge로 가장자리 깨짐 방지)
+    videoTexture.wrapS = THREE.ClampToEdgeWrapping;
+    videoTexture.wrapT = THREE.ClampToEdgeWrapping;
+    // 텍스처 형식 최적화
+    videoTexture.format = THREE.RGBAFormat;
+    videoTexture.generateMipmaps = false; // 비디오는 mipmap 불필요
     
     // 스크린 메시 생성 (MeshBasicMaterial로 변경하여 비디오가 선명하게 보이도록)
     const screen = new THREE.Mesh(
       new THREE.PlaneGeometry(14.7, 8.6), // 4배 확대 + 10% 추가 (13.4 → 14.7, 7.8 → 8.6)
       new THREE.MeshBasicMaterial({
-        map: videoTexture // 비디오 텍스처 직접 적용
+        map: videoTexture, // 비디오 텍스처 직접 적용
+        side: THREE.FrontSide // 정면만 렌더링 (성능 최적화)
       })
     );
     screen.position.set(0, 0, 0.208); // 4배 확대에 맞춰 위치 조정 (0.052 → 0.208, z-fighting 방지)
@@ -552,6 +563,9 @@ class TV3D {
     forwardBtn.userData.buttonType = 'forward';
     forwardBtn.name = 'Soundbar_Forward';
 
+    // TV 그룹에 이름표 부착 (Showroom.js에서 찾을 수 있도록)
+    group.name = 'TV_Group';
+    
     console.log('✅ [TV3D] 고급 3D TV 모델 생성 완료 (원본 디자인 기반)');
     return group;
   }
