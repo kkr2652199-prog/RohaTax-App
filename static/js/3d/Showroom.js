@@ -1065,9 +1065,25 @@ class Showroom {
               console.warn('[Showroom] 비디오 재생 실패:', err);
             });
             tvGroup.userData.isPlaying = true;
+            
+            // 버튼 아이콘 업데이트: Play(▶) 숨기고 Pause(||) 표시
+            if (tvGroup.userData.playPauseIcons) {
+              const icons = tvGroup.userData.playPauseIcons;
+              if (icons.playTriangle) icons.playTriangle.visible = false;
+              if (icons.pauseBar1) icons.pauseBar1.visible = true;
+              if (icons.pauseBar2) icons.pauseBar2.visible = true;
+            }
           } else {
             video.pause();
             tvGroup.userData.isPlaying = false;
+            
+            // 버튼 아이콘 업데이트: Pause(||) 숨기고 Play(▶) 표시
+            if (tvGroup.userData.playPauseIcons) {
+              const icons = tvGroup.userData.playPauseIcons;
+              if (icons.playTriangle) icons.playTriangle.visible = true;
+              if (icons.pauseBar1) icons.pauseBar1.visible = false;
+              if (icons.pauseBar2) icons.pauseBar2.visible = false;
+            }
           }
         } else if (buttonType === 'rewind') {
           // 10초 뒤로
