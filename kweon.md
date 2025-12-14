@@ -1,4 +1,32 @@
-﻿# [2025-12-13 20:25 KST] - 조명 시스템 최적화: 벽면 PointLight 제거 및 HemisphereLight 도입, 스포트라이트 핀포인트 조명 설정
+﻿# [2025-12-14 11:19:01 KST] - 샹들리에는 3D 모델 추가 및 조명 시스템 개선, 메뉴판 앞면 가독성 향상
+
+*   **한국 시간/날짜:** 2025년 12월 14일 11:19:01 (KST)
+*   **커밋 해시:** 949744c
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 샹들리에는 3D 모델 추가 및 조명 시스템 개선, 메뉴판 앞면 가독성 향상
+  1. [샹들리에는 3D 모델 추가] Chandelier3D.js 클래스 생성 (8개 팔, 중앙 허브, 천장 고정 봉 포함)
+  2. [샹들리에는 쇼룸 배치] 쇼룸 천장 중앙에 샹들리에는 배치 (봉 윗면이 천장에 붙도록 위치 계산)
+  3. [장식용 전구 조정] PointLight 강도 1.0 → 2.0, 거리 5 → 3 (빛 누출 방지)
+  4. [메인 조명 추가] SpotLight 추가 (intensity 15.0, distance 28.0, 하향 조사)
+  5. [메인 조명 위치 하강] y: -1 → -3.0 (팔에 가려지지 않게, 벽 그림자 간섭 제거)
+  6. [천장 전용 조명 추가] ceilingGlow PointLight 추가 (intensity 8.0, distance 30, 천장 밝기 확보)
+  7. [메뉴판 앞면 재질 교체] MeshStandardMaterial → MeshBasicMaterial (빛 반사 및 그림자 영향 100% 차단)
+  8. [showroom.html 스크립트 로드] Chandelier3D.js 스크립트 로드 추가
+*   **수정 파일:**
+  - static/js/3d/Chandelier3D.js (신규, 샹들리에는 3D 모델 및 조명 시스템)
+  - static/js/3d/Showroom.js (샹들리에는 배치 로직)
+  - static/js/3d/ProductFactory.js (메뉴판 앞면 재질 교체, 그림자 차단)
+  - templates/payment/showroom.html (Chandelier3D.js 스크립트 로드 추가)
+*   **결과:**
+  - 샹들리에는 쇼룸 천장 중앙에 정확히 배치 완료
+  - 조명 시스템 개선: 장식용 미광 + 메인 조명 + 천장 전용 조명
+  - 벽 그림자 간섭 제거 (메인 조명 위치 하강)
+  - 천장 전체 밝기 확보 (ceilingGlow)
+  - 메뉴판 앞면 가독성 향상 (빛 반사 및 그림자 영향 차단)
+
+---
+
+# [2025-12-13 20:25 KST] - 조명 시스템 최적화: 벽면 PointLight 제거 및 HemisphereLight 도입, 스포트라이트 핀포인트 조명 설정
 
 *   **한국 시간/날짜:** 2025년 12월 13일 20:25 (KST)
 *   **커밋 해시:** de61af5
