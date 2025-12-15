@@ -1,11 +1,11 @@
 /* VIP 회원님 체크포인트 제목 스타일 */
 .vip-checkpoint-title {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #0F172A;
   text-align: center;
-  margin-bottom: 12px;
-  padding: 12px 0;
+  margin-bottom: 24px;
+  padding: 16px 0;
   border-bottom: 2px solid #E2E8F0;
   position: relative;
 }
@@ -18,23 +18,20 @@
 
 /* 엑셀 시트 안 가로 배열 목차 스타일 (현대적인 SaaS Card UI) */
 .vip-checklist-text {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin-bottom: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
   background: #F8FAFC;
-  border-radius: 12px;
+  border-radius: 16px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .checklist-text-item {
   margin-bottom: 0;
-  padding: 12px;
+  padding: 20px 16px;
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #E2E8F0;
   position: relative;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -44,7 +41,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 70px;
+  min-height: 100px;
 }
 
 .checklist-text-item:hover {
@@ -66,11 +63,11 @@
 }
 
 .checklist-title {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #0F172A;
-  margin-bottom: 6px;
-  line-height: 1.3;
+  margin-bottom: 8px;
+  line-height: 1.4;
   position: relative;
   padding-left: 0;
   text-align: center;
@@ -79,10 +76,10 @@
 }
 
 .checklist-description {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: #64748B;
-  line-height: 1.4;
-  margin-bottom: 3px;
+  line-height: 1.5;
+  margin-bottom: 4px;
   padding-left: 0;
   position: relative;
   text-align: center;
@@ -98,54 +95,24 @@
 .vip-help-row,
 .vip-compare-row {
   display: grid;
-  grid-template-columns: var(--vip-columns, repeat(7, 1fr));
+  grid-template-columns: var(--vip-columns);
   gap: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-top: 0;
-  margin-bottom: 0;
-  clear: both;
-}
-
-.vip-help-cell {
-  padding: 16px 20px;
-  font-size: 13px;
-  color: #475569;
-  text-align: center;
-  border-right: 1px solid #E2E8F0;
-  background: #ffffff;
-  min-height: 55px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-break: break-word;
-  line-height: 1.6;
-}
-
-.vip-help-cell:last-child {
-  border-right: none;
 }
 
 /* 비교 행 스타일 (데이터 그리드 스타일) */
 .vip-compare-row {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .vip-compare-cell {
   text-align: center;
-  padding: 14px 18px;
+  padding: 16px;
   color: #0F172A;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   font-weight: 600;
   transition: all 0.2s ease;
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-break: break-word;
 }
 
 .vip-compare-cell:hover {
@@ -156,12 +123,11 @@
 /* VIP 팝업 기본 스타일 (현대적인 SaaS 스타일) */
 .vip-notice {
   position: fixed;
-  top: 3vh;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 95vw;
-  max-width: 1800px;
-  max-height: 92vh;
+  transform: translate(-50%, -50%);
+  width: 1600px;
+  height: 850px;
   color: #0F172A;
   background: #ffffff;
   border-radius: 24px;
@@ -173,16 +139,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  overflow-y: auto;
-  overflow-x: hidden;
+  justify-content: center;
+  overflow-y: visible;
   border: 1px solid #E2E8F0;
-  box-sizing: border-box;
-}
-
-.vip-notice * {
-  box-sizing: border-box;
-  max-width: 100%;
 }
 
 /* 백드롭 */
@@ -375,8 +334,8 @@
 .vip-simulation-preview {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .vip-sim-cell {
@@ -469,17 +428,14 @@
   background: #ffffff;
   border: 1px solid #E2E8F0;
   border-radius: 16px;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 8px;
 }
 
 .vip-excel-header {
@@ -501,57 +457,11 @@
   display: grid;
   grid-template-columns: var(--vip-columns, repeat(7, 1fr));
   background: #ffffff;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  box-sizing: border-box;
-  margin-top: 0;
-  margin-bottom: 24px;
-  clear: both;
-  gap: 0;
-}
-
-/* VIP 회원님 엑셀파일 제목 예시 박스 */
-.vip-excel-title-example-box {
-  width: fit-content;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 32px;
-  padding-top: 10px;
-  padding-bottom: 80px;
-  padding-left: 28px;
-  padding-right: 28px;
-  background: #F8FAFC;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  clear: both;
-}
-
-.title-example-header {
-  width: 100%;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.title-example-main {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #0F172A;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.title-example-sub {
-  font-size: 1.0rem;
-  color: #64748B;
-  font-weight: 500;
-  margin: 0;
-  line-height: 1.5;
 }
 
 .vip-excel-col {
-  padding: 18px 24px;
-  font-size: 14px;
+  padding: 16px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
   border-right: 1px solid #E2E8F0;
@@ -559,12 +469,6 @@
   color: #475569;
   border-bottom: 2px solid #E2E8F0;
   transition: all 0.2s ease;
-  min-height: 65px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-break: break-word;
-  line-height: 1.6;
 }
 
 .vip-excel-col:hover {
@@ -576,38 +480,9 @@
 }
 
 /* 예시값 한 줄 */
-.vip-excel-example {
-  display: grid;
-  grid-template-columns: var(--vip-columns, repeat(7, 1fr));
-  border-top: 1px solid #d0d7de;
-  background: #fff;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-top: 0;
-  margin-bottom: 0;
-  clear: both;
-}
-
-.vip-example-cell {
-  padding: 16px 20px;
-  font-family: "Courier New", monospace;
-  font-size: 13px;
-  color: #374151;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  word-break: keep-all;
-  line-height: 1.6;
-  min-height: 60px;
-}
-
-.vip-example-cell:last-child {
-  border-right: none;
-}
+.vip-excel-example{display:grid;grid-template-columns:var(--vip-columns, repeat(7,1fr));border-top:1px solid #d0d7de;background:#fff}
+.vip-example-cell{padding:10px 8px;font-family:"Courier New",monospace;font-size:12px;color:#374151;border-right:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;line-height:1.4}
+.vip-example-cell:last-child{border-right:none}
 
 
 /* 데이터 시뮬레이션 영역 */
@@ -915,7 +790,7 @@
 
 /* 마우스 시뮬레이션 영상 컨테이너 */
 .vip-video-container {
-  margin: 12px 0;
+  margin: 20px 0;
   border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.1);
@@ -940,21 +815,18 @@
 .vip-demo-preview {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
 .vip-excel-cell {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  min-height: 50px;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .vip-cell-label {
@@ -1231,13 +1103,9 @@
 /* 반응형 디자인 */
         @media (max-width: 768px) {
           .vip-notice {
-            top: 3vh;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95vw;          /* 화면 너비의 95% */
-            max-width: 1600px;    /* 최대 너비 확대 */
-            max-height: 92vh;     /* 화면 높이의 92% 제한 */
-            padding: 24px 28px;   /* 태블릿 패딩 */
+            width: 650px;         /* 태블릿용 고정 크기 (가로 더 크게) */
+            height: 400px;        /* 태블릿용 고정 높이 */
+            padding: 18px 20px;   /* 태블릿 패딩 */
           }
   
   .vip-headline {
@@ -1256,19 +1124,19 @@
   
   .vip-feature-highlight {
     font-size: 15px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
   }
   
   .vip-user-role {
     font-size: 16px;
-    margin-bottom: 12px;
-    padding: 10px 14px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
   }
   
   .vip-video-showcase {
-    margin: 12px 0;
-    padding: 12px;
+    margin: 20px 0;
+    padding: 16px;
   }
   
   .vip-video-wrapper {
@@ -1372,13 +1240,9 @@
 
         @media (max-width: 480px) {
           .vip-notice {
-            top: 3vh;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95vw;          /* 화면 너비의 95% */
-            max-width: 95vw;      /* 최대 너비 제한 */
-            max-height: 92vh;     /* 화면 높이의 92% 제한 */
-            padding: 20px 24px;   /* 모바일 패딩 */
+            width: 500px;         /* 모바일용 고정 크기 (가로 더 크게) */
+            height: 350px;        /* 모바일용 고정 높이 */
+            padding: 16px 18px;   /* 모바일 패딩 */
           }
   
   .vip-headline {
@@ -1481,17 +1345,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 0px;
-  padding-bottom: 15px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  padding: 24px 0;
+  margin: 20px 0;
 }
 
 .arrow-icon {
   font-size: 2.5rem;
-  margin-bottom: 0px;
-  margin-top: 0px;
-  position: static;
+  margin-bottom: 8px;
   animation: arrowBounce 2s ease-in-out infinite;
 }
 
@@ -1529,9 +1389,9 @@
 
 /* 엑셀 예시 셀 스타일 개선 */
 .vip-example-cell {
-  padding: 8px 12px;
+  padding: 16px;
   font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-size: 13px;
   color: #374151;
   border-right: 1px solid #E2E8F0;
   display: flex;
@@ -1540,7 +1400,7 @@
   text-align: center;
   white-space: normal;
   word-break: keep-all;
-  line-height: 1.4;
+  line-height: 1.5;
   background: #ffffff;
   transition: background 0.2s ease;
 }
@@ -1556,12 +1416,12 @@
 /* 비교 행 스타일 개선 */
 .vip-compare-cell {
   text-align: center;
-  padding: 8px 12px;
+  padding: 16px;
   color: #0F172A;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.5;
   font-weight: 600;
   transition: all 0.2s ease;
 }
