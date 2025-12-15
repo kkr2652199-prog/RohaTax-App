@@ -49,7 +49,9 @@
         
         <!-- VIP 회원님 체크포인트 제목 -->
         <div class="vip-checkpoint-title">
+          <span class="vip-badge-icon">👑</span>
           <h2>로●하 Tax VIP 회원님 체크포인트</h2>
+          <span class="vip-badge-trust">신뢰할 수 있는 자동화 솔루션</span>
         </div>
         
         <!-- 엑셀 시트 안에 VIP 핵심 어필 텍스트 (이미지와 동일) -->
@@ -302,7 +304,11 @@
         </div>
       </div>
 
-      <div style="height: 60px;"></div>
+      <!-- 데이터 변환 화살표 (시각적 흐름 표현) -->
+      <div class="vip-conversion-arrow">
+        <div class="arrow-icon">⬇️</div>
+        <div class="arrow-text">로●하 Tax 자동 변환</div>
+      </div>
 
       <!-- 홈택스 공식 양식 예시 시트박스 -->
       <div class="vip-excel-title-example-box" style="margin-top: -20px;">
@@ -1313,24 +1319,24 @@ function closeDropdown(columnKey, event) {
     color: #059669;
   }
 
-  /* VIP 회원님 엑셀파일 제목 예시 시트박스 스타일 - 프리미엄 버전 */
+  /* VIP 회원님 엑셀파일 제목 예시 시트박스 스타일 - 현대적인 SaaS 스타일 */
   .vip-excel-title-example-box {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 2px solid #10B981;
-    border-radius: 16px;
-    padding: 12px 17px;
-    margin: 10px auto;
-    max-width: 648px;
-    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px auto;
+    max-width: 100%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   
   .vip-excel-title-example-box:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.25);
-    border-color: rgba(255,215,0,0.5);
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.15);
+    border-color: #10B981;
   }
 
   .vip-excel-title-example-box::before {
@@ -1354,18 +1360,21 @@ function closeDropdown(columnKey, event) {
   }
 
   .title-example-main {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.01em;
     color: #1F2937;
     margin: 0 0 4px 0;
     line-height: 1.3;
   }
 
   .title-example-sub {
-    font-size: 10px;
-    color: #6B7280;
-    margin: 0;
+    font-size: 12px;
+    color: #64748B;
+    margin: 8px 0 0 0;
     font-weight: 500;
+    line-height: 1.5;
   }
 
   /* 반응형 디자인 */
