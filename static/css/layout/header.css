@@ -73,6 +73,9 @@
 }
 
 .navbar .nav-logo .logo-text {
+    position: absolute !important;
+    top: -18px !important;
+    left: -170px !important;
     font-weight: 800 !important;
     margin: 0 !important;
     padding: 0 !important;
