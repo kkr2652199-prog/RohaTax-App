@@ -89,7 +89,12 @@
       });
 
       // 터치 이벤트 지원
-      this.grid.addEventListener('touchstart', () => {
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      this.grid.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
         this.isPaused = true;
       });
 

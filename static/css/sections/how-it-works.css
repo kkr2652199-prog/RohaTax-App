@@ -16,7 +16,9 @@
 
 /* Section Header (Theater Mode) */
 .how-it-works-section .section-header {
-    position: relative;
+    position: absolute;
+    top: -247px;
+    z-index: 0;
     background-color: #0f172a;
     background-image: 
         linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
