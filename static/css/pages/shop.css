@@ -1,0 +1,1767 @@
+/* ================================================================
+   Platinum White - Modern Shop Design
+   Light Mode & Premium Shadow Style
+   ================================================================ */
+
+:root {
+    --primary-color: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --bg-dark: #F8FAFC;
+    --bg-darker: #F1F5F9;
+    --card-bg: #FFFFFF;
+    --card-border: rgba(0, 0, 0, 0.05);
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --gold: #fbbf24;
+    --gold-glow: rgba(251, 191, 36, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 20px 60px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* ================================================================
+   Base Styles
+   ================================================================ */
+
+body.shop-page {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ================================================================
+   Glass Header (Light Theme)
+   ================================================================ */
+
+.glass-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 16px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.glass-header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.glass-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+}
+
+.glass-header-logo-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 10px var(--neon-glow));
+}
+
+.glass-header-nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.glass-header-nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.glass-header-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #22d3ee 0%, #a78bfa 100%);
+    transition: width 0.3s ease;
+}
+
+.glass-header-nav-link:hover {
+    color: var(--primary-color);
+}
+
+.glass-header-nav-link:hover::after {
+    width: 100%;
+}
+
+/* User Dropdown Menu */
+.user-menu {
+    position: relative;
+}
+
+.user-menu-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.user-menu-dropdown.active ~ .user-menu-trigger .dropdown-arrow,
+.user-menu-trigger:has(+ .user-menu-dropdown.active) .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.user-menu-trigger:hover {
+    background: var(--bg-darker);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.user-menu-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu-dropdown-item {
+    display: block;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.user-menu-dropdown-item:hover {
+    background: var(--bg-darker);
+    color: var(--primary-color);
+    padding-left: 20px;
+}
+
+.user-menu-dropdown-item.logout {
+    color: #f87171;
+    border-top: 1px solid var(--glass-border);
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+.user-menu-dropdown-item.logout:hover {
+    background: rgba(248, 113, 113, 0.2);
+    color: #fca5a5;
+}
+
+/* Login/Signup Buttons */
+.glass-header-auth {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-header-login,
+.btn-header-signup {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.btn-header-login {
+    color: #e2e8f0;
+    background: transparent;
+    border-color: var(--glass-border);
+}
+
+.btn-header-login:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(129, 140, 248, 0.5);
+    color: #22d3ee;
+}
+
+.btn-header-signup {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-header-signup:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+}
+
+/* Admin Badge */
+.admin-badge {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(44, 62, 80, 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    z-index: 9999;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.admin-badge:hover {
+    background: rgba(44, 62, 80, 1);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+@media (max-width: 768px) {
+    .glass-header-nav {
+        gap: 16px;
+        font-size: 0.85rem;
+    }
+    
+    .glass-header-logo {
+        font-size: 1.2rem;
+    }
+    
+    .user-menu-dropdown {
+        right: -20px;
+    }
+}
+
+.shop-page-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+}
+
+/* ================================================================
+   Hero Section
+   ================================================================ */
+
+.shop-hero {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+    z-index: 1;
+}
+
+.shop-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+}
+
+.shop-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--bg-darker);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.shop-hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0 0 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.shop-hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+}
+
+/* ================================================================
+   Event Banner Section
+   ================================================================ */
+
+.event-section {
+    margin-bottom: 60px;
+}
+
+.event-section-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 32px;
+    z-index: 10;
+    pointer-events: none; /* 3D 씬 클릭 가능하도록 */
+}
+
+.event-section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #ffd700; /* Gold 색상 */
+    text-shadow: 0 4px 4px rgba(0, 0, 0, 0.8);
+}
+
+.event-section-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+    perspective: 1000px;
+}
+
+.event-card {
+    /* Glassmorphism 효과 - 깊이감 있는 반투명 배경 */
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease;
+    box-shadow: var(--shadow-md);
+    z-index: 1;
+}
+
+/* 홀로그램 빛 반사 효과 (무료 이벤트 - 무지개빛) */
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 154, 158, 0.3) 40%,
+        rgba(250, 208, 196, 0.4) 50%,
+        rgba(255, 154, 158, 0.3) 60%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.event-card:hover::before {
+    opacity: 1;
+    animation: hologram-shine 0.8s ease-out;
+}
+
+.event-card.period::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(147, 51, 234, 0.3) 40%,
+        rgba(99, 102, 241, 0.4) 50%,
+        rgba(147, 51, 234, 0.3) 60%,
+        transparent 70%
+    );
+}
+
+/* vanilla-tilt.js가 transform을 제어하므로 hover transform 제거 */
+.event-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.event-card.ended {
+    opacity: 0.5;
+    filter: grayscale(1);
+}
+
+.event-card.ended::after {
+    content: '이벤트 종료';
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 14px;
+    background: rgba(148, 163, 184, 0.9);
+    color: white;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ================================================================
+   전체 화면 이벤트 섹션 (kwon3d 스타일 - 탁자 위에 2개 상자)
+   ================================================================ */
+
+.event-section-fullscreen {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    margin-bottom: 0;
+    display: block; /* 명시적으로 표시 */
+}
+
+.event-products-3d-scene {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    /* kwon3d 원본 배경: 어두운 그라데이션 */
+    background: radial-gradient(circle at center, #3a1515 0%, #1a0505 45%, #000000 100%);
+    color: white;
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 상단 타이틀 (kwon3d 스타일) */
+.event-product-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 48px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.event-product-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-family: serif;
+    color: #ffd700;
+    text-shadow: 0 4px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.05em;
+    margin: 0 0 12px 0;
+}
+
+.event-product-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+}
+
+/* 3D 상자 전체 화면 컨테이너 */
+.gift-box-3d-fullscreen {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.gift-box-3d-fullscreen:active {
+    cursor: grabbing;
+}
+
+/* 하단 구매 버튼 (kwon3d 스타일) */
+.event-product-footer {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.btn-purchase-fullscreen {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 40px;
+    border-radius: 999px;
+    border: 2px solid;
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease-out;
+    transform: scale(1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    position: relative;
+}
+
+.btn-purchase-fullscreen:not(:disabled) {
+    background: linear-gradient(to right, #ffd700, #b45309);
+    border-color: #ffd700;
+    color: white;
+}
+
+.btn-purchase-fullscreen:not(:disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 25px 70px rgba(255, 215, 0, 0.4);
+}
+
+.btn-purchase-fullscreen:not(:disabled):active {
+    transform: scale(0.95);
+}
+
+.btn-purchase-fullscreen:disabled {
+    background: linear-gradient(to right, #374151, #1f2937);
+    border-color: #4b5563;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    font-size: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+.btn-text {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .event-product-title {
+        font-size: 2.5rem;
+    }
+    
+    .event-product-header {
+        padding: 32px 24px;
+    }
+    
+    .btn-purchase-fullscreen {
+        padding: 14px 32px;
+        font-size: 1rem;
+    }
+}
+
+/* 기존 3D 상자 컨테이너 스타일 (유지) */
+.gift-box-3d-container {
+    width: 100%;
+    height: 400px;
+    margin: -16px -32px 24px -32px;
+    border-radius: 24px 24px 0 0;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #3a1515 0%, #1a0505 45%, #000000 100%);
+    position: relative;
+    cursor: grab;
+}
+
+.gift-box-3d-container:active {
+    cursor: grabbing;
+}
+
+.gift-box-3d-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.event-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.event-badge.period {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: var(--primary-color);
+}
+
+.event-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+}
+
+.event-card.ended h3 {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
+.event-card p {
+    color: var(--text-secondary);
+    margin: 0 0 16px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.event-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+}
+
+.event-feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.event-feature-list li::before {
+    content: "✨";
+    font-size: 1.1rem;
+}
+
+/* ================================================================
+   Product Grid Section
+   ================================================================ */
+
+.product-section {
+    margin-bottom: 60px;
+}
+
+.product-section-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.product-section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: var(--text-primary);
+}
+
+.product-section-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    perspective: 1000px;
+}
+
+@media (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ================================================================
+   Product Card (Glassmorphism)
+   ================================================================ */
+
+.product-card {
+    /* Glassmorphism 효과 - 깊이감 있는 반투명 배경 */
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 40px 32px;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+/* 홀로그램 빛 반사 효과 (기본) */
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(99, 102, 241, 0.2) 40%,
+        rgba(129, 140, 248, 0.3) 50%,
+        rgba(99, 102, 241, 0.2) 60%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.product-card:hover::before {
+    opacity: 1;
+    animation: hologram-shine 0.8s ease-out;
+}
+
+/* vanilla-tilt.js가 transform을 제어하므로 hover transform 제거 */
+.product-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--primary-color);
+}
+
+/* Standard Card (Dark Theme) - Glassmorphism 적용 */
+.product-card.standard {
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    position: relative;
+}
+
+.product-card.standard::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, #cbd5e1 0%, #64748b 50%, #3b82f6 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.product-card.standard:hover::after {
+    opacity: 1;
+}
+
+.product-card.standard::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(203, 213, 225, 0.3) 40%,
+        rgba(59, 130, 246, 0.4) 50%,
+        rgba(203, 213, 225, 0.3) 60%,
+        transparent 70%
+    );
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
+.product-card.standard:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Premium Card (BEST) - Glassmorphism + 네온 시안+퍼플 */
+.product-card.premium {
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(6, 182, 212, 0.3);
+    color: #ffffff;
+    position: relative;
+}
+
+.product-card.premium::after {
+    content: 'BEST';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+    color: white;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.6),
+                0 0 40px rgba(139, 92, 246, 0.4);
+    z-index: 10;
+    animation: premium-badge-pulse 2s ease-in-out infinite;
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+}
+
+@keyframes premium-badge-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.6),
+                    0 0 40px rgba(139, 92, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.9),
+                    0 0 60px rgba(139, 92, 246, 0.7);
+    }
+}
+
+.product-card.premium::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(6, 182, 212, 0.4) 40%,
+        rgba(139, 92, 246, 0.5) 50%,
+        rgba(6, 182, 212, 0.4) 60%,
+        transparent 70%
+    );
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
+.product-card.premium:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border: none;
+}
+
+/* Gold Card (리얼 골드 텍스처) - Glassmorphism 적용 */
+.product-card.gold {
+    background: rgba(15, 23, 42, 0.6);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 3px solid rgba(251, 191, 36, 0.3);
+    color: #ffffff;
+    box-shadow: var(--shadow-md), 0 0 0 1px rgba(251, 191, 36, 0.2);
+    position: relative;
+}
+
+.product-card.gold::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 3px;
+    background: linear-gradient(
+        to right,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #aa771c 50%,
+        #fcf6ba 75%,
+        #bf953f 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.product-card.gold:hover::after {
+    opacity: 1;
+    animation: gold-shimmer 2s ease-in-out infinite;
+}
+
+.product-card.gold::before {
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(251, 191, 36, 0.4) 40%,
+        rgba(252, 211, 77, 0.5) 50%,
+        rgba(251, 191, 36, 0.4) 60%,
+        transparent 70%
+    );
+}
+
+@keyframes gold-shimmer {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* vanilla-tilt.js가 transform을 제어 */
+.product-card.gold:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border-color: transparent;
+}
+
+/* Event Card */
+.product-card.event {
+    justify-content: center;
+    align-items: center;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-right: 25px;
+    padding-left: 25px;
+    box-shadow: inset 0px 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* ================================================================
+   Product Card Content
+   ================================================================ */
+
+.product-icon {
+    font-size: 4.5rem;
+    margin-bottom: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.product-card.standard .product-icon,
+.product-card.premium .product-icon {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.product-card.gold .product-icon {
+    background: rgba(251, 191, 36, 0.15);
+}
+
+.product-card:hover .product-icon {
+    transform: scale(1.1);
+}
+
+.product-card.gold:hover .product-icon {
+    background: rgba(251, 191, 36, 0.2);
+}
+
+.product-tagline {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #818cf8;
+    margin-bottom: 16px;
+    line-height: 1.4;
+    letter-spacing: -0.3px;
+}
+
+.product-card.standard .product-tagline,
+.product-card.premium .product-tagline {
+    color: var(--gold);
+}
+
+.product-card.gold .product-tagline {
+    background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.product-name {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 12px;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+
+/* Gold 상품명 - 리얼 골드 그라데이션 */
+.product-card.gold .product-name {
+    background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(191, 149, 63, 0.8));
+    text-shadow: 0 0 20px rgba(191, 149, 63, 0.6);
+}
+
+/* Premium 상품명 - Cyan Blue 네온 */
+.product-card.premium .product-name {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.8));
+    text-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+}
+
+/* Standard 상품명 - 기본 스타일 유지 */
+.product-card.standard .product-name {
+    background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.5));
+}
+
+.product-description {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin: 0 0 24px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.product-card.standard .product-description,
+.product-card.premium .product-description,
+.product-card.gold .product-description {
+    color: var(--gold);
+    opacity: 0.9;
+}
+
+.product-price {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0 0 8px;
+    color: #22d3ee;
+    line-height: 1.1;
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.8),
+                 0 0 40px rgba(34, 211, 238, 0.5),
+                 0 4px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.05em;
+}
+
+/* Standard 가격 색상 */
+.product-card.standard .product-price {
+    color: var(--gold);
+}
+
+/* Premium 가격 색상 */
+.product-card.premium .product-price {
+    color: var(--gold);
+}
+
+/* Gold 가격 색상 */
+.product-card.gold .product-price {
+    color: var(--gold);
+}
+
+/* 이벤트 가격 색상 (0원) */
+.event-card .product-price,
+.event-card .price {
+    color: var(--primary-color);
+}
+
+.product-price-unit {
+    font-size: 1.5rem;
+    color: #cbd5e1;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.product-card.standard .product-price-unit,
+.product-card.premium .product-price-unit,
+.product-card.gold .product-price-unit {
+    color: var(--gold);
+    opacity: 0.8;
+}
+
+.product-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 32px;
+    flex-grow: 1;
+}
+
+.product-feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-weight: 500;
+    word-break: keep-all;
+    hyphens: auto;
+}
+
+.product-card.standard .product-feature-list li,
+.product-card.premium .product-feature-list li,
+.product-card.gold .product-feature-list li {
+    color: var(--gold);
+    opacity: 0.85;
+}
+
+.product-feature-list li .feature-subtext {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    opacity: 0.85;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.product-feature-list li::before {
+    content: "✓";
+    color: #22d3ee;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.product-card.standard .product-feature-list li::before {
+    color: #22d3ee;
+}
+
+.product-card.premium .product-feature-list li::before {
+    color: #818cf8;
+}
+
+.product-card.gold .product-feature-list li::before {
+    color: var(--gold);
+}
+
+/* ================================================================
+   Purchase Button
+   ================================================================ */
+
+.btn-purchase {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.btn-purchase::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-purchase:hover::before {
+    left: 100%;
+}
+
+.btn-purchase:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-purchase:active {
+    transform: translateY(0);
+}
+
+.btn-purchase:disabled {
+    background: #475569;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+.product-card.gold .btn-purchase {
+    background: linear-gradient(135deg, var(--gold) 0%, #f59e0b 100%);
+    box-shadow: 0 4px 20px var(--gold-glow);
+}
+
+.product-card.gold .btn-purchase:hover {
+    box-shadow: 0 8px 30px rgba(251, 191, 36, 0.6);
+}
+
+/* ================================================================
+   Modal Styles (기존 모달 유지, 스타일만 조정)
+   ================================================================ */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(11, 14, 20, 0.8);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content.theme-event {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-content.theme-event::before {
+    display: none;
+}
+
+.modal-content.theme-basic {
+    background: var(--card-bg);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-darker);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.modal-close-btn:hover {
+    background: var(--text-muted);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.modal-hero {
+    padding: 40px 32px 24px;
+    text-align: center;
+    position: relative;
+}
+
+.modal-hero-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    display: block;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.modal-hero-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.theme-event .modal-hero-title {
+    color: var(--primary-color);
+}
+
+.theme-event .modal-hero-icon {
+    color: var(--primary-color);
+    filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3));
+}
+
+.modal-info {
+    padding: 0 32px 24px;
+}
+
+.modal-info-card {
+    background: var(--bg-darker);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.theme-event .modal-info-card {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.modal-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+
+.modal-price-label {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.modal-price-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.theme-event .modal-price-value {
+    color: var(--primary-color);
+}
+
+.theme-basic .modal-price-value {
+    color: var(--success);
+}
+
+.modal-specs {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.theme-event .modal-specs {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.modal-control {
+    padding: 0 32px 24px;
+}
+
+.modal-quantity-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.modal-quantity-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-darker);
+    border-radius: 12px;
+    border: 2px solid var(--card-border);
+    overflow: hidden;
+}
+
+.stepper-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stepper-btn:hover:not(:disabled) {
+    background: var(--bg-darker);
+    color: var(--primary-color);
+}
+
+.stepper-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stepper-value {
+    min-width: 100px;
+    width: 120px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--card-border);
+    border-right: 1px solid var(--card-border);
+    text-align: center;
+    padding: 0 12px;
+    outline: none;
+}
+
+.stepper-value::placeholder {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stepper-value:focus {
+    background: var(--bg-darker);
+    border-left-color: var(--primary-color);
+    border-right-color: var(--primary-color);
+}
+
+.stepper-value::-webkit-inner-spin-button,
+.stepper-value::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stepper-value[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.modal-event-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.modal-total {
+    padding: 20px 32px;
+    background: var(--bg-darker);
+    border-top: 1px solid var(--card-border);
+}
+
+.theme-event .modal-total {
+    background: rgba(99, 102, 241, 0.05);
+    border-top-color: rgba(99, 102, 241, 0.2);
+}
+
+.modal-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.theme-event .modal-total-row {
+    color: var(--primary-color);
+}
+
+.modal-footer {
+    padding: 20px 32px 32px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-modal {
+    flex: 1;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+}
+
+.btn-modal-cancel {
+    background: var(--bg-darker);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+}
+
+.btn-modal-cancel:hover {
+    background: var(--text-muted);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-modal-confirm {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-modal-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.theme-event .btn-modal-confirm {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ================================================================
+   Holographic Shine Animation
+   ================================================================ */
+
+@keyframes hologram-shine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+        opacity: 0;
+    }
+}
+
+/* ================================================================
+   Responsive Design
+   ================================================================ */
+
+@media (max-width: 768px) {
+    .shop-hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .shop-hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        perspective: 800px;
+    }
+    
+    .event-grid {
+        grid-template-columns: 1fr;
+        perspective: 800px;
+    }
+    
+    /* vanilla-tilt.js가 transform을 제어하므로 모바일 hover transform 제거 */
+    .product-card:hover,
+    .event-card:hover {
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4) !important;
+    }
+}
+
+/* ================================================================
+   Special Highlights
+   ================================================================ */
+
+.gold-special-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 15px var(--gold-glow);
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+}
+
+.discount-badge-wrapper {
+    display: inline-block;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.premium-discount-badge {
+    position: absolute;
+    top: -39px;
+    display: flex;
+    padding: 4px 12px;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid var(--success);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--success);
+    margin-left: 8px;
+    line-height: 20px;
+    letter-spacing: 4px;
+    gap: 0px;
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gold-special-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 12px;
+    box-shadow: 0 0 15px var(--gold-glow);
+    /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
+    transform: translateZ(50px);
+    transform-style: preserve-3d;
+}
+
+

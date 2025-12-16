@@ -1,0 +1,72 @@
+/* ==========================================================================
+   Shop Showroom Layout Module
+   레이아웃, 배경, 그리드 시스템만 담당 (3D 효과는 shop_card_3d.css에서 처리)
+   ========================================================================== */
+
+/* 1. 배경 (Clean Studio) */
+.shop-page-wrapper {
+    background: #f0f2f5; /* 눈이 편안한 밝은 회색 */
+    min-height: 100vh;
+    padding: 100px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    perspective: 2500px; /* 3D 모듈과 연동 */
+    perspective-origin: center center;
+}
+
+/* 2. 섹션 컨테이너 (Invisible Grid) */
+.event-section, .product-section {
+    width: 100%;
+    max-width: 1400px;
+    margin-bottom: 80px;
+    /* 배경 박스 제거하고 상품 자체에 집중 */
+    background: transparent; 
+    border: none;
+    box-shadow: none;
+}
+
+/* 3. 그리드 (Horizontal Layout) */
+.event-grid, .product-grid {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* 높이가 달라도 상단 기준 정렬 */
+    gap: 50px;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+/* 4. 기본 카드 레이아웃 (3D 효과는 shop_card_3d.css에서 처리) */
+.event-card, .product-card {
+    position: relative;
+    width: 320px !important;
+    min-height: 500px; /* 기본 높이 */
+    height: auto !important; /* 내용물에 따라 늘어남 (버튼 잘림 방지) */
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px 20px;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* 5. 등급별 포인트 컬러 */
+.product-card.premium { border-top: 5px solid #3b82f6; }
+.product-card.gold { border-top: 5px solid #f59e0b; }
+.event-card { border-top: 5px solid #ec4899; }
+
+/* Event Card - Flexbox 정렬 */
+.product-card.event {
+    justify-content: center;
+    align-items: center;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-right: 25px;
+    padding-left: 25px;
+}
+
+/* 6. 모바일 대응 */
+@media (max-width: 768px) {
+    .shop-page-wrapper { perspective: none; }
+    .event-card, .product-card {
+        width: 100% !important;
+    }
+}

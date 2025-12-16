@@ -1,0 +1,66 @@
+<!-- 통합 관제실 섹션 (모듈화된 구조) -->
+<section class="panel hidden" id="control-deck">
+    <div class="hd">The Control Deck (통합 관제실)</div>
+    
+    <div class="bd">
+        <!-- 탭 네비게이션 -->
+        <ul class="nav nav-tabs mb-3" id="activity-log-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-all" data-bs-toggle="tab" data-bs-target="#panel-all" 
+                        type="button" role="tab" data-category="ALL">전체</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-financial" data-bs-toggle="tab" data-bs-target="#panel-financial" 
+                        type="button" role="tab" data-category="FINANCIAL">자산</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-activity" data-bs-toggle="tab" data-bs-target="#panel-activity" 
+                        type="button" role="tab" data-category="ACTIVITY">활동</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-security" data-bs-toggle="tab" data-bs-target="#panel-security" 
+                        type="button" role="tab" data-category="SECURITY">보안</button>
+            </li>
+        </ul>
+        
+        <!-- 탭 컨텐츠 -->
+        <div class="tab-content" id="activity-log-tab-content">
+            <!-- 전체 탭 -->
+            <div class="tab-pane fade show active" id="panel-all" role="tabpanel">
+                {% include 'admin/components/activity_log/filters.html' %}
+                <div id="activity-log-container-all">
+                    {% include 'admin/components/activity_log/table.html' %}
+                </div>
+                {% include 'admin/components/activity_log/pagination.html' %}
+            </div>
+            
+            <!-- 자산 탭 -->
+            <div class="tab-pane fade" id="panel-financial" role="tabpanel">
+                {% include 'admin/components/activity_log/filters.html' %}
+                <div id="activity-log-container-financial">
+                    <p class="muted">자산 관련 활동 로그가 여기에 표시됩니다.</p>
+                </div>
+                {% include 'admin/components/activity_log/pagination.html' %}
+            </div>
+            
+            <!-- 활동 탭 -->
+            <div class="tab-pane fade" id="panel-activity" role="tabpanel">
+                {% include 'admin/components/activity_log/filters.html' %}
+                <div id="activity-log-container-activity">
+                    <p class="muted">일반 활동 로그가 여기에 표시됩니다.</p>
+                </div>
+                {% include 'admin/components/activity_log/pagination.html' %}
+            </div>
+            
+            <!-- 보안 탭 -->
+            <div class="tab-pane fade" id="panel-security" role="tabpanel">
+                {% include 'admin/components/activity_log/filters.html' %}
+                <div id="activity-log-container-security">
+                    <p class="muted">보안 관련 활동 로그가 여기에 표시됩니다.</p>
+                </div>
+                {% include 'admin/components/activity_log/pagination.html' %}
+            </div>
+        </div>
+    </div>
+</section>
+

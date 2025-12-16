@@ -1,0 +1,219 @@
+<!-- ================================================================
+   채널톡 챗봇 위젯 (ChannelTalk Chatbot Widget)
+   ================================================================
+   
+   설치 위치: base.html의 </body> 태그 바로 직전
+   활성화 방법: base.html에서 이 파일을 {% include %} 하면 됩니다.
+   
+   Commander님, 발급받으신 채널톡 플러그인 키를 아래에 입력하시면 즉시 가동됩니다.
+   ================================================================ -->
+
+<script>
+(function(){var w=window;if(w.ChannelIO){return (window.console.info||window.console.log||function(){})("ChannelIO script included twice.");}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement("script");s.type="text/javascript";s.async=true;s.src="https://cdn.channel.io/plugin/ch-plugin-web.js";s.charset="UTF-8";var x=document.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x);}if(document.readyState==="complete"){l();}else if(window.attachEvent){window.attachEvent("onload",l);}else{window.addEventListener("DOMContentLoaded",l,false);}})()
+
+// ================================================================
+// Commander님, 여기에 채널톡 플러그인 키를 입력하세요!
+// ================================================================
+ChannelIO('boot', {
+    "pluginKey": "YOUR_PLUGIN_KEY_HERE",  // ⚠️ 여기에 발급받은 플러그인 키를 입력하세요!
+    
+    // ================================================================
+    // 유저 연동 (로그인한 사용자 정보 전달)
+    // ================================================================
+    {% if session.get('user_id') %}
+    // 로그인한 사용자 정보를 채널톡에 전달
+    "memberId": "{{ session.get('user_id') }}",  // 사용자 ID
+    "profile": {
+        "name": "{{ session.get('username') or '사용자' }}",  // 사용자명
+        "email": "{{ session.get('email') or '' }}",  // 이메일 (세션에 저장되어 있다면)
+        "mobileNumber": "{{ session.get('phone') or '' }}",  // 전화번호 (세션에 저장되어 있다면)
+        "companyName": "{{ session.get('company_name') or '' }}",  // 회사명 (세션에 저장되어 있다면)
+        "businessNumber": "{{ session.get('business_number') or '' }}"  // 사업자등록번호 (세션에 저장되어 있다면)
+    },
+    {% else %}
+    // 비로그인 사용자는 기본 설정만 적용
+    {% endif %}
+    
+    // ================================================================
+    // 추가 설정 (선택사항)
+    // ================================================================
+    "language": "ko",  // 한국어 설정
+    "appearance": "light",  // 라이트 모드 (dark로 변경 가능)
+    "zIndex": 10000,  // z-index 설정 (다른 요소 위에 표시)
+    
+    // ================================================================
+    // 이벤트 핸들러 (선택사항)
+    // ================================================================
+    "onBadgeChanged": function(count) {
+        // 뱃지 카운트 변경 시 실행되는 함수
+        console.log("채널톡 뱃지 카운트:", count);
+    },
+    "onShow": function() {
+        // 챗봇 창이 열릴 때 실행되는 함수
+        console.log("채널톡 창이 열렸습니다.");
+    },
+    "onHide": function() {
+        // 챗봇 창이 닫힐 때 실행되는 함수
+        console.log("채널톡 창이 닫혔습니다.");
+    }
+});
+
+// ================================================================
+// 유저 정보 업데이트 함수 (동적 업데이트가 필요한 경우)
+// ================================================================
+{% if session.get('user_id') %}
+// 로그인 후 유저 정보를 채널톡에 업데이트
+ChannelIO('updateUser', {
+    "id": "{{ session.get('user_id') }}",
+    "profile": {
+        "name": "{{ session.get('username') or '사용자' }}",
+        "email": "{{ session.get('email') or '' }}",
+        "mobileNumber": "{{ session.get('phone') or '' }}",
+        "companyName": "{{ session.get('company_name') or '' }}",
+        "businessNumber": "{{ session.get('business_number') or '' }}"
+    }
+});
+{% endif %}
+
+// ================================================================
+// 디버깅 모드 (개발 중에만 사용)
+// ================================================================
+// ChannelIO('show');  // 챗봇 창 강제 표시
+// ChannelIO('hide');  // 챗봇 창 강제 숨김
+// ChannelIO('shutdown');  // 챗봇 완전 종료
+
+</script>
+
+<!-- ================================================================
+   설치 완료 안내
+   ================================================================
+   
+   이 모듈을 활성화하려면:
+   1. base.html의 </body> 태그 바로 직전에 다음 코드를 추가하세요:
+      
+      {% include 'components/chatbot_widget.html' %}
+   
+   2. 위의 "YOUR_PLUGIN_KEY_HERE" 부분을 발급받은 채널톡 플러그인 키로 교체하세요.
+   
+   3. 서버를 재시작하면 모든 페이지에 챗봇이 표시됩니다.
+   
+   ================================================================ -->
+
+
+
+   채널톡 챗봇 위젯 (ChannelTalk Chatbot Widget)
+   ================================================================
+   
+   설치 위치: base.html의 </body> 태그 바로 직전
+   활성화 방법: base.html에서 이 파일을 {% include %} 하면 됩니다.
+   
+   Commander님, 발급받으신 채널톡 플러그인 키를 아래에 입력하시면 즉시 가동됩니다.
+   ================================================================ -->
+
+<script>
+(function(){var w=window;if(w.ChannelIO){return (window.console.info||window.console.log||function(){})("ChannelIO script included twice.");}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement("script");s.type="text/javascript";s.async=true;s.src="https://cdn.channel.io/plugin/ch-plugin-web.js";s.charset="UTF-8";var x=document.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x);}if(document.readyState==="complete"){l();}else if(window.attachEvent){window.attachEvent("onload",l);}else{window.addEventListener("DOMContentLoaded",l,false);}})()
+
+// ================================================================
+// Commander님, 여기에 채널톡 플러그인 키를 입력하세요!
+// ================================================================
+ChannelIO('boot', {
+    "pluginKey": "YOUR_PLUGIN_KEY_HERE",  // ⚠️ 여기에 발급받은 플러그인 키를 입력하세요!
+    
+    // ================================================================
+    // 유저 연동 (로그인한 사용자 정보 전달)
+    // ================================================================
+    {% if session.get('user_id') %}
+    // 로그인한 사용자 정보를 채널톡에 전달
+    "memberId": "{{ session.get('user_id') }}",  // 사용자 ID
+    "profile": {
+        "name": "{{ session.get('username') or '사용자' }}",  // 사용자명
+        "email": "{{ session.get('email') or '' }}",  // 이메일 (세션에 저장되어 있다면)
+        "mobileNumber": "{{ session.get('phone') or '' }}",  // 전화번호 (세션에 저장되어 있다면)
+        "companyName": "{{ session.get('company_name') or '' }}",  // 회사명 (세션에 저장되어 있다면)
+        "businessNumber": "{{ session.get('business_number') or '' }}"  // 사업자등록번호 (세션에 저장되어 있다면)
+    },
+    {% else %}
+    // 비로그인 사용자는 기본 설정만 적용
+    {% endif %}
+    
+    // ================================================================
+    // 추가 설정 (선택사항)
+    // ================================================================
+    "language": "ko",  // 한국어 설정
+    "appearance": "light",  // 라이트 모드 (dark로 변경 가능)
+    "zIndex": 10000,  // z-index 설정 (다른 요소 위에 표시)
+    
+    // ================================================================
+    // 이벤트 핸들러 (선택사항)
+    // ================================================================
+    "onBadgeChanged": function(count) {
+        // 뱃지 카운트 변경 시 실행되는 함수
+        console.log("채널톡 뱃지 카운트:", count);
+    },
+    "onShow": function() {
+        // 챗봇 창이 열릴 때 실행되는 함수
+        console.log("채널톡 창이 열렸습니다.");
+    },
+    "onHide": function() {
+        // 챗봇 창이 닫힐 때 실행되는 함수
+        console.log("채널톡 창이 닫혔습니다.");
+    }
+});
+
+// ================================================================
+// 유저 정보 업데이트 함수 (동적 업데이트가 필요한 경우)
+// ================================================================
+{% if session.get('user_id') %}
+// 로그인 후 유저 정보를 채널톡에 업데이트
+ChannelIO('updateUser', {
+    "id": "{{ session.get('user_id') }}",
+    "profile": {
+        "name": "{{ session.get('username') or '사용자' }}",
+        "email": "{{ session.get('email') or '' }}",
+        "mobileNumber": "{{ session.get('phone') or '' }}",
+        "companyName": "{{ session.get('company_name') or '' }}",
+        "businessNumber": "{{ session.get('business_number') or '' }}"
+    }
+});
+{% endif %}
+
+// ================================================================
+// 디버깅 모드 (개발 중에만 사용)
+// ================================================================
+// ChannelIO('show');  // 챗봇 창 강제 표시
+// ChannelIO('hide');  // 챗봇 창 강제 숨김
+// ChannelIO('shutdown');  // 챗봇 완전 종료
+
+</script>
+
+<!-- ================================================================
+   설치 완료 안내
+   ================================================================
+   
+   이 모듈을 활성화하려면:
+   1. base.html의 </body> 태그 바로 직전에 다음 코드를 추가하세요:
+      
+      {% include 'components/chatbot_widget.html' %}
+   
+   2. 위의 "YOUR_PLUGIN_KEY_HERE" 부분을 발급받은 채널톡 플러그인 키로 교체하세요.
+   
+   3. 서버를 재시작하면 모든 페이지에 챗봇이 표시됩니다.
+   
+   ================================================================ -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

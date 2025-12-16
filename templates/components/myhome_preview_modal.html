@@ -1,0 +1,26 @@
+<!-- 미리보기 모달 -->
+<div class="modal fade bs-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title" id="previewModalLabel">📋 수정 정보 미리보기</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-section">
+          <h3>🔍 변경 사항 확인</h3>
+          <div id="preview-changes"></div>
+        </div>
+        <div class="preview-section">
+          <h3>✅ 최종 정보</h3>
+          <div id="preview-final"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirm-update" class="btn btn-primary">✅ 확인 및 적용</button>
+        <button type="button" id="cancel-update" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
