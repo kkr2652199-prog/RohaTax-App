@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
@@ -24,76 +27,336 @@
     <!-- Shop Page Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}?v={{ timestamp }}">
     
-    <!-- Luxury Dark Showroom Theme -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_showroom.css') }}?v={{ timestamp }}">
-    
-    <!-- 3D 선물 상자 스타일 -->
+    <!-- Modern 2D Card Styles -->
     <style>
-        /* [1] 3D 전용 카드 스타일 (기존 product-card 덮어쓰기) */
-        .product-card.special-3d-card {
-            background: transparent !important;       /* 배경 투명화 */
-            border: none !important;                  /* 테두리 삭제 */
-            box-shadow: none !important;              /* 그림자 삭제 */
-            overflow: visible !important;             /* ★핵심: 상자가 밖으로 튀어나오게 허용 */
-            transform: none !important;               /* 3D 충돌 방지 */
-        }
-        
-        /* [2] 3D 상자 컨테이너 (무대) */
-        .gift-box-3d-target {
-            height: 400px !important;             /* 높이 강제 고정 (무한 스크롤 방지) */
-            width: 120%;                          /* 카드를 넘어서는 너비 */
-            margin-left: -10%;                    /* 중앙 정렬 보정 */
-            margin-top: -50px;                    /* 위로 솟구치게 */
-            overflow: visible !important;         /* ★핵심 */
+        /* 프리미엄 핀테크 스타일 - 카드 기본 스타일 */
+        .product-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 40px 36px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             position: relative;
-            z-index: 10;                          /* 다른 카드보다 위에 뜨게 */
+            color: #f8f9fa; /* 기본 텍스트 색상 - 부드러운 흰색 */
         }
         
-        /* [3] 아이콘 래퍼 (overflow 제거) */
-        .icon-wrapper {
-            height: 400px !important;             /* gift-box-3d-target과 동일한 높이 */
+        /* 호버 효과 - 반투명 글래스 스타일 */
+        .product-card:hover {
+            transform: translateY(-12px);
+            background: rgba(30, 30, 35, 0.85); /* 반투명 블랙 */
+            -webkit-backdrop-filter: blur(10px); /* Safari 호환성 */
+            backdrop-filter: blur(10px); /* 고급스러운 유리 느낌 */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            border-color: #3b82f6;
+            z-index: 10;
+        }
+        
+        .product-card.event {
+            border: 2px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+        
+        .product-card.event:hover {
+            border-color: #6366f1;
+            background: rgba(30, 30, 35, 0.85);
+            -webkit-backdrop-filter: blur(10px); /* Safari 호환성 */
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* 아이콘 스타일 */
+        .product-icon {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        /* 상품명 - 더 두껍게 (핵심 포인트 - 기존 색상 유지) */
+        .product-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0 0 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        /* 설명 텍스트 - 연한 회색 */
+        .product-description {
+            font-size: 0.95rem;
+            color: #adb5bd; /* 연한 회색 */
+            margin: 0 0 24px;
+            line-height: 1.7;
+        }
+        
+        /* 가격 - 크기 키우고 강조색 */
+        .product-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 0 0 28px;
+            letter-spacing: -0.03em;
+        }
+        
+        .product-card.premium .product-price {
+            color: #f59e0b;
+        }
+        
+        .product-card.gold .product-price {
+            color: #fbbf24;
+        }
+        
+        /* 리스트 - 줄 간격 넓히기 */
+        .product-feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 28px;
+            flex-grow: 1;
+        }
+        
+        .product-feature-list li {
+            padding: 0;
+            margin-bottom: 12px;
+            color: #adb5bd; /* 연한 회색 - 계층 구분 */
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.6;
+        }
+        
+        .product-feature-list li::before {
+            content: "✔";
+            color: #10b981;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+        
+        /* 버튼 스타일 - 프리미엄 핀테크 */
+        .product-card .btn-purchase {
             width: 100%;
-            position: relative;
-            overflow: visible !important;          /* ★핵심: overflow 제거 */
+            padding: 16px 32px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            margin-top: auto;
+        }
+        
+        .product-card .btn-purchase:hover {
+            background: #2563eb;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .product-card .btn-purchase:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .product-card.premium .btn-purchase {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        
+        .product-card.premium .btn-purchase:hover {
+            background: #d97706;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .product-card.gold .btn-purchase {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+        
+        .product-card.gold .btn-purchase:hover {
+            background: #f59e0b;
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+        }
+        
+        .product-card.event .btn-purchase {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .product-card.event .btn-purchase:hover {
+            background: #7c3aed;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* 이벤트 상품 그리드 - 중앙 정렬 */
+        .event-product-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .event-product-grid .product-card {
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        /* 유료 상품 그리드 - 3열 고정 (Standard, Premium, Gold) */
+        .paid-product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        @media (max-width: 1024px) {
+            .paid-product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .paid-product-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .event-product-grid {
+                flex-direction: column;
+                gap: 24px;
+            }
+            
+            .product-card {
+                padding: 32px 28px;
+            }
+            
+            .product-card:hover {
+                transform: translateY(-8px);
+            }
+        }
+        
+        /* Hero Section - 컴팩트하고 세련된 디자인 */
+        .shop-hero-section {
+            padding: 40px 20px;
+            padding-right: 62px;
+            margin-left: 120px;
+            margin-right: 120px;
+            background-color: rgba(29, 27, 27, 1);
+            box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: flex-start;
+            height: 340px;
+        }
+        
+        .hero-badge-top {
+            font-size: 12px;
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        
+        .hero-title {
+            font-size: 2.0rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+        
+        .hero-title .highlight {
+            color: #FFD700;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.0rem;
+            color: #94a3b8;
+            margin-bottom: 0;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+        
+        .hero-subtitle strong {
+            color: #FFD700;
+            font-weight: 700;
+        }
+        
+        /* 타겟 고객 배지 컨테이너 */
+        .target-badges-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        .target-badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s ease;
         }
         
-        /* [4] 텍스트/버튼 영역 (받침대) */
-        .product-info-3d {
-            background: rgba(0, 0, 0, 0.6);       /* 반투명 검정 받침대 */
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: -80px;                    /* 상자와 겹치게 */
-            position: relative;
-            z-index: 11;                          /* 상자보다 더 앞에 */
-            -webkit-backdrop-filter: blur(10px);  /* Safari 지원 */
-            backdrop-filter: blur(10px);          /* 고급스러운 블러 효과 */
-            border: 1px solid rgba(255, 215, 0, 0.3); /* 금색 테두리 살짝 */
+        .target-badge:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .target-badge i {
+            font-size: 16px;
+            color: #60a5fa;
+        }
+        
+        @media (max-width: 768px) {
+            .shop-hero-section {
+                padding: 30px 20px;
+            }
+            
+            .hero-title {
+                font-size: 1.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .target-badges-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .target-badge {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
-    
-    <!-- 3D Card Effect Module -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop_card_3d.css') }}?v={{ timestamp }}">
-    
-    <!-- Three.js 라이브러리 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script>
-        // OrbitControls를 THREE 네임스페이스에 추가 (CDN 로드 후)
-        (function() {
-            if (typeof THREE !== 'undefined') {
-                // OrbitControls가 전역으로 로드되면 THREE에 추가
-                if (typeof OrbitControls !== 'undefined' && typeof THREE.OrbitControls === 'undefined') {
-                    THREE.OrbitControls = OrbitControls;
-                }
-            }
-        })();
-    </script>
-    
-    <!-- 3D Event Products Scene (탁자 위에 2개 상자) -->
-    <script src="{{ url_for('static', filename='js/3d/event_products_3d_scene.js') }}?v={{ timestamp }}"></script>
 </head>
 <body class="shop-page">
     <!-- 전역 헤더 -->
@@ -103,102 +366,99 @@
     {% endif %}
     
     <div class="shop-page-wrapper">
-        {# Hero Section #}
-        <div class="shop-hero">
-            <div class="shop-hero-badge">
-                <span>⚡</span>
-                <span>ROHA TAX SHOP</span>
+        {# Hero Section - 컴팩트하고 세련된 디자인 #}
+        <div class="shop-hero-section">
+            <!-- 1. 신뢰 문구 (마케팅 MSG) -->
+            <span class="hero-badge-top">✨ 누적 처리 100만 건 돌파 (예상)</span>
+            
+            <!-- 2. 메인 카피 -->
+            <h1 class="hero-title">
+                배달대행 & 대량 세무처리,<br>
+                <span class="highlight">가장 완벽한 자동화</span> 솔루션
+            </h1>
+            
+            <!-- 3. 서브 카피 -->
+            <p class="hero-subtitle">
+                복잡한 엑셀 취합, 수기 입력 실수는 이제 그만.<br>
+                <strong>로하택스</strong> 하나로 정산부터 국세청 신고 파일 생성까지 3분이면 끝납니다.
+            </p>
+            
+            <!-- 4. 타겟 고객 배지 (핵심 추가 사항) -->
+            <div class="target-badges-container">
+                <div class="target-badge"><i class="bi bi-scooter"></i> 배달대행 지사</div>
+                <div class="target-badge"><i class="bi bi-shop"></i> 소상공인 사장님</div>
+                <div class="target-badge"><i class="bi bi-briefcase-fill"></i> 세무대리/대량발행</div>
             </div>
-            <h1 class="shop-hero-title">상품 구매</h1>
-            <p class="shop-hero-subtitle">필요에 따라 토큰형/기간형 이벤트와 정식 요금제를 선택하세요</p>
         </div>
 
-        {# 이벤트 상품 섹션 - 탁자 위에 2개 상자 (하나의 3D 씬) - 주석 처리됨 #}
-        {# 이전 이벤트 섹션은 제거되었고, 이제 product-grid에 통합되었습니다 #}
-
-        {# 상품 진열대 (이벤트 + 일반 상품 통합) #}
-        {# 디버그: event_products 개수 = {{ event_products|length if event_products else 0 }}, regular_products 개수 = {{ regular_products|length if regular_products else 0 }} #}
-        {% if event_products or regular_products %}
-        <section class="product-section" id="all-products">
-            {% if regular_products %}
-            <div class="product-section-header">
-                <h2 class="product-section-title">상품 목록</h2>
-                <p class="product-section-subtitle">이벤트 상품과 정식 요금제를 확인하세요</p>
-            </div>
-            {% elif event_products %}
+        {# [1] 무료 상품 (Event Products) - 페이지 중앙 배치 #}
+        {% if event_products %}
+        <section class="event-section" id="event-products">
             <div class="product-section-header">
                 <h2 class="product-section-title">🎁 신규 회원 한정 혜택</h2>
                 <p class="product-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
             </div>
-            {% endif %}
-            <div class="product-grid">
-                {# [1] 무료 상품 (Event Products) 먼저 배치 #}
-                {% if event_products %}
-                    {% for product in event_products %}
-                <div class="product-card event special-3d-card" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
-                    {# 상단 아이콘 영역 (3D 상자 적용) #}
-                    <div class="icon-wrapper">
-                        <div id="gift-box-container-{{ product.id }}" 
-                             class="gift-box-3d-target"
-                             data-title="{{ product.name }}"
-                             data-color-box="#7b1113" 
-                             data-color-ribbon="#FFD700"
-                             data-token="{{ product.token_amount or 0 }}">
-                        </div>
+            <div class="event-product-grid">
+                {% for product in event_products %}
+                <div class="product-card event">
+                    <span class="product-icon">🎁</span>
+                    <div class="product-tagline">신규 회원 한정!</div>
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-description">
+                        {% if product.token_amount %}
+                            {{ product.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                        {% elif product.duration_days %}
+                            {{ product.duration_days }}일간 무료 이용 가능
+                        {% else %}
+                            가입 즉시 혜택을 받아보세요
+                        {% endif %}
+                    </p>
+                    <div class="product-price">
+                        무료<span class="product-price-unit"> (이벤트)</span>
                     </div>
-                    
-                    {# 하단 텍스트/버튼 영역 (받침대) #}
-                    <div class="product-info-3d">
-                        <div class="product-tagline">신규 회원 한정!</div>
-                        <h3 class="product-name">{{ product.name }}</h3>
-                        <p class="product-description">
-                            {% if product.token_amount %}
-                                {{ product.token_amount }}개의 무료 토큰이 즉시 지급됩니다
-                            {% elif product.duration_days %}
-                                {{ product.duration_days }}일간 무료 이용 가능
-                            {% else %}
-                                가입 즉시 혜택을 받아보세요
-                            {% endif %}
-                        </p>
-                        <div class="product-price">
-                            무료<span class="product-price-unit"> (이벤트)</span>
-                </div>
-                        <ul class="product-feature-list">
-                            {% if product.token_amount %}
-                            <li>{{ product.token_amount }}개의 무료 토큰 지급</li>
-                            <li>금액 부담 없이 즉시 사용</li>
-                            <li>관리자 승인 없이 자동 적용</li>
-                            {% elif product.duration_days %}
-                            <li>{{ product.duration_days }}일간 무제한 사용</li>
-                            <li>모든 기능 이용 가능</li>
-                            <li>자동 갱신 없음</li>
-                            {% else %}
-                            <li>신규 회원 전용 혜택</li>
-                            <li>가입 즉시 적용</li>
-                            <li>특별 이벤트</li>
-                            {% endif %}
-                        </ul>
-                        <button class="btn-purchase" 
-                            data-id="{{ product.id }}"
-                            data-name="{{ product.name }}"
-                            data-price="{{ product.price or 0 }}"
-                            data-type="{{ product.type }}"
-                            data-token="{{ product.token_amount or 0 }}"
-                            data-duration="{{ product.duration_days or 0 }}"
-                            {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
-                            선택하기
+                    <ul class="product-feature-list">
+                        {% if product.token_amount %}
+                        <li>{{ product.token_amount }}개의 무료 토큰 지급</li>
+                        <li>금액 부담 없이 즉시 사용</li>
+                        <li>관리자 승인 없이 자동 적용</li>
+                        {% elif product.duration_days %}
+                        <li>{{ product.duration_days }}일간 무제한 사용</li>
+                        <li>모든 기능 이용 가능</li>
+                        <li>자동 갱신 없음</li>
+                        {% else %}
+                        <li>신규 회원 전용 혜택</li>
+                        <li>가입 즉시 적용</li>
+                        <li>특별 이벤트</li>
+                        {% endif %}
+                    </ul>
+                    <button class="btn-purchase" 
+                        data-id="{{ product.id }}"
+                        data-name="{{ product.name }}"
+                        data-price="{{ product.price or 0 }}"
+                        data-type="{{ product.type }}"
+                        data-token="{{ product.token_amount or 0 }}"
+                        data-duration="{{ product.duration_days or 0 }}"
+                        {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
+                        선택하기
                     </button>
-                    </div>
                 </div>
                 {% endfor %}
+            </div>
+        </section>
         {% endif %}
 
-                {# [2] 일반 상품 (Regular Products) 배치 #}
+        {# [2] 유료 상품 (Regular Products) - Standard, Premium, Gold 3종 나란히 배치 #}
         {% if regular_products %}
+        <section class="product-section" id="paid-products">
+            <div class="product-section-header">
+                <h2 class="product-section-title">정식 요금제</h2>
+                <p class="product-section-subtitle">필요에 맞는 요금제를 선택하세요</p>
+            </div>
+            <div class="paid-product-grid">
                 {% for product in regular_products %}
                     {# Standard 상품 #}
                     {% if product.name|lower|replace(' ', '') == 'standard' %}
-                    <div class="product-card standard" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
+                    <div class="product-card standard">
                         <span class="product-icon">🚀</span>
                         <div class="product-tagline">급할 때 한 건씩!</div>
                         <h3 class="product-name">{{ product.name }}</h3>
@@ -225,7 +485,7 @@
 
                     {# Premium 상품 - BEST 뱃지 #}
                     {% if product.name|lower|replace(' ', '') == 'premium' %}
-                    <div class="product-card premium" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
+                    <div class="product-card premium">
                         <span class="product-icon">📦</span>
                         <div class="product-tagline">정산서가 쌓여있을 때!</div>
                         <h3 class="product-name">{{ product.name }}</h3>
@@ -259,7 +519,7 @@
 
                     {# Gold 상품 - 황금 테두리 #}
                     {% if product.name|lower|replace(' ', '') == 'gold' %}
-                    <div class="product-card gold" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
+                    <div class="product-card gold">
                         <span class="product-icon">👑</span>
                         <div class="product-tagline">세무사/대리 발급 전문가용</div>
                         <h3 class="product-name">{{ product.name }}</h3>
@@ -289,10 +549,10 @@
                     </div>
                     {% endif %}
 
-                    {# 기타 상품 - 기본 스타일 #}
+                    {# 기타 상품 - 기본 스타일 (Standard, Premium, Gold가 아닌 경우) #}
                     {% set product_name_normalized = product.name|lower|replace(' ', '') %}
                     {% if product_name_normalized not in ['standard', 'premium', 'gold'] %}
-                    <div class="product-card" data-tilt data-tilt-max="12" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.3" data-tilt-scale="1.05">
+                    <div class="product-card">
                         <span class="product-icon">🛒</span>
                         <h3 class="product-name">{{ product.name }}</h3>
                         <p class="product-description">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
@@ -314,7 +574,6 @@
                     </div>
                     {% endif %}
                 {% endfor %}
-                {% endif %}
             </div>
         </section>
         {% endif %}
@@ -414,83 +673,7 @@
         </div>
     </div>
 
-    {# vanilla-tilt.js - CodePen 스타일 3D 효과 #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-    
     {# 주문 연동 스크립트 - 기존 유지 #}
     <script src="{{ url_for('static', filename='js/payment/shop.js') }}?v={{ timestamp }}"></script>
-    
-    {# [1] 라이브러리 로드 (순서 중요!) #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    {# 캐시 방지를 위해 ?v=1 추가 #}
-    <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v=1"></script>
-    
-    {# [2] 실행 코드 #}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("3D Engine Starting..."); // 디버깅용 로그
-
-            // 1. 타겟 찾기
-            const containers = document.querySelectorAll('.gift-box-3d-target');
-            console.log("Found targets:", containers.length);
-
-            // 2. 루프 실행
-            containers.forEach((container, index) => {
-                // 안전장치: 높이가 없으면 강제로 줌
-                if (container.clientHeight === 0) {
-                    container.style.height = "300px"; 
-                }
-
-                // 색상 파싱 함수
-                const parseColor = (colorStr) => {
-                    if (!colorStr) return null;
-                    // # 제거하고 16진수로 변환
-                    return Number.parseInt(colorStr.replace('#', ''), 16);
-                };
-
-                // 옵션 구성
-                const options = {
-                    boxColor: parseColor(container.dataset.colorBox) || 0x7b1113,
-                    ribbonColor: parseColor(container.dataset.colorRibbon) || 0xFFD700,
-                    texts: {
-                        icon: "🎉",
-                        title: "토큰 이벤트",
-                        subTitle: "Welcome Event",
-                        mainBenefit: container.dataset.title || "신규 혜택",
-                        description1: "60개의 무료 토큰이",
-                        description2: "즉시 지급됩니다.",
-                        smallText: "금액 부담 없이 즉시 사용\n관리자 승인 없이 자동 적용"
-                    }
-                };
-
-                // 3. 생성 및 초기화
-                try {
-                    if (window.GiftBox3D === undefined) {
-                        console.error("GiftBox3D Class not found!");
-                        return;
-                    }
-                    const box = new window.GiftBox3D(container.id, options); // ID 전달
-                    box.init();
-                    console.log("Box initialized for:", container.id);
-                    
-                    // 인스턴스를 컨테이너에 저장 (나중에 dispose 호출 시 사용)
-                    container._giftBoxInstance = box;
-                } catch (e) {
-                    console.error("Error initializing box:", e);
-                }
-            });
-        });
-        
-        // 페이지 언로드 시 메모리 해제
-        window.addEventListener('beforeunload', function() {
-            const containers = document.querySelectorAll('.gift-box-3d-target');
-            containers.forEach(container => {
-                if (container._giftBoxInstance) {
-                    container._giftBoxInstance.dispose();
-                }
-            });
-        });
-    </script>
 </body>
 </html>

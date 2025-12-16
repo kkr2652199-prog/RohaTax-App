@@ -778,6 +778,8 @@ body.shop-page {
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     z-index: 1;
 }
 
@@ -987,6 +989,17 @@ body.shop-page {
 .product-card.gold:hover {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
     border-color: transparent;
+}
+
+/* Event Card */
+.product-card.event {
+    justify-content: center;
+    align-items: center;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-right: 25px;
+    padding-left: 25px;
+    box-shadow: inset 0px 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* ================================================================
@@ -1687,6 +1700,7 @@ body.shop-page {
 .gold-special-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 8px 16px;
     background: rgba(251, 191, 36, 0.2);
@@ -1696,6 +1710,7 @@ body.shop-page {
     font-weight: 700;
     color: var(--gold);
     margin-top: 12px;
+    margin-bottom: 30px;
     box-shadow: 0 0 15px var(--gold-glow);
     /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
     transform: translateZ(50px);
@@ -1709,7 +1724,9 @@ body.shop-page {
 }
 
 .premium-discount-badge {
-    display: inline-block;
+    position: absolute;
+    top: -39px;
+    display: flex;
     padding: 4px 12px;
     background: rgba(16, 185, 129, 0.2);
     border: 1px solid var(--success);
@@ -1718,6 +1735,9 @@ body.shop-page {
     font-weight: 700;
     color: var(--success);
     margin-left: 8px;
+    line-height: 20px;
+    letter-spacing: 4px;
+    gap: 0px;
     /* 3D 입체감 - 카드 밖으로 튀어나오는 효과 */
     transform: translateZ(50px);
     transform-style: preserve-3d;
@@ -1728,6 +1748,7 @@ body.shop-page {
 .gold-special-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 8px 16px;
     background: rgba(251, 191, 36, 0.2);
