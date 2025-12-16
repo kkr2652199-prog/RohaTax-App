@@ -1,0 +1,283 @@
+<!-- How it Works 섹션 (Video Demo + Hometax Slider 통합) -->
+<section class="how-it-works-section reveal" id="how-it-works">
+    <div class="container">
+        <!-- 헤더: 다크 모드용 텍스트 -->
+        <div class="section-header text-center">
+            <h2 class="section-title text-white">Seamless Workflow</h2>
+            <p class="section-subtitle text-gray-400">복잡한 세무 행정, <strong>단 3단계의 프로세스</strong>로 종결됩니다.</p>
+        </div>
+
+        <!-- 비디오 영역: 다크 시어터 디자인 -->
+        <div class="video-demo-section theater-mode">
+            <div class="video-section-header">
+                <!-- 3단계 프로세스 바 -->
+                <div class="process-steps">
+                    <div class="step-item active">
+                        <span class="step-num">01</span>
+                        <span class="step-text">Raw Data Upload<br>(원본 업로드)</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item active">
+                        <span class="step-num">02</span>
+                        <span class="step-text">AI Verification<br>(자동 검증)</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item active">
+                        <span class="step-num">03</span>
+                        <span class="step-text">Standard Output<br>(표준 변환)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [중요] 비디오 플레이어 컴포넌트 유지 -->
+            <div class="video-wrapper-glow">
+                {% include 'components/video_player.html' %}
+            </div>
+            
+            <p class="video-caption">* 실제 로하택스 구동 화면입니다. (속도 조작 없음)</p>
+        </div>
+
+        <!-- 홈택스 가이드 슬라이더 -->
+        <div class="hometax-guide-slider-container reveal">
+            <div class="container">
+                <!-- 1. Provocative Header (도발적 헤더) -->
+                <div class="guide-header text-center">
+                    <span class="guide-badge warning">REALITY CHECK</span>
+                    <h2>아직도 '건별 발행'을 하고 계십니까?</h2>
+                    <p>디지털 시대에 <strong>수기 입력</strong>은 단순한 불편함이 아닙니다.<br>그것은 <strong>경영 자원의 낭비</strong>입니다.</p>
+                </div>
+
+                <!-- 2. Cost Comparison (비용/시간 비교) -->
+                <div class="vs-container">
+                    <!-- Left: Legacy (Loss) -->
+                    <div class="vs-card legacy">
+                        <div class="vs-header">
+                            <h3>건별 수기 입력</h3>
+                            <span class="status-badge bad">Legacy Way</span>
+                        </div>
+                        <div class="cost-box loss">
+                            <span class="label">월 낭비 시간</span>
+                            <strong class="value">- 4.5시간</strong>
+                            <span class="sub-value">(연간 54시간 허비)</span>
+                        </div>
+                        <ul class="vs-list">
+                            <li class="bad">❌ 반복적인 로그인/로그아웃</li>
+                            <li class="bad">❌ 건마다 사업자 번호 타이핑</li>
+                            <li class="bad">❌ 오타 발생 시 수정 불가</li>
+                        </ul>
+                    </div>
+
+                    <!-- Right: RohaTax (Gain) -->
+                    <div class="vs-card smart">
+                        <div class="recommended-badge">SMART CHOICE</div>
+                        <div class="vs-header">
+                            <h3>로하택스 일괄 변환</h3>
+                            <span class="status-badge good">New Standard</span>
+                        </div>
+                        <div class="cost-box gain">
+                            <span class="label">월 확보 시간</span>
+                            <strong class="value">+ 4시간 20분</strong>
+                            <span class="sub-value">(커피 한 잔 마실 시간이면 끝)</span>
+                        </div>
+                        <ul class="vs-list">
+                            <li class="good">✅ <strong>단 1번</strong>의 로그인</li>
+                            <li class="good">✅ 엑셀 그대로 업로드 (타이핑 Zero)</li>
+                            <li class="good">✅ <strong>1,000건도 10분</strong>이면 완료</li>
+                        </ul>
+                        <div class="vs-footer">
+                            <button class="btn-vs primary pulse-effect" onclick="document.querySelector('.monitor-frame').scrollIntoView({behavior: 'smooth'})">
+                                가이드 확인하기 ↓
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Slider Section (Monitor Frame) -->
+                <div class="guide-slider-wrapper">
+                    <div class="slider-header">
+                        <h3>홈택스 일괄발행 가이드</h3>
+                        <p>복잡해 보이지만, 로하택스와 함께라면 <strong>클릭 8번</strong>이면 충분합니다.</p>
+                    </div>
+                
+                <!-- 프로그레스 탭 네비게이션 -->
+                <div class="guide-tabs">
+                    <button class="tab-item active" data-index="0">
+                        <span class="tab-label">1. 로그인</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="1">
+                        <span class="tab-label">2. 사업자전환</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="2">
+                        <span class="tab-label">3. 일괄발급 메뉴</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="3">
+                        <span class="tab-label">4. 전자세금계산서 메뉴</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="4">
+                        <span class="tab-label">5. 파일 업로드</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="5">
+                        <span class="tab-label">6. 변환하기</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="6">
+                        <span class="tab-label">7. 결과 확인</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                    <button class="tab-item" data-index="7">
+                        <span class="tab-label">8. 일괄발급</span>
+                        <div class="tab-progress-bar">
+                            <div class="tab-progress-fill"></div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- 슬라이드 컨테이너 -->
+                <div class="slide-container">
+                    <!-- 모니터 프레임 -->
+                    <div class="monitor-frame" id="monitor-frame">
+                        <!-- 슬라이드 이미지들 -->
+                        <div class="slide-wrapper">
+                        <div class="slide active" data-step="1">
+                            <img src="/static/images/hometax_guide/step1.png.jpg" alt="홈택스 가이드 1단계" class="guide-image">
+                            <div class="slide-highlight" data-step="1"></div>
+                            <div class="mouse-click-effect" data-step="1">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-ripple"></div>
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="2">
+                            <img src="/static/images/hometax_guide/step2.png.jpg" alt="홈택스 가이드 2단계" class="guide-image">
+                            <div class="slide-highlight" data-step="2"></div>
+                            <div class="mouse-click-effect" data-step="2">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="3">
+                            <img src="/static/images/hometax_guide/step3.png.jpg" alt="홈택스 가이드 3단계" class="guide-image">
+                            <div class="slide-highlight" data-step="3"></div>
+                            <div class="mouse-click-effect" data-step="3">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="4">
+                            <img src="/static/images/hometax_guide/step4.png.jpg" alt="홈택스 가이드 4단계" class="guide-image">
+                            <div class="slide-highlight" data-step="4"></div>
+                            <div class="mouse-click-effect" data-step="4">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="5">
+                            <img src="/static/images/hometax_guide/step5.png.jpg" alt="홈택스 가이드 5단계" class="guide-image">
+                            <div class="slide-highlight" data-step="5"></div>
+                            <div class="mouse-click-effect" data-step="5">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="6">
+                            <img src="/static/images/hometax_guide/step6.png.jpg" alt="홈택스 가이드 6단계" class="guide-image">
+                            <div class="slide-highlight" data-step="6"></div>
+                            <div class="mouse-click-effect" data-step="6">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="7">
+                            <img src="/static/images/hometax_guide/step7.png.jpg" alt="홈택스 가이드 7단계" class="guide-image">
+                            <div class="slide-highlight" data-step="7"></div>
+                            <div class="mouse-click-effect" data-step="7">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slide" data-step="8">
+                            <img src="/static/images/hometax_guide/step8.png.jpg" alt="홈택스 가이드 8단계" class="guide-image">
+                            <div class="slide-highlight" data-step="8"></div>
+                            <div class="mouse-click-effect" data-step="8">
+                                <div class="mouse-cursor">
+                                    <div class="cursor-pointer"></div>
+                                </div>
+                                <div class="click-target login-target">
+                                    <div class="click-glow"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    <!-- 모니터 프레임 끝 -->
+                    
+                    <!-- 자막 영역 -->
+                    <div class="subtitle-container">
+                        <div class="subtitle-text" id="subtitleText"></div>
+                    </div>
+                    
+                    <!-- 슬라이드 컨트롤 버튼 -->
+                    <div class="slide-controls">
+                        <button class="slide-btn prev-btn" id="prevBtn" title="이전 단계">
+                            <i data-lucide="chevron-left" class="btn-icon"></i>
+                        </button>
+                        <button class="slide-btn play-pause-btn" id="playPauseBtn" title="재생">
+                            <i data-lucide="play" class="btn-icon play-icon"></i>
+                        </button>
+                        <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
+                            <i data-lucide="chevron-right" class="btn-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로하택스 - 가구 디자인 스튜디오</title>
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
+    
+    <!-- Layout Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v={{ timestamp }}">
+    
+    <!-- Import Map (ES6 모듈 지원) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 헤더 아래 컨텐츠 영역 */
+        .studio-content {
+            display: flex;
+            flex: 1;
+            margin-top: 70px; /* 헤더 높이만큼 여백 */
+            overflow: hidden;
+        }
+        
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .viewer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #10B981;
+        }
+        
+        .back-link {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(55, 65, 81, 0.4);
+        }
+        
+        #viewer-canvas {
+            width: 100%;
+            height: 100%;
+            background: #2a2a2a;
+            border: 2px solid #10B981;
+            border-radius: 8px;
+            min-height: 500px;
+        }
+        
+        .control-panel {
+            width: 350px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-left: 2px solid #10B981;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #10B981;
+            text-align: center;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .test-button {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .test-button:active {
+            transform: translateY(0);
+        }
+        
+        .test-button.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+        
+        .test-button.standard {
+            background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+        }
+        
+        .test-button.premium {
+            background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+        }
+        
+        .test-button.event {
+            background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+        }
+        
+        .info-section {
+            margin-top: 30px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #3a3a3a;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #10B981;
+        }
+        
+        .info-text {
+            font-size: 12px;
+            color: #aaaaaa;
+            line-height: 1.6;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #10B981;
+            border: 1px solid #10B981;
+        }
+        
+        /* 초기화 버튼 스타일 */
+        .clear-button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .clear-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        /* 아코디언 스타일 */
+        .accordion-group {
+            margin-bottom: 15px;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        
+        .accordion-group details {
+            width: 100%;
+        }
+        
+        .accordion-group summary {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+        
+        .accordion-group summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .accordion-group summary::before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .accordion-group details[open] summary::before {
+            transform: rotate(90deg);
+        }
+        
+        .accordion-group summary:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        }
+        
+        .accordion-content {
+            padding: 12px 20px;
+            background: #1a1a1a;
+        }
+        
+        /* 크기 조절 슬라이더 스타일 */
+        .size-control {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #3a3a3a;
+        }
+        
+        .size-control-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #10B981;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .size-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #3a3a3a;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #10B981;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .size-slider::-webkit-slider-thumb:hover {
+            background: #059669;
+            transform: scale(1.2);
+        }
+        
+        .size-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #10B981;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .size-slider::-moz-range-thumb:hover {
+            background: #059669;
+            transform: scale(1.2);
+        }
+        
+        .size-value {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #aaaaaa;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/header.html' %}
+    
+    <div class="studio-content">
+        <div class="viewer-container">
+        <div class="viewer-header">
+            <div class="viewer-title">🎨 3D 가구 디자인 스튜디오</div>
+            <a href="/admin" class="back-link">⬅️ 대시보드로 돌아가기</a>
+        </div>
+        <div id="viewer-canvas"></div>
+    </div>
+    
+    <div class="control-panel">
+        <div class="panel-title">🎛️ 제어 패널</div>
+        
+        <!-- 초기화 버튼 -->
+        <button id="btn-clear" class="clear-button">
+            🔄 화면 초기화
+        </button>
+        
+        <!-- 아코디언 그룹: 유료 상품 -->
+        <div class="accordion-group">
+            <details>
+                <summary>📂 유료 상품 목록</summary>
+                <div class="accordion-content">
+                    <div class="button-group">
+                        <button id="btn-gold" class="test-button gold">
+                            👑 Gold Crown
+                        </button>
+                        <button id="btn-standard" class="test-button standard">
+                            🪙 Standard Coin
+                        </button>
+                        <button id="btn-premium" class="test-button premium">
+                            🎲 Premium Cube
+                        </button>
+                    </div>
+                </div>
+            </details>
+        </div>
+        
+        <!-- 아코디언 그룹: 이벤트 상품 -->
+        <div class="accordion-group">
+            <details>
+                <summary>🎁 이벤트 상품 목록</summary>
+                <div class="accordion-content">
+                    <div class="button-group">
+                        <button id="btn-event1" class="test-button event">
+                            🎁 Event Box 1
+                        </button>
+                        <button id="btn-event2" class="test-button event">
+                            🎁 Event Box 2
+                        </button>
+                    </div>
+                </div>
+            </details>
+        </div>
+        
+        <!-- 아코디언 그룹: 신규 실험실 -->
+        <div class="accordion-group">
+            <details>
+                <summary>🔬 신규 실험실</summary>
+                <div class="accordion-content">
+                    <div class="button-group">
+                        <button id="btn-neon" class="test-button" style="background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%);">
+                            💍 Neon Ring
+                        </button>
+                        <button id="btn-pedestal" class="test-button" style="background: linear-gradient(135deg, #8b7355 0%, #6b5d4f 100%);">
+                            🏛️ 진열대 (Pedestal)
+                        </button>
+                        <button id="btn-tv3d" class="test-button" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+                            📺 3D TV
+                        </button>
+                        <button id="btn-luxedisplay" class="test-button" style="background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);">
+                            💎 LuxeDisplay3D
+                        </button>
+                        <button id="btn-magicfire" class="test-button" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">
+                            🔥 Magic Fire (불꽃 액자)
+                        </button>
+                        <button id="btn-chandelier" class="test-button" style="background: linear-gradient(135deg, #dda520 0%, #b8860b 100%);">
+                            💡 3D Chandelier (샹들리에)
+                        </button>
+                        <button id="btn-crown3d" class="test-button" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);">
+                            👑 3D Crown (왕관)
+                        </button>
+                    </div>
+                </div>
+            </details>
+        </div>
+        
+        <!-- 크기 조절 슬라이더 -->
+        <div class="size-control">
+            <label for="size-slider" class="size-control-label">📏 크기 조절</label>
+            <input type="range" id="size-slider" class="size-slider" min="0.5" max="2.0" step="0.1" value="1.0" title="가구 크기 조절 (0.5x ~ 2.0x)" aria-label="가구 크기 조절">
+            <div class="size-value">
+                크기: <span id="size-value-display">1.0x</span>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-title">ℹ️ 사용 방법</div>
+            <div class="info-text">
+                • 카테고리를 펼쳐 가구를 선택합니다.<br>
+                • 마우스로 드래그하여 회전할 수 있습니다.<br>
+                • 휠로 확대/축소가 가능합니다.<br>
+                • 슬라이더로 가구 크기를 실시간 조절합니다.<br>
+                • 초기화 버튼으로 화면을 비울 수 있습니다.
+            </div>
+        </div>
+        
+        <div id="status" class="status">
+            초기화 중...
+        </div>
+    </div>
+    </div> <!-- studio-content 닫기 -->
+
+    <!-- Three.js 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GLTFLoader (3D 모델 로드용) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <!-- OrbitControls 및 GLTFLoader를 THREE 네임스페이스에 추가 -->
+    <script>
+        if (typeof THREE !== 'undefined') {
+            if (typeof OrbitControls !== 'undefined') {
+                THREE.OrbitControls = OrbitControls;
+            }
+            if (typeof GLTFLoader !== 'undefined') {
+                THREE.GLTFLoader = GLTFLoader;
+            }
+        }
+    </script>
+    
+    <!-- 로컬 모듈 로드 (전역 변수 방식) -->
+    <script src="{{ url_for('static', filename='js/3d/Pedestal3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/GiftBox3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/NeonRing.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/TV3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/LuxeDisplay3D.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/MagicFire.js') }}?v={{ timestamp }}" onload="console.log('✅ [MagicFire.js] 로딩:', typeof window.MagicFire)" onerror="console.error('❌ [MagicFire.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/Chandelier3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [Chandelier3D.js] 로딩:', typeof window.Chandelier3D)" onerror="console.error('❌ [Chandelier3D.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/Crown3D.js') }}?v={{ timestamp }}" onload="console.log('✅ [Crown3D.js] 로딩:', typeof window.Crown3D)" onerror="console.error('❌ [Crown3D.js] 로딩 실패:', this.src)"></script>
+    <script src="{{ url_for('static', filename='js/3d/ProductFactory.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', filename='js/3d/FurnitureViewer.js') }}?v={{ timestamp }}"></script>
+    
+    <script>
+        let viewer = null;
+        let factory = null;
+        
+        // 상태 업데이트 함수
+        function updateStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.style.color = isError ? '#EF4444' : '#10B981';
+            statusEl.style.borderColor = isError ? '#EF4444' : '#10B981';
+        }
+        
+        // 초기화
+        function init() {
+            try {
+                // 디버깅: 로드된 모듈 확인
+                console.log('[Furniture Studio] 모듈 로드 상태 확인:');
+                console.log('  - THREE:', typeof THREE !== 'undefined' ? '✅' : '❌');
+                console.log('  - THREE.OrbitControls:', typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined' ? '✅' : '❌');
+                console.log('  - GiftBox3D:', typeof GiftBox3D !== 'undefined' ? '✅' : '❌');
+                console.log('  - NeonRing:', typeof NeonRing !== 'undefined' ? '✅' : '❌');
+                console.log('  - window.NeonRing:', typeof window.NeonRing !== 'undefined' ? '✅' : '❌');
+                console.log('  - ProductFactory:', typeof ProductFactory !== 'undefined' ? '✅' : '❌');
+                console.log('  - FurnitureViewer:', typeof FurnitureViewer !== 'undefined' ? '✅' : '❌');
+                console.log('  - window.FurnitureViewer:', typeof window.FurnitureViewer !== 'undefined' ? '✅' : '❌');
+                
+                // 1. 뷰어 초기화
+                if (typeof FurnitureViewer === 'undefined' && typeof window.FurnitureViewer === 'undefined') {
+                    throw new Error('FurnitureViewer를 찾을 수 없습니다. 스크립트가 로드되었는지 확인하세요.');
+                }
+                
+                const FurnitureViewerClass = FurnitureViewer || window.FurnitureViewer;
+                viewer = new FurnitureViewerClass('viewer-canvas');
+                updateStatus('✅ FurnitureViewer 초기화 완료');
+                
+                // 2. 팩토리 초기화 (뷰어의 scene 사용)
+                if (typeof ProductFactory === 'undefined' && typeof window.ProductFactory === 'undefined') {
+                    throw new Error('ProductFactory를 찾을 수 없습니다. 스크립트가 로드되었는지 확인하세요.');
+                }
+                
+                const ProductFactoryClass = ProductFactory || window.ProductFactory;
+                factory = new ProductFactoryClass(viewer.scene);
+                
+                // FurnitureViewer에 factory 참조 설정 (애니메이션용)
+                if (viewer && typeof viewer.setFactory === 'function') {
+                    viewer.setFactory(factory);
+                }
+                
+                updateStatus('✅ ProductFactory 초기화 완료');
+                
+                // 3. 버튼 이벤트 리스너 설정
+                setupEventListeners();
+                
+                updateStatus('✅ 모든 시스템 준비 완료');
+                
+            } catch (error) {
+                console.error('[Furniture Studio] 초기화 오류:', error);
+                console.error('[Furniture Studio] 에러 메시지:', error.message);
+                console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                updateStatus('❌ 초기화 실패: ' + error.message, true);
+            }
+        }
+        
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 초기화 버튼
+            document.getElementById('btn-clear').onclick = () => {
+                try {
+                    if (viewer && viewer.currentProduct) {
+                        viewer.scene.remove(viewer.currentProduct);
+                        viewer.currentProduct = null;
+                        // 슬라이더도 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ 화면 초기화 완료');
+                    } else {
+                        updateStatus('ℹ️ 제거할 가구가 없습니다');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 초기화 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ 초기화 실패: ' + error.message, true);
+                }
+            };
+            
+            // 크기 조절 슬라이더
+            const sizeSlider = document.getElementById('size-slider');
+            const sizeValueDisplay = document.getElementById('size-value-display');
+            
+            sizeSlider.addEventListener('input', (e) => {
+                try {
+                    const scaleValue = parseFloat(e.target.value);
+                    sizeValueDisplay.textContent = scaleValue.toFixed(1) + 'x';
+                    
+                    if (viewer && viewer.currentProduct) {
+                        viewer.currentProduct.scale.set(scaleValue, scaleValue, scaleValue);
+                        // 상태 메시지는 너무 자주 업데이트하지 않도록 주석 처리
+                        // updateStatus(`📏 크기 조절: ${scaleValue.toFixed(1)}x`);
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 크기 조절 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                }
+            });
+            
+            // 슬라이더 리셋 함수 (가구 생성 시 호출)
+            window.resetSizeSlider = () => {
+                sizeSlider.value = 1.0;
+                sizeValueDisplay.textContent = '1.0x';
+            };
+            
+            // Gold Crown
+            document.getElementById('btn-gold').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Gold",
+                        price: 50000,
+                        description: "프리미엄 골드 크라운"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createGoldCrown(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Gold Crown 생성 완료');
+                    } else {
+                        throw new Error('Gold Crown 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Gold Crown 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Gold Crown 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Standard Coin
+            document.getElementById('btn-standard').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Standard",
+                        price: 10000,
+                        description: "스탠다드 코인"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createStandardCoin(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Standard Coin 생성 완료');
+                    } else {
+                        throw new Error('Standard Coin 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Standard Coin 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Standard Coin 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Premium Cube
+            document.getElementById('btn-premium').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Premium",
+                        price: 30000,
+                        description: "프리미엄 큐브"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createPremiumCube(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Premium Cube 생성 완료');
+                    } else {
+                        throw new Error('Premium Cube 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Premium Cube 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Premium Cube 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Event Box 1
+            document.getElementById('btn-event1').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Event Box 1",
+                        price: 0,
+                        description: "이벤트 박스 1",
+                        is_event: true,
+                        event_type: "welcome"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createEventProduct(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Event Box 1 생성 완료');
+                    } else {
+                        throw new Error('Event Box 1 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Event Box 1 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Event Box 1 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Event Box 2
+            document.getElementById('btn-event2').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Event Box 2",
+                        price: 0,
+                        description: "이벤트 박스 2",
+                        is_event: true,
+                        event_type: "special"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createEventProduct(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Event Box 2 생성 완료');
+                    } else {
+                        throw new Error('Event Box 2 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Event Box 2 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Event Box 2 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Neon Ring
+            document.getElementById('btn-neon').onclick = () => {
+                try {
+                    const productData = {
+                        name: "Neon Ring",
+                        price: 0,
+                        description: "네온 링 (실험실 제품)"
+                    };
+                    const pos = new THREE.Vector3(0, 0, 0);
+                    
+                    const group = factory.createNeonRing(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Neon Ring 생성 완료');
+                        
+                        // 회전 애니메이션 시작
+                        const animateNeonRing = () => {
+                            if (viewer && viewer.currentProduct && viewer.currentProduct.userData.isAnimating) {
+                                const NeonRingClass = NeonRing || window.NeonRing;
+                                if (NeonRingClass) {
+                                    NeonRingClass.animate(viewer.currentProduct);
+                                }
+                                requestAnimationFrame(animateNeonRing);
+                            }
+                        };
+                        animateNeonRing();
+                    } else {
+                        throw new Error('Neon Ring 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Neon Ring 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Neon Ring 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Pedestal (진열대)
+            document.getElementById('btn-pedestal').onclick = () => {
+                try {
+                    // 진열대는 높이가 있으므로 y위치를 -2로 조정하여 뷰어 중앙에 오게 함
+                    const pos = { x: 0, y: -2, z: 0 };
+                    
+                    const group = factory.createPedestal(pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ 진열대 (Pedestal) 생성 완료');
+                    } else {
+                        throw new Error('진열대 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 진열대 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ 진열대 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // 3D TV
+            document.getElementById('btn-tv3d').onclick = () => {
+                try {
+                    updateStatus('⏳ 3D TV 모델 로드 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    const productData = { name: '3D TV', price: 0 };
+                    
+                    // 모델 파일 경로 설정 (사용자가 나중에 변경 가능)
+                    // 기본값: /static/models/tv.glb
+                    // 또는 사용자가 지정한 경로: '/static/js/3d tv/models/tv.glb' 등
+                    const modelPath = '/static/models/tv.glb'; // 필요시 수정
+                    
+                    const group = factory.createTV3D(productData, pos, modelPath);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ 3D TV 생성 완료 (모델 로드 중일 수 있음)');
+                        
+                        // 자동 회전 애니메이션 제거 - TV는 사용자가 직접 조작할 때만 움직임 (OrbitControls 사용)
+                    } else {
+                        throw new Error('3D TV 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] 3D TV 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ 3D TV 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // LuxeDisplay3D
+            document.getElementById('btn-luxedisplay').onclick = () => {
+                try {
+                    updateStatus('⏳ LuxeDisplay3D 생성 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    const productData = { name: 'LuxeDisplay3D', price: 0 };
+                    
+                    const group = factory.createLuxeDisplay3D(productData, pos);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ LuxeDisplay3D 생성 완료');
+                        
+                        // 회전 애니메이션 시작 (선택적)
+                        group.userData.isAnimating = true;
+                        const animateLuxeDisplay = () => {
+                            if (viewer && viewer.currentProduct && viewer.currentProduct.userData.isAnimating) {
+                                const LuxeDisplay3DClass = LuxeDisplay3D || window.LuxeDisplay3D;
+                                if (LuxeDisplay3DClass) {
+                                    LuxeDisplay3DClass.animate(viewer.currentProduct);
+                                }
+                                requestAnimationFrame(animateLuxeDisplay);
+                            }
+                        };
+                        animateLuxeDisplay();
+                    } else {
+                        throw new Error('LuxeDisplay3D 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] LuxeDisplay3D 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ LuxeDisplay3D 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Magic Fire (불꽃 액자)
+            document.getElementById('btn-magicfire').onclick = () => {
+                try {
+                    updateStatus('⏳ Magic Fire 생성 중...');
+                    const pos = { x: 0, y: 0, z: 0 };
+                    
+                    // 이미지 URL 옵션 (기본값 사용)
+                    const options = {
+                        imageUrl: 'https://assets.codepen.io/12550455/good-place-2.jpg',
+                        particleCount: 25,   // 50 -> 25로 반으로 줄임
+                        frameWidth: 2,      // 4 -> 2로 축소
+                        frameHeight: 1.125, // 2.25 -> 1.125로 축소
+                        frameDepth: 0.1
+                    };
+                    
+                    const group = factory.createMagicFire(pos, options);
+                    if (group) {
+                        // 초기 스케일 설정
+                        group.scale.set(1.0, 1.0, 1.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Magic Fire 생성 완료');
+                        // 불꽃 애니메이션은 ProductFactory.updateProductAnimations()에서 자동으로 처리됨
+                    } else {
+                        throw new Error('Magic Fire 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Magic Fire 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Magic Fire 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Chandelier3D (샹들리에)
+            document.getElementById('btn-chandelier').onclick = () => {
+                try {
+                    // 샹들리에는 createModel 내부에서 허브를 y=2에 배치하므로, 위치는 (0, 0, 0)으로 설정
+                    const pos = { x: 0, y: 0, z: 0 };
+                    
+                    const group = factory.createChandelier(pos);
+                    if (group) {
+                        // 샹들리에는 크기가 작을 수 있으므로 스케일을 2배로 키움
+                        group.scale.set(2.0, 2.0, 2.0);
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Chandelier3D 생성 완료');
+                        
+                        // 회전 애니메이션 시작
+                        let lastTime = performance.now();
+                        const animateChandelier = () => {
+                            if (viewer && viewer.currentProduct && viewer.currentProduct.userData.isRotating) {
+                                const currentTime = performance.now();
+                                const delta = (currentTime - lastTime) / 1000; // 초 단위
+                                lastTime = currentTime;
+                                
+                                const Chandelier3DClass = Chandelier3D || window.Chandelier3D;
+                                if (Chandelier3DClass) {
+                                    Chandelier3DClass.animate(viewer.currentProduct, delta);
+                                }
+                                requestAnimationFrame(animateChandelier);
+                            }
+                        };
+                        animateChandelier();
+                    } else {
+                        throw new Error('Chandelier3D 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Chandelier3D 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Chandelier3D 생성 실패: ' + error.message, true);
+                }
+            };
+            
+            // Crown3D (왕관 - 외부 GLB 모델)
+            document.getElementById('btn-crown3d').onclick = () => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'furniture_studio.html:946',message:'BUTTON CLICK',data:{buttonId:'btn-crown3d'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+                try {
+                    const pos = { x: 0, y: 0, z: 0 };
+                    
+                    // 모델 경로 옵션 (기본값: /static/models/crown-3d.glb)
+                    // 사용자가 다른 경로를 지정하려면 options에 modelPath를 전달
+                    const options = {};
+                    
+                    const group = factory.createCrown3D(pos, options);
+                    if (group) {
+                        viewer.displayProduct(group);
+                        // 슬라이더 리셋
+                        if (window.resetSizeSlider) window.resetSizeSlider();
+                        updateStatus('✅ Crown3D 생성 완료 (모델 로딩 중...)');
+                        
+                        // 회전 애니메이션 시작
+                        let lastTime = performance.now();
+                        const animateCrown = () => {
+                            if (viewer && viewer.currentProduct) {
+                                const currentTime = performance.now();
+                                const delta = (currentTime - lastTime) / 1000; // 초 단위
+                                lastTime = currentTime;
+                                
+                                const Crown3DClass = Crown3D || window.Crown3D;
+                                if (Crown3DClass && viewer.currentProduct.userData.modelLoaded) {
+                                    Crown3DClass.animate(viewer.currentProduct);
+                                }
+                                requestAnimationFrame(animateCrown);
+                            }
+                        };
+                        animateCrown();
+                    } else {
+                        throw new Error('Crown3D 생성 실패');
+                    }
+                } catch (error) {
+                    console.error('[Furniture Studio] Crown3D 오류:', error);
+                    console.error('[Furniture Studio] 에러 메시지:', error.message);
+                    console.error('[Furniture Studio] 스택 트레이스:', error.stack);
+                    updateStatus('❌ Crown3D 생성 실패: ' + error.message, true);
+                }
+            };
+        }
+        
+        // DOM 로드 완료 후 초기화
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
+

@@ -4,9 +4,14 @@ import sys
 
 
 def get_env(key: str, default: str | None = None) -> str:
-    value = os.getenv(key, default)
-    if value is None:
-        return ""
+    """
+    환경 변수 조회 유틸리티.
+    - 값이 설정되지 않았거나 빈 문자열("")인 경우 default를 사용한다.
+    - default도 없으면 빈 문자열을 반환한다.
+    """
+    value = os.getenv(key)
+    if value is None or value == "":
+        return default or ""
     return value
 
 

@@ -1,0 +1,21 @@
+/* ================================================================
+   Font Configuration - RohaTax Typography
+   ================================================================ */
+
+/* 
+ * Note: Google Fonts는 HTML <head>에서 로드됨
+ * <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ */
+
+body {
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+}
+
+/* 기본 타이포그래피 */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 700;
+    line-height: 1.2;
+}
+

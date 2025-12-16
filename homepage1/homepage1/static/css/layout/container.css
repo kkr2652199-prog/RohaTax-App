@@ -1,0 +1,125 @@
+/* ================================================================
+   Container & Layout - RohaTax (강력한 척추 코드)
+   ================================================================ */
+
+/* --- Global Container & Layout --- */
+
+/* 1. 메인 컨테이너 (척추) */
+.container {
+    width: 100%;
+    max-width: 1200px; /* 원본과 동일 */
+    margin: 0 auto;
+    padding: 0 20px; /* 원본과 동일 */
+    position: relative;
+}
+
+/* 2. 섹션 공통 (구역) */
+section {
+    width: 100%;
+    position: relative;
+    overflow: visible; /* 슬라이더 컨트롤이 보이도록 변경 */
+    display: block;
+    /* padding 제거 - 각 섹션이 자체 패딩 사용 */
+}
+
+/* 3. Section Header (Common) */
+.section-header {
+    position: absolute;
+    top: -248px;
+    left: 0px;
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.section-header h2 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+}
+
+.section-header p {
+    font-size: 18px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+
+/* 4. 공통 그리드 시스템 (뼈대) */
+.grid {
+    display: grid;
+    gap: 30px;
+    width: 100%;
+}
+
+.grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* 5. Flex 유틸리티 (배치 도구) */
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 6. 모바일 대응 (반응형 붕괴 방지) */
+@media (max-width: 1024px) {
+    .container { 
+        max-width: 95%; 
+        padding: 0 15px; 
+    }
+    
+    .grid-2, 
+    .grid-3, 
+    .grid-4 { 
+        grid-template-columns: 1fr; /* 모바일은 1열 */
+    }
+    
+    .section-header {
+        margin-bottom: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
+    }
+    
+    .section-header h2 {
+        font-size: 28px;
+    }
+    
+    .section-header p {
+        font-size: 16px;
+    }
+    
+    .grid {
+        gap: 20px;
+    }
+    
+    .flex-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
