@@ -1,0 +1,19 @@
+:root{
+  --color-bg-start:#5f6ee6;
+  --color-bg-end:#6f4fb0;
+  --color-surface:#ffffff;
+  --color-surface-elev:#ffffffcc;
+  --color-text-strong:#111827;
+  --color-text:#1f2937;
+  --color-muted:#6b7280;
+  --color-primary:#5865f2;
+  --color-accent:#ff6b6b;
+  --shadow-md:0 10px 30px rgba(0,0,0,0.12);
+  --radius-md:12px;
+  --spacing-sm:8px;
+  --spacing-md:16px;
+  --spacing-lg:24px;
+  --spacing-xl:36px;
+}
+
+

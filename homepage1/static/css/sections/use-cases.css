@@ -1,0 +1,101 @@
+/* ================================================================
+   Use Cases Section - RohaTax
+   ================================================================ */
+
+/* Use Cases Section */
+.use-cases-section {
+    padding: 100px 0;
+    background-color: #f8fafc;
+}
+
+/* Use Cases Grid */
+.use-cases-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: 1280px;
+    margin: 60px auto 0;
+    padding: 0 20px;
+}
+
+/* Immersive Content */
+.immersive-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 30px;
+    color: #fff;
+}
+
+/* Origin Card */
+.origin-card {
+    border: 2px solid rgba(225, 29, 72, 0.3);
+}
+
+/* Impact Text */
+.impact-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #f1f5f9;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.impact-text strong {
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+/* Metric Box */
+.metric-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    color: #0f172a;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.metric-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #2563eb;
+}
+
+.sub-desc {
+    display: none;
+}
+
+/* Responsive Use Cases */
+@media (max-width: 991px) {
+    .use-cases-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .immersive-card {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .use-cases-section {
+        padding: 60px 0;
+    }
+    
+    .use-cases-grid {
+        gap: 20px;
+    }
+}
+

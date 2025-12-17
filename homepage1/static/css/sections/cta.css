@@ -1,0 +1,69 @@
+/* ================================================================
+   CTA Section - RohaTax
+   ================================================================ */
+
+/* CTA Section */
+.cta-section {
+    background: #1a365d;
+    padding: 80px 0;
+}
+
+.cta-content {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* CTA Title */
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #FFFFFF;
+}
+
+/* CTA Subtitle */
+.cta-subtitle {
+    font-size: 1.1rem;
+    color: #FFFFFF;
+    margin-bottom: 40px;
+}
+
+/* CTA Actions */
+.cta-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
+/* CTA Guarantee */
+.cta-guarantee {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cta-section {
+        padding: 60px 0;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+    }
+    
+    .cta-subtitle {
+        font-size: 1rem;
+    }
+    
+    .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+

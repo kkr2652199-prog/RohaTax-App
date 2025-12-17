@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}로●하 Tax{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v={{ timestamp }}">
+    <!-- Core Styles (Base) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
+    <!-- Layout Styles (Base) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}?v={{ timestamp }}">
+    {% block head_extra %}{% endblock %}
+    {% if csrf_token is defined %}
+        {% if csrf_token is callable %}
+            <meta name="csrf-token" content="{{ csrf_token() }}">
+        {% else %}
+            <meta name="csrf-token" content="{{ csrf_token }}">
+        {% endif %}
+    {% else %}
+        <meta name="csrf-token" content="">
+    {% endif %}
+</head>
+<body>
+    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path and request.endpoint != 'auth.login' and '/login' not in request.path %}
+    {% include 'partials/header.html' %}
+    {% endif %}
+    <main>
+               {% with messages = get_flashed_messages(with_categories=true) %}
+               {% if messages %}
+               <div class="container" style="max-width:960px;margin:16px auto;display:none">
+                   {% for category, message in messages %}
+                   <div class="alert alert-{{ category }}" style="padding:10px 14px;border-radius:8px;margin-bottom:8px;{% if category=='success' %}background:#e8f7ef;color:#17663a;border:1px solid #bdebd0{% elif category=='error' %}background:#fdecea;color:#611a15;border:1px solid #f5c6cb{% else %}background:#eef2ff;color:#1e3a8a;border:1px solid #c7d2fe{% endif %}">
+                       {{ message }}
+                   </div>
+                   {% endfor %}
+               </div>
+               {% endif %}
+               {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    {% block scripts %}{% endblock %}
+    
+    <!-- ================================================================
+         채널톡 챗봇 위젯 설치 위치
+         ================================================================
+         아래 주석을 해제하고 chatbot_widget.html의 플러그인 키를 입력하면
+         모든 페이지에 챗봇이 표시됩니다.
+         ================================================================ -->
+    {# {% include 'components/chatbot_widget.html' %} #}
+</body>
+</html>
+
+
+
+
+
+
+

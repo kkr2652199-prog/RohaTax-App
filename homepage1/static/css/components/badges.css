@@ -1,0 +1,122 @@
+/* ================================================================
+   Badges & Labels - RohaTax
+   ================================================================ */
+
+/* Industry Badge (Use Cases) */
+.industry-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    margin-bottom: 10px;
+    align-self: flex-start;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Badge Color Variants */
+.badge-problem {
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+}
+
+.badge-solution {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(37,99,235,0.4);
+}
+
+.badge-origin {
+    background: #e11d48;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.4);
+}
+
+.badge-gold {
+    background: #d97706;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(217, 119, 6, 0.4);
+}
+
+/* Event Badge (Pricing) */
+.event-badge {
+    background: #e11d48;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* Popular Badge (Pricing) */
+.popular-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.status-badge.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.status-badge.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.status-badge.info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+/* Tag */
+.tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Label */
+.label {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
