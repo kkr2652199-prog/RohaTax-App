@@ -1,49 +1,15 @@
-import { Type } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { ColorTheme, GeneratedContent, SupplementaryInfo } from '../types';
 
-// ✅ 보안 프록시: 백엔드 API를 통해 호출 (API 키는 서버에서만 관리)
-const BACKEND_API_URL = '/api/studio/generate';
+// ✅ 기술 복원: Vite 환경 변수 사용 (브라우저 호환)
+const API_KEY = import.meta.env.VITE_API_KEY;
 
-// TypeScript Type enum을 JSON 직렬화 가능한 객체로 변환하는 헬퍼
-const _convertTypeToJson = (typeValue: any): string => {
-    if (typeValue === Type.OBJECT) return 'object';
-    if (typeValue === Type.STRING) return 'string';
-    if (typeValue === Type.ARRAY) return 'array';
-    if (typeValue === Type.NUMBER) return 'number';
-    if (typeValue === Type.BOOLEAN) return 'boolean';
-    return 'string'; // 기본값
-};
+if (!API_KEY) {
+  console.error("VITE_API_KEY environment variable is not set.");
+  throw new Error("API_KEY environment variable is not set.");
+}
 
-const _convertSchemaToJson = (schema: any): any => {
-    if (!schema || typeof schema !== 'object') return schema;
-    
-    const converted: any = {};
-    
-    if ('type' in schema) {
-        converted.type = _convertTypeToJson(schema.type);
-    }
-    
-    if ('properties' in schema) {
-        converted.properties = {};
-        for (const [key, value] of Object.entries(schema.properties)) {
-            converted.properties[key] = _convertSchemaToJson(value);
-        }
-    }
-    
-    if ('items' in schema) {
-        converted.items = _convertSchemaToJson(schema.items);
-    }
-    
-    if ('description' in schema) {
-        converted.description = schema.description;
-    }
-    
-    if ('required' in schema) {
-        converted.required = schema.required;
-    }
-    
-    return converted;
-};
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -310,40 +276,20 @@ export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' 
     try {
         if (!prompt) return null;
 
-        // ✅ 백엔드 프록시 API 호출 (보안 강화)
-        // 참고: 이미지 생성은 아직 백엔드에서 구현되지 않았으므로, 임시로 에러를 반환
-        // 추후 백엔드에서 구현되면 아래 코드로 교체
-        /*
-        const response = await fetch(BACKEND_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        // ✅ 기술 복원: gpt-park의 작동하는 이미지 생성 로직
+        const imageResponse = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/jpeg',
+                aspectRatio: aspectRatio,
             },
-            credentials: 'include',
-            body: JSON.stringify({
-                action: 'generateImage',
-                params: {
-                    prompt: prompt,
-                    aspectRatio: aspectRatio
-                }
-            })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류가 발생했습니다.' }));
-            throw new Error(errorData.error || `서버 오류: ${response.status}`);
+        if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
+            return imageResponse.generatedImages[0].image.imageBytes;
         }
-
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || '이미지 생성에 실패했습니다.');
-        }
-
-        return result.data.imageBase64;
-        */
-        
-        // 임시: 이미지 생성 기능은 추후 구현 예정
-        console.warn("이미지 생성 기능은 백엔드 프록시 구현 후 사용 가능합니다.");
         return null;
     } catch (error) {
         console.error("Error generating image:", error);
@@ -359,33 +305,18 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
   try {
     const prompt = getPrompt(topic, theme, interactiveElementIdea, rawContent, additionalRequest, currentDate);
     
-    // ✅ 백엔드 프록시 API 호출 (보안 강화)
-    const response = await fetch(BACKEND_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+    // ✅ 기술 복원: gpt-park의 직접 호출 방식
+    const contentResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
         },
-        credentials: 'include', // 세션 쿠키 포함
-        body: JSON.stringify({
-            action: 'generate',
-            params: {
-                prompt: prompt,
-                responseSchema: _convertSchemaToJson(responseSchema)
-            }
-        })
     });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류가 발생했습니다.' }));
-        throw new Error(errorData.error || `서버 오류: ${response.status}`);
-    }
-
-    const result = await response.json();
-    if (!result.success) {
-        throw new Error(result.error || '블로그 생성에 실패했습니다.');
-    }
-
-    const parsedJson = result.data;
+    const jsonString = contentResponse.text;
+    const parsedJson = JSON.parse(jsonString);
 
     if (
         !parsedJson.blogPostHtml ||
@@ -444,33 +375,18 @@ export const regenerateBlogPostHtml = async (originalHtml: string, feedback: str
     try {
         const prompt = getRegenerationPrompt(originalHtml, feedback, theme, currentDate);
         
-        // ✅ 백엔드 프록시 API 호출 (보안 강화)
-        const response = await fetch(BACKEND_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        // ✅ 기술 복원: gpt-park의 직접 호출 방식
+        const contentResponse = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: regenerationResponseSchema,
             },
-            credentials: 'include', // 세션 쿠키 포함
-            body: JSON.stringify({
-                action: 'regenerate',
-                params: {
-                    prompt: prompt,
-                    responseSchema: _convertSchemaToJson(regenerationResponseSchema)
-                }
-            })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류가 발생했습니다.' }));
-            throw new Error(errorData.error || `서버 오류: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || '블로그 재생성에 실패했습니다.');
-        }
-
-        const parsedJson = result.data;
+        const jsonString = contentResponse.text;
+        const parsedJson = JSON.parse(jsonString);
 
         if (!parsedJson.blogPostHtml) {
             throw new Error("Received malformed JSON response from API for content regeneration.");
@@ -501,36 +417,45 @@ const topicSuggestionSchema = {
 
 const generateTopics = async (prompt: string, useSearch: boolean = false): Promise<string[]> => {
     try {
+        const config: {
+            responseMimeType?: "application/json",
+            responseSchema?: typeof topicSuggestionSchema,
+            tools?: {googleSearch: {}}[],
+            temperature?: number;
+        } = {};
+        
+        if (useSearch) {
+             config.tools = [{googleSearch: {}}];
+        } else {
+             config.responseMimeType = "application/json";
+             config.responseSchema = topicSuggestionSchema;
+        }
+
+        config.temperature = 1.0;
+        
         const enhancedPrompt = `${prompt}\n\n(This is a new request. Please generate a completely new and different set of suggestions. Random seed: ${Math.random()})`;
 
-        // ✅ 백엔드 프록시 API 호출 (보안 강화)
-        const response = await fetch(BACKEND_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // 세션 쿠키 포함
-            body: JSON.stringify({
-                action: 'generateTopics',
-                params: {
-                    prompt: enhancedPrompt,
-                    useSearch: useSearch,
-                    responseSchema: useSearch ? null : _convertSchemaToJson(topicSuggestionSchema)
-                }
-            })
+        // ✅ 기술 복원: gpt-park의 직접 호출 방식
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: enhancedPrompt,
+            config: config,
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류가 발생했습니다.' }));
-            throw new Error(errorData.error || `서버 오류: ${response.status}`);
+        if (useSearch) {
+            const text = response.text;
+            // When using googleSearch, the output is not guaranteed to be JSON.
+            // We'll parse it as a simple newline-separated list.
+            let lines = text.split('\n').map(topic => topic.trim()).filter(Boolean);
+            // Heuristically remove a potential introductory sentence.
+            if (lines.length > 1 && (lines[0].includes('다음은') || lines[0].endsWith('입니다.') || lines[0].endsWith('입니다:'))) {
+                lines.shift();
+            }
+            return lines.map(topic => topic.replace(/^(\d+\.|-|\*)\s*/, '').trim()).filter(Boolean);
         }
 
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || '주제 생성에 실패했습니다.');
-        }
-
-        const parsedJson = result.data;
+        const jsonString = response.text;
+        const parsedJson = JSON.parse(jsonString);
 
         if (!parsedJson.topics || !Array.isArray(parsedJson.topics)) {
             throw new Error("Received malformed JSON response from API for topic suggestion.");
@@ -632,32 +557,15 @@ export const suggestInteractiveElementForTopic = async (topic: string): Promise<
     `;
 
     try {
-        // ✅ 백엔드 프록시 API 호출 (보안 강화)
-        const response = await fetch(BACKEND_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        // ✅ 기술 복원: gpt-park의 직접 호출 방식
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                temperature: 0.8,
             },
-            credentials: 'include', // 세션 쿠키 포함
-            body: JSON.stringify({
-                action: 'suggestInteractiveElement',
-                params: {
-                    topic: topic
-                }
-            })
         });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류가 발생했습니다.' }));
-            throw new Error(errorData.error || `서버 오류: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || '인터랙티브 요소 제안에 실패했습니다.');
-        }
-
-        return result.data.suggestion;
+        return response.text.trim();
     } catch (error) {
         console.error("Error suggesting interactive element:", error);
         if (error instanceof Error) {

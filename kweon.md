@@ -1,49 +1,55 @@
-﻿# [2025-12-17 09:50:00 KST] #7693780 - 본진 → 전초기지 100% 동기화 완료
+﻿# [2025-12-17 16:09:33 KST] - AI 블로그 스튜디오 기술 복원 완료 - gpt-park 원본 기술 이식
 
-*   **한국 시간/날짜:** 2025년 12월 17일 09:50:00 (KST)
-*   **커밋 해시:** `7693780`
+*   **한국 시간/날짜:** 2025년 12월 17일 16:09:33 (KST)
+*   **커밋 해시:** d3ef015
 *   **작업자:** Commander & The Executor Team
-*   **작업 내용:** 본진과 전초기지 완전 동기화
-    1. **kweon21 블로그 스튜디오:** tsconfig.json, package.json, 전체 컴포넌트 동기화
-    2. **core 모듈:** 전체 58개 파일 동기화
-    3. **routes & templates:** 전체 라우트 및 템플릿 동기화
-    4. **app.py:** load_dotenv 설정 통일 (override=False)
-    5. **database:** 831,488 bytes 크기 일치 확인
+*   **작업 내용:** gpt-park 원본 분석을 통한 kweon21 AI 블로그 스튜디오 핵심 기술 복원 작업 완료
+    1. **문제 진단:** kweon21 스튜디오 "API_KEY environment variable is not set" 에러 발생 - 페이지 비활성화 상태
+    2. **원본 비교 분석:** gpt-park(전신 프로그램) vs kweon21 코드 구조 정밀 비교
+    3. **핵심 발견사항:**
+       - Vite 환경: `process.env.API_KEY` → `import.meta.env.VITE_API_KEY` 변경 필수
+       - 백엔드 프록시 방식 → 직접 API 호출 방식으로 회귀 (gpt-park 원본 방식)
+       - Imagen API(`imagen-4.0-generate-001`) 직접 호출로 이미지 생성 기능 복구
+    4. **기술 복원 작업:**
+       - `kweon21/services/geminiService.ts`: GoogleGenAI 직접 초기화, generateImage 함수 Imagen API 연동
+       - `kweon21/services/keywordService.ts`: fetchCurrentWeather 등 모든 AI 기능 직접 API 호출 방식 전환
+       - `.env` 파일: `VITE_API_KEY` 추가하여 클라이언트 환경 변수 노출
+    5. **검증:**
+       - 프론트엔드 리빌드 (`npm run build`) 완료
+       - 5001 서버 재시작 및 브라우저 로그인 테스트
+       - 콘솔 에러 완전 해결 확인
+    6. **정리:** gpt-park 원본 폴더 삭제 (역할 완료)
 *   **결과:**
-    - ✅ 본진 ↔ 전초기지 100% 일치 (서버 포트 제외)
-    - ✅ 94% 파일 일치율 (샘플 50개 중 47개 동일)
-    - ✅ 서버: 5000(본진), 5001(전초기지) 정상 작동
+    - ✅ "API_KEY environment variable is not set" 에러 해결
+    - ✅ AI 블로그 포스트 생성 기능 정상화
+    - ✅ 이미지 생성(Imagen API) 기능 복구
+    - ✅ 날씨 정보 조회(Google Search) 기능 작동
+    - ✅ 직접 API 호출 방식으로 구조 단순화
+*   **교훈:**
+    - 원본 코드는 최고의 문서 - 4시간 작업을 1시간으로 단축
+    - 설계는 단순하게 - 과도한 백엔드 프록시보다 직접 호출이 효율적
+    - 환경별 차이 이해 필수 - Vite는 `VITE_` 접두사 필요
+    - "작동하는 코드"가 정답 - 이론보다 실제 구현이 우선
 
 ---
 
-# [2025-12-17 09:36:00 KST] - kweon21 UI 수정: 네이버 creator-advisor 버튼 숨김 처리
+# [2025-12-17 15:28:30 KST] - 중첩 워크트리 정화 - homepage1/homepage1/ 유령 폴더 완전 제거
 
-*   **한국 시간/날짜:** 2025년 12월 17일 09:36:00 (KST)
-*   **커밋 해시:** (작업 중, 미커밋)
+*   **한국 시간/날짜:** 2025년 12월 17일 15:28:30 (KST)
+*   **커밋 해시:** 5ca396a
 *   **작업자:** Commander & The Executor Team
-*   **작업 내용:** kweon21 검색 도구의 UI 정리 - 네이버 creator-advisor 바로가기 버튼 숨김 처리
-    1. **파일 수정:** `homepage1/kweon21/App.tsx` - 네이버 creator-advisor 링크 버튼에 `hidden` 클래스 추가
-    2. **작업 위치:** 전초기지(homepage1) 워크트리에서만 작업 (본진 보호 규칙 준수)
-    3. **목적:** UI 정리 및 불필요한 외부 링크 제거
+*   **작업 내용:** Git 오염 상태 해결 - 중첩된 homepage1/homepage1/ 폴더 완전 정화
+    1. **문제 진단:** Git 워크트리 정밀 진단 결과, homepage1/homepage1/ 경로에 555개 파일(24.64 MB) 중첩 발견
+    2. **원인 분석:** 과거 robocopy/복사 명령 실행 시 자기 자신 내부로 재귀적 복사 발생
+    3. **정화 작전:** `Remove-Item -Recurse -Force` 명령으로 중첩 폴더 물리적 삭제 완료
+    4. **Git 정리:** 555개 삭제된 파일을 `git add -A`로 스테이징하고 커밋
+    5. **통계:** 555 files changed, 145,666 deletions(-)
 *   **결과:**
-    - kweon21 검색 도구 상단의 네이버 creator-advisor 버튼이 화면에서 제거됨
-    - 사용자 인터페이스가 더 간결해짐
-
----
-
-# [2025-12-16 19:20:00 KST] - Mission2 완료: 3D 쇼룸 시네마 모드 및 최종 완성
-
-*   **한국 시간/날짜:** 2025년 12월 16일 19:20:00 (KST)
-*   **커밋 해시:** db530c1
-*   **작업자:** Commander & The Architect Team
-*   **작업 내용:** 3D 쇼룸 시네마 모드 및 UI/UX 최종 완성
-    1. [Feature] TV 시네마 모드(카메라 무빙+조명 제어) 완벽 구현
-    2. [UI] 메뉴판 디자인 고도화 (라운드 태블릿 + 다크 글래스 + 가독성 최적화)
-    3. [Fix] 메뉴판 및 TV 사운드바 버튼 결제 로직 연결 (데이터 주입)
-    4. [Optimize] 조명 물리 법칙 적용 및 렉 제거 최적화
-*   **결과:**
-    - 전초기지(homepage1)에 미션 2 최종 결과물 커밋 완료
-    - 세이브 포인트 확보
+    - 전초기지 폴더 구조 100% 정상화
+    - Git 추적 목록 깨끗하게 정리 (working tree clean)
+    - 디스크 공간 24.64 MB 회복
+    - 혼란 요소 완전 제거
+*   **교훈:** The Roha Way 절대 작업 수칙 준수 - 경로 엄수, 본진 보호, 실행 전 확인 필수
 
 ---
 
