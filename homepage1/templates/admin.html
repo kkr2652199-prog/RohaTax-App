@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block head_extra %}
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Core Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
+<!-- Admin Page Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin.css') }}?v={{ timestamp }}">
+{% endblock %}
+{% block content %}
+    <div id="adminDashboard" class="admin-wrap">
+        {% include 'admin/partials/_header.html' %}
+
+        {% include 'admin/partials/_live_indicator.html' %}
+
+        {% include 'admin/partials/_tabs.html' %}
+
+        <section class="panel" id="users" >
+            {% include 'admin/partials/_user_list_table.html' %}
+        </section>
+
+        <!-- 시스템 관리자 관리 섹션 -->
+        <section class="panel hidden" id="admin-management">
+            <div class="hd">시스템 관리자 관리</div>
+            
+            {% include 'admin/partials/_stat_cards.html' %}
+
+            {% include 'admin/partials/_admin_list_table.html' %}
+        </section>
+
+        <section class="panel hidden" id="token-history">
+            <div class="hd">비활성 사용자 관리</div>
+            <div class="bd" id="tokenHistoryTable">
+                <p class="muted">비활성 사용자 목록을 불러오는 중...</p>
+                        </div>
+        </section>
+
+        <!-- 통합 관제실 섹션 (모듈화된 구조) -->
+        {% include 'admin/tabs/activity_log.html' %}
+
+        <!-- 통계 섹션: 전체 너비 사용 -->
+        <section class="panel hidden" id="stats" style="margin-top: 16px;">
+            <div class="hd">상세 통계</div>
+            <div class="bd" id="statsContent">
+                <!-- 통계 카드 영역 (기존 숫자 카드들) -->
+                <div id="statsCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <p class="muted">통계를 불러오는 중...</p>
+        </div>
+
+                <!-- 차트 영역 -->
+                <div id="chartsContainer" style="display: none;">
+                    <!-- Hero Chart: 일일 토큰 사용량 (전체 너비) -->
+                    <div class="chart-card chart-hero">
+                        <h3 class="chart-title">일일 토큰 사용량 (최근 7일)</h3>
+                        <canvas id="dailyTokenUsageChart"></canvas>
+        </div>
+
+                    <!-- Sub Charts: 활동 유형 분포 & 시간대별 트래픽 (50:50) -->
+                    <div class="charts-grid-sub">
+                        <div class="chart-card">
+                            <h3 class="chart-title">활동 유형 분포 (최근 30일)</h3>
+                            <canvas id="activityDistributionChart"></canvas>
+        </div>
+
+                        <div class="chart-card">
+                            <h3 class="chart-title">시간대별 트래픽 (최근 24시간)</h3>
+                            <canvas id="hourlyTrafficChart"></canvas>
+            </div>
+            </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 결제 관리 섹션 -->
+        {% include 'admin/tabs/payment_management.html' %}
+        {% include 'admin/tabs/product_management.html' %}
+        
+        <!-- 세무 리포트 섹션 -->
+        {% include 'admin/tabs/tax_report.html' %}
+
+        <div class="grid" style="margin-top:16px">
+            <section class="panel hidden" id="settings">
+                <div class="hd">시스템 설정</div>
+                <div class="bd">
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>📧 이메일 인증 설정</h3>
+                                <p class="setting-description">회원가입 시 이메일 인증 시스템 관리</p>
+                            </div>
+                            <div class="setting-content" id="emailVerificationSettings">
+                                <p class="muted">이메일 인증 설정을 불러오는 중...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <h3>⚙️ 기타 설정</h3>
+                                <p class="setting-description">추가 시스템 설정</p>
+                            </div>
+                            <div class="setting-content">
+                                <p class="muted">추가 설정 기능 준비 중...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script id="admin-initial-data" type="application/json">{{ admin_initial_data | tojson | safe }}</script>
+    <script>
+        const adminInitialData = JSON.parse(document.getElementById('admin-initial-data')?.textContent || '{}');
+        const csrfToken = () => document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '';
+        let adminToken = null;
+        const dashboard = document.getElementById('adminDashboard');
+        const tabs = document.querySelectorAll('.admin-tab');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 세션 체크 후 관리자 대시보드 표시
+            checkAdminSession();
+            
+            // 자동 새로고침 시작 (30초마다)
+            startAutoRefresh();
+        });
+
+
+        tabs.forEach(btn => btn.addEventListener('click', (e) => {
+            tabs.forEach(b => { b.classList.remove('active'); b.classList.add('inactive'); });
+            e.target.classList.add('active');
+            e.target.classList.remove('inactive');
+            document.querySelectorAll('#users, #token-history, #stats, #settings, #payment-management, #product-management, #tax-report, #admin-management, #control-deck').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(e.target.dataset.target).classList.remove('hidden');
+            
+            // 설정 탭 클릭 시 이메일 인증 설정 로드
+            if (e.target.dataset.target === 'settings') {
+                loadEmailVerificationSettings();
+            }
+        }));
+
+        
+        
+        // 자동 새로고침 기능
+        let autoRefreshInterval = null;
+        
+        // 페이지 가시성 변경 시 업데이트
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('👁️ 페이지가 다시 보임 - 대시보드 새로고침');
+                refreshDashboard();
+            }
+        });
+        
+        
+        
+        // 새로고침 버튼 이벤트
+        document.getElementById('btnRefresh').addEventListener('click', () => {
+            refreshDashboard();
+        });
+        
+        
+        // 탭 클릭 이벤트 처리
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetId = tab.getAttribute('data-target');
+                
+                // 모든 탭 비활성화
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.classList.add('inactive');
+                });
+                
+                // 모든 섹션 숨기기
+                document.querySelectorAll('.panel, section[id]').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                
+                // 선택된 탭 활성화
+                tab.classList.add('active');
+                tab.classList.remove('inactive');
+                
+                // 해당 섹션 표시
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    
+                    // 각 탭별 데이터 로드
+                    switch(targetId) {
+                        case 'users':
+                            loadUsers();
+                            break;
+                        case 'admin-management':
+                            loadAdminUsers();
+                            loadAdminDashboardStats();
+                            break;
+                        case 'token-history':
+                            loadTokenHistory();
+                            break;
+                        case 'control-deck':
+                            loadActivityLogs();
+                            break;
+                        case 'stats':
+                            loadStats();
+                            break;
+                        case 'payment-management':
+                            // 결제 관리 데이터 로드
+                            if (typeof initPaymentManagement === 'function') {
+                                initPaymentManagement();
+                            } else {
+                                // payment.js가 아직 로드되지 않은 경우
+                                setTimeout(() => {
+                                    if (typeof initPaymentManagement === 'function') {
+                                        initPaymentManagement();
+                                    } else {
+                                        loadPayments(1, '');
+                                    }
+                                }, 100);
+                            }
+                            break;
+                        case 'product-management':
+                            // 요금제 관리 데이터 로드
+                            if (typeof initProductManagement === 'function') {
+                                initProductManagement();
+                            } else {
+                                // product.js가 아직 로드되지 않은 경우
+                                setTimeout(() => {
+                                    if (typeof initProductManagement === 'function') {
+                                        initProductManagement();
+                                    } else if (typeof loadProducts === 'function') {
+                                        loadProducts();
+                                    }
+                                }, 100);
+                            }
+                            break;
+                        case 'tax-report':
+                            // 세무 리포트 데이터 로드
+                            if (typeof loadTaxStats === 'function') {
+                                setTimeout(() => {
+                                    loadTaxStats();
+                                }, 100);
+                            }
+                            break;
+                        case 'settings':
+                            loadEmailVerificationSettings();
+                            break;
+                    }
+                }
+            });
+        });
+        
+        // 관리자 사용자 목록 로드
+        
+        
+        
+        // 관리자 목록 새로고침 버튼 이벤트
+        document.getElementById('btnRefreshAdmins').addEventListener('click', () => {
+            loadAdminUsers();
+            loadAdminDashboardStats();
+        });
+        
+        // [중복 호출 제거] utils.js의 startAutoRefresh와 충돌 방지
+        // setInterval(() => {
+        //     loadUsers();
+        //     loadTokenHistory();
+        // }, 30000);
+
+        
+        // [신규] 검색 버튼에 이벤트 리스너 추가
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnApplyFilters = document.getElementById('btn-apply-filters');
+            if (btnApplyFilters) {
+                btnApplyFilters.addEventListener('click', () => {
+                    loadActivityLogs(1, 50); // 필터 적용 시 첫 페이지부터 검색
+                });
+            }
+        });
+    </script>
+    
+    <!-- Admin Utils JS -->
+    <script src="{{ url_for('static', filename='js/admin/utils.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin User Management JS -->
+    <script src="{{ url_for('static', filename='js/admin/user_management.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin Dashboard Core JS -->
+    <script src="{{ url_for('static', filename='js/admin/dashboard_core.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin Statistics JS -->
+    <script src="{{ url_for('static', filename='js/admin/stats.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin Token History JS -->
+    <script src="{{ url_for('static', filename='js/admin/token_history.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin Management JS -->
+    <script src="{{ url_for('static', filename='js/admin/admin_management.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Admin Activity Log JS -->
+    <script src="{{ url_for('static', filename='js/admin/activity_log.js') }}?v={{ timestamp }}"></script>
+    
+           <!-- Admin Email Settings JS -->
+           <script src="{{ url_for('static', filename='js/admin/email_settings.js') }}?v={{ timestamp }}"></script>
+           
+           <!-- Admin Payment Management JS -->
+           <script src="{{ url_for('static', filename='js/admin/payment.js') }}?v={{ timestamp }}"></script>
+           <script src="{{ url_for('static', filename='js/admin/product.js') }}?v={{ timestamp }}"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

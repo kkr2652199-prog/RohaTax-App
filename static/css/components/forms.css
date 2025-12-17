@@ -1,0 +1,175 @@
+/* ================================================================
+   Forms - RohaTax
+   ================================================================ */
+
+/* Form Group */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-sub, #555555);
+    font-size: 0.9rem;
+}
+
+/* Form Control (Input, Textarea, Select) */
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #E5E7EB);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    background: #ffffff;
+    color: var(--text-main, #111111);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color, #2C5BF0);
+    box-shadow: 0 0 0 3px rgba(44, 91, 240, 0.1);
+}
+
+.form-control::placeholder {
+    color: #9CA3AF;
+}
+
+/* Input Styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #E5E7EB);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    background: #ffffff;
+    color: var(--text-main, #111111);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color, #2C5BF0);
+    box-shadow: 0 0 0 3px rgba(44, 91, 240, 0.1);
+}
+
+/* Textarea */
+textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #E5E7EB);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    background: #ffffff;
+    color: var(--text-main, #111111);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 100px;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #2C5BF0);
+    box-shadow: 0 0 0 3px rgba(44, 91, 240, 0.1);
+}
+
+/* Select */
+select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #E5E7EB);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    background: #ffffff;
+    color: var(--text-main, #111111);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color, #2C5BF0);
+    box-shadow: 0 0 0 3px rgba(44, 91, 240, 0.1);
+}
+
+/* Checkbox & Radio */
+.checkbox,
+.radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.checkbox input[type="checkbox"],
+.radio input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox label,
+.radio label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Auth Card Forms */
+.auth-card .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-card .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-sub, #555555);
+    font-size: 0.9rem;
+}
+
+.auth-card .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #E5E7EB);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    background: #ffffff;
+    color: var(--text-main, #111111);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.auth-card .form-control:focus {
+    outline: none;
+    border-color: var(--primary-color, #2C5BF0);
+    box-shadow: 0 0 0 3px rgba(44, 91, 240, 0.1);
+}
+
+.auth-card .form-control::placeholder {
+    color: #9CA3AF;
+}
+
+/* Utility Classes */
+.w-100 {
+    width: 100%;
+}
+
+/* Auth Links */
+.auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, #E5E7EB);
+}
+

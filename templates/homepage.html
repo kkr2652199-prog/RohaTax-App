@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로하택스 - AI 전자세금계산서 변환</title>
+    <!-- 성능 최적화: 폰트 로딩 개선 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="/static/css/core/reset.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/core/variables.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/core/fonts.css?v={{ timestamp }}">
+    
+    <!-- Layout Styles -->
+    <link rel="stylesheet" href="/static/css/layout/container.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/layout/header.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/layout/footer.css?v={{ timestamp }}">
+    
+    <!-- Component Styles -->
+    <link rel="stylesheet" href="/static/css/components/buttons.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/cards.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/forms.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/badges.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/modals.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/animations.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/features_algo.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/components/youtube_demo.css?v={{ timestamp }}">
+    
+    <!-- Section Styles -->
+    <link rel="stylesheet" href="/static/css/sections/hero.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/stats.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/features.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/problem-solution.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/use-cases.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/how-it-works.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/company.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/testimonials.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/faq.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/pricing.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/sections/cta.css?v={{ timestamp }}">
+</head>
+<body>
+    <!-- 전역 헤더 -->
+    {% include 'partials/header.html' %}
+
+    {% include 'home_sections/_hero.html' %}
+    {% include 'home_sections/_stats.html' %}
+    {% include 'home_sections/_problem_solution.html' %}
+    {% include 'home_sections/_use_cases.html' %}
+    {% include 'home_sections/_how_it_works.html' %}
+    {% include 'home_sections/_features.html' %}
+    {% include 'home_sections/_pricing.html' %}
+    {% include 'home_sections/_company.html' %}
+    {% include 'home_sections/_testimonials.html' %}
+    {% include 'home_sections/_faq.html' %}
+    {% include 'home_sections/_cta.html' %}
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-text">로하택스</span>
+                    </div>
+                    <p class="footer-description">로하택스 - 로하로 쉽게! AI 기반 자동 전자세금계산서 변환 서비스</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4 class="link-title">서비스</h4>
+                        <a href="#" class="link-item">기능 소개</a>
+                        <a href="#" class="link-item">요금제</a>
+                        <a href="#" class="link-item">API 문서</a>
+                    </div>
+                    <div class="link-group">
+                        <h4 class="link-title">지원</h4>
+                        <a href="#" class="link-item">고객센터</a>
+                        <a href="#" class="link-item">FAQ</a>
+                        <a href="#" class="link-item">문의하기</a>
+                    </div>
+                    <div class="link-group">
+                        <h4 class="link-title">회사</h4>
+                        <a href="#" class="link-item">회사 소개</a>
+                        <a href="#" class="link-item">채용</a>
+                        <a href="/terms" class="link-item">이용약관</a>
+                        <a href="/privacy" class="link-item">개인정보처리방침</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-info">
+                    <span>사업자번호: 213-12-99908</span>
+                    <span>주소: 인천광역시 연수구 옥련동308-1 1층 2호</span>
+                    <span>고객센터: 032-833-4309</span>
+                    <span>이메일: kweon4309@naver.com</span>
+                </div>
+                <div class="footer-copyright">
+                    <span>© 2025 로하택스. All rights reserved.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/homepage.js?v={{ timestamp }}"></script>
+    <script src="/static/js/components/video_player.js?v={{ timestamp }}"></script>
+    <script src="/static/js/sections/testimonials.js?v={{ timestamp }}"></script>
+    <script>
+        // Lucide Icons 초기화
+        lucide.createIcons();
+    </script>
+</body>
+</html>

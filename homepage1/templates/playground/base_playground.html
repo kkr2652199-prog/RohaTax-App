@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}블로그 연구소 - 로하택스{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/playground.css') }}?v=2025_UI_RESTORE">
+{% endblock %}
+
+{% block content %}
+<div class="playground-container">
+    {% block playground_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% block playground_scripts %}{% endblock %}
+{% endblock %}
+

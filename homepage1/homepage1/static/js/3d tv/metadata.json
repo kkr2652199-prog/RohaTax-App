@@ -1,0 +1,5 @@
+{
+  "name": "3D Cinematic Wall TV",
+  "description": "A high-fidelity 3D interactive wall-mounted TV experience with a soundbar and functional media controls using React Three Fiber.",
+  "requestFramePermissions": []
+}

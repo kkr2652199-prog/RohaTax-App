@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로●하 TAX - 상점</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/variables.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/fonts.css') }}?v={{ timestamp }}">
+    
+    <!-- Layout Styles (Header & Footer only) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}?v={{ timestamp }}">
+    
+    <!-- Common Components -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}?v={{ timestamp }}">
+    
+    <!-- Shop Page Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/shop.css') }}?v={{ timestamp }}">
+    
+    <!-- Modern 2D Card Styles -->
+    <style>
+        /* 프리미엄 핀테크 스타일 - 카드 기본 스타일 */
+        .product-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 40px 36px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            color: #f8f9fa; /* 기본 텍스트 색상 - 부드러운 흰색 */
+        }
+        
+        /* 호버 효과 - 반투명 글래스 스타일 */
+        .product-card:hover {
+            transform: translateY(-12px);
+            background: rgba(30, 30, 35, 0.85); /* 반투명 블랙 */
+            -webkit-backdrop-filter: blur(10px); /* Safari 호환성 */
+            backdrop-filter: blur(10px); /* 고급스러운 유리 느낌 */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            border-color: #3b82f6;
+            z-index: 10;
+        }
+        
+        .product-card.event {
+            border: 2px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+        
+        .product-card.event:hover {
+            border-color: #6366f1;
+            background: rgba(30, 30, 35, 0.85);
+            -webkit-backdrop-filter: blur(10px); /* Safari 호환성 */
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* 아이콘 스타일 */
+        .product-icon {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        /* 상품명 - 더 두껍게 (핵심 포인트 - 기존 색상 유지) */
+        .product-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0 0 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        /* 설명 텍스트 - 연한 회색 */
+        .product-description {
+            font-size: 0.95rem;
+            color: #adb5bd; /* 연한 회색 */
+            margin: 0 0 24px;
+            line-height: 1.7;
+        }
+        
+        /* 가격 - 크기 키우고 강조색 */
+        .product-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 0 0 28px;
+            letter-spacing: -0.03em;
+        }
+        
+        .product-card.premium .product-price {
+            color: #f59e0b;
+        }
+        
+        .product-card.gold .product-price {
+            color: #fbbf24;
+        }
+        
+        /* 리스트 - 줄 간격 넓히기 */
+        .product-feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 28px;
+            flex-grow: 1;
+        }
+        
+        .product-feature-list li {
+            padding: 0;
+            margin-bottom: 12px;
+            color: #adb5bd; /* 연한 회색 - 계층 구분 */
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.6;
+        }
+        
+        .product-feature-list li::before {
+            content: "✔";
+            color: #10b981;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+        
+        /* 버튼 스타일 - 프리미엄 핀테크 */
+        .product-card .btn-purchase {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            margin-top: auto;
+        }
+        
+        .product-card .btn-purchase:hover {
+            background: #2563eb;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .product-card .btn-purchase:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .product-card.premium .btn-purchase {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        
+        .product-card.premium .btn-purchase:hover {
+            background: #d97706;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .product-card.gold .btn-purchase {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+        
+        .product-card.gold .btn-purchase:hover {
+            background: #f59e0b;
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+        }
+        
+        .product-card.event .btn-purchase {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .product-card.event .btn-purchase:hover {
+            background: #7c3aed;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* 이벤트 상품 그리드 - 중앙 정렬 */
+        .event-product-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .event-product-grid .product-card {
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        /* 유료 상품 그리드 - 3열 고정 (Standard, Premium, Gold) */
+        .paid-product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        @media (max-width: 1024px) {
+            .paid-product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .paid-product-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .event-product-grid {
+                flex-direction: column;
+                gap: 24px;
+            }
+            
+            .product-card {
+                padding: 32px 28px;
+            }
+            
+            .product-card:hover {
+                transform: translateY(-8px);
+            }
+        }
+        
+        /* Hero Section - 컴팩트하고 세련된 디자인 */
+        .shop-hero-section {
+            padding: 40px 20px;
+            padding-right: 62px;
+            margin-left: 120px;
+            margin-right: 120px;
+            background-color: rgba(29, 27, 27, 1);
+            box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: flex-start;
+            height: 340px;
+        }
+        
+        .hero-badge-top {
+            font-size: 12px;
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        
+        .hero-title {
+            font-size: 2.0rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+        
+        .hero-title .highlight {
+            color: #FFD700;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.0rem;
+            color: #94a3b8;
+            margin-bottom: 0;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+        
+        .hero-subtitle strong {
+            color: #FFD700;
+            font-weight: 700;
+        }
+        
+        /* 타겟 고객 배지 컨테이너 */
+        .target-badges-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        .target-badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .target-badge:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .target-badge i {
+            font-size: 16px;
+            color: #60a5fa;
+        }
+        
+        @media (max-width: 768px) {
+            .shop-hero-section {
+                padding: 30px 20px;
+            }
+            
+            .hero-title {
+                font-size: 1.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .target-badges-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .target-badge {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="shop-page">
+    <!-- 전역 헤더 -->
+    {% include 'partials/header.html' %}
+    {% if session.get('is_admin') %}
+    <a href="/admin" class="admin-badge">관리자 대시보드</a>
+    {% endif %}
+    
+    <div class="shop-page-wrapper">
+        {# Hero Section - 컴팩트하고 세련된 디자인 #}
+        <div class="shop-hero-section">
+            <!-- 1. 신뢰 문구 (마케팅 MSG) -->
+            <span class="hero-badge-top">✨ 누적 처리 100만 건 돌파 (예상)</span>
+            
+            <!-- 2. 메인 카피 -->
+            <h1 class="hero-title">
+                배달대행 & 대량 세무처리,<br>
+                <span class="highlight">가장 완벽한 자동화</span> 솔루션
+            </h1>
+            
+            <!-- 3. 서브 카피 -->
+            <p class="hero-subtitle">
+                복잡한 엑셀 취합, 수기 입력 실수는 이제 그만.<br>
+                <strong>로하택스</strong> 하나로 정산부터 국세청 신고 파일 생성까지 3분이면 끝납니다.
+            </p>
+            
+            <!-- 4. 타겟 고객 배지 (핵심 추가 사항) -->
+            <div class="target-badges-container">
+                <div class="target-badge"><i class="bi bi-scooter"></i> 배달대행 지사</div>
+                <div class="target-badge"><i class="bi bi-shop"></i> 소상공인 사장님</div>
+                <div class="target-badge"><i class="bi bi-briefcase-fill"></i> 세무대리/대량발행</div>
+            </div>
+        </div>
+
+        {# [1] 무료 상품 (Event Products) - 페이지 중앙 배치 #}
+        {% if event_products %}
+        <section class="event-section" id="event-products">
+            <div class="product-section-header">
+                <h2 class="product-section-title">🎁 신규 회원 한정 혜택</h2>
+                <p class="product-section-subtitle">가입 즉시 토큰 혹은 기간 혜택을 받아보세요</p>
+            </div>
+            <div class="event-product-grid">
+                {% for product in event_products %}
+                <div class="product-card event">
+                    <span class="product-icon">🎁</span>
+                    <div class="product-tagline">신규 회원 한정!</div>
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-description">
+                        {% if product.token_amount %}
+                            {{ product.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                        {% elif product.duration_days %}
+                            {{ product.duration_days }}일간 무료 이용 가능
+                        {% else %}
+                            가입 즉시 혜택을 받아보세요
+                        {% endif %}
+                    </p>
+                    <div class="product-price">
+                        무료<span class="product-price-unit"> (이벤트)</span>
+                    </div>
+                    <ul class="product-feature-list">
+                        {% if product.token_amount %}
+                        <li>{{ product.token_amount }}개의 무료 토큰 지급</li>
+                        <li>금액 부담 없이 즉시 사용</li>
+                        <li>관리자 승인 없이 자동 적용</li>
+                        {% elif product.duration_days %}
+                        <li>{{ product.duration_days }}일간 무제한 사용</li>
+                        <li>모든 기능 이용 가능</li>
+                        <li>자동 갱신 없음</li>
+                        {% else %}
+                        <li>신규 회원 전용 혜택</li>
+                        <li>가입 즉시 적용</li>
+                        <li>특별 이벤트</li>
+                        {% endif %}
+                    </ul>
+                    <button class="btn-purchase" 
+                        data-id="{{ product.id }}"
+                        data-name="{{ product.name }}"
+                        data-price="{{ product.price or 0 }}"
+                        data-type="{{ product.type }}"
+                        data-token="{{ product.token_amount or 0 }}"
+                        data-duration="{{ product.duration_days or 0 }}"
+                        {% if not product.is_active %}disabled aria-disabled="true"{% endif %}>
+                        선택하기
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {# [2] 유료 상품 (Regular Products) - Standard, Premium, Gold 3종 나란히 배치 #}
+        {% if regular_products %}
+        <section class="product-section" id="paid-products">
+            <div class="product-section-header">
+                <h2 class="product-section-title">정식 요금제</h2>
+                <p class="product-section-subtitle">필요에 맞는 요금제를 선택하세요</p>
+            </div>
+            <div class="paid-product-grid">
+                {% for product in regular_products %}
+                    {# Standard 상품 #}
+                    {% if product.name|lower|replace(' ', '') == 'standard' %}
+                    <div class="product-card standard">
+                        <span class="product-icon">🚀</span>
+                        <div class="product-tagline">급할 때 한 건씩!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">필요할 때만 사용하는 유연한 플랜</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>1건당 300원 (부담 없는 가격)</li>
+                            <li>필요할 때만 구매 (유연한 시스템)</li>
+                            <li>기본 템플릿 제공</li>
+                            <li>이메일 지원</li>
+                            <li>99.9% 정확도 보장</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+
+                    {# Premium 상품 - BEST 뱃지 #}
+                    {% if product.name|lower|replace(' ', '') == 'premium' %}
+                    <div class="product-card premium">
+                        <span class="product-icon">📦</span>
+                        <div class="product-tagline">정산서가 쌓여있을 때!</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">100건 패키지로 한 번에 해결</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
+                            {% if discount_rate > 0 %}
+                            <div class="discount-badge-wrapper">
+                                <span class="premium-discount-badge dynamic-badge">
+                                    {{ discount_rate }}% SAVE
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>{{ product.token_amount or 0 }}건 패키지 (건당 {{ "{:,}".format(premium_per_token_price) }}원{% if discount_rate > 0 %}, {{ discount_rate }}% 할인{% endif %})</li>
+                            <li>모든 템플릿 제공</li>
+                            <li>우선 지원</li>
+                            <li>데이터 백업</li>
+                            <li>API 연동 가능</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+
+                    {# Gold 상품 - 황금 테두리 #}
+                    {% if product.name|lower|replace(' ', '') == 'gold' %}
+                    <div class="product-card gold">
+                        <span class="product-icon">👑</span>
+                        <div class="product-tagline">세무사/대리 발급 전문가용</div>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">무제한 변환으로 업무 효율 극대화</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원/월</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>무제한 토큰 (월 70,000원)</li>
+                            <li>맞춤형 템플릿</li>
+                            <li>전담 매니저 지원</li>
+                            <li>고객 리스트 관리</li>
+                            <li>고객 대신 발급 가능<br><span class="feature-subtext">(공급자 정보 변경 지원)</span></li>
+                            <li>SLA 보장</li>
+                        </ul>
+                        <div class="gold-special-badge">
+                            <span>💎</span>
+                            <span>Gold 전용 특별 기능</span>
+                        </div>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+
+                    {# 기타 상품 - 기본 스타일 (Standard, Premium, Gold가 아닌 경우) #}
+                    {% set product_name_normalized = product.name|lower|replace(' ', '') %}
+                    {% if product_name_normalized not in ['standard', 'premium', 'gold'] %}
+                    <div class="product-card">
+                        <span class="product-icon">🛒</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
+                        <div class="product-price">
+                            {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원{% if product.type == 'subscription' %}/월{% endif %}</span>
+                        </div>
+                        <ul class="product-feature-list">
+                            <li>{% if product.token_amount == -1 %}토큰 무제한 사용{% else %}토큰 {{ product.token_amount }}개 포함{% endif %}</li>
+                            <li>부가세 별도</li>
+                            <li>실시간 고객 지원</li>
+                        </ul>
+                        <button class="btn-purchase" 
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price or 0 }}"
+                                data-type="{{ product.type }}"
+                                data-token="{{ product.token_amount or 0 }}"
+                                data-duration="{{ product.duration_days or 0 }}">구매하기</button>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    {# 결제 확인 모달 - 기존 구조 유지 #}
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-content" id="modalContent">
+            {# 닫기 버튼 #}
+            <button class="modal-close-btn" id="btnCloseModal" aria-label="닫기">×</button>
+            
+            {# Hero Section #}
+            <div class="modal-hero">
+                <span class="modal-hero-icon" id="modalHeroIcon">🎁</span>
+                <h2 class="modal-hero-title" id="modalProductName">상품명</h2>
+            </div>
+            
+            {# Info Section #}
+            <div class="modal-info">
+                <div class="modal-info-card">
+                    <div class="modal-price-row">
+                        <span class="modal-price-label">단가</span>
+                        <span class="modal-price-value" id="modalProductPrice">0원</span>
+                    </div>
+                    <div class="modal-specs" id="modalProductSpecs">스펙 정보</div>
+                </div>
+            </div>
+            
+            {# Control Section #}
+            <div class="modal-control">
+                {# Event 타입: 배지 표시 #}
+                <div id="modalEventBadge" class="modal-event-badge hidden">
+                    🎁 1회 무료 제공
+                </div>
+                
+                {# Basic 타입: Stepper UI #}
+                <div id="modalQuantityStepper" class="modal-quantity-wrapper hidden">
+                    <span class="modal-quantity-label">수량</span>
+                    <div class="stepper">
+                        <button class="stepper-btn" id="stepperDecrease" aria-label="수량 감소">−</button>
+                        <input type="number" id="modalQuantityInput" class="stepper-value" value="" placeholder="수량 입력" min="1" step="1">
+                        <button class="stepper-btn" id="stepperIncrease" aria-label="수량 증가">+</button>
+                    </div>
+                </div>
+                
+                {# 결제 수단 선택 섹션 (유료 상품일 때만 표시) #}
+                <div id="modalPaymentMethodSection" class="modal-payment-method-wrapper hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.1);">
+                    <div class="modal-payment-method-label" style="margin-bottom: 0.75rem; font-weight: 600; color: #374151;">결제 수단</div>
+                    <div class="modal-payment-radio-group" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="paymentMethod" id="paymentMethodCard" value="card" checked style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-size: 0.95rem;">💳 신용카드</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="paymentMethod" id="paymentMethodTrans" value="trans" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-size: 0.95rem;">💸 실시간 계좌이체</span>
+                        </label>
+                    </div>
+                    
+                    {# 계좌 정보 박스 (계좌이체 선택 시에만 표시) #}
+                    <div id="modalAccountInfoBox" class="hidden" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border: 2px solid #F59E0B; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 600; color: #92400E; margin-bottom: 0.5rem; font-size: 0.9rem;">📌 입금 계좌 정보</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #78350F; font-family: 'Courier New', monospace;">
+                            기업은행 46404641701014
+                        </div>
+                        <div style="font-size: 0.85rem; color: #92400E; margin-top: 0.25rem;">
+                            예금주: 권강록
+                        </div>
+                    </div>
+                    
+                    {# 증빙 신청 체크박스 (계좌이체 선택 시에만 표시) #}
+                    <div id="modalTaxEvidenceCheckbox" class="hidden" style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 0.875rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer; margin: 0;">
+                            <input type="checkbox" id="taxEvidenceRequested" checked style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-size: 0.9rem; color: #374151; line-height: 1.5;">
+                                세금계산서/현금영수증 발행 신청<br>
+                                <span style="font-size: 0.8rem; color: #6B7280;">(VAT 10% 포함)</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            {# Total Section #}
+            <div class="modal-total">
+                <div class="modal-total-row">
+                    <span id="modalTotalLabel">총 결제 예상액</span>
+                    <span id="modalTotalPrice">0원</span>
+                </div>
+            </div>
+            
+            {# Footer #}
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-cancel" id="btnCancelPayment">취소</button>
+                <button class="btn-modal btn-modal-confirm" id="btnConfirmPayment">결제하기</button>
+            </div>
+        </div>
+    </div>
+
+    {# 주문 연동 스크립트 - 기존 유지 #}
+    <script src="{{ url_for('static', filename='js/payment/shop.js') }}?v={{ timestamp }}"></script>
+</body>
+</html>

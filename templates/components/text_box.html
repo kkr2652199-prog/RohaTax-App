@@ -1,0 +1,29 @@
+{% macro text_box(title='', body='', align='left', size='md', cta_label='', cta_href='#') %}
+  {% set title_size = {'sm':'1.25rem','md':'1.5rem','lg':'1.75rem'}[size] %}
+  <section style="max-width:1200px;margin:0 auto;padding:var(--spacing-lg);">
+    <div style="background:var(--color-surface);border:1px solid var(--color-surface-elev);border-radius:var(--radius-md);box-shadow:var(--shadow-md);padding:var(--spacing-lg);text-align:{{ align }};">
+      {% if title %}<h3 style="margin:0 0 var(--spacing-md) 0;font-size:{{ title_size }};">{{ title }}</h3>{% endif %}
+      {% if body %}<p style="margin:0 0 var(--spacing-md) 0;color:var(--color-text);">{{ body }}</p>{% endif %}
+      {% if cta_label %}
+        <a href="{{ cta_href }}" style="display:inline-block;padding:10px 16px;border-radius:10px;background:var(--color-primary);color:#fff;font-weight:700;text-decoration:none;">{{ cta_label }}</a>
+      {% endif %}
+    </div>
+  </section>
+{% endmacro %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
