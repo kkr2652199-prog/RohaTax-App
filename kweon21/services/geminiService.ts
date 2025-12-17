@@ -272,48 +272,99 @@ const getRegenerationPrompt = (originalHtml: string, feedback: string, theme: Co
     `;
 };
 
-export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' = '16:9'): Promise<string | null> => {
-    try {
-        if (!prompt) return null;
+// ✅ 타임아웃 헬퍼 함수
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+        )
+    ]);
+};
 
-        // ✅ 기술 복원: gpt-park의 작동하는 이미지 생성 로직
-        const imageResponse = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
-            config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/jpeg',
-                aspectRatio: aspectRatio,
-            },
-        });
+// ✅ Rate Limit 재시도 로직 포함 이미지 생성
+export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' = '16:9', maxRetries = 3): Promise<string | null> => {
+    if (!prompt) return null;
 
-        if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
-            return imageResponse.generatedImages[0].image.imageBytes;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            console.log(`🖼️ 이미지 생성 시도 ${attempt + 1}/${maxRetries}...`);
+            
+            // ✅ 타임아웃 60초 설정
+            const imageResponse = await withTimeout(
+                ai.models.generateImages({
+                    model: 'imagen-4.0-generate-001',
+                    prompt: prompt,
+                    config: {
+                        numberOfImages: 1,
+                        outputMimeType: 'image/jpeg',
+                        aspectRatio: aspectRatio,
+                    },
+                }),
+                60000,
+                'Image generation timeout (60s)'
+            );
+
+            if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
+                console.log(`✅ 이미지 생성 성공!`);
+                return imageResponse.generatedImages[0].image.imageBytes;
+            }
+            return null;
+            
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`❌ 이미지 생성 실패 (시도 ${attempt + 1}):`, errorMessage);
+            
+            // Rate Limit 또는 타임아웃 감지
+            const isRateLimit = errorMessage.includes('429') || 
+                               errorMessage.includes('Rate limit') || 
+                               errorMessage.includes('quota');
+            const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout');
+            
+            // 마지막 시도가 아니면 재시도
+            if (attempt < maxRetries - 1 && (isRateLimit || isTimeout)) {
+                const waitTime = isRateLimit ? 5000 * (attempt + 1) : 3000;
+                console.log(`⏳ ${waitTime/1000}초 후 재시도...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                continue;
+            }
+            
+            // 최종 실패
+            if (attempt === maxRetries - 1) {
+                if (isRateLimit) {
+                    throw new Error('이미지 생성 할당량 초과. 잠시 후 다시 시도해주세요.');
+                } else if (isTimeout) {
+                    throw new Error('이미지 생성 시간 초과. 네트워크를 확인해주세요.');
+                } else {
+                    throw new Error(`이미지 생성 실패: ${errorMessage}`);
+                }
+            }
         }
-        return null;
-    } catch (error) {
-        console.error("Error generating image:", error);
-        if (error instanceof Error) {
-            throw new Error(`Failed to generate image: ${error.message}`);
-        }
-        throw new Error("An unknown error occurred while generating the image.");
     }
+    return null;
 };
 
 
 export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldGenerateImage: boolean, shouldGenerateSubImages: boolean, interactiveElementIdea: string | null, rawContent: string | null, additionalRequest: string | null, aspectRatio: '16:9' | '1:1', currentDate: string): Promise<GeneratedContent> => {
   try {
+    console.log('📝 블로그 포스트 생성 시작...');
     const prompt = getPrompt(topic, theme, interactiveElementIdea, rawContent, additionalRequest, currentDate);
     
-    // ✅ 기술 복원: gpt-park의 직접 호출 방식
-    const contentResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: responseSchema,
-        },
-    });
+    // ✅ 타임아웃 90초 설정 (긴 콘텐츠 생성 고려)
+    const contentResponse = await withTimeout(
+        ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: responseSchema,
+            },
+        }),
+        90000,
+        '블로그 포스트 생성 시간 초과 (90초). 네트워크를 확인하거나 더 짧은 주제로 시도해주세요.'
+    );
+    
+    console.log('✅ 블로그 콘텐츠 생성 완료!');
 
     const jsonString = contentResponse.text;
     const parsedJson = JSON.parse(jsonString);
@@ -331,19 +382,49 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
         throw new Error("Received malformed JSON response from API for content generation.");
     }
     
-    // ✅ 이미지 생성은 아직 프론트엔드에서 처리 (백엔드 구현 예정)
+    // ✅ 대표 이미지 생성
     let imageBase64: string | null = null;
     if (shouldGenerateImage) {
-        imageBase64 = await generateImage(parsedJson.supplementaryInfo.imagePrompt, aspectRatio);
+        try {
+            console.log('📸 대표 이미지 생성 중...');
+            imageBase64 = await generateImage(parsedJson.supplementaryInfo.imagePrompt, aspectRatio);
+        } catch (error) {
+            console.error('대표 이미지 생성 실패:', error);
+            // 이미지 실패해도 포스트는 계속 생성
+            imageBase64 = null;
+        }
     }
     
+    // ✅ 서브 이미지 순차 생성 (Rate Limit 방지)
     let subImages: { prompt: string; altText: string; base64: string | null }[] | null = null;
     if (parsedJson.supplementaryInfo.subImagePrompts && parsedJson.supplementaryInfo.subImagePrompts.length > 0) {
         const subImagePromptObjects: { prompt: string; altText: string }[] = parsedJson.supplementaryInfo.subImagePrompts;
         
-        const subImageBase64s = shouldGenerateSubImages
-            ? await Promise.all(subImagePromptObjects.map(p => generateImage(p.prompt, '16:9')))
-            : subImagePromptObjects.map(() => null);
+        const subImageBase64s: (string | null)[] = [];
+        
+        if (shouldGenerateSubImages) {
+            console.log(`🖼️ 서브 이미지 ${subImagePromptObjects.length}개 순차 생성 시작...`);
+            
+            for (let i = 0; i < subImagePromptObjects.length; i++) {
+                try {
+                    console.log(`📸 서브 이미지 ${i + 1}/${subImagePromptObjects.length} 생성 중...`);
+                    const img = await generateImage(subImagePromptObjects[i].prompt, '16:9');
+                    subImageBase64s.push(img);
+                    
+                    // Rate Limit 방지: 각 이미지 사이 2초 대기
+                    if (i < subImagePromptObjects.length - 1) {
+                        console.log('⏳ Rate Limit 방지를 위해 2초 대기...');
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                } catch (error) {
+                    console.error(`서브 이미지 ${i + 1} 생성 실패:`, error);
+                    subImageBase64s.push(null); // 실패해도 계속 진행
+                }
+            }
+            console.log(`✅ 서브 이미지 생성 완료 (성공: ${subImageBase64s.filter(img => img !== null).length}개)`);
+        } else {
+            subImageBase64s.push(...subImagePromptObjects.map(() => null));
+        }
 
         subImages = subImagePromptObjects.map((pObj, index) => ({
             prompt: pObj.prompt,
@@ -373,17 +454,24 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
 
 export const regenerateBlogPostHtml = async (originalHtml: string, feedback: string, theme: ColorTheme, currentDate: string): Promise<string> => {
     try {
+        console.log('🔄 블로그 포스트 재생성 시작...');
         const prompt = getRegenerationPrompt(originalHtml, feedback, theme, currentDate);
         
-        // ✅ 기술 복원: gpt-park의 직접 호출 방식
-        const contentResponse = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: regenerationResponseSchema,
-            },
-        });
+        // ✅ 타임아웃 90초 설정
+        const contentResponse = await withTimeout(
+            ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: regenerationResponseSchema,
+                },
+            }),
+            90000,
+            '블로그 포스트 재생성 시간 초과 (90초). 네트워크를 확인해주세요.'
+        );
+        
+        console.log('✅ 블로그 포스트 재생성 완료!');
 
         const jsonString = contentResponse.text;
         const parsedJson = JSON.parse(jsonString);
@@ -435,12 +523,16 @@ const generateTopics = async (prompt: string, useSearch: boolean = false): Promi
         
         const enhancedPrompt = `${prompt}\n\n(This is a new request. Please generate a completely new and different set of suggestions. Random seed: ${Math.random()})`;
 
-        // ✅ 기술 복원: gpt-park의 직접 호출 방식
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: enhancedPrompt,
-            config: config,
-        });
+        // ✅ 타임아웃 30초 설정 (주제 생성은 빠름)
+        const response = await withTimeout(
+            ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: enhancedPrompt,
+                config: config,
+            }),
+            30000,
+            '주제 생성 시간 초과 (30초). 네트워크를 확인해주세요.'
+        );
 
         if (useSearch) {
             const text = response.text;
