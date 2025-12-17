@@ -1,4 +1,39 @@
-﻿# [2025-12-17 15:28:30 KST] - 중첩 워크트리 정화 - homepage1/homepage1/ 유령 폴더 완전 제거
+﻿# [2025-12-17 16:09:33 KST] - AI 블로그 스튜디오 기술 복원 완료 - gpt-park 원본 기술 이식
+
+*   **한국 시간/날짜:** 2025년 12월 17일 16:09:33 (KST)
+*   **커밋 해시:** (pending)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** gpt-park 원본 분석을 통한 kweon21 AI 블로그 스튜디오 핵심 기술 복원 작업 완료
+    1. **문제 진단:** kweon21 스튜디오 "API_KEY environment variable is not set" 에러 발생 - 페이지 비활성화 상태
+    2. **원본 비교 분석:** gpt-park(전신 프로그램) vs kweon21 코드 구조 정밀 비교
+    3. **핵심 발견사항:**
+       - Vite 환경: `process.env.API_KEY` → `import.meta.env.VITE_API_KEY` 변경 필수
+       - 백엔드 프록시 방식 → 직접 API 호출 방식으로 회귀 (gpt-park 원본 방식)
+       - Imagen API(`imagen-4.0-generate-001`) 직접 호출로 이미지 생성 기능 복구
+    4. **기술 복원 작업:**
+       - `kweon21/services/geminiService.ts`: GoogleGenAI 직접 초기화, generateImage 함수 Imagen API 연동
+       - `kweon21/services/keywordService.ts`: fetchCurrentWeather 등 모든 AI 기능 직접 API 호출 방식 전환
+       - `.env` 파일: `VITE_API_KEY` 추가하여 클라이언트 환경 변수 노출
+    5. **검증:**
+       - 프론트엔드 리빌드 (`npm run build`) 완료
+       - 5001 서버 재시작 및 브라우저 로그인 테스트
+       - 콘솔 에러 완전 해결 확인
+    6. **정리:** gpt-park 원본 폴더 삭제 (역할 완료)
+*   **결과:**
+    - ✅ "API_KEY environment variable is not set" 에러 해결
+    - ✅ AI 블로그 포스트 생성 기능 정상화
+    - ✅ 이미지 생성(Imagen API) 기능 복구
+    - ✅ 날씨 정보 조회(Google Search) 기능 작동
+    - ✅ 직접 API 호출 방식으로 구조 단순화
+*   **교훈:**
+    - 원본 코드는 최고의 문서 - 4시간 작업을 1시간으로 단축
+    - 설계는 단순하게 - 과도한 백엔드 프록시보다 직접 호출이 효율적
+    - 환경별 차이 이해 필수 - Vite는 `VITE_` 접두사 필요
+    - "작동하는 코드"가 정답 - 이론보다 실제 구현이 우선
+
+---
+
+# [2025-12-17 15:28:30 KST] - 중첩 워크트리 정화 - homepage1/homepage1/ 유령 폴더 완전 제거
 
 *   **한국 시간/날짜:** 2025년 12월 17일 15:28:30 (KST)
 *   **커밋 해시:** 5ca396a
