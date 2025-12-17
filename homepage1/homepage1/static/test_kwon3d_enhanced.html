@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kwon3d 향상된 버전 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            /* kwon3d 원본 index.html 라인 17 정확히 일치 */
+            background: radial-gradient(circle at center, #3a1515 0%, #1a0505 45%, #000000 100%);
+            font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .ui-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 48px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+        
+        .ui-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            font-family: serif;
+            color: #ffd700;
+            text-shadow: 0 4px 4px rgba(0, 0, 0, 0.8);
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        .ui-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .ui-button {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 40px;
+            border-radius: 999px;
+            border: 2px solid;
+            font-weight: 700;
+            font-size: 1.125rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease-out;
+            cursor: pointer;
+            background: linear-gradient(to right, #ffd700, #b45309);
+            border-color: #ffd700;
+            color: white;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .ui-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 25px 70px rgba(255, 215, 0, 0.4);
+        }
+        
+        .ui-button:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="ui-header">
+        <h1 class="ui-title">Royal Gift</h1>
+        <p class="ui-subtitle">Interactive 3D Experience</p>
+    </div>
+    
+    <button class="ui-button" id="toggleButton">
+        <span>🎁</span>
+        <span>OPEN GIFT</span>
+    </button>
+    
+    <!-- Three.js CDN -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        // 전역으로 노출
+        window.THREE = THREE;
+        window.OrbitControls = OrbitControls;
+        
+        // 나머지 스크립트 실행
+        document.dispatchEvent(new Event('threejs-loaded'));
+    </script>
+    
+    <script>
+        /**
+         * kwon3d 향상된 버전 테스트
+         * 순수 Three.js로 kwon3d의 핵심 기능 구현:
+         * 1. Environment (환경 맵)
+         * 2. VolumetricText (입체 텍스트)
+         * 3. ContactShadows (개선된 그림자)
+         * 4. Confetti (파티클 효과)
+         */
+        
+        class EnhancedGiftBox3D {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.isLidOpen = false;
+                
+                // kwon3d 원본 파일에서 정확히 추출한 색상
+                this.BOX_RED = "#7f1d1d"; // GiftHandModel.tsx 라인 9: Deep Royal Red
+                this.RIBBON_GOLD = "#fbbf24"; // GiftHandModel.tsx 라인 10: Bright Gold
+                this.RIBBON_ACCENT = "#b45309"; // GiftHandModel.tsx 라인 11: Dark Gold
+                this.TEXT_COLOR = "#ffedcc"; // GiftHandModel.tsx 라인 12: Soft Cream Gold
+                
+                // 크기 설정 (kwon3d 원본)
+                this.boxWidth = 2.0;
+                this.boxDepth = 2.0;
+                this.boxHeight = 1.8;
+                this.wallThickness = 0.15;
+                this.ribbonWidth = 0.3;
+                this.ribbonThick = 0.02;
+                this.lidHeight = 0.4;
+                this.lidOverhang = 0.1;
+                this.boxRadius = 0.1;
+                this.bevelSize = 0.03;
+                
+                // Three.js 객체
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.lidGroup = null;
+                this.confettiParticles = [];
+                this.envMap = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                // Scene 생성
+                this.scene = new THREE.Scene();
+                // kwon3d 원본: background는 transparent로 CSS에서 처리
+                // 실제 배경은 어두운 그라데이션 (CSS 또는 Canvas에서 처리)
+                
+                // Camera 설정 (kwon3d 원본)
+                this.camera = new THREE.PerspectiveCamera(
+                    40,
+                    this.container.clientWidth / this.container.clientHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(4, 3, 6);
+                this.camera.lookAt(0, 0.5, 0);
+                
+                // Renderer 설정
+                this.renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    alpha: true // kwon3d 원본: 투명 배경으로 CSS 배경이 보이도록
+                });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // kwon3d 원본: dpr={[1, 2]}
+                this.renderer.shadowMap.enabled = true; // kwon3d 원본: shadows
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.0; // kwon3d 원본과 일치
+                this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+                // kwon3d 원본 App.tsx 라인 63: background는 CSS에서 처리
+                this.renderer.setClearColor(0x000000, 0); // 투명 배경 (CSS 배경이 보이도록)
+                this.container.appendChild(this.renderer.domElement);
+                
+                // OrbitControls (전역 OrbitControls 사용)
+                if (typeof OrbitControls === 'undefined') {
+                    console.error('OrbitControls가 로드되지 않았습니다.');
+                    return;
+                }
+                
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enablePan = false;
+                this.controls.enableZoom = true;
+                this.controls.minPolarAngle = 0;
+                this.controls.maxPolarAngle = Math.PI / 2.2;
+                this.controls.autoRotate = false;
+                this.controls.target.set(0, 0.5, 0);
+                
+                // 조명 설정 (kwon3d 원본)
+                this.setupLighting();
+                
+                // Environment 맵 로드 (kwon3d의 Environment preset="lobby" 효과)
+                await this.loadEnvironment();
+                
+                // 탁자 생성
+                this.createTable();
+                
+                // ContactShadows (kwon3d 원본)
+                this.createContactShadows();
+                
+                // 선물 상자 생성
+                this.createGiftBox();
+                
+                // 리사이즈 핸들러
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                // 애니메이션 시작
+                this.animate();
+            }
+            
+            setupLighting() {
+                // kwon3d 원본 App.tsx 라인 66-84 정확히 일치
+                // Ambient Light
+                const ambientLight = new THREE.AmbientLight(0xffddaa, 0.4); // 라인 66: intensity={0.4} color="#ffddaa"
+                this.scene.add(ambientLight);
+                
+                // Main Spotlight
+                const spotLight = new THREE.SpotLight(0xfff5cc, 2); // 라인 73: intensity={2} color="#fff5cc"
+                spotLight.position.set(5, 8, 5); // 라인 70: position={[5, 8, 5]}
+                spotLight.angle = 0.4; // 라인 71: angle={0.4}
+                spotLight.penumbra = 0.5; // 라인 72: penumbra={0.5}
+                spotLight.castShadow = true; // 라인 74: castShadow
+                spotLight.shadow.mapSize.width = 1024; // 라인 75: shadow-mapSize={[1024, 1024]}
+                spotLight.shadow.mapSize.height = 1024;
+                spotLight.shadow.bias = -0.0001; // 라인 76: shadow-bias={-0.0001}
+                this.scene.add(spotLight);
+                
+                // Fill light
+                const pointLight = new THREE.PointLight(0xbd5e5e, 0.5, 100, 2); // 라인 81: intensity={0.5} color="#bd5e5e"
+                pointLight.position.set(-5, 2, -5); // 라인 81: position={[-5, 2, -5]}
+                this.scene.add(pointLight);
+                
+                // Rim light
+                const rimLight = new THREE.SpotLight(0xffd700, 3, 15, Math.PI * 0.1, 0.5, 1); // 라인 84: intensity={3} color="#ffd700" distance={15}
+                rimLight.position.set(0, 5, -8); // 라인 84: position={[0, 5, -8]}
+                this.scene.add(rimLight);
+            }
+            
+            async loadEnvironment() {
+                // Environment 맵 생성 (kwon3d의 Environment preset="lobby" 효과)
+                // 실제 환경 맵 이미지가 없으므로, 간단한 환경 맵을 생성
+                // 일단 환경 맵 없이 진행 (나중에 HDR 이미지로 교체 가능)
+                this.envMap = null;
+                
+                // 환경 맵 없이도 반사 효과를 위해 envMapIntensity만 설정
+                this.scene.traverse((object) => {
+                    if (object.isMesh && object.material) {
+                        if (Array.isArray(object.material)) {
+                            object.material.forEach(mat => {
+                                if (mat.isMeshPhysicalMaterial || mat.isMeshStandardMaterial) {
+                                    mat.envMapIntensity = 0.5; // 환경 맵 강도만 설정
+                                    mat.needsUpdate = true;
+                                }
+                            });
+                        } else {
+                            if (object.material.isMeshPhysicalMaterial || object.material.isMeshStandardMaterial) {
+                                object.material.envMapIntensity = 0.5;
+                                object.material.needsUpdate = true;
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createTable() {
+                // kwon3d 원본 App.tsx 라인 96-104 정확히 일치
+                const tableGeometry = new THREE.CylinderGeometry(4, 4, 0.2, 64);
+                const tableMaterial = new THREE.MeshStandardMaterial({
+                    color: "#222", // 라인 99: color="#222"
+                    roughness: 0.1, // 라인 100: roughness={0.1}
+                    metalness: 0.2, // 라인 101: metalness={0.2}
+                    envMapIntensity: 1 // 라인 102: envMapIntensity={1}
+                });
+                const tableMesh = new THREE.Mesh(tableGeometry, tableMaterial);
+                tableMesh.position.set(0, -0.1, 0); // 라인 96: position={[0, -0.1, 0]}
+                tableMesh.receiveShadow = true; // 라인 96: receiveShadow
+                this.scene.add(tableMesh);
+            }
+            
+            createContactShadows() {
+                // kwon3d 원본 App.tsx 라인 107-114 정확히 일치
+                // 원본: <ContactShadows position={[0, 0.01, 0]} opacity={0.7} scale={10} blur={2} far={2} color="#000" />
+                // ContactShadows를 ShadowMaterial로 구현
+                const shadowPlaneGeometry = new THREE.PlaneGeometry(20, 20, 64, 64); // scale={10} -> 20x20, blur={2}를 위해 세그먼트 증가
+                const shadowPlaneMaterial = new THREE.ShadowMaterial({ 
+                    opacity: 0.7, // 라인 109: opacity={0.7}
+                    color: "#000" // 라인 113: color="#000"
+                });
+                const shadowPlane = new THREE.Mesh(shadowPlaneGeometry, shadowPlaneMaterial);
+                shadowPlane.rotation.x = -Math.PI / 2;
+                shadowPlane.position.set(0, 0.01, 0); // 라인 108: position={[0, 0.01, 0]}
+                shadowPlane.receiveShadow = true;
+                this.scene.add(shadowPlane);
+            }
+            
+            createGiftBox() {
+                // kwon3d 원본 App.tsx 라인 90: group position={[0, -1, 0]}
+                // GiftHandModel.tsx 라인 141: scale={[1.5, 1.5, 1.5]}
+                // 상자가 테이블 위에 명확히 보이도록 위치 조정 (유리 바닥처럼 내려가도록)
+                const boxGroup = new THREE.Group();
+                boxGroup.position.set(0, -0.8, 0); // 테이블 위에 명확히 보이도록 약간 올림 (원본 -1에서 -0.8로)
+                boxGroup.scale.set(1.5, 1.5, 1.5); // GiftHandModel.tsx 라인 141: scale={[1.5, 1.5, 1.5]}
+                
+                // kwon3d 원본 GiftHandModel.tsx 라인 159-165 정확히 일치
+                const boxGeometry = this.createRoundedBoxGeometry();
+                const boxMaterial = new THREE.MeshPhysicalMaterial({
+                    color: this.BOX_RED, // 라인 160: color={BOX_RED}
+                    roughness: 0.25, // 라인 161: roughness={0.25}
+                    metalness: 0.1, // 라인 162: metalness={0.1}
+                    clearcoat: 0.8, // 라인 163: clearcoat={0.8}
+                    clearcoatRoughness: 0.2 // 라인 164: clearcoatRoughness={0.2}
+                });
+                const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+                boxMesh.rotation.x = -Math.PI / 2;
+                boxMesh.castShadow = true;
+                boxMesh.receiveShadow = true;
+                boxGroup.add(boxMesh);
+                
+                // 바닥 (kwon3d 원본 GiftHandModel.tsx 라인 169-181)
+                // 원본: <RoundedBox args={[boxWidth - wallThickness * 2, wallThickness, boxDepth - wallThickness * 2]} radius={0.05} smoothness={4} />
+                // RoundedBox를 구현하기 위해 ExtrudeGeometry로 둥근 모서리 박스 생성
+                const floorShape = new THREE.Shape();
+                const fw = (this.boxWidth - this.wallThickness * 2) / 2;
+                const fd = (this.boxDepth - this.wallThickness * 2) / 2;
+                const fr = 0.05; // 라인 171: radius={0.05}
+                
+                // 둥근 사각형 생성
+                floorShape.moveTo(-fw + fr, -fd);
+                floorShape.lineTo(fw - fr, -fd);
+                floorShape.quadraticCurveTo(fw, -fd, fw, -fd + fr);
+                floorShape.lineTo(fw, fd - fr);
+                floorShape.quadraticCurveTo(fw, fd, fw - fr, fd);
+                floorShape.lineTo(-fw + fr, fd);
+                floorShape.quadraticCurveTo(-fw, fd, -fw, fd - fr);
+                floorShape.lineTo(-fw, -fd + fr);
+                floorShape.quadraticCurveTo(-fw, -fd, -fw + fr, -fd);
+                
+                const floorExtrudeSettings = {
+                    depth: this.wallThickness,
+                    bevelEnabled: true,
+                    bevelSegments: 4, // 라인 172: smoothness={4}에 해당
+                    steps: 1,
+                    bevelSize: 0.01,
+                    bevelThickness: 0.01,
+                    curveSegments: 8
+                };
+                
+                const floorGeometry = new THREE.ExtrudeGeometry(floorShape, floorExtrudeSettings);
+                const floorMaterial = new THREE.MeshPhysicalMaterial({
+                    color: this.BOX_RED, // 라인 177: color={BOX_RED}
+                    roughness: 0.3, // 라인 178: roughness={0.3}
+                    metalness: 0.1 // 라인 179: metalness={0.1}
+                });
+                const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+                floorMesh.rotation.x = -Math.PI / 2; // 바닥이므로 회전
+                floorMesh.position.set(0, this.wallThickness / 2, 0); // 라인 173: position={[0, wallThickness / 2, 0]}
+                floorMesh.receiveShadow = true; // 라인 174: receiveShadow
+                boxGroup.add(floorMesh);
+                
+                // 리본 추가
+                this.createRibbons(boxGroup);
+                
+                // VolumetricText 추가 (kwon3d 원본)
+                this.createVolumetricText(boxGroup);
+                
+                // 뚜껑 생성
+                this.createLid(boxGroup);
+                
+                this.scene.add(boxGroup);
+                this.boxGroup = boxGroup;
+            }
+            
+            createRoundedBoxGeometry() {
+                // ExtrudeGeometry로 둥근 모서리 상자 생성 (kwon3d 원본)
+                const shape = new THREE.Shape();
+                const w = this.boxWidth / 2;
+                const h = this.boxDepth / 2;
+                const r = this.boxRadius;
+                
+                // 외곽 둥근 사각형
+                shape.moveTo(-w + r, -h);
+                shape.lineTo(w - r, -h);
+                shape.quadraticCurveTo(w, -h, w, -h + r);
+                shape.lineTo(w, h - r);
+                shape.quadraticCurveTo(w, h, w - r, h);
+                shape.lineTo(-w + r, h);
+                shape.quadraticCurveTo(-w, h, -w, h - r);
+                shape.lineTo(-w, -h + r);
+                shape.quadraticCurveTo(-w, -h, -w + r, -h);
+                
+                // 내부 구멍
+                const hole = new THREE.Shape();
+                const iw = w - this.wallThickness;
+                const ih = h - this.wallThickness;
+                const ir = Math.max(0.01, r - this.wallThickness);
+                
+                hole.moveTo(-iw + ir, -ih);
+                hole.quadraticCurveTo(-iw, -ih, -iw, -ih + ir);
+                hole.lineTo(-iw, ih - ir);
+                hole.quadraticCurveTo(-iw, ih, -iw + ir, ih);
+                hole.lineTo(iw - ir, ih);
+                hole.quadraticCurveTo(iw, ih, iw, ih - ir);
+                hole.lineTo(iw, -ih + ir);
+                hole.quadraticCurveTo(iw, -ih, iw - ir, -ih);
+                hole.lineTo(-iw + ir, -ih);
+                
+                shape.holes.push(hole);
+                
+                // kwon3d 원본 GiftHandModel.tsx 라인 75-83 정확히 일치
+                const extrudeSettings = {
+                    depth: this.boxHeight, // 라인 76: depth: boxHeight
+                    bevelEnabled: true, // 라인 77: bevelEnabled: true
+                    bevelSegments: 5, // 라인 78: bevelSegments: 5
+                    steps: 1, // 라인 79: steps: 1
+                    bevelSize: this.bevelSize, // 라인 80: bevelSize: bevelSize
+                    bevelThickness: this.bevelSize, // 라인 81: bevelThickness: bevelSize
+                    curveSegments: 12 // 라인 82: curveSegments: 12
+                };
+                
+                return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            }
+            
+            createRibbons(parent) {
+                const ribbonMaterial = new THREE.MeshPhysicalMaterial({
+                    color: this.RIBBON_GOLD,
+                    metalness: 0.6,
+                    roughness: 0.3,
+                    envMapIntensity: 0.5
+                });
+                
+                // 가로 리본
+                const ribbonH1 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonWidth, this.ribbonThick, this.boxDepth - 0.2),
+                    ribbonMaterial
+                );
+                ribbonH1.position.set(0, -this.ribbonThick / 2, 0);
+                parent.add(ribbonH1);
+                
+                const ribbonH2 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.boxWidth - 0.2, this.ribbonThick, this.ribbonWidth),
+                    ribbonMaterial
+                );
+                ribbonH2.position.set(0, -this.ribbonThick / 2, 0);
+                parent.add(ribbonH2);
+                
+                // 세로 리본
+                const ribbonV1 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonThick, this.boxHeight, this.ribbonWidth),
+                    ribbonMaterial
+                );
+                ribbonV1.position.set(-this.boxWidth / 2 - this.ribbonThick / 2 + this.bevelSize, this.boxHeight / 2, 0);
+                ribbonV1.castShadow = true;
+                parent.add(ribbonV1);
+                
+                const ribbonV2 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonThick, this.boxHeight, this.ribbonWidth),
+                    ribbonMaterial
+                );
+                ribbonV2.position.set(this.boxWidth / 2 + this.ribbonThick / 2 - this.bevelSize, this.boxHeight / 2, 0);
+                ribbonV2.castShadow = true;
+                parent.add(ribbonV2);
+                
+                const ribbonV3 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonWidth, this.boxHeight, this.ribbonThick),
+                    ribbonMaterial
+                );
+                ribbonV3.position.set(0, this.boxHeight / 2, -this.boxDepth / 2 - this.ribbonThick / 2 + this.bevelSize);
+                ribbonV3.castShadow = true;
+                parent.add(ribbonV3);
+                
+                const ribbonV4 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonWidth, this.boxHeight, this.ribbonThick),
+                    ribbonMaterial
+                );
+                ribbonV4.position.set(0, this.boxHeight / 2, this.boxDepth / 2 + this.ribbonThick / 2 - this.bevelSize);
+                ribbonV4.castShadow = true;
+                parent.add(ribbonV4);
+            }
+            
+            createVolumetricText(parent) {
+                // kwon3d 원본 GiftHandModel.tsx 라인 212-282 정확히 일치
+                // VolumetricText 구현 (라인 100-138: 5개 레이어, depth: 0.003)
+                
+                const textGroup = new THREE.Group();
+                textGroup.position.set(0, this.boxHeight / 2, this.boxDepth / 2 + 0.07); // 라인 212: position={[0, boxHeight/2, boxDepth/2 + 0.07]}
+                
+                // 텍스트 내용 (kwon3d 원본 GiftHandModel.tsx 정확히 일치)
+                const texts = [
+                    { text: '🎉 토큰 이벤트', fontSize: 0.19, color: '#ffdb4d', y: 0.62, letterSpacing: 0.05, fontWeight: 'bold' }, // 라인 215-225
+                    { text: 'Welcome Event', fontSize: 0.11, color: '#ffe6b3', y: 0.44, letterSpacing: 0.1 }, // 라인 229-239
+                    { text: '신규 가입 혜택 (60토큰)', fontSize: 0.18, color: '#ffffff', y: 0.15, fontWeight: 'bold' }, // 라인 242-252
+                    { text: '60개의 무료 토큰이\n즉시 지급됩니다.', fontSize: 0.11, color: '#ffedcc', y: -0.25, lineHeight: 1.4 }, // 라인 255-266
+                    { text: '금액 부담 없이 즉시 사용\n관리자 승인 없이 자동 적용', fontSize: 0.095, color: '#ffca80', y: -0.65, lineHeight: 1.5 } // 라인 269-280
+                ];
+                
+                texts.forEach((textData) => {
+                    // kwon3d 원본 GiftHandModel.tsx 라인 101-102 정확히 일치
+                    const layers = 5; // 라인 101: const layers = 5;
+                    const depth = 0.003; // 라인 102: const depth = 0.003;
+                    
+                    // 텍스트 해상도 대폭 증가 (뭉개짐 방지)
+                    const canvasWidth = 4096; // 2048 -> 4096 (더 높은 해상도)
+                    const canvasHeight = 2048; // 1024 -> 2048
+                    
+                    for (let layer = 0; layer < layers; layer++) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = canvasWidth;
+                        canvas.height = canvasHeight;
+                        const context = canvas.getContext('2d', { alpha: true });
+                        
+                        context.clearRect(0, 0, canvas.width, canvas.height);
+                        
+                        // 텍스트 렌더링 품질 향상
+                        context.imageSmoothingEnabled = true;
+                        context.imageSmoothingQuality = 'high';
+                        
+                        // kwon3d 원본 GiftHandModel.tsx 라인 106-119: Shadow/Side Layers
+                        if (layer < layers - 1) {
+                            context.fillStyle = '#3a0d0d'; // 라인 112: color="#3a0d0d"
+                            context.font = `bold ${textData.fontSize * 1000}px Arial`;
+                            context.textAlign = 'center';
+                            context.textBaseline = 'middle';
+                            context.strokeStyle = '#2a0505'; // 라인 115: outlineColor="#2a0505"
+                            context.lineWidth = 2; // 라인 114: outlineWidth={0.002}에 해당하는 비율
+                            
+                            const lines = textData.text.split('\n');
+                            lines.forEach((line, i) => {
+                                const y = (canvasHeight / 2) + (textData.y * canvasHeight / 2) + (i * 80); // 해상도에 맞게 간격 조정
+                                context.strokeText(line, canvasWidth / 2, y);
+                                context.fillText(line, canvasWidth / 2, y);
+                            });
+                        } else {
+                            // kwon3d 원본 GiftHandModel.tsx 라인 121-135: Front Face
+                            context.fillStyle = textData.color; // 라인 124: color={color}
+                            context.font = `bold ${textData.fontSize * 1000}px Arial`;
+                            context.textAlign = 'center';
+                            context.textBaseline = 'middle';
+                            context.strokeStyle = '#000000';
+                            context.lineWidth = 2;
+                            
+                            const lines = textData.text.split('\n');
+                            lines.forEach((line, i) => {
+                                const y = (canvasHeight / 2) + (textData.y * canvasHeight / 2) + (i * 80); // 해상도에 맞게 간격 조정
+                                context.strokeText(line, canvasWidth / 2, y);
+                                context.fillText(line, canvasWidth / 2, y);
+                            });
+                            
+                            // 그림자 리셋
+                            context.shadowColor = 'transparent';
+                            context.shadowBlur = 0;
+                            context.shadowOffsetX = 0;
+                            context.shadowOffsetY = 0;
+                        }
+                        
+                        const texture = new THREE.CanvasTexture(canvas);
+                        texture.needsUpdate = true;
+                        texture.anisotropy = 16;
+                        texture.minFilter = THREE.LinearFilter; // 선형 필터링으로 선명도 향상
+                        texture.magFilter = THREE.LinearFilter;
+                        
+                        // kwon3d 원본 GiftHandModel.tsx 라인 127-134 정확히 일치
+                        const material = new THREE.MeshPhysicalMaterial({
+                            map: texture,
+                            transparent: true,
+                            side: THREE.DoubleSide,
+                            color: textData.color, // 라인 128: color={color}
+                            roughness: 0.3, // 라인 129: roughness={0.3}
+                            metalness: 0.1, // 라인 130: metalness={0.1}
+                            clearcoat: 0.5, // 라인 131: clearcoat={0.5}
+                            emissive: textData.color, // 라인 132: emissive={color}
+                            emissiveIntensity: 0.25 // 라인 133: emissiveIntensity={0.25}
+                        });
+                        
+                        const geometry = new THREE.PlaneGeometry(1.5, 0.75);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.z = -(layer * depth);
+                        textGroup.add(mesh);
+                    }
+                });
+                
+                parent.add(textGroup);
+            }
+            
+            createLid(parent) {
+                // kwon3d 원본 GiftHandModel.tsx 라인 287-303 정확히 일치
+                // 뚜껑 그룹 (경첩 위치)
+                const hingePosition = new THREE.Vector3(0, this.boxHeight, -this.boxDepth / 2); // 라인 37: [0, boxHeight, -boxDepth / 2]
+                this.lidGroup = new THREE.Group();
+                this.lidGroup.position.copy(hingePosition); // 라인 288: position={hingePosition}
+                
+                // 뚜껑 내부 그룹 (라인 289: <group position={[0, lidHeight / 2, boxDepth / 2]}>)
+                const lidInnerGroup = new THREE.Group();
+                lidInnerGroup.position.set(0, this.lidHeight / 2, this.boxDepth / 2);
+                
+                // kwon3d 원본: RoundedBox 사용 (라인 292-303)
+                // RoundedBox를 ExtrudeGeometry로 구현
+                const lidShape = new THREE.Shape();
+                const lw = (this.boxWidth + this.lidOverhang) / 2;
+                const ld = (this.boxDepth + this.lidOverhang) / 2;
+                const lr = this.boxRadius; // 라인 294: radius={boxRadius}
+                
+                // 둥근 사각형 생성
+                lidShape.moveTo(-lw + lr, -ld);
+                lidShape.lineTo(lw - lr, -ld);
+                lidShape.quadraticCurveTo(lw, -ld, lw, -ld + lr);
+                lidShape.lineTo(lw, ld - lr);
+                lidShape.quadraticCurveTo(lw, ld, lw - lr, ld);
+                lidShape.lineTo(-lw + lr, ld);
+                lidShape.quadraticCurveTo(-lw, ld, -lw, ld - lr);
+                lidShape.lineTo(-lw, -ld + lr);
+                lidShape.quadraticCurveTo(-lw, -ld, -lw + lr, -ld);
+                
+                const lidExtrudeSettings = {
+                    depth: this.lidHeight, // 라인 293: args={[boxWidth + lidOverhang, lidHeight, boxDepth + lidOverhang]}
+                    bevelEnabled: true,
+                    bevelSegments: 4, // 라인 295: smoothness={4}
+                    steps: 1,
+                    bevelSize: 0.01,
+                    bevelThickness: 0.01,
+                    curveSegments: 8
+                };
+                
+                const lidGeometry = new THREE.ExtrudeGeometry(lidShape, lidExtrudeSettings);
+                const lidMaterial = new THREE.MeshPhysicalMaterial({
+                    color: this.BOX_RED, // 라인 298: color={BOX_RED}
+                    roughness: 0.25, // 라인 299: roughness={0.25}
+                    metalness: 0.1, // 라인 300: metalness={0.1}
+                    clearcoat: 0.8 // 라인 301: clearcoat={0.8}
+                });
+                const lidMesh = new THREE.Mesh(lidGeometry, lidMaterial);
+                lidMesh.castShadow = true;
+                lidMesh.receiveShadow = true;
+                lidInnerGroup.add(lidMesh);
+                this.lidGroup.add(lidInnerGroup);
+                
+                // kwon3d 원본 GiftHandModel.tsx 라인 305-313 정확히 일치
+                // 뚜껑 리본
+                const lidRibbonH1 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.ribbonWidth + 0.02, this.lidHeight + 0.01, this.boxDepth + this.lidOverhang + 0.02), // 라인 307
+                    new THREE.MeshPhysicalMaterial({
+                        color: this.RIBBON_GOLD, // 라인 308: color={RIBBON_GOLD}
+                        metalness: 0.6, // 라인 308: metalness={0.6}
+                        roughness: 0.3 // 라인 308: roughness={0.3}
+                    })
+                );
+                lidInnerGroup.add(lidRibbonH1);
+                
+                const lidRibbonH2 = new THREE.Mesh(
+                    new THREE.BoxGeometry(this.boxWidth + this.lidOverhang + 0.02, this.lidHeight + 0.01, this.ribbonWidth + 0.02), // 라인 311
+                    new THREE.MeshPhysicalMaterial({
+                        color: this.RIBBON_GOLD, // 라인 312: color={RIBBON_GOLD}
+                        metalness: 0.6, // 라인 312: metalness={0.6}
+                        roughness: 0.3 // 라인 312: roughness={0.3}
+                    })
+                );
+                lidInnerGroup.add(lidRibbonH2);
+                
+                // kwon3d 원본 GiftHandModel.tsx 라인 316-346 정확히 일치
+                // 보우
+                const bowGroup = new THREE.Group();
+                bowGroup.position.set(0, this.lidHeight / 2 + 0.1, 0); // 라인 316: position={[0, lidHeight/2 + 0.1, 0]}
+                
+                // Loops (라인 318-325)
+                const loop1 = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.3, 0.12, 16, 32), // 라인 319
+                    new THREE.MeshStandardMaterial({
+                        color: this.RIBBON_GOLD, // 라인 320: color={RIBBON_GOLD}
+                        metalness: 0.4, // 라인 320: metalness={0.4}
+                        roughness: 0.4 // 라인 320: roughness={0.4}
+                    })
+                );
+                loop1.position.set(-0.35, 0.15, 0); // 라인 318: position={[-0.35, 0.15, 0]}
+                loop1.rotation.z = 0.6; // 라인 318: rotation={[0, 0, 0.6]}
+                bowGroup.add(loop1);
+                
+                const loop2 = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.3, 0.12, 16, 32), // 라인 323
+                    new THREE.MeshStandardMaterial({
+                        color: this.RIBBON_GOLD, // 라인 324: color={RIBBON_GOLD}
+                        metalness: 0.4, // 라인 324: metalness={0.4}
+                        roughness: 0.4 // 라인 324: roughness={0.4}
+                    })
+                );
+                loop2.position.set(0.35, 0.15, 0); // 라인 322: position={[0.35, 0.15, 0]}
+                loop2.rotation.z = -0.6; // 라인 322: rotation={[0, 0, -0.6]}
+                bowGroup.add(loop2);
+                
+                // Center Knot (라인 328-331)
+                const centerKnot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.18, 16, 16), // 라인 329
+                    new THREE.MeshStandardMaterial({
+                        color: this.RIBBON_ACCENT, // 라인 330: color={RIBBON_ACCENT}
+                        metalness: 0.4, // 라인 330: metalness={0.4}
+                        roughness: 0.4 // 라인 330: roughness={0.4}
+                    })
+                );
+                centerKnot.position.set(0, 0.05, 0); // 라인 329: position={[0, 0.05, 0]}
+                bowGroup.add(centerKnot);
+                
+                // Ribbon Tails (라인 334-345)
+                const tail1 = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.15, 0.8, 0.02), // 라인 336
+                    new THREE.MeshStandardMaterial({
+                        color: this.RIBBON_GOLD, // 라인 337: color={RIBBON_GOLD}
+                        metalness: 0.4, // 라인 337: metalness={0.4}
+                        roughness: 0.4, // 라인 337: roughness={0.4}
+                        side: THREE.DoubleSide // 라인 337: side={2}
+                    })
+                );
+                tail1.position.set(-0.4, 0, 0.4); // 라인 334: position={[-0.4, 0, 0.4]}
+                tail1.rotation.set(0.5, 0.5, 0); // 라인 334: rotation={[0.5, 0.5, 0]}
+                tail1.castShadow = true; // 라인 335: castShadow
+                bowGroup.add(tail1);
+                
+                const tail2 = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.15, 0.8, 0.02), // 라인 342
+                    new THREE.MeshStandardMaterial({
+                        color: this.RIBBON_GOLD, // 라인 343: color={RIBBON_GOLD}
+                        metalness: 0.4, // 라인 343: metalness={0.4}
+                        roughness: 0.4, // 라인 343: roughness={0.4}
+                        side: THREE.DoubleSide // 라인 343: side={2}
+                    })
+                );
+                tail2.position.set(0.4, 0, -0.4); // 라인 340: position={[0.4, 0, -0.4]}
+                tail2.rotation.set(-0.5, -0.5, 0); // 라인 340: rotation={[-0.5, -0.5, 0]}
+                tail2.castShadow = true; // 라인 341: castShadow
+                bowGroup.add(tail2);
+                
+                lidInnerGroup.add(bowGroup); // 라인 348: </group> (bowGroup이 lidInnerGroup 안에)
+                this.lidGroup.add(lidInnerGroup); // 라인 349: </group> (lidInnerGroup이 lidGroup 안에)
+                parent.add(this.lidGroup); // 라인 351: </group> (lidGroup이 parent에 추가)
+            }
+            
+            createConfetti() {
+                // Confetti 효과 (kwon3d 원본)
+                const count = 80;
+                this.confettiParticles = [];
+                
+                for (let i = 0; i < count; i++) {
+                    const particle = {
+                        position: new THREE.Vector3(
+                            (Math.random() - 0.5) * 1.5,
+                            -0.5,
+                            (Math.random() - 0.5) * 1.5
+                        ),
+                        velocity: new THREE.Vector3(
+                            (Math.random() - 0.5) * 0.15,
+                            Math.random() * 0.25 + 0.1,
+                            (Math.random() - 0.5) * 0.15
+                        ),
+                        rotation: new THREE.Euler(
+                            Math.random() * Math.PI,
+                            Math.random() * Math.PI,
+                            0
+                        ),
+                        rotVelocity: [
+                            Math.random() * 0.2,
+                            Math.random() * 0.2,
+                            Math.random() * 0.2
+                        ],
+                        scale: Math.random() * 0.1 + 0.05,
+                        color: ['#FFD700', '#FF0000', '#FFFFFF', '#00FF00', '#0000FF'][
+                            Math.floor(Math.random() * 5)
+                        ],
+                        mesh: null
+                    };
+                    
+                    const geometry = new THREE.PlaneGeometry(particle.scale, particle.scale);
+                    const material = new THREE.MeshStandardMaterial({
+                        color: particle.color,
+                        side: THREE.DoubleSide
+                    });
+                    particle.mesh = new THREE.Mesh(geometry, material);
+                    particle.mesh.position.copy(particle.position);
+                    particle.mesh.rotation.copy(particle.rotation);
+                    particle.mesh.castShadow = true;
+                    
+                    this.scene.add(particle.mesh);
+                    this.confettiParticles.push(particle);
+                }
+            }
+            
+            updateConfetti() {
+                if (!this.isLidOpen) return;
+                
+                this.confettiParticles.forEach(particle => {
+                    // 중력 적용
+                    particle.velocity.y -= 0.005;
+                    
+                    // 위치 업데이트
+                    particle.position.add(particle.velocity);
+                    particle.mesh.position.copy(particle.position);
+                    
+                    // 회전 업데이트
+                    particle.rotation.x += particle.rotVelocity[0];
+                    particle.rotation.y += particle.rotVelocity[1];
+                    particle.rotation.z += particle.rotVelocity[2];
+                    particle.mesh.rotation.copy(particle.rotation);
+                    
+                    // 너무 아래로 떨어지면 제거
+                    if (particle.position.y < -5) {
+                        particle.mesh.visible = false;
+                    }
+                });
+            }
+            
+            toggleLid() {
+                this.isLidOpen = !this.isLidOpen;
+                
+                if (this.isLidOpen) {
+                    // Confetti 생성
+                    this.createConfetti();
+                } else {
+                    // Confetti 제거
+                    this.confettiParticles.forEach(particle => {
+                        this.scene.remove(particle.mesh);
+                        particle.mesh.geometry.dispose();
+                        particle.mesh.material.dispose();
+                    });
+                    this.confettiParticles = [];
+                }
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                if (this.controls) {
+                    this.controls.update();
+                }
+                
+                // 뚜껑 애니메이션 (kwon3d 원본)
+                if (this.lidGroup) {
+                    const targetRotation = this.isLidOpen ? -Math.PI * 0.65 : 0;
+                    this.lidGroup.rotation.x = THREE.MathUtils.lerp(
+                        this.lidGroup.rotation.x,
+                        targetRotation,
+                        0.05
+                    );
+                }
+                
+                // Confetti 업데이트
+                this.updateConfetti();
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            onWindowResize() {
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            }
+        }
+        
+        // 초기화
+        let giftBox = null;
+        
+        function initApp() {
+            if (typeof THREE === 'undefined' || typeof OrbitControls === 'undefined') {
+                // Three.js가 아직 로드되지 않았으면 대기
+                setTimeout(initApp, 100);
+                return;
+            }
+            
+            giftBox = new EnhancedGiftBox3D('canvas-container');
+            
+            // 버튼 이벤트
+            document.getElementById('toggleButton').addEventListener('click', () => {
+                giftBox.toggleLid();
+                const button = document.getElementById('toggleButton');
+                if (giftBox.isLidOpen) {
+                    button.innerHTML = '<span>CLOSE GIFT</span>';
+                    button.style.background = 'linear-gradient(to right, #374151, #1f2937)';
+                    button.style.borderColor = '#4b5563';
+                } else {
+                    button.innerHTML = '<span>🎁</span><span>OPEN GIFT</span>';
+                    button.style.background = 'linear-gradient(to right, #ffd700, #b45309)';
+                    button.style.borderColor = '#ffd700';
+                }
+            });
+        }
+        
+        // DOMContentLoaded 또는 threejs-loaded 이벤트 대기
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+        
+        // Three.js 로드 완료 후에도 초기화 시도
+        window.addEventListener('threejs-loaded', initApp);
+    </script>
+</body>
+</html>
+

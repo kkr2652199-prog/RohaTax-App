@@ -1,0 +1,144 @@
+<!-- 전역 헤더 (Global Header) -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-logo">
+            <span class="logo-text">로하택스</span>
+        </a>
+        <div class="nav-menu">
+            <a href="#features" class="nav-link">기능 소개</a>
+            <a href="#testimonials" class="nav-link">성공 사례</a>
+            <a href="/shop" class="nav-link">유료 상점</a>
+            <a href="/showroom" class="nav-link">3D 체험 상점 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+            <a href="/studio" class="nav-link">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
+            <a href="#faq" class="nav-link">고객 지원</a>
+            {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
+            {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}
+                <a href="/conversion" class="nav-link">워크스페이스</a>
+                <a href="/profile/edit" class="nav-link">마이홈</a>
+                <div class="user-menu">
+                    <div class="user-menu-trigger" id="userMenuTrigger" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}" role="button" tabindex="0" aria-expanded="false" aria-haspopup="true">
+                        <div class="user-avatar">
+                            {# 사용자 이름: session.username, current_user.name, 또는 기본값 'U' #}
+                            {{ ((session.get('username') or (current_user is defined and current_user.name) or 'U'))[0].upper() }}
+                        </div>
+                        <span>{{ session.get('username') or (current_user is defined and current_user.name) or '사용자' }}님</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <ul class="user-menu-dropdown" id="userMenuDropdown">
+                        <a href="/" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">🏠</span>
+                            <span class="keycap-text">홈</span>
+                        </a>
+                        <a href="/shop" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">🛍️</span>
+                            <span class="keycap-text">유료 상점</span>
+                        </a>
+                        <a href="/showroom" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">📦</span>
+                            <span class="keycap-text">3D 상점</span>
+                        </a>
+                        <a href="/studio" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">📝</span>
+                            <span class="keycap-text">스튜디오</span>
+                        </a>
+                        <a href="/conversion" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">⚡</span>
+                            <span class="keycap-text">변환</span>
+                        </a>
+                        <a href="/profile/edit" class="user-menu-dropdown-item">
+                            <span class="keycap-icon">👤</span>
+                            <span class="keycap-text">마이홈</span>
+                        </a>
+                        <a href="/logout" class="user-menu-dropdown-item logout">
+                            <span class="keycap-icon">🚪</span>
+                            <span class="keycap-text">로그아웃</span>
+                        </a>
+                    </ul>
+                </div>
+            {% else %}
+                <a href="/login" class="nav-link login-btn">로그인</a>
+                <a href="/register" class="nav-link signup-btn">회원가입</a>
+            {% endif %}
+        </div>
+    </div>
+    {# 관리자 체크: session.is_admin 또는 current_user.is_admin 확인 #}
+    {% if session.get('is_admin') or (current_user is defined and current_user.is_authenticated and current_user.is_admin) %}
+    <a href="/admin" style="position:fixed;top:12px;right:12px;background:#2c3e50;color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;text-decoration:none;z-index:9999;">관리자 대시보드</a>
+    {% endif %}
+</nav>
+
+<script>
+// 유저 메뉴 토글 함수 (전역 함수로 등록)
+function toggleUserMenu(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    const userMenuTrigger = document.getElementById('userMenuTrigger');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
+    
+    if (userMenuDropdown) {
+        const isActive = userMenuDropdown.classList.toggle('active');
+        // aria-expanded 업데이트
+        if (userMenuTrigger) {
+            userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        }
+    }
+}
+
+// 유저 메뉴 드롭다운 초기화 (이벤트 리스너도 추가)
+(function() {
+    function initUserMenu() {
+        const userMenuTrigger = document.getElementById('userMenuTrigger');
+        const userMenuDropdown = document.getElementById('userMenuDropdown');
+        
+        if (userMenuTrigger && userMenuDropdown) {
+            // 클릭 이벤트 (인라인 onclick과 함께 작동)
+            userMenuTrigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const isActive = userMenuDropdown.classList.toggle('active');
+                userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+            }, true);
+            
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', function(e) {
+                if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                    userMenuDropdown.classList.remove('active');
+                    userMenuTrigger.setAttribute('aria-expanded', 'false');
+                }
+            }, true);
+        }
+    }
+    
+    // DOMContentLoaded 또는 즉시 실행
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUserMenu);
+    } else {
+        initUserMenu();
+    }
+    
+    // 로고 클릭 시 페이지 맨 위로 스크롤
+    function initLogoScroll() {
+        const navLogo = document.querySelector('.nav-logo');
+        if (navLogo) {
+            navLogo.addEventListener('click', function(e) {
+                const homeSection = document.getElementById('home');
+                if (homeSection && window.location.pathname === '/') {
+                    e.preventDefault();
+                    homeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLogoScroll);
+    } else {
+        initLogoScroll();
+    }
+})();
+</script>

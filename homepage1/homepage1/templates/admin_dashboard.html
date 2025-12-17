@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 - 1Tax App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+    <style>
+      header { display: none; }
+      
+      body {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+      }
+      
+      .admin-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: transparent;
+        min-height: 100vh;
+      }
+      
+      .admin-header {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        text-align: center;
+      }
+      
+      .admin-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
+      
+      .admin-subtitle {
+        color: #6B7280;
+        font-size: 1.125rem;
+        margin-bottom: 1rem;
+      }
+      
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+      
+      .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        transition: all 0.3s ease;
+      }
+      
+      .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #F3F4F6;
+      }
+      
+      .card-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+      }
+      
+      .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1F2937;
+        margin: 0;
+      }
+      
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+      }
+      
+      .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #F9FAFB;
+        border-radius: 12px;
+        border: 1px solid #E5E7EB;
+        transition: all 0.3s ease;
+      }
+      
+      .stat-item:hover {
+        background: #F3F4F6;
+        transform: translateY(-1px);
+      }
+      
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #10B981;
+        margin-bottom: 0.25rem;
+      }
+      
+      .stat-label {
+        font-size: 0.875rem;
+        color: #6B7280;
+        font-weight: 500;
+      }
+      
+      .user-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      
+      .user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #E5E7EB;
+        transition: background 0.3s ease;
+      }
+      
+      .user-item:hover {
+        background: #F9FAFB;
+      }
+      
+      .user-info {
+        flex: 1;
+      }
+      
+      .user-name {
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 0.25rem;
+      }
+      
+      .user-details {
+        font-size: 0.875rem;
+        color: #6B7280;
+      }
+      
+      .refresh-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #10B981;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        justify-content: center;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      
+      .refresh-indicator:hover {
+        background: rgba(16, 185, 129, 0.2);
+      }
+      
+      .refresh-icon {
+        animation: spin 2s linear infinite;
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      .loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      
+      .navigation-bar {
+        background: white;
+        padding: 1rem 2rem;
+        margin-bottom: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+      }
+      
+      .nav-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .nav-links a {
+        color: #6B7280;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      
+      .nav-links a:hover {
+        color: #10B981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+      
+      .nav-links a.active {
+        color: #10B981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+      
+      @media (max-width: 768px) {
+        .admin-container {
+          padding: 1rem;
+        }
+        
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        
+        .dashboard-card {
+          padding: 1.5rem;
+        }
+        
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .user-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
+        }
+        
+        .nav-links {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        
+        .admin-title {
+          font-size: 2rem;
+        }
+      }
+    </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 네비게이션 바 -->
+    <div class="navigation-bar">
+      <ul class="nav-links">
+        <li><a href="/">홈</a></li>
+        <li><a href="/conversion">변환하기</a></li>
+        <li><a href="/profile/edit">마이홈</a></li>
+        <li><a href="/admin" class="active">관리자 대시보드</a></li>
+        <li><a href="/logout">로그아웃</a></li>
+      </ul>
+    </div>
+    
+    <div class="admin-header">
+      <h1 class="admin-title">
+        <span>👑</span>
+        관리자 대시보드
+      </h1>
+      <p class="admin-subtitle">실시간 시스템 현황 및 사용자 관리</p>
+      <div class="refresh-indicator" onclick="refreshDashboard()">
+        <span class="refresh-icon">🔄</span>
+        <span class="refresh-text">실시간 업데이트</span>
+      </div>
+    </div>
+    
+    <div class="dashboard-grid">
+      <!-- 사용자 통계 -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div class="card-icon">👥</div>
+          <h2 class="card-title">사용자 통계</h2>
+        </div>
+        <div class="stat-grid" id="userStats">
+          <div class="stat-item">
+            <div class="stat-value" id="totalUsers">-</div>
+            <div class="stat-label">전체 사용자</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="activeUsers">-</div>
+            <div class="stat-label">활성 사용자</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="vipUsers">-</div>
+            <div class="stat-label">VIP 사용자</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="newUsers30d">-</div>
+            <div class="stat-label">신규 사용자 (30일)</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 토큰 통계 -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div class="card-icon">💰</div>
+          <h2 class="card-title">토큰 통계</h2>
+        </div>
+        <div class="stat-grid" id="tokenStats">
+          <div class="stat-item">
+            <div class="stat-value" id="totalIssued">-</div>
+            <div class="stat-label">발급된 토큰</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalUsed">-</div>
+            <div class="stat-label">사용된 토큰</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="avgAvailable">-</div>
+            <div class="stat-label">평균 잔액</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="usageRate">-</div>
+            <div class="stat-label">사용률</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 변환 통계 -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div class="card-icon">🔄</div>
+          <h2 class="card-title">변환 통계</h2>
+        </div>
+        <div class="stat-grid" id="conversionStats">
+          <div class="stat-item">
+            <div class="stat-value" id="totalConversions">-</div>
+            <div class="stat-label">총 변환</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="successRate">-</div>
+            <div class="stat-label">성공률</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="avgTime">-</div>
+            <div class="stat-label">평균 시간</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalFileSize">-</div>
+            <div class="stat-label">총 파일 크기</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 최근 활동 -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div class="card-icon">📊</div>
+          <h2 class="card-title">최근 활동</h2>
+        </div>
+        <div class="user-list" id="recentActivity">
+          <div class="user-item">
+            <div class="user-info">
+              <div class="user-name">데이터 로딩 중...</div>
+              <div class="user-details">잠시만 기다려주세요</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 사용자 관리 -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <div class="card-icon">👤</div>
+        <h2 class="card-title">사용자 관리</h2>
+      </div>
+      <div class="user-list" id="userManagement">
+        <div class="user-item">
+          <div class="user-info">
+            <div class="user-name">데이터 로딩 중...</div>
+            <div class="user-details">잠시만 기다려주세요</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+class AdminDashboard {
+    constructor() {
+        this.updateInterval = 30000; // 30초마다 업데이트
+        this.isUpdating = false;
+        this.init();
+    }
+    
+    init() {
+        this.loadDashboardData();
+        this.startAutoUpdate();
+        this.bindEvents();
+    }
+    
+    async loadDashboardData() {
+        if (this.isUpdating) return;
+        
+        this.isUpdating = true;
+        this.showLoadingIndicator();
+        
+        try {
+            const response = await fetch('/api/admin/dashboard');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateDashboard(data.data);
+                this.showLastUpdated();
+            } else {
+                console.error('대시보드 데이터 로딩 실패:', data.error);
+                this.showError('대시보드 데이터를 불러올 수 없습니다');
+            }
+        } catch (error) {
+            console.error('API 요청 실패:', error);
+            this.showError('네트워크 오류가 발생했습니다');
+        } finally {
+            this.isUpdating = false;
+            this.hideLoadingIndicator();
+        }
+    }
+    
+    updateDashboard(data) {
+        // 사용자 통계 업데이트
+        document.getElementById('totalUsers').textContent = data.user_stats.total_users;
+        document.getElementById('activeUsers').textContent = data.user_stats.active_users;
+        document.getElementById('vipUsers').textContent = data.user_stats.vip_users;
+        document.getElementById('newUsers30d').textContent = data.user_stats.new_users_30d;
+        
+        // 토큰 통계 업데이트
+        document.getElementById('totalIssued').textContent = data.token_stats.total_issued.toLocaleString();
+        document.getElementById('totalUsed').textContent = data.token_stats.total_used.toLocaleString();
+        document.getElementById('avgAvailable').textContent = data.token_stats.avg_available.toLocaleString();
+        document.getElementById('usageRate').textContent = `${data.token_stats.usage_rate}%`;
+        
+        // 변환 통계 업데이트
+        document.getElementById('totalConversions').textContent = data.conversion_stats.total_conversions;
+        document.getElementById('successRate').textContent = `${data.conversion_stats.success_rate}%`;
+        document.getElementById('avgTime').textContent = `${data.conversion_stats.avg_conversion_time}초`;
+        document.getElementById('totalFileSize').textContent = this.formatFileSize(data.conversion_stats.total_file_size);
+        
+        // 최근 활동 업데이트
+        this.updateRecentActivity(data.recent_activity);
+    }
+    
+    updateRecentActivity(activities) {
+        const container = document.getElementById('recentActivity');
+        container.innerHTML = '';
+        
+        if (activities.length === 0) {
+            container.innerHTML = '<div class="user-item"><div class="user-info"><div class="user-name">최근 활동이 없습니다</div></div></div>';
+            return;
+        }
+        
+        activities.forEach(activity => {
+            const activityItem = document.createElement('div');
+            activityItem.className = 'user-item';
+            
+            const statusIcon = activity.status === 'success' ? '✅' : '❌';
+            const statusText = activity.status === 'success' ? '성공' : '실패';
+            
+            activityItem.innerHTML = `
+                <div class="user-info">
+                    <div class="user-name">${activity.username}</div>
+                    <div class="user-details">
+                        ${statusIcon} ${activity.filename} - ${statusText} (${activity.conversion_time}초)
+                    </div>
+                </div>
+                <div class="user-details">${this.formatDate(activity.created_at)}</div>
+            `;
+            
+            container.appendChild(activityItem);
+        });
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('ko-KR');
+    }
+    
+    showLoadingIndicator() {
+        const refreshIcon = document.querySelector('.refresh-icon');
+        if (refreshIcon) {
+            refreshIcon.style.animation = 'spin 1s linear infinite';
+        }
+        document.body.classList.add('loading');
+    }
+    
+    hideLoadingIndicator() {
+        const refreshIcon = document.querySelector('.refresh-icon');
+        if (refreshIcon) {
+            refreshIcon.style.animation = 'spin 2s linear infinite';
+        }
+        document.body.classList.remove('loading');
+    }
+    
+    showLastUpdated() {
+        const refreshText = document.querySelector('.refresh-text');
+        if (refreshText) {
+            refreshText.textContent = `마지막 업데이트: ${new Date().toLocaleTimeString('ko-KR')}`;
+        }
+    }
+    
+    showError(message) {
+        console.error(message);
+        // 에러 알림 표시
+        alert(message);
+    }
+    
+    startAutoUpdate() {
+        setInterval(() => {
+            this.loadDashboardData();
+        }, this.updateInterval);
+    }
+    
+    bindEvents() {
+        // 수동 새로고침 버튼
+        const refreshButton = document.querySelector('.refresh-indicator');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => {
+                this.loadDashboardData();
+            });
+        }
+        
+        // 페이지 가시성 변경 시 업데이트
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.loadDashboardData();
+            }
+        });
+    }
+}
+
+// 전역 함수로 노출
+function refreshDashboard() {
+    if (window.adminDashboard) {
+        window.adminDashboard.loadDashboardData();
+    }
+}
+
+// 페이지 로드 시 관리자 대시보드 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    window.adminDashboard = new AdminDashboard();
+});
+</script>
+</body>
+</html>

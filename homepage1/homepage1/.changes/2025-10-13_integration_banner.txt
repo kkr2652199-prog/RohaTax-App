@@ -1,0 +1,1 @@
+2025-10-13 15:20: Added integration section banner to core/file_parser.py
