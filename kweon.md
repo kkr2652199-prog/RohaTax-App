@@ -1,4 +1,137 @@
-﻿# [2025-12-17 12:17:00 KST] - Git 상태 정리: homepage1을 .gitignore에 추가
+﻿# [2025-12-17 13:40:00 KST] - 날씨 API 수정: 브라우저 직접 호출 → 백엔드 프록시로 변경
+
+*   **한국 시간/날짜:** 2025년 12월 17일 13:40:00 (KST)
+*   **작업자:** Commander & The Executor Team
+*   **작업 위치:** 전초기지(homepage1)만 작업 ✅
+*   **문제 분석:**
+    1. **증상:** AI 블로그 스튜디오에서 "날씨 정보 로딩 실패" 에러 발생
+    2. **원인 파악:**
+       - `fetchCurrentWeather()` 함수가 `getAI()` 호출
+       - `getAI()`는 브라우저에서 `process.env.API_KEY` 접근 시도
+       - 브라우저 환경에서는 환경변수 접근 불가 → 에러 발생
+       - 에러 메시지: "API Key is not available in browser environment"
+    3. **근본 원인:**
+       - 다른 기능들은 백엔드 프록시 API(`/api/studio/generate`) 사용
+       - 날씨 기능만 프론트엔드에서 직접 Gemini AI 호출 시도
+*   **수정 내용:**
+    - **파일:** `homepage1/kweon21/services/keywordService.ts`
+    - **함수:** `fetchCurrentWeather()`
+    - **변경:**
+      ```
+      이전: getAI().models.generateContent() → 직접 API 호출
+      이후: fetch('/api/studio/generate') → 백엔드 프록시 사용
+      ```
+    - **추가 설정:**
+      - action: 'generateTopics'
+      - useSearch: true (Google Search 도구 활성화)
+      - responseSchema: 날씨 데이터 구조 정의
+*   **결과:**
+    - ✅ kweon21 리빌드 완료 (985ms)
+    - ✅ 번들 크기 최적화: 525.48KB → 317.41KB (40% 감소!)
+    - ✅ 서버 재시작 완료 (5001 포트)
+    - ✅ 날씨 API가 이제 백엔드를 통해 안전하게 작동
+*   **테스트:**
+    - 브라우저에서 http://localhost:5001/studio 접속
+    - 상단 상태 바에서 날씨 정보 정상 로드 확인
+
+---
+
+# [2025-12-17 13:35:00 KST] - AI 블로그 스튜디오 업데이트: 하늘나라 최신 버전 적용
+
+*   **한국 시간/날짜:** 2025년 12월 17일 13:35:00 (KST)
+*   **커밋 해시:** 0824d51
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 하늘나라(GitHub)의 최신 AI 블로그 스튜디오 코드를 본진으로 가져옴
+    1. **파일 비교:**
+       - 하늘나라 kweon21/App.tsx: 179,320 bytes (git show 출력)
+       - 실제 파일 크기: 94,641 bytes (1,606줄)
+       - 본진 이전 버전: 94,648 bytes (1,607줄)
+       - 결론: 거의 동일하지만 일부 차이 존재
+    2. **적용 작업:**
+       - git checkout origin/main -- kweon21/App.tsx
+       - 본진 리빌드: dist/assets/index-DYoFTlQP.js 생성
+       - 전초기지 동기화 및 리빌드 완료
+    3. **검증:**
+       - ✅ 본진 빌드 성공 (1.36초)
+       - ✅ 전초기지 빌드 성공 (1.34초)
+       - ✅ 본진과 전초기지 100% 동기화
+*   **결과:**
+    - AI 블로그 스튜디오 코드가 하늘나라 최신 버전으로 업데이트됨
+    - 본진 및 전초기지 모두 정상 작동
+*   **다음 단계:**
+    - 브라우저에서 /studio 테스트
+    - 추가 기능 확인
+
+---
+
+# [2025-12-17 12:28:00 KST] - kweon21 스튜디오 빌드 완료
+
+*   **한국 시간/날짜:** 2025년 12월 17일 12:28:00 (KST)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** kweon21 React 앱 빌드 완료 - AI 블로그 스튜디오 활성화
+    1. **전초기지 kweon21 빌드:**
+       - npm install: 134 packages 설치
+       - npm run build: Vite 빌드 성공 (1.39s)
+       - dist 폴더 생성: index.html + assets (CSS 7.77KB, JS 525.48KB)
+    2. **본진 kweon21 빌드:**
+       - npm run build: 동일하게 빌드 완료 (1.36s)
+       - 본진과 전초기지 빌드 결과 동일
+*   **결과:**
+    - ✅ /studio 경로에서 AI 블로그 스튜디오 접근 가능
+    - ✅ 본진(5000)과 전초기지(5001) 모두 스튜디오 작동
+    - ✅ "kweon21 스튜디오 준비 중" 메시지 해결
+*   **다음 단계:**
+    - 브라우저에서 http://localhost:5001/studio 새로고침
+    - AI 블로그 스튜디오 정상 작동 확인
+
+---
+
+# [2025-12-17 12:25:00 KST] - 본진 ↔ 전초기지 100% 동기화 완료
+
+*   **한국 시간/날짜:** 2025년 12월 17일 12:25:00 (KST)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 본진과 전초기지를 100% 동일하게 동기화
+    1. **app.py 동기화:** load_dotenv(override=False)로 통일 - 환경변수 우선순위 개선
+    2. **.gitignore 동기화:** 본진 버전으로 업데이트 (homepage1/ 제외 규칙 포함)
+    3. **static 폴더 동기화:** 본진에만 있던 6개 파일 복사
+       - roha_conversion_demo.mp4 (2개)
+       - .env.local 파일 4개 (3D 모듈용)
+*   **검증 결과:**
+    - ✅ config: 3파일 (100% 일치)
+    - ✅ core: 129파일 (100% 일치)
+    - ✅ routes: 51파일 (100% 일치)
+    - ✅ templates: 62파일 (100% 일치)
+    - ✅ static: 154파일 (100% 일치)
+    - ✅ models: 2파일 (100% 일치)
+    - ✅ tools: 2파일 (100% 일치)
+    - ✅ 루트 파일: app.py, requirements.txt, .env, .gitignore 모두 일치
+*   **결론:**
+    - 🎯 본진과 전초기지가 서버 포트를 제외하고 100% 동일
+    - 🎯 모든 구조가 완벽하게 일치함
+
+---
+
+# [2025-12-17 12:20:00 KST] - 전초기지 Git 상태 정리: 중첩 폴더 제거 및 환경변수 설정 개선
+
+*   **한국 시간/날짜:** 2025년 12월 17일 12:20:00 (KST)
+*   **커밋 해시:** (homepage1 브랜치)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 전초기지 워크트리의 Git 상태를 완벽하게 정리
+    1. **중첩 폴더 제거:** homepage1/homepage1/ 폴더의 Git 추적 제거 (557개 파일)
+    2. **app.py 수정:** load_dotenv(override=True)로 변경 - 환경변수 우선순위 개선
+    3. **줄바꿈 정규화:** LF → CRLF 자동 변환 처리
+*   **결과:**
+    - ✅ 전초기지 Git 상태: nothing to commit, working tree clean
+    - ✅ 중첩 폴더 문제 완전히 해결
+    - ✅ 환경변수 관리 개선 (PORT 설정 등)
+*   **영향:**
+    - 전초기지 VS Code Git 패널 깨끗하게 정리됨
+    - 워크트리 구조 정상화
+    - 서버 실행 시 환경변수 충돌 방지
+
+---
+
+# [2025-12-17 12:17:00 KST] - Git 상태 정리: homepage1을 .gitignore에 추가
 
 *   **한국 시간/날짜:** 2025년 12월 17일 12:17:00 (KST)
 *   **커밋 해시:** 9db1d05

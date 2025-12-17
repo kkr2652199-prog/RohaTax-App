@@ -2,24 +2,8 @@
 import type { WeatherData, SearchSource, KeywordData, BlogPostData, NaverNewsData, GoogleSerpData, PaaItem, KeywordMetrics, GeneratedTopic, BlogStrategyReportData, RecommendedKeyword, SustainableTopicCategory, SerpStrategyReportData, NewsStrategyIdea } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
 
-// FIX: Lazy initialization - API Key는 브라우저 환경에서 사용할 수 없으므로
-// 백엔드 프록시 API를 사용하도록 변경 필요 (현재는 지연 초기화로 오류 방지)
-let ai: GoogleGenAI | null = null;
-
-const getAI = (): GoogleGenAI => {
-    // 브라우저 환경에서는 API Key를 직접 사용할 수 없으므로
-    // 이 서비스는 백엔드 프록시 API로 마이그레이션 필요
-    // 현재는 오류 방지를 위해 null 반환
-    if (!ai) {
-        // 임시: API Key가 없으면 null로 설정하여 나중에 오류 처리
-        const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : null;
-        if (!apiKey) {
-            throw new Error('API Key is not available in browser environment. Please use backend proxy API instead.');
-        }
-        ai = new GoogleGenAI({ apiKey });
-    }
-    return ai;
-};
+// FIX: Create a single, reusable Gemini AI instance for the entire service.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * Extracts and parses a JSON object from a string that may contain markdown and other text.
@@ -122,7 +106,7 @@ export const fetchCurrentWeather = async (): Promise<WeatherData> => {
     `.trim();
 
     try {
-        const response = await getAI().models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
