@@ -1146,7 +1146,7 @@ function App() {
                 href="https://creator-advisor.naver.com/naver_blog" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="hidden group flex items-center rounded-lg bg-gradient-to-r from-[#2C5BF0] to-[#1e4ed8] px-4 py-2 text-sm font-bold text-white shadow-md transition-transform duration-200 hover:scale-105"
+                className="group flex items-center rounded-lg bg-gradient-to-r from-[#2C5BF0] to-[#1e4ed8] px-4 py-2 text-sm font-bold text-white shadow-md transition-transform duration-200 hover:scale-105"
             >
                 <span className="mr-2 filter drop-shadow">⭐</span>
                 <span>네이버 creator-advisor</span>
