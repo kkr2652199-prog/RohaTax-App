@@ -1,4 +1,41 @@
-﻿# [2025-12-17 16:28:46 KST] - 블로그 포스트 생성 "팅김" 버그 완전 수정 - 안정성 대폭 강화
+﻿# [2025-12-18 15:23:51 KST] - Featured/Kweo 이미지 추가 및 타겟 고객 섹션 Modern SaaS Premium 스타일 업그레이드
+
+*   **한국 시간/날짜:** 2025년 12월 18일 15:23:51 (KST)
+*   **커밋 해시:** 8f71b1c
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** Hero 섹션에 Featured/Kweo 이미지 추가 및 타겟 고객 섹션을 Modern SaaS Premium 스타일로 업그레이드
+    1. **Featured 이미지 추가:**
+       - 16:9 와이드 비율 (640px × 360px) 곡면 디자인 적용
+       - 타겟 고객 섹션 오른쪽에 배치 (top: 740px, left: 3px)
+       - border-radius: 20px, box-shadow 적용
+    2. **타겟 고객 섹션 Modern SaaS Premium 스타일:**
+       - Category 텍스트: 18px, Bold, 브랜드 컬러(#2C5BF0)로 강조
+       - 카드 배경: #F8FAFC (아주 옅은 쿨 그레이)
+       - border-radius: 16px (부드러운 곡면)
+       - 아이콘: 원형 배경 (48px, 브랜드 컬러 옅은 버전)
+       - padding: 32px (시원한 여백)
+    3. **Kweo 이미지 추가:**
+       - Featured 이미지 아래 배치 (top: 1150px)
+       - 크기: 640px × 420px
+       - object-fit: cover (Featured 이미지와 동일한 표시 방식)
+    4. **반응형 디자인:**
+       - 태블릿: Featured 520px × 292.5px, Kweo 520px × 341px
+       - 모바일: 이미지 숨김 처리
+*   **수정 파일:**
+    - `static/css/sections/hero.css` (Featured/Kweo 이미지 스타일, 타겟 고객 섹션 업그레이드)
+    - `templates/home_sections/_hero.html` (Featured/Kweo 이미지 HTML 추가)
+    - `static/images/hometax_guide/featured.jpeg` (신규)
+    - `static/images/hometax_guide/kweo.jpg` (신규)
+*   **결과:**
+    - ✅ Featured 이미지가 타겟 고객 섹션 오른쪽에 고급스럽게 배치
+    - ✅ 타겟 고객 섹션이 Modern SaaS Premium 스타일로 업그레이드
+    - ✅ Kweo 이미지가 Featured 이미지 아래에 자연스럽게 배치
+    - ✅ 모든 이미지가 16:9 와이드 비율 및 곡면 처리 적용
+    - ✅ 반응형 디자인 완벽 지원
+
+---
+
+# [2025-12-17 16:28:46 KST] - 블로그 포스트 생성 "팅김" 버그 완전 수정 - 안정성 대폭 강화
 
 *   **한국 시간/날짜:** 2025년 12월 17일 16:28:46 (KST)
 *   **커밋 해시:** b782627
