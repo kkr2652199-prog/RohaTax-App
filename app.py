@@ -349,7 +349,7 @@ if "token" not in app.blueprints:
     app.register_blueprint(token_bp)
 
 # Payment routes 등록
-from routes.payment_routes import payment_bp
+from routes.payment_routes import payment_bp, _build_shop_context
 
 if "payment_routes" not in app.blueprints:
     app.register_blueprint(payment_bp)
@@ -396,7 +396,19 @@ if "playground" not in app.blueprints:
 
 @app.route("/")
 def homepage():
-    return render_template("homepage.html")
+    """
+    메인 랜딩 페이지
+    - 하단 멤버십 5종(무료 2 + 유료 3)이 상점 상품 관리 데이터에 맞춰 자동 갱신되도록
+      payment_routes._build_shop_context()에서 생성한 컨텍스트를 함께 주입
+    - 결제/구매 로직은 포함하지 않고, 텍스트/금액/토큰/기간 정보만 공유
+    """
+    context = {}
+    try:
+        context = _build_shop_context()
+    except Exception:
+        # 상점 컨텍스트 로딩 실패 시에도 홈페이지는 열리도록 방어
+        context = {}
+    return render_template("homepage.html", **context)
 
 
 @app.route("/new")

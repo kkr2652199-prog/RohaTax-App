@@ -10,6 +10,7 @@ from flask import session
 from flask import jsonify
 
 from .utils.auth import current_user_id, ensure_admin_view, ensure_logged_in_view
+from routes.payment_routes import _build_shop_context
 
 home_bp = Blueprint('home', __name__)
 
@@ -18,30 +19,16 @@ home_bp = Blueprint('home', __name__)
 def home():
     """
     메인 홈페이지
-    Standard, Premium, Gold 상품 정보를 DB에서 조회하여 전달
+    - payment_routes._build_shop_context()에서 생성한 공통 상품 컨텍스트 사용
+    - 상점/쇼룸과 동일한 event_products / free_token_product / free_period_product 등을 전달
     """
     try:
-        with get_conn() as conn:
-            conn.row_factory = sqlite3.Row
-            # Standard(1), Premium(2), Gold(3) 상품만 조회
-            products = conn.execute(
-                """
-                SELECT id, name, description, price, token_amount, duration_days, 
-                       type, vat_included, is_active
-                FROM products
-                WHERE id IN (1, 2, 3) AND (is_active = 1 OR is_active IS NULL)
-                ORDER BY id
-                """
-            ).fetchall()
-            
-            products_list = [dict(row) for row in products]
-        
-        return render_template('homepage.html', products=products_list)
-        
+        context = _build_shop_context()
+        return render_template('homepage.html', **context)
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.error(f"홈페이지 products 조회 실패: {str(e)}")
-        # 에러 발생 시 빈 리스트로 렌더링
+        logger.error(f"홈페이지 컨텍스트 생성 실패: {str(e)}")
+        # 에러 발생 시 최소한 페이지는 열리도록 기본 값만 전달
         return render_template('homepage.html', products=[])
 
 @home_bp.route('/old')

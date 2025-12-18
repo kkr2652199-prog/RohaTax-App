@@ -1,4 +1,51 @@
-﻿# [2025-12-18 16:21 KST] - homepage1 랜딩 섹션 레이아웃 미세 조정 (hero, Problem/Solution, Use Cases) - 커밋 49c47ec
+﻿# [2025-12-18 19:00 KST] - homepage1 멤버십 섹션 데이터 소스 통합 및 위치 미세 조정 - 커밋 e88bd79
+
+*   **한국 시간/날짜:** 2025년 12월 18일 19:00 (KST)
+*   **커밋 해시:** e88bd79
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** homepage1 하단 멤버십(5종) 섹션이 상점과 동일한 컨텍스트를 사용하도록 통합하고, 섹션 제목/그리드 위치를 미세 조정
+    1. **데이터 컨텍스트 통합:**
+       - `routes.home.home()`에서 직접 SQL로 3종만 조회하던 로직을 제거하고 `payment_routes._build_shop_context()`를 그대로 사용하도록 변경
+       - `homepage.html`에 `event_products`, `free_token_product`, `free_period_product`, `standard_product`, `premium_product`, `gold_product` 등 상점과 동일한 키를 전달
+       - 상점/쇼룸/홈페이지가 모두 하나의 컨텍스트 함수를 공유하도록 만들어, 상품 관리에서의 수정이 세 화면에 동시에 반영되도록 구조 개선
+    2. **무료 2종 동적 텍스트 검증:**
+       - `_pricing.html`의 무료 2종 카드가 `free_token_product.token_amount` / `free_period_product.duration_days`를 정확히 참조하도록 조건 분기 점검
+       - 상점의 `event_products` 분기와 비교해 동일한 규칙으로 토큰 수·기간 문구가 노출되는지 확인
+    3. **레이아웃/위치 미세 조정:**
+       - `pricing.css`에서 멤버십 제목 블록과 무료 2종/유료 3종 그리드 간의 마진·정렬을 조정해, 사용자가 의도한 위치에 제목/카드가 노출되도록 수차례 미세 튜닝
+       - 무료 2종/유료 3종 그리드 전체를 아래로 살짝 내리는 등, 기존 섹션과의 시각적 밸런스를 맞춤
+*   **결과:**
+    - ✅ 상점에서 무료 토큰/기간 이벤트 값을 수정하면, homepage1 하단 무료 2종 카드의 수량/일자 텍스트가 즉시 동기화
+    - ✅ 멤버십 섹션 제목과 5종 카드가 의도한 위치에 배치되어, 상단 섹션들과의 시각적 흐름이 자연스럽게 이어짐
+
+---
+
+# [2025-12-18 18:30 KST] - homepage1 멤버십 섹션(무료 2종 + 유료 3종) UI/로직 정교화 - 커밋 5a41dbb
+
+*   **한국 시간/날짜:** 2025년 12월 18일 18:30 (KST)
+*   **커밋 해시:** 5a41dbb
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** homepage1 하단 멤버십(가격 정책) 섹션을 상점/관리자 로직과 완전히 동기화하고 UI 품질 개선
+    1. **무료 2종 (Welcome Token / Welcome Period):**
+       - `payment_routes._build_shop_context()`에서 이벤트 상품(`event_products`)을 기준으로 `free_token_product`, `free_period_product`를 계산
+       - `_pricing.html`에서 상점(`shop.html`)의 `event_products` 로직을 그대로 응용해 토큰 수(`token_amount`)·기간(`duration_days`)에 따라 텍스트가 자동으로 변경되도록 구현
+       - 관리자 대시보드에서 토큰/기간 값을 수정하면 상점/쇼룸/홈페이지 하단 무료 2종 텍스트가 모두 동일하게 반영되도록 통합
+    2. **유료 3종 (Standard / Premium / Gold):**
+       - Standard: 단건 가격 설명을 `1건당 {{ price }}원 (부담 없는 가격)` 형태로 수정해 상품관리 가격 변경에 자동 반응하도록 구현
+       - Premium: 기존 할인율/건당 단가 계산(`discount_rate`, `premium_per_token_price`)을 재사용해 패키지 설명 텍스트가 관리 값에 맞게 동적으로 표시되도록 정리
+       - Gold: `무제한 토큰 (월 {{ price }}원)` 문구를 상점과 동일하게 상품관리 가격에 연동, Gold 전용 다이아몬드 배지(UI) 복구
+    3. **UI/레이아웃 정제:**
+       - 무료 2종: 화이트 카드 + 라이트 테마로 상단 여백/음영 조정 (이벤트 카드 느낌 강화)
+       - 유료 3종: 다크 카드 + 체크 리스트(✔) 적용, Premium 할인 배지/Gold 황금 테두리 스타일을 상점과 유사하게 재현
+       - 그리드 분리(`pricing-preview-grid-free`, `pricing-preview-grid-paid`)로 무료 2종(윗줄 2열) / 유료 3종(아랫줄 3열) 밸런스 정리
+*   **결과:**
+    - ✅ homepage1 하단 멤버십 섹션이 상점/관리자 상품 데이터와 1:1로 동기화 (무료/유료 5종 모두)
+    - ✅ 무료/유료 상품 UI를 상점 카드 스타일과 최대한 일관되게 맞춰, 사용자가 보기에도 자연스러운 구성으로 개선
+    - ✅ 기존 결제/구매 로직에는 영향 없이 텍스트/레이아웃/스타일 레벨에서만 안전하게 변경
+
+---
+
+# [2025-12-18 16:21 KST] - homepage1 랜딩 섹션 레이아웃 미세 조정 (hero, Problem/Solution, Use Cases) - 커밋 49c47ec
 
 *   **한국 시간/날짜:** 2025년 12월 18일 16:21 (KST)
 *   **커밋 해시:** 49c47ec
