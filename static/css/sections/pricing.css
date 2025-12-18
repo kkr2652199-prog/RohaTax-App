@@ -173,6 +173,10 @@
     padding: 100px 0;
 }
 
+/* 멤버십 섹션 전용 폰트 톤 업 (조금 더 부드럽고 또렷하게) */
+.pricing-preview-section {
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
 /* Homepage 멤버십 5종 제목 영역 (센터 정렬, 무료 2종 바로 위에 배치) */
 .pricing-preview-section .section-header {
     text-align: center;
@@ -259,14 +263,14 @@
 }
 
 .pricing-preview-section .product-name {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 800;
     margin-bottom: 10px;
     color: var(--text-main);
 }
 
 .pricing-preview-section .product-description {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: #64748b;
     line-height: 1.6;
     max-width: 260px;
@@ -274,7 +278,7 @@
 }
 
 .pricing-preview-section .product-price {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     margin-bottom: 14px;
     color: var(--text-main);
@@ -358,10 +362,10 @@
 
 /* 무료 2종: 화이트 배경에서 잘 보이는 라이트 카드 스타일 */
 .pricing-preview-section .product-card.event {
-    background: #ffffff;
+    background: radial-gradient(circle at top left, #fef9c3 0%, #fee2e2 35%, #eff6ff 100%);
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.6);
+    box-shadow: 0 18px 40px rgba(248, 250, 252, 0.3), 0 14px 30px rgba(15, 23, 42, 0.16);
 }
 
 .pricing-preview-section .product-card.event .product-tagline {
@@ -371,6 +375,57 @@
 .pricing-preview-section .product-card.event .product-name,
 .pricing-preview-section .product-card.event .product-price,
 .pricing-preview-section .product-card.event .product-feature-list li {
+    color: #0f172a;
+}
+
+.pricing-preview-section .product-card.event .product-description {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 18px;
+}
+
+.pricing-preview-section .product-card.event .product-price {
+    font-size: 1.9rem;
+}
+
+.pricing-preview-section .product-card.event .product-price-unit {
+    font-size: 1rem;
+}
+
+.pricing-preview-section .product-card.event .event-main-benefit {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.pricing-preview-section .product-card.event .event-note {
+    font-size: 0.85rem;
+    color: #4b5563;
+}
+
+.pricing-preview-section .product-card.event .event-number {
+    font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #ea580c;
+}
+
+/* 무료 (이벤트) 가격 강조 */
+.pricing-preview-section .product-card.event .price-free {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 35%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.pricing-preview-section .product-card.event .price-free .product-price-unit {
+    font-size: 1.05rem;
+    opacity: 0.9;
     color: #0f172a;
 }
 
