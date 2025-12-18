@@ -8,6 +8,19 @@
     background-color: #f8fafc;
 }
 
+/* Use Cases 섹션 전용 섹션 헤더 정렬
+   - 글로벌 .section-header absolute(top:-248px) 대신
+   - 이 섹션 안에서는 컨테이너 중앙에 자연스럽게 배치 */
+.use-cases-section .section-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
 /* Use Cases Grid */
 .use-cases-grid {
     display: grid;

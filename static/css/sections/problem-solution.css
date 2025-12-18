@@ -8,6 +8,247 @@
     background-color: #fff;
 }
 
+/* Problem & Solution 섹션 전용 섹션 헤더
+   - 두 비교 카드(grids) 상단 중앙에 오도록 공통 .section-header 절대 위치를 덮어씀 */
+.problem-solution-section .section-header {
+    position: relative;          /* 전역 absolute(top:-248px) 무효화 */
+    left: 1px;                   /* 요청: left 0px → 1px */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 60px;         /* 가운데 정렬 + 하단 여백 */
+    text-align: center;
+}
+
+/* 이 섹션의 헤더(.section-header.text-center) 전용 패딩/위치 조정
+   - padding-bottom: 18px → 0px
+   - 컨테이너 안에서 기본 흐름 유지하면서, 시각적으로만 아래로 내림 */
+.problem-solution-section .section-header.text-center {
+    padding-bottom: 0;
+    margin-top: 0;
+    transform: translateY(270px);  /* 텍스트 박스만 추가로 아래로 20px 더 이동 (총 270px) */
+}
+
+/* Problem & Solution 섹션의 메인 컨테이너 위치 조정
+   - DOM: section.problem-...ection.reveal.active > div.container
+   - 박스를 위로 100px 올림 */
+.problem-solution-section .container {
+    position: relative;
+    top: -100px;
+}
+
+/* Comparison Grid (좌우 5:5 비율) */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 핵심! 좌우 균등 배치 */
+    gap: 40px;
+    max-width: 1200px;
+    margin: 60px auto 0;
+}
+
+/* 카드 공통 스타일 */
+.compare-card {
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.compare-card:hover {
+    transform: translateY(-10px);
+}
+
+/* 이미지 영역 */
+.card-image-box {
+    height: 240px;
+    position: relative;
+    overflow: hidden;
+}
+
+.compare-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.compare-card:hover .compare-img {
+    transform: scale(1.05);
+}
+
+/* 뱃지 스타일 */
+.card-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+
+/* Problem 카드 특화 (흑백/경고 느낌) */
+.problem .compare-img {
+    filter: grayscale(100%) contrast(1.2); /* 흑백 처리 */
+}
+
+.badge-problem {
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+}
+
+.problem h3 strong {
+    color: #64748b; /* 흐릿한 제목 */
+}
+
+/* Solution 카드 특화 (컬러풀/희망 느낌) */
+.solution .compare-img {
+    filter: none; /* 원색 유지 */
+}
+
+.badge-solution {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+}
+
+.solution h3 strong {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 카드 내용 영역 */
+.compare-content {
+    padding: 40px;
+}
+
+.compare-content h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 30px;
+    color: #0f172a;
+}
+
+/* 비교 리스트 */
+.compare-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.compare-list li {
+    margin-bottom: 24px;
+    padding-left: 32px;
+    position: relative;
+}
+
+.compare-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+/* Problem 리스트 (빨간 X) */
+.list-problem li::before {
+    background: #ef4444;
+    content: '✕';
+    color: #fff;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Solution 리스트 (파란 체크) */
+.list-solution li::before {
+    background: #2563eb;
+    content: '✓';
+    color: #fff;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compare-list li strong {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1e293b;
+}
+
+.compare-list li span {
+    display: block;
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* 모바일 대응 */
+@media (max-width: 991px) {
+    .comparison-grid {
+        grid-template-columns: 1fr; /* 모바일에서는 세로 배치 */
+        gap: 60px;
+    }
+}
+
+@media (max-width: 768px) {
+    .problem-solution-section {
+        padding: 60px 0;
+    }
+    
+    .comparison-grid {
+        margin: 40px auto 0;
+        gap: 40px;
+    }
+    
+    .card-image-box {
+        height: 200px;
+    }
+    
+    .compare-content {
+        padding: 30px;
+    }
+    
+    .compare-content h3 {
+        font-size: 1.5rem;
+        margin-bottom: 24px;
+    }
+    
+    .compare-list li {
+        margin-bottom: 20px;
+        padding-left: 28px;
+    }
+    
+    .compare-list li::before {
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+    }
+}
+
+/* ================================================================
+   Problem & Solution Section - RohaTax
+   ================================================================ */
+
+/* Problem Solution Section */
+.problem-solution-section {
+    padding: 100px 0;
+    background-color: #fff;
+}
+
 /* Comparison Grid (좌우 5:5 비율) */
 .comparison-grid {
     display: grid;
