@@ -1,4 +1,29 @@
-﻿# [2025-12-18 16:21 KST] - homepage1 랜딩 섹션 레이아웃 미세 조정 (hero, Problem/Solution, Use Cases) - 커밋 49c47ec
+﻿# [2025-12-18 18:30 KST] - homepage1 멤버십 섹션(무료 2종 + 유료 3종) UI/로직 정교화 - 커밋 5a41dbb
+
+*   **한국 시간/날짜:** 2025년 12월 18일 18:30 (KST)
+*   **커밋 해시:** 5a41dbb
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** homepage1 하단 멤버십(가격 정책) 섹션을 상점/관리자 로직과 완전히 동기화하고 UI 품질 개선
+    1. **무료 2종 (Welcome Token / Welcome Period):**
+       - `payment_routes._build_shop_context()`에서 이벤트 상품(`event_products`)을 기준으로 `free_token_product`, `free_period_product`를 계산
+       - `_pricing.html`에서 상점(`shop.html`)의 `event_products` 로직을 그대로 응용해 토큰 수(`token_amount`)·기간(`duration_days`)에 따라 텍스트가 자동으로 변경되도록 구현
+       - 관리자 대시보드에서 토큰/기간 값을 수정하면 상점/쇼룸/홈페이지 하단 무료 2종 텍스트가 모두 동일하게 반영되도록 통합
+    2. **유료 3종 (Standard / Premium / Gold):**
+       - Standard: 단건 가격 설명을 `1건당 {{ price }}원 (부담 없는 가격)` 형태로 수정해 상품관리 가격 변경에 자동 반응하도록 구현
+       - Premium: 기존 할인율/건당 단가 계산(`discount_rate`, `premium_per_token_price`)을 재사용해 패키지 설명 텍스트가 관리 값에 맞게 동적으로 표시되도록 정리
+       - Gold: `무제한 토큰 (월 {{ price }}원)` 문구를 상점과 동일하게 상품관리 가격에 연동, Gold 전용 다이아몬드 배지(UI) 복구
+    3. **UI/레이아웃 정제:**
+       - 무료 2종: 화이트 카드 + 라이트 테마로 상단 여백/음영 조정 (이벤트 카드 느낌 강화)
+       - 유료 3종: 다크 카드 + 체크 리스트(✔) 적용, Premium 할인 배지/Gold 황금 테두리 스타일을 상점과 유사하게 재현
+       - 그리드 분리(`pricing-preview-grid-free`, `pricing-preview-grid-paid`)로 무료 2종(윗줄 2열) / 유료 3종(아랫줄 3열) 밸런스 정리
+*   **결과:**
+    - ✅ homepage1 하단 멤버십 섹션이 상점/관리자 상품 데이터와 1:1로 동기화 (무료/유료 5종 모두)
+    - ✅ 무료/유료 상품 UI를 상점 카드 스타일과 최대한 일관되게 맞춰, 사용자가 보기에도 자연스러운 구성으로 개선
+    - ✅ 기존 결제/구매 로직에는 영향 없이 텍스트/레이아웃/스타일 레벨에서만 안전하게 변경
+
+---
+
+# [2025-12-18 16:21 KST] - homepage1 랜딩 섹션 레이아웃 미세 조정 (hero, Problem/Solution, Use Cases) - 커밋 49c47ec
 
 *   **한국 시간/날짜:** 2025년 12월 18일 16:21 (KST)
 *   **커밋 해시:** 49c47ec
