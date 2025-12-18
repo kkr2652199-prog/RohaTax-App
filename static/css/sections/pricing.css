@@ -173,6 +173,14 @@
     padding: 100px 0;
 }
 
+/* Homepage 멤버십 5종 제목 영역 (센터 정렬, 무료 2종 바로 위에 배치) */
+.pricing-preview-section .section-header {
+    text-align: center;
+    margin: 150px auto 8px;
+    max-width: 800px;
+    transform: translateX(450px);
+}
+
 .pricing-preview-grid {
     display: grid;
     gap: 32px;
@@ -182,7 +190,7 @@
 .pricing-preview-grid-free {
     grid-template-columns: repeat(2, 1fr);
     max-width: 800px;
-    margin: 0 auto 32px;
+    margin: 50px auto 32px; /* 5종 상품 전체를 아래로 50px 내림 */
 }
 
 /* 아랫줄: 유료 3종 (3열, 중앙 정렬) */
