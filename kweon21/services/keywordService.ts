@@ -5,6 +5,16 @@ import { GoogleGenAI, Type } from "@google/genai";
 // ✅ 기술 복원: Vite 환경 변수 사용 (브라우저 호환)
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
+// ✅ 타임아웃 헬퍼 함수
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+        )
+    ]);
+};
+
 /**
  * Extracts and parses a JSON object from a string that may contain markdown and other text.
  * It intelligently finds the end of the JSON structure by balancing brackets.
@@ -106,13 +116,18 @@ export const fetchCurrentWeather = async (): Promise<WeatherData> => {
     `.trim();
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                tools: [{ googleSearch: {} }],
-            }
-        });
+        // ✅ 타임아웃 20초 설정
+        const response = await withTimeout(
+            ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    tools: [{ googleSearch: {} }],
+                }
+            }),
+            20000,
+            '날씨 정보 조회 시간 초과 (20초)'
+        );
         const parsed = extractJsonFromText(response.text);
         if (parsed.temperature && parsed.condition && parsed.wind && parsed.humidity) {
             return parsed as WeatherData;

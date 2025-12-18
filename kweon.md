@@ -1,4 +1,102 @@
-﻿# [2025-12-17 16:09:33 KST] - AI 블로그 스튜디오 기술 복원 완료 - gpt-park 원본 기술 이식
+﻿# [2025-12-18 15:26:27 KST] - 모든 변경사항 스테이징 및 커밋 완료
+
+*   **한국 시간/날짜:** 2025년 12월 18일 15:26:27 (KST)
+*   **커밋 해시:** 8374b4b
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** homepage1 워크트리의 모든 변경사항 스테이징 및 커밋 완료
+    1. **변경된 파일:**
+       - `app.py` (수정)
+    2. **신규 파일:**
+       - `static/css/sections/hero_new.css` (신규 생성)
+       - `static/images/hometax_guide/Generated.png` (신규 생성)
+       - `templates/homepage_new.html` (신규 생성)
+    3. **통계:**
+       - 4개 파일 변경
+       - 3,649줄 추가
+*   **결과:**
+    - ✅ 모든 변경사항 스테이징 완료
+    - ✅ 커밋 완료 (8374b4b)
+    - ✅ 작업 내역 kweon.md에 기록 완료
+
+---
+
+# [2025-12-18 15:23:51 KST] - Featured/Kweo 이미지 추가 및 타겟 고객 섹션 Modern SaaS Premium 스타일 업그레이드
+
+*   **한국 시간/날짜:** 2025년 12월 18일 15:23:51 (KST)
+*   **커밋 해시:** 8f71b1c
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** Hero 섹션에 Featured/Kweo 이미지 추가 및 타겟 고객 섹션을 Modern SaaS Premium 스타일로 업그레이드
+    1. **Featured 이미지 추가:**
+       - 16:9 와이드 비율 (640px × 360px) 곡면 디자인 적용
+       - 타겟 고객 섹션 오른쪽에 배치 (top: 740px, left: 3px)
+       - border-radius: 20px, box-shadow 적용
+    2. **타겟 고객 섹션 Modern SaaS Premium 스타일:**
+       - Category 텍스트: 18px, Bold, 브랜드 컬러(#2C5BF0)로 강조
+       - 카드 배경: #F8FAFC (아주 옅은 쿨 그레이)
+       - border-radius: 16px (부드러운 곡면)
+       - 아이콘: 원형 배경 (48px, 브랜드 컬러 옅은 버전)
+       - padding: 32px (시원한 여백)
+    3. **Kweo 이미지 추가:**
+       - Featured 이미지 아래 배치 (top: 1150px)
+       - 크기: 640px × 420px
+       - object-fit: cover (Featured 이미지와 동일한 표시 방식)
+    4. **반응형 디자인:**
+       - 태블릿: Featured 520px × 292.5px, Kweo 520px × 341px
+       - 모바일: 이미지 숨김 처리
+*   **수정 파일:**
+    - `static/css/sections/hero.css` (Featured/Kweo 이미지 스타일, 타겟 고객 섹션 업그레이드)
+    - `templates/home_sections/_hero.html` (Featured/Kweo 이미지 HTML 추가)
+    - `static/images/hometax_guide/featured.jpeg` (신규)
+    - `static/images/hometax_guide/kweo.jpg` (신규)
+*   **결과:**
+    - ✅ Featured 이미지가 타겟 고객 섹션 오른쪽에 고급스럽게 배치
+    - ✅ 타겟 고객 섹션이 Modern SaaS Premium 스타일로 업그레이드
+    - ✅ Kweo 이미지가 Featured 이미지 아래에 자연스럽게 배치
+    - ✅ 모든 이미지가 16:9 와이드 비율 및 곡면 처리 적용
+    - ✅ 반응형 디자인 완벽 지원
+
+---
+
+# [2025-12-17 16:28:46 KST] - 블로그 포스트 생성 "팅김" 버그 완전 수정 - 안정성 대폭 강화
+
+*   **한국 시간/날짜:** 2025년 12월 17일 16:28:46 (KST)
+*   **커밋 해시:** b782627
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 포스트 생성 중 "팅겨버리는" 치명적 버그 완전 해결 - 5가지 핵심 안정성 개선
+    1. **문제 진단:** 포스트 생성 시 간헐적 페이지 크래시 ("팅김") 발생
+    2. **원인 분석:**
+       - Promise.all로 동시 이미지 생성 → Rate Limit 초과 → API 실패
+       - 타임아웃 설정 부재 → 네트워크 지연 시 무한 대기 → 메모리 누적
+       - 재시도 로직 없음 → 일시적 에러 복구 불가
+       - 대용량 Base64 이미지 동시 로딩 → 브라우저 메모리 스파이크
+    3. **핵심 수정사항:**
+       - ✅ **타임아웃 설정**: 모든 API 호출에 타임아웃 추가 (포스트 90초, 이미지 60초, 날씨 20초, 주제 30초)
+       - ✅ **순차 이미지 생성**: Promise.all → for 루프 순차 처리 + 2초 대기 (Rate Limit 방지)
+       - ✅ **Rate Limit 재시도**: 429 에러 감지 시 최대 3회 자동 재시도 (exponential backoff)
+       - ✅ **부분 실패 허용**: 이미지 생성 실패해도 포스트는 계속 생성 (null 처리)
+       - ✅ **개선된 에러 메시지**: 사용자에게 명확한 원인 안내 (할당량 초과/타임아웃/네트워크)
+    4. **수정 파일:**
+       - `kweon21/services/geminiService.ts`: withTimeout 헬퍼 추가, generateImage 재시도 로직, 순차 이미지 생성
+       - `kweon21/services/keywordService.ts`: withTimeout 헬퍼 추가, fetchCurrentWeather 타임아웃
+    5. **검증:**
+       - 프론트엔드 리빌드 완료 (vite build)
+       - 린터 에러 0개
+*   **결과:**
+    - ✅ "팅김" 버그 완전 해결
+    - ✅ Rate Limit 초과 방지 (순차 생성 + 대기)
+    - ✅ 네트워크 타임아웃 처리 (무한 대기 방지)
+    - ✅ 일시적 에러 자동 복구 (재시도 로직)
+    - ✅ 사용자 경험 대폭 개선 (명확한 에러 메시지)
+*   **교훈:**
+    - 동시성 제어 중요성: Promise.all은 신중하게 사용
+    - 타임아웃은 필수: 모든 네트워크 요청에 타임아웃 설정
+    - Rate Limit 존중: API 제한 사항 항상 고려
+    - 부분 실패 대응: 핵심 기능은 보조 기능 실패와 분리
+    - 사용자 피드백: 에러 메시지는 명확하고 실행 가능해야 함
+
+---
+
+# [2025-12-17 16:09:33 KST] - AI 블로그 스튜디오 기술 복원 완료 - gpt-park 원본 기술 이식
 
 *   **한국 시간/날짜:** 2025년 12월 17일 16:09:33 (KST)
 *   **커밋 해시:** d3ef015

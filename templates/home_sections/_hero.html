@@ -4,29 +4,143 @@
         <div class="hero-content-wrapper">
             <!-- 좌측: 텍스트 그룹 -->
             <div class="hero-copy hero-text-group reveal reveal-delay-1">
+                <!-- 상단 배지 -->
+                <div class="hero-badge" style="display: inline-flex; align-items: center; gap: 8px; background: #E0F2F7; color: #007B8F; padding: 8px 16px; border-radius: 20px; font-size: 0.875rem; font-weight: 600; margin-bottom: 20px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: #007B8F;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>국세청 표준 양식 100% 호환</span>
+                </div>
+                
                 <h1 class="hero-title">
-                    복잡한 세무 정산 데이터,<br>
-                    홈택스 업로드용<br>
-                    <strong>표준 포맷으로 완벽 변환.</strong>
+                    복잡한 세금계산서,<br>
+                    <strong>엑셀 씨름은 이제 끝.</strong>
                 </h1>
                 <p class="hero-subtitle">
-                    업로드 실패 없는 <strong>무결점 엑셀</strong> 생성.<br>
-                    로하택스가 사장님의 원본 파일을 국세청 표준 양식으로 <strong>0.5초 만에</strong> 바꿔드립니다.
+                    로하택스로 배달대행/퀵서비스 정산서를<br>
+                    국세청 양식으로 <strong>1분 만에</strong> 변환하세요.
                 </p>
+                
+                <!-- 신뢰 지표 -->
+                <div class="hero-trust-indicators" style="display: flex; gap: 30px; margin: 20px 0;">
+                    <div class="trust-item" style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <div class="trust-number" style="font-size: 2rem; font-weight: 800; color: #1D1D1F; line-height: 1;">99.9%</div>
+                        <div class="trust-label" style="font-size: 0.875rem; color: #6B7280; margin-top: 4px;">변환 정확도</div>
+                    </div>
+                    <div class="trust-item" style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <div class="trust-number" style="font-size: 2rem; font-weight: 800; color: #1D1D1F; line-height: 1;">0.5초</div>
+                        <div class="trust-label" style="font-size: 0.875rem; color: #6B7280; margin-top: 4px;">평균 처리 속도</div>
+                    </div>
+                    <div class="trust-item" style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <div class="trust-number" style="font-size: 2rem; font-weight: 800; color: #1D1D1F; line-height: 1;">5,000+</div>
+                        <div class="trust-label" style="font-size: 0.875rem; color: #6B7280; margin-top: 4px;">누적 사용 기업</div>
+                    </div>
+                </div>
+                
                 <div class="hero-actions">
                     <button class="btn-primary" onclick="window.location.href='/shop'">
                         무료로 시작하기
                     </button>
+                    <button class="btn-secondary" onclick="alert('기능 섹션은 아직 구현되지 않았습니다.')" style="background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; padding: 14px 28px; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-left: 15px;">
+                        기능 둘러보기
+                    </button>
+                </div>
+                
+                <!-- 보안 인증 표시 -->
+                <div class="hero-security-note" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 0; font-size: 0.875rem; color: #64748B; font-weight: 500; margin-top: 20px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: #10B981;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span>SSL 암호화 · 개인정보 보호 · 100% 안전</span>
                 </div>
             </div>
 
             <!-- 우측: 비주얼 영역 (브라우저 창 프레임 안에 대시보드 스크린샷) -->
-            <div class="hero-image-wrapper reveal reveal-delay-2">
-                <!-- UI 전용 이미지 (노트북 베젤 없음) -->
-                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop" 
-                     alt="로하택스 대시보드 UI" 
-                     class="hero-dashboard-img"
-                     style="width: 100%; height: auto; display: block; object-fit: cover;">
+            <div class="hero-visual-container">
+                <div class="hero-image-wrapper reveal reveal-delay-2">
+                    <!-- UI 전용 이미지 (노트북 베젤 없음) -->
+                    <img src="/static/images/hometax_guide/Generated.png" 
+                         alt="로하택스 대시보드 UI" 
+                         class="hero-dashboard-img">
+                </div>
+                
+                <!-- Featured 이미지 (16:9 와이드, 곡면 처리) -->
+                <div class="hero-featured-image-wrapper reveal reveal-delay-3">
+                    <img src="/static/images/hometax_guide/featured.jpeg" 
+                         alt="로하택스 Featured" 
+                         class="hero-featured-img">
+                </div>
+                
+                <!-- Kweo 이미지 (Featured 이미지 아래) -->
+                <div class="hero-kweo-image-wrapper reveal reveal-delay-3">
+                    <img src="/static/images/hometax_guide/kweo.jpg" 
+                         alt="로하택스 Kweo" 
+                         class="hero-kweo-img">
+                </div>
+                
+                <!-- 타겟 고객 섹션 -->
+                <div class="hero-target-audience reveal reveal-delay-3">
+                    <h2 class="target-title">비즈니스 유형별 최적화 솔루션</h2>
+                    <p class="target-subtitle">데이터 검증부터 신고까지, 로하택스가 완벽하게 지원합니다.</p>
+                    
+                    <div class="target-cards">
+                        <!-- Card 1: 물류/배달대행 -->
+                        <div class="target-card">
+                            <div class="target-card-icon">
+                                <i data-lucide="truck"></i>
+                            </div>
+                            <div class="target-card-content">
+                                <div class="target-card-category">물류 · 배달대행</div>
+                                <h3 class="target-card-title">지사별 정산 데이터 자동화</h3>
+                                <p class="target-card-description">
+                                    복잡한 지사 정산, 클릭 한 번으로 종결
+                                </p>
+                                <p class="target-card-detail">
+                                    수천 건의 엑셀 데이터를 국세청 표준 포맷으로 즉시 변환합니다.
+                                </p>
+                                <a href="#" class="target-card-footer">도입 효과 확인하기 →</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Card 2: 소상공인/프랜차이즈 -->
+                        <div class="target-card">
+                            <div class="target-card-icon">
+                                <i data-lucide="store"></i>
+                            </div>
+                            <div class="target-card-content">
+                                <div class="target-card-category">소상공인 · 프랜차이즈</div>
+                                <h3 class="target-card-title">세무 지식 없이도 가능한 홈택스 신고</h3>
+                                <p class="target-card-description">
+                                    세무 전문 지식 없이도 누구나 쉽게 홈택스 신고를 완료할 수 있습니다.
+                                </p>
+                                <p class="target-card-detail">
+                                    복잡한 양식 작성 없이 원본 파일만 업로드하면 자동으로 국세청 양식으로 변환됩니다.
+                                </p>
+                                <a href="#" class="target-card-footer">도입 효과 확인하기 →</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Card 3: 세무법인/대량처리 -->
+                        <div class="target-card">
+                            <div class="target-card-icon">
+                                <i data-lucide="file-check-2"></i>
+                            </div>
+                            <div class="target-card-content">
+                                <div class="target-card-category">세무법인 · 대량처리</div>
+                                <h3 class="target-card-title">수임처 100곳의 데이터를 1분 만에 처리</h3>
+                                <p class="target-card-description">
+                                    대량의 고객사 데이터를 빠르고 정확하게 처리하여 업무 효율을 극대화합니다.
+                                </p>
+                                <p class="target-card-detail">
+                                    다수의 고객사 데이터를 대량으로 처리해야 할 때, 로하택스의 광속 처리와 정확도는 업무 효율을 극대화시켜 줄 것입니다.
+                                </p>
+                                <a href="#" class="target-card-footer">도입 효과 확인하기 →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -399,6 +399,12 @@ def homepage():
     return render_template("homepage.html")
 
 
+@app.route("/new")
+def homepage_new():
+    """신규 디자인 실험용 벙커 (완전 격리)"""
+    return render_template("homepage_new.html")
+
+
 @app.route("/terms")
 def terms():
     """서비스 이용약관 페이지"""

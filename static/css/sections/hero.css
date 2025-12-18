@@ -152,7 +152,7 @@
 .hero-content-wrapper {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: 80px;
     width: 100%;
@@ -160,6 +160,7 @@
     margin: 0 auto;
     padding: 0 40px;
     min-height: 700px;
+    padding-top: 0;
 }
 
 .hero-text-group,
@@ -167,36 +168,29 @@
     flex: 0 0 580px;
     text-align: left;
     z-index: 10;
+    margin-top: 40px; /* 텍스트 박스를 조금 더 아래로 내림 */
 }
 
-/* Hero Image Wrapper (Browser Frame) */
+/* Hero Image Wrapper (컨테이너 제거 - 레이아웃에서 제외) */
 .hero-image-wrapper {
-    flex: 0 0 650px;
-    border-radius: 12px;
-    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(0,0,0,0.08);
-    background: #fff;
-    overflow: hidden;
-    display: block !important;
+    display: contents !important; /* 컨테이너를 레이아웃에서 제거 */
 }
 
-.hero-image-wrapper::before {
-    content: '';
-    display: block;
-    height: 32px;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
-    background-image: radial-gradient(circle, #ff5f57 5px, transparent 6px),
-                      radial-gradient(circle, #febc2e 5px, transparent 6px),
-                      radial-gradient(circle, #28c840 5px, transparent 6px);
-    background-size: 100% 100%;
-    background-position: 15px center, 35px center, 55px center;
-}
-
+/* Hero Dashboard Image (이미지에 직접 16:9 와이드 크기 적용) */
 .hero-dashboard-img {
-    width: 100%;
-    height: auto;
-    display: block;
+    width: 640px !important;
+    height: 360px !important; /* 16:9 와이드 비율: 640 / 16 * 9 = 360 */
+    max-width: 640px !important;
+    max-height: 360px !important;
+    min-width: 640px !important;
+    min-height: 360px !important;
+    display: block !important;
+    object-fit: cover !important; /* 이미지를 컨테이너만큼 키워서 완전히 채움 */
+    object-position: center center !important; /* 중앙 정렬 */
+    border-radius: 20px;
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.2);
+    margin: 110px 0 0 0 !important; /* 이미지를 조금 더 아래로 내림 */
+    padding: 0 !important;
 }
 
 /* Hero Visual Cards */
@@ -366,6 +360,285 @@
     .hero-visual {
         flex-direction: column;
         gap: 20px;
+    }
+}
+
+/* ================================================================
+   타겟 고객 섹션 (이미지 아래)
+   ================================================================ */
+
+.hero-visual-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    flex: 0 0 600px;
+    position: relative;
+}
+
+/* Featured 이미지 (16:9 와이드, 곡면 처리, 타겟 고객 섹션 오른쪽 배치) */
+.hero-featured-image-wrapper {
+    position: absolute;
+    top: 740px; /* 위로 20px 이동: 760px - 20px = 740px */
+    left: 3px; /* 왼쪽으로 10px 추가 이동: 13px - 10px = 3px */
+    width: 640px; /* 크기 확대: 480px → 640px */
+    height: 360px; /* 16:9 와이드 비율: 640 / 16 * 9 = 360 */
+    z-index: 5;
+}
+
+.hero-featured-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    border-radius: 20px; /* 곡면 처리 - 부드러운 모서리 */
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-featured-img:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.4);
+}
+
+/* Kweo 이미지 (Featured 이미지 아래 배치) */
+.hero-kweo-image-wrapper {
+    position: absolute;
+    top: 1150px; /* 밑으로 30px 이동: 1120px + 30px = 1150px */
+    left: 3px; /* Featured 이미지와 동일한 left 위치 */
+    width: 640px; /* Featured 이미지와 동일한 크기 */
+    height: 420px; /* 높이 조정: 360px → 420px */
+    z-index: 5;
+}
+
+.hero-kweo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Featured 이미지와 동일하게 cover로 변경 */
+    object-position: center center;
+    border-radius: 20px; /* 곡면 처리 - 부드러운 모서리 */
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-kweo-img:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.4);
+}
+
+.hero-target-audience {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 70px;
+    padding: 0;
+    padding-top: 90px;
+    position: relative;
+    left: -680px; /* 왼쪽으로 680px 이동 */
+}
+
+.target-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+    text-align: left;
+}
+
+.target-subtitle {
+    font-size: 1.1rem;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    font-weight: 500;
+    text-align: left;
+}
+
+.target-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Modern SaaS Premium 스타일 카드 */
+.target-card {
+    background: #F8FAFC; /* 아주 옅은 쿨 그레이 */
+    border: 1px solid #f1f5f9; /* 아주 연한 테두리 */
+    border-radius: 16px; /* 부드럽고 현대적인 느낌 */
+    padding: 32px; /* 시원시원한 여백 */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: none; /* 평소엔 그림자 없음 */
+    text-align: left;
+}
+
+.target-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* hover 시만 살짝 그림자 */
+    border-color: #e2e8f0;
+}
+
+/* 아이콘 영역 (원형 배경) */
+.target-card-icon {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    background: rgba(44, 91, 240, 0.1); /* 브랜드 컬러 옅은 버전 */
+    border-radius: 50%; /* 원형 배경 */
+    color: #2C5BF0; /* 브랜드 컬러 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.target-card-icon i {
+    width: 24px;
+    height: 24px;
+    stroke-width: 1.5;
+}
+
+/* 텍스트 콘텐츠 영역 */
+.target-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 여백 증가 */
+}
+
+/* Category (카드의 얼굴 - 대폭 확대, 브랜드 컬러) */
+.target-card-category {
+    font-size: 1.125rem; /* 18px - 대폭 확대 */
+    font-weight: 700; /* Bold */
+    color: #2C5BF0; /* 브랜드 컬러 - 눈에 확 띄게 */
+    text-transform: none; /* 대문자 제거 */
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+/* Title (크기 약간 줄여서 Category와 균형) */
+.target-card-title {
+    font-size: 1.15rem; /* 약간 줄임 */
+    font-weight: 700;
+    color: #1e293b; /* 검정색 유지 */
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Description (차분한 고딕, 짙은 회색) */
+.target-card-description {
+    font-size: 1rem;
+    color: #334155;
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Detail (명조체/바탕체 느낌의 차분한 고딕) */
+.target-card-detail {
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.7;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* Footer (텍스트 링크) */
+.target-card-footer {
+    font-size: 0.9rem;
+    color: #2C5BF0;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 8px;
+    transition: color 0.2s ease;
+}
+
+.target-card-footer:hover {
+    color: #1e40af;
+    text-decoration: underline;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+    .hero-visual-container {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .hero-featured-image-wrapper {
+        top: 740px; /* 위로 20px 이동: 760px - 20px = 740px */
+        left: -197px; /* 왼쪽으로 10px 추가 이동: -187px - 10px = -197px */
+        width: 520px; /* 태블릿에서도 크게 */
+        height: 292.5px; /* 16:9 비율 유지: 520 / 16 * 9 = 292.5 */
+    }
+    
+    .hero-kweo-image-wrapper {
+        top: 1082.5px; /* 밑으로 30px 이동: 1052.5px + 30px = 1082.5px */
+        left: -197px; /* Featured 이미지와 동일한 left 위치 */
+        width: 520px; /* Featured 이미지와 동일한 크기 */
+        height: 341px; /* 비율 유지: 520 / 640 * 420 = 341.25px */
+    }
+    
+    .hero-target-audience {
+        max-width: 100%;
+    }
+    
+    .target-title {
+        font-size: 1.5rem;
+    }
+    
+    .target-subtitle {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-featured-image-wrapper {
+        display: none; /* 모바일에서는 숨김 */
+    }
+    
+    .hero-kweo-image-wrapper {
+        display: none; /* 모바일에서는 숨김 */
+    }
+    
+    .target-title {
+        font-size: 1.35rem;
+    }
+    
+    .target-card {
+        padding: 24px; /* 모바일에서도 충분한 여백 */
+        flex-direction: row; /* 모바일에서도 가로 배치 유지 */
+        gap: 16px;
+    }
+    
+    .target-card-icon {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .target-card-icon i {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .target-card-category {
+        font-size: 1rem; /* 모바일에서도 크게 */
+    }
+    
+    .target-card-title {
+        font-size: 1.05rem;
+    }
+    
+    .target-card-description {
+        font-size: 0.95rem;
+    }
+    
+    .target-card-detail {
+        font-size: 0.9rem;
     }
 }
 
