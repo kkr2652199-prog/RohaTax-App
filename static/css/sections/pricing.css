@@ -175,10 +175,216 @@
 
 .pricing-preview-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 32px;
+}
+
+/* 윗줄: 무료 2종 (2열, 중앙 정렬) */
+.pricing-preview-grid-free {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 800px;
+    margin: 0 auto 32px;
+}
+
+/* 아랫줄: 유료 3종 (3열, 중앙 정렬) */
+.pricing-preview-grid-paid {
+    grid-template-columns: repeat(3, 1fr);
     max-width: 1200px;
     margin: 0 auto 48px;
+}
+
+/* ================================================================
+   Homepage 멤버십 5종 카드 UI (shop 유료 상품 스타일 재사용)
+   ================================================================ */
+
+/* 공통 카드 베이스 */
+.pricing-preview-section .product-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border, rgba(148, 163, 184, 0.4));
+    border-radius: 24px;
+    padding: 40px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-md, 0 18px 35px rgba(15, 23, 42, 0.18));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.pricing-preview-section .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light, #60a5fa) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pricing-preview-section .product-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: var(--shadow-lg, 0 26px 55px rgba(15, 23, 42, 0.26));
+    border-color: var(--primary-color);
+}
+
+.pricing-preview-section .product-card:hover::before {
+    opacity: 1;
+}
+
+/* 무료/유료 공통 아이콘/텍스트 정렬 */
+.pricing-preview-section .product-icon {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+}
+
+.pricing-preview-section .product-tagline {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #a5b4fc;
+    margin-bottom: 6px;
+}
+
+.pricing-preview-section .product-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: var(--text-main);
+}
+
+.pricing-preview-section .product-description {
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.6;
+    max-width: 260px;
+    margin: 0 auto 16px;
+}
+
+.pricing-preview-section .product-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+    color: var(--text-main);
+}
+
+.pricing-preview-section .product-price-unit {
+    font-size: 0.9rem;
+    margin-left: 4px;
+    opacity: 0.85;
+}
+
+.pricing-preview-section .product-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+    text-align: left;
+    max-width: 260px;
+}
+
+.pricing-preview-section .product-feature-list li {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #4b5563;
+}
+
+/* Standard / Premium / Gold 다크 테마 느낌 */
+.pricing-preview-section .product-card.standard,
+.pricing-preview-section .product-card.premium,
+.pricing-preview-section .product-card.gold {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.pricing-preview-section .product-card.standard .product-name,
+.pricing-preview-section .product-card.premium .product-name,
+.pricing-preview-section .product-card.gold .product-name,
+.pricing-preview-section .product-card.standard .product-price,
+.pricing-preview-section .product-card.premium .product-price,
+.pricing-preview-section .product-card.gold .product-price {
+    color: #ffffff;
+}
+
+.pricing-preview-section .product-card.standard .product-description,
+.pricing-preview-section .product-card.premium .product-description,
+.pricing-preview-section .product-card.gold .product-description,
+.pricing-preview-section .product-card.standard .product-feature-list li,
+.pricing-preview-section .product-card.premium .product-feature-list li,
+.pricing-preview-section .product-card.gold .product-feature-list li {
+    color: #e2e8f0;
+}
+
+.pricing-preview-section .product-card.standard:hover,
+.pricing-preview-section .product-card.premium:hover,
+.pricing-preview-section .product-card.gold:hover {
+    box-shadow: var(--shadow-lg, 0 26px 55px rgba(15, 23, 42, 0.4));
+}
+
+/* Premium BEST 배지 느낌 (텍스트 기반) */
+.pricing-preview-section .product-card.premium .discount-badge-wrapper {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+}
+
+.pricing-preview-section .product-card.premium .premium-discount-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark, #1d4ed8) 100%);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+/* Gold 특화 라벨 */
+.pricing-preview-section .product-card.gold {
+    border: 2px solid var(--gold, #fbbf24);
+    box-shadow: 0 18px 40px rgba(251, 191, 36, 0.25);
+}
+
+/* 무료 2종: 화이트 배경에서 잘 보이는 라이트 카드 스타일 */
+.pricing-preview-section .product-card.event {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.pricing-preview-section .product-card.event .product-tagline {
+    color: #f97316;
+}
+
+.pricing-preview-section .product-card.event .product-name,
+.pricing-preview-section .product-card.event .product-price,
+.pricing-preview-section .product-card.event .product-feature-list li {
+    color: #0f172a;
+}
+
+/* 유료 3종: 체크 마크 느낌 (텍스트 좌측에 V 아이콘) */
+.pricing-preview-section .product-card.standard .product-feature-list li::before,
+.pricing-preview-section .product-card.premium .product-feature-list li::before,
+.pricing-preview-section .product-card.gold .product-feature-list li::before {
+    content: "✔";
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 0.8rem;
+    color: #4ade80;
+}
+
+/* Gold 전용 특별 기능 배지 */
+.pricing-preview-section .gold-special-badge {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #facc15;
 }
 
 .pricing-preview-card {
@@ -287,7 +493,9 @@
 
 /* Responsive for Preview Cards */
 @media (max-width: 991px) {
-    .pricing-preview-grid {
+    .pricing-preview-grid,
+    .pricing-preview-grid-free,
+    .pricing-preview-grid-paid {
         grid-template-columns: 1fr;
         gap: 24px;
     }

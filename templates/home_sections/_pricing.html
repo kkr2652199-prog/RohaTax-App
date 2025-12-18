@@ -1,97 +1,214 @@
-<!-- 가격 정책 미리보기 섹션 -->
+<!-- [homepage1] 가격 정책 미리보기 섹션 (marker: HOMEPAGE1_PRICING) -->
 <section class="pricing-preview-section" id="pricing">
     <div class="container">
         <div class="section-header">
             <h2>합리적인 멤버십</h2>
             <p>규모에 맞는 최적의 플랜을 선택하세요</p>
         </div>
-        {% if products %}
-        <div class="pricing-preview-grid reveal">
-            {% for product in products %}
-            <!-- {{ product.name }} -->
-            <div class="pricing-preview-card{% if product.id == 2 %} featured{% endif %}">
-                {% if product.id == 2 %}
-                <div class="pricing-badge">BEST</div>
-                {% endif %}
-                <h3 class="pricing-preview-title">{{ product.name }}</h3>
-                <div class="pricing-preview-price">
-                    <span class="price-amount">{{ "{:,}".format(product.price or 0) }}원</span>
-                    <span class="price-unit">{% if product.type == 'subscription' %}/월{% else %}/건{% endif %}</span>
-                </div>
-                <p class="pricing-preview-feature">{{ product.description or '프로페셔널 업무에 최적화된 요금제' }}</p>
-                
-                <!-- 혜택 리스트 -->
-                <ul class="pricing-preview-benefits">
-                    {% if product.id == 1 %}
-                    <!-- Standard 혜택 -->
-                    <li>✅ 토큰 1개 포함</li>
-                    <li>✅ 부가세 별도</li>
-                    <li>✅ 실시간 고객 지원</li>
-                    {% elif product.id == 2 %}
-                    <!-- Premium 혜택 -->
-                    <li>✅ 토큰 {{ product.token_amount or 0 }}개 포함</li>
-                    <li>✅ 대량 할인 적용</li>
-                    <li>✅ 우선 처리</li>
-                    {% elif product.id == 3 %}
-                    <!-- Gold 혜택 -->
-                    <li>✅ 무제한 변환</li>
-                    <li>✅ 전담 매니저 배정</li>
-                    <li>✅ API 연동 지원</li>
+
+        {# 무료 2종 + 유료 3종을 상점 컨텍스트 기반으로 렌더링
+           - 무료 2종은 shop.html 의 event_products 로직을 그대로 응용하되,
+             free_token_product / free_period_product 를 우선 사용하여
+             토큰/기간 이벤트를 정확히 매핑 #}
+        {% set event1 = event_products[0] if event_products is defined and event_products|length > 0 else None %}
+        {% set event2 = event_products[1] if event_products is defined and event_products|length > 1 else None %}
+        {% set free_token = free_token_product if free_token_product is defined and free_token_product else event1 %}
+        {% set free_period = free_period_product if free_period_product is defined and free_period_product else event2 %}
+        {% set std_product = standard_product if standard_product is defined else None %}
+        {% set premium_product_ctx = premium_product if premium_product is defined else None %}
+        {% set gold_product_ctx = gold_product if gold_product is defined else None %}
+
+        <!-- 윗줄: 무료 상품 2종 (가운데 정렬) -->
+        <div class="pricing-preview-grid pricing-preview-grid-free reveal">
+            <!-- Free 1: Welcome Token (토큰 이벤트 우선, 없으면 event1 사용) -->
+            <div class="product-card event">
+                <span class="product-icon">🎁</span>
+                <div class="product-tagline">신규 회원 한정!</div>
+                <h3 class="product-name">
+                    {{ free_token.name if free_token and free_token.name else "Welcome Token" }}
+                </h3>
+                <p class="product-description">
+                    {% if free_token and free_token.token_amount %}
+                        {{ free_token.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                    {% elif free_token and free_token.duration_days %}
+                        {{ free_token.duration_days }}일간 무료 이용 가능
                     {% else %}
-                    <!-- 기타 상품 혜택 -->
-                    <li>✅ {% if product.token_amount == -1 %}토큰 무제한 사용{% else %}토큰 {{ product.token_amount or 0 }}개 포함{% endif %}</li>
-                    <li>✅ 부가세 {{ '포함' if product.vat_included else '별도' }}</li>
-                    <li>✅ 실시간 고객 지원</li>
+                        가입 즉시 혜택을 받아보세요
+                    {% endif %}
+                </p>
+                <div class="product-price">
+                    무료<span class="product-price-unit"> (이벤트)</span>
+                </div>
+                <ul class="product-feature-list">
+                    {% if free_token and free_token.token_amount %}
+                    <li>{{ free_token.token_amount }}개의 무료 토큰 지급</li>
+                    <li>금액 부담 없이 즉시 사용</li>
+                    <li>관리자 승인 없이 자동 적용</li>
+                    {% elif free_token and free_token.duration_days %}
+                    <li>{{ free_token.duration_days }}일간 무제한 사용</li>
+                    <li>모든 기능 이용 가능</li>
+                    <li>자동 갱신 없음</li>
+                    {% else %}
+                    <li>신규 회원 전용 혜택</li>
+                    <li>가입 즉시 적용</li>
+                    <li>특별 이벤트</li>
                     {% endif %}
                 </ul>
             </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <!-- 상품이 없을 경우 기본 메시지 -->
-        <div class="pricing-preview-grid reveal">
-            <div class="pricing-preview-card">
-                <h3 class="pricing-preview-title">Standard</h3>
-                <div class="pricing-preview-price">
-                    <span class="price-amount">500원</span>
-                    <span class="price-unit">/건</span>
+
+            <!-- Free 2: Welcome Period (기간 이벤트 우선, 없으면 event2 사용) -->
+            <div class="product-card event">
+                <span class="product-icon">🎁</span>
+                <div class="product-tagline">신규 회원 한정!</div>
+                <h3 class="product-name">
+                    {{ free_period.name if free_period and free_period.name else "Welcome Period" }}
+                </h3>
+                <p class="product-description">
+                    {% if free_period and free_period.token_amount %}
+                        {{ free_period.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                    {% elif free_period and free_period.duration_days %}
+                        {{ free_period.duration_days }}일간 무료 이용 가능
+                    {% else %}
+                        가입 즉시 혜택을 받아보세요
+                    {% endif %}
+                </p>
+                <div class="product-price">
+                    무료<span class="product-price-unit"> (이벤트)</span>
                 </div>
-                <p class="pricing-preview-feature">급할 때 한 건씩</p>
-                <ul class="pricing-preview-benefits">
-                    <li>✅ 토큰 1개 포함</li>
-                    <li>✅ 부가세 별도</li>
-                    <li>✅ 실시간 고객 지원</li>
-                </ul>
-            </div>
-            <div class="pricing-preview-card featured">
-                <div class="pricing-badge">BEST</div>
-                <h3 class="pricing-preview-title">Premium</h3>
-                <div class="pricing-preview-price">
-                    <span class="price-amount">25,000원</span>
-                    <span class="price-unit">/월</span>
-                </div>
-                <p class="pricing-preview-feature">정산서가 쌓여있을 때</p>
-                <ul class="pricing-preview-benefits">
-                    <li>✅ 토큰 100개 포함</li>
-                    <li>✅ 대량 할인 적용</li>
-                    <li>✅ 우선 처리</li>
-                </ul>
-            </div>
-            <div class="pricing-preview-card">
-                <h3 class="pricing-preview-title">Gold</h3>
-                <div class="pricing-preview-price">
-                    <span class="price-amount">70,000원</span>
-                    <span class="price-unit">/월</span>
-                </div>
-                <p class="pricing-preview-feature">세무사 등 대리 발급 전문</p>
-                <ul class="pricing-preview-benefits">
-                    <li>✅ 무제한 변환</li>
-                    <li>✅ 전담 매니저 배정</li>
-                    <li>✅ API 연동 지원</li>
+                <ul class="product-feature-list">
+                    {% if free_period and free_period.token_amount %}
+                    <li>{{ free_period.token_amount }}개의 무료 토큰 지급</li>
+                    <li>금액 부담 없이 즉시 사용</li>
+                    <li>관리자 승인 없이 자동 적용</li>
+                    {% elif free_period and free_period.duration_days %}
+                    <li>{{ free_period.duration_days }}일간 무제한 사용</li>
+                    <li>모든 기능 이용 가능</li>
+                    <li>자동 갱신 없음</li>
+                    {% else %}
+                    <li>신규 회원 전용 혜택</li>
+                    <li>가입 즉시 적용</li>
+                    <li>특별 이벤트</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
-        {% endif %}
+
+        <!-- 아랫줄: 유료 상품 3종 (Standard / Premium / Gold) -->
+        <div class="pricing-preview-grid pricing-preview-grid-paid reveal">
+            <!-- Standard -->
+            <div class="product-card standard">
+                <span class="product-icon">🚀</span>
+                <div class="product-tagline">급할 때 한 건씩!</div>
+                <h3 class="product-name">
+                    {{ std_product.name if std_product and std_product.name else "Standard" }}
+                </h3>
+                <p class="product-description">
+                    {{ std_product.description if std_product and std_product.description else "필요할 때만 사용하는 유연한 플랜" }}
+                </p>
+                <div class="product-price">
+                    {% if std_product and std_product.price %}
+                        {{ "{:,}".format(std_product.price or 0) }}<span class="product-price-unit">원</span>
+                    {% else %}
+                        500<span class="product-price-unit">원</span>
+                    {% endif %}
+                </div>
+                <ul class="product-feature-list">
+                    <li>
+                        {% if std_product and std_product.price %}
+                            1건당 {{ "{:,}".format(std_product.price or 0) }}원 (부담 없는 가격)
+                        {% else %}
+                            1건당 300원 (부담 없는 가격)
+                        {% endif %}
+                    </li>
+                    <li>필요할 때만 구매 (유연한 시스템)</li>
+                    <li>기본 템플릿 제공</li>
+                    <li>이메일 지원</li>
+                    <li>99.9% 정확도 보장</li>
+                </ul>
+            </div>
+
+            <!-- Premium (BEST) -->
+            <div class="product-card premium">
+                <span class="product-icon">📦</span>
+                <div class="product-tagline">정산서가 쌓여있을 때!</div>
+                <h3 class="product-name">
+                    {{ premium_product_ctx.name if premium_product_ctx and premium_product_ctx.name else "Premium" }}
+                </h3>
+                <p class="product-description">
+                    {% if premium_product_ctx and premium_product_ctx.token_amount %}
+                        {{ premium_product_ctx.token_amount }}건 패키지로 한 번에 해결
+                    {% else %}
+                        100건 패키지로 한 번에 해결
+                    {% endif %}
+                </p>
+                <div class="product-price">
+                    {% if premium_product_ctx and premium_product_ctx.price %}
+                        {{ "{:,}".format(premium_product_ctx.price or 0) }}<span class="product-price-unit">원</span>
+                    {% else %}
+                        25,000<span class="product-price-unit">원</span>
+                    {% endif %}
+                    <div class="discount-badge-wrapper">
+                        <span class="premium-discount-badge dynamic-badge">
+                            {% if discount_rate is defined and discount_rate > 0 %}
+                                {{ discount_rate }}% SAVE
+                            {% else %}
+                                30% SAVE
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <ul class="product-feature-list">
+                    <li>
+                        {% if premium_product_ctx and premium_product_ctx.token_amount and premium_product_ctx.price and premium_per_token_price is defined and premium_per_token_price > 0 and discount_rate is defined and discount_rate > 0 %}
+                            {{ premium_product_ctx.token_amount }}건 패키지 (건당 {{ "{:,}".format(premium_per_token_price) }}원, {{ discount_rate }}% 할인)
+                        {% else %}
+                            100건 패키지 (건당 250원, 30% 할인)
+                        {% endif %}
+                    </li>
+                    <li>모든 템플릿 제공</li>
+                    <li>우선 지원</li>
+                    <li>데이터 백업</li>
+                    <li>API 연동 가능</li>
+                </ul>
+            </div>
+
+            <!-- Gold -->
+            <div class="product-card gold">
+                <span class="product-icon">👑</span>
+                <div class="product-tagline">세무사/대리 발급 전문가용</div>
+                <h3 class="product-name">
+                    {{ gold_product_ctx.name if gold_product_ctx and gold_product_ctx.name else "Gold" }}
+                </h3>
+                <p class="product-description">
+                    {{ gold_product_ctx.description if gold_product_ctx and gold_product_ctx.description else "무제한 변환으로 업무 효율 극대화" }}
+                </p>
+                <div class="product-price">
+                    {% if gold_product_ctx and gold_product_ctx.price %}
+                        {{ "{:,}".format(gold_product_ctx.price or 0) }}<span class="product-price-unit">원/월</span>
+                    {% else %}
+                        70,000<span class="product-price-unit">원/월</span>
+                    {% endif %}
+                </div>
+                <ul class="product-feature-list">
+                    <li>
+                        {% if gold_product_ctx and gold_product_ctx.price %}
+                            무제한 토큰 (월 {{ "{:,}".format(gold_product_ctx.price or 0) }}원)
+                        {% else %}
+                            무제한 토큰 (월 70,000원)
+                        {% endif %}
+                    </li>
+                    <li>맞춤형 템플릿</li>
+                    <li>전담 매니저 지원</li>
+                    <li>고객 리스트 관리</li>
+                    <li>고객 대신 발급 가능<br><span class="feature-subtext">(공급자 정보 변경 지원)</span></li>
+                    <li>SLA 보장</li>
+                </ul>
+                <div class="gold-special-badge">
+                    <span>💎</span>
+                    <span>Gold 전용 특별 기능</span>
+                </div>
+            </div>
+        </div>
         <div class="pricing-preview-action">
             <a href="/shop" class="btn-outline">멤버십 전체 보기</a>
         </div>

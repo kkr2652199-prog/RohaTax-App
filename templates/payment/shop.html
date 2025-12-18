@@ -467,7 +467,13 @@
                             {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원</span>
                         </div>
                         <ul class="product-feature-list">
-                            <li>1건당 300원 (부담 없는 가격)</li>
+                            <li>
+                                {% if product.price %}
+                                    1건당 {{ "{:,}".format(product.price or 0) }}원 (부담 없는 가격)
+                                {% else %}
+                                    1건당 300원 (부담 없는 가격)
+                                {% endif %}
+                            </li>
                             <li>필요할 때만 구매 (유연한 시스템)</li>
                             <li>기본 템플릿 제공</li>
                             <li>이메일 지원</li>
@@ -528,7 +534,13 @@
                             {{ "{:,}".format(product.price or 0) }}<span class="product-price-unit">원/월</span>
                         </div>
                         <ul class="product-feature-list">
-                            <li>무제한 토큰 (월 70,000원)</li>
+                            <li>
+                                {% if product.price %}
+                                    무제한 토큰 (월 {{ "{:,}".format(product.price or 0) }}원)
+                                {% else %}
+                                    무제한 토큰 (월 70,000원)
+                                {% endif %}
+                            </li>
                             <li>맞춤형 템플릿</li>
                             <li>전담 매니저 지원</li>
                             <li>고객 리스트 관리</li>
