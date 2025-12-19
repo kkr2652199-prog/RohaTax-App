@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}로하택스 AI 블로그 스튜디오{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* 상태 알림바 스타일 - 세로 배치, 고정 위치 */
+    .api-key-status-bar {
+        position: fixed;
+        top: 100px;
+        right: 220px;
+        z-index: 1000;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        width: fit-content;
+        min-width: 200px;
+        border-radius: 12px;
+        box-sizing: border-box;
+    }
+    
+    /* Iframe 스타일 - React 앱 격리 */
+    .studio-iframe {
+        width: 100%;
+        height: calc(100vh - 100px); /* 헤더와 알림바 높이를 뺀 나머지 */
+        border: none;
+        display: block;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* body와 main 태그 스타일 초기화 */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    main {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .api-key-status-bar.no-key {
+        background: rgba(239, 68, 68, 0.1);
+        color: #b91c1c;
+        border: none;
+    }
+    
+    .api-key-status-bar.has-key {
+        background: rgba(16, 185, 129, 0.1);
+        color: #047857;
+        border: none;
+    }
+    
+    .api-key-status-bar .status-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-align: center;
+        line-height: 1.5;
+    }
+    
+    .api-key-status-bar .status-btn {
+        width: 100%;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    
+    .api-key-status-bar.no-key .status-btn {
+        background: #DC2626;
+        color: white;
+    }
+    
+    .api-key-status-bar.no-key .status-btn:hover {
+        background: #B91C1C;
+    }
+    
+    .api-key-status-bar.has-key .status-btn {
+        background: #059669;
+        color: white;
+    }
+    
+    .api-key-status-bar.has-key .status-btn:hover {
+        background: #047857;
+    }
+    
+    /* 모달 스타일 - 페이지 중앙 배치, 직사각형 곡면 */
+    .api-key-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .api-key-modal.active {
+        display: flex;
+    }
+    
+    .api-key-modal-content {
+        background: white;
+        border-radius: 16px;
+        border: none;
+        padding: 40px;
+        width: 100%;
+        max-width: 650px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        position: relative;
+        margin: auto;
+    }
+    
+    .api-key-modal-header {
+        margin-bottom: 24px;
+    }
+    
+    .api-key-modal-header h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1F2937;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .api-key-modal-header p {
+        color: #6B7280;
+        font-size: 14px;
+    }
+    
+    .guide-steps {
+        margin-bottom: 32px;
+    }
+    
+    .guide-step {
+        margin-bottom: 32px;
+        padding: 0;
+    }
+    
+    .guide-step-number {
+        display: inline-block;
+        font-size: 32px;
+        font-weight: 700;
+        color: #2563EB;
+        margin-right: 12px;
+        vertical-align: top;
+        line-height: 1.2;
+    }
+    
+    .guide-step-content {
+        display: inline-block;
+        width: calc(100% - 50px);
+        vertical-align: top;
+    }
+    
+    .guide-step-content p {
+        font-size: 16px;
+        color: #374151;
+        line-height: 1.8;
+        margin-bottom: 12px;
+    }
+    
+    /* 가짜 버튼 예시 스타일 */
+    .mock-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #1a73e8;
+        color: white;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        margin: 12px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+    
+    .guide-step-link {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 14px 28px;
+        background: #2563EB;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background 0.2s ease;
+    }
+    
+    .guide-step-link:hover {
+        background: #1D4ED8;
+    }
+    
+    .api-key-input-section {
+        margin-top: 32px;
+        padding-top: 32px;
+        border-top: 1px solid #E5E7EB;
+    }
+    
+    .api-key-input-section label {
+        display: block;
+        font-size: 18px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 12px;
+    }
+    
+    .api-key-input-section input {
+        width: 100%;
+        padding: 16px 20px;
+        border: none;
+        border-radius: 12px;
+        background: #f3f4f6;
+        font-size: 16px;
+        font-family: monospace;
+        transition: background 0.2s ease;
+    }
+    
+    .api-key-input-section input:focus {
+        outline: none;
+        background: #e5e7eb;
+    }
+    
+    .api-key-input-section .hint {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #6B7280;
+    }
+    
+    .api-key-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    
+    .api-key-modal-actions button {
+        width: 100%;
+        height: 48px;
+        padding: 0;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-save {
+        background: #2C5BF0;
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: #1D4ED8;
+    }
+    
+    .btn-save:disabled {
+        background: #9CA3AF;
+        cursor: not-allowed;
+    }
+    
+    .btn-cancel {
+        background: #F3F4F6;
+        color: #374151;
+    }
+    
+    .btn-cancel:hover {
+        background: #E5E7EB;
+    }
+    
+    .close-modal {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #9CA3AF;
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+    
+    .close-modal:hover {
+        background: #E5E7EB;
+        color: #374151;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 상태 알림바 (상단 오른쪽 고정) -->
+<div class="api-key-status-bar {% if has_key %}has-key{% else %}no-key{% endif %}" id="statusBar">
+    <div class="status-text">
+        {% if has_key %}
+        <span>🟢</span>
+        <span>AI 엔진이 준비되었습니다.</span>
+        {% else %}
+        <span>🔴</span>
+        <span>AI 기능을 사용하려면<br>설정이 필요합니다.</span>
+        {% endif %}
+    </div>
+    <button class="status-btn" id="openModalBtn">
+        {% if has_key %}⚙️ 구글 API 키 설정{% else %}키 등록 가이드 보기{% endif %}
+    </button>
+</div>
+
+<!-- React 앱 Iframe (완벽한 격리) -->
+<iframe 
+    src="/studio/app" 
+    class="studio-iframe"
+    title="로하택스 AI 블로그 스튜디오"
+    allow="clipboard-read; clipboard-write"
+></iframe>
+
+<!-- 키 발급 가이드 모달 -->
+<div class="api-key-modal" id="apiKeyModal">
+    <div class="api-key-modal-content">
+        <button class="close-modal" id="closeModalBtn">&times;</button>
+        
+        <div class="api-key-modal-header">
+            <h2>🔑 구글 무료 키 설정</h2>
+            <p>초등학생도 따라 하는 쉬운 가이드</p>
+        </div>
+        
+        <div class="guide-steps">
+            <div class="guide-step">
+                <span class="guide-step-number">①</span>
+                <div class="guide-step-content">
+                    <p><strong>1. 아래 버튼을 눌러 구글 사이트를 열어주세요.</strong></p>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="guide-step-link">
+                        🌐 Google AI Studio 바로가기
+                    </a>
+                </div>
+            </div>
+            
+            <div class="guide-step">
+                <span class="guide-step-number">②</span>
+                <div class="guide-step-content">
+                    <p><strong>2. 화면 왼쪽 위에서 아래와 같은 버튼을 찾아 누르세요.</strong></p>
+                    <span class="mock-btn">Get API key</span>
+                    <p style="margin-top: 12px; font-size: 14px; color: #6B7280;">이 버튼을 누르면 새 창이 열립니다.</p>
+                </div>
+            </div>
+            
+            <div class="guide-step">
+                <span class="guide-step-number">③</span>
+                <div class="guide-step-content">
+                    <p><strong>3. <span class="mock-btn" style="background: #34a853; font-size: 12px; padding: 8px 16px;">Create API key in new project</span> 를 누르면 키가 생성됩니다.</strong></p>
+                    <p style="margin-top: 12px; font-size: 16px; color: #374151;">잠시 기다리면 <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">AIza...</code>로 시작하는 긴 영어가 나옵니다. 그걸 복사하세요!</p>
+                </div>
+            </div>
+            
+            <div class="guide-step">
+                <span class="guide-step-number">④</span>
+                <div class="guide-step-content">
+                    <p><strong>4. 복사한 키를 여기에 붙여넣고 저장하면 끝!</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="api-key-input-section">
+            <label for="apiKeyInput">API 키 입력</label>
+            <input 
+                type="text" 
+                id="apiKeyInput" 
+                placeholder="AIzaSy..." 
+                autocomplete="off"
+            >
+            <p class="hint">💡 키는 안전하게 암호화되어 저장됩니다.</p>
+        </div>
+        
+        <div class="api-key-modal-actions">
+            <button class="btn-cancel" id="cancelBtn">닫기</button>
+            <button class="btn-save" id="saveBtn">
+                저장하기
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    // 모달 제어
+    const modal = document.getElementById('apiKeyModal');
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const statusBar = document.getElementById('statusBar');
+    
+    function openModal() {
+        modal.classList.add('active');
+        // 기존 키가 있으면 입력창에 표시 (마스킹)
+        {% if has_key %}
+        apiKeyInput.value = '••••••••••••••••••••••••••••••••';
+        apiKeyInput.placeholder = '새로운 키를 입력하세요';
+        {% endif %}
+    }
+    
+    function closeModal() {
+        modal.classList.remove('active');
+        apiKeyInput.value = '';
+    }
+    
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    // 모달 외부 클릭 시 닫기
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // API 키 저장
+    saveBtn.addEventListener('click', async function() {
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!apiKey) {
+            alert('API 키를 입력해주세요.');
+            return;
+        }
+        
+        // 키 형식 검증
+        if (!apiKey.startsWith('AIzaSy')) {
+            alert('유효하지 않은 Google API 키 형식입니다.\n키는 "AIzaSy"로 시작해야 합니다.');
+            return;
+        }
+        
+        // 저장 버튼 비활성화 및 로딩 표시
+        saveBtn.disabled = true;
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="loading-spinner"></span>저장 중...';
+        
+        try {
+            const response = await fetch('/api/user/apikey', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ api_key: apiKey })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // 성공 시 페이지 새로고침
+                window.location.reload();
+            } else {
+                alert(data.error || 'API 키 저장에 실패했습니다.');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('API 키 저장 오류:', error);
+            alert('서버와의 통신 중 오류가 발생했습니다. 다시 시도해주세요.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    });
+    
+    // Enter 키로 저장
+    apiKeyInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            saveBtn.click();
+        }
+    });
+})();
+</script>
+{% endblock %}
+

@@ -131,6 +131,15 @@ app = Flask(
 # extensions 모듈에서 limiter 객체를 가져와 앱에 연결
 limiter.init_app(app)
 
+# /studio 경로는 rate limiting에서 제외 (블로그 스튜디오는 자유롭게 접근 가능해야 함)
+@app.before_request
+def exempt_studio_from_rate_limit():
+    """/studio 경로는 rate limiting에서 제외"""
+    if request.path.startswith("/studio"):
+        # limiter의 exempt 데코레이터가 작동하도록 함
+        # 실제 제외는 각 라우트의 @limiter.exempt 데코레이터로 처리됨
+        pass
+
 
 # 전역 텍스트 주입
 @app.context_processor
@@ -470,7 +479,7 @@ from routes.admin.activity_log_api import activity_log_bp
 from routes.admin.tax_api import admin_tax_bp
 from routes.api_modules.admin_api import admin_api_bp
 # 기존 user_api (비상시 롤백용으로 보존)
-# from routes.api_modules.user_api import user_api_bp
+from routes.api_modules.user_api import user_api_bp
 # 신형 엔진 (user_api_v2)
 from routes.api_modules.user_api_v2 import user_api_v2_bp
 # from routes.conversion import conversion_bp  # 제거됨 - conversion_engine_routes로 이동
@@ -522,8 +531,9 @@ if "ops" not in app.blueprints:
 if "admin_api" not in app.blueprints:
     app.register_blueprint(admin_api_bp)
 # 기존 user_api (비상시 롤백용으로 보존)
-# if 'user_api' not in app.blueprints:
-#     app.register_blueprint(user_api_bp)
+# /api/user/apikey 엔드포인트를 위해 활성화
+if 'user_api' not in app.blueprints:
+    app.register_blueprint(user_api_bp)
 # 신형 엔진 (user_api_v2)
 if "user_api_v2" not in app.blueprints:
     app.register_blueprint(user_api_v2_bp)

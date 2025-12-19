@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
   privacy_agreed INTEGER NOT NULL DEFAULT 0, -- 개인정보 수집 및 이용 동의 (0: 미동의, 1: 동의)
   terms_agreed_at TEXT, -- 이용약관 동의 일시
   privacy_agreed_at TEXT, -- 개인정보 수집 및 이용 동의 일시
+  google_api_key TEXT, -- 사용자 Google API Key (BYOK 모델)
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
