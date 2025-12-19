@@ -1,3 +1,22 @@
+"""
+RohaTax Flask Application
+=========================
+
+Production Run (Linux):
+    gunicorn -w 4 -b 0.0.0.0:5000 --timeout 120 --access-logfile - --error-logfile - app:app
+
+Development Run (Windows):
+    python app.py
+    또는
+    flask run --host=127.0.0.1 --port=5001
+
+Environment Variables:
+    - PORT: 서버 포트 (기본값: 5001)
+    - DEBUG: 디버그 모드 (기본값: false)
+    - SECRET_KEY: 세션 암호화 키 (필수)
+    - DATABASE_URL: 데이터베이스 연결 문자열 (기본값: sqlite:///database/app.db)
+"""
+
 import os
 
 from dotenv import load_dotenv
@@ -14,7 +33,7 @@ import logging
 from datetime import datetime, timedelta
 
 import psutil
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session, flash
 from werkzeug.exceptions import HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -24,6 +43,7 @@ from core.change_detector import change_detector
 from core.content_loader import CONTENT_CACHE, get_text
 from core.db import get_conn, init_db, seed_demo
 from core.email_sender import init_mail
+from core.extensions import limiter
 from core.file_manager import FileManager
 from core.file_size_monitor import file_size_monitor
 from core.logging_setup import init_logging
@@ -107,6 +127,19 @@ app = Flask(
     static_url_path="/static",  # URL 경로 명시
 )
 
+# Rate Limiting 초기화 (무차별 공격 방어)
+# extensions 모듈에서 limiter 객체를 가져와 앱에 연결
+limiter.init_app(app)
+
+# /studio 경로는 rate limiting에서 제외 (블로그 스튜디오는 자유롭게 접근 가능해야 함)
+@app.before_request
+def exempt_studio_from_rate_limit():
+    """/studio 경로는 rate limiting에서 제외"""
+    if request.path.startswith("/studio"):
+        # limiter의 exempt 데코레이터가 작동하도록 함
+        # 실제 제외는 각 라우트의 @limiter.exempt 데코레이터로 처리됨
+        pass
+
 
 # 전역 텍스트 주입
 @app.context_processor
@@ -124,6 +157,55 @@ def inject_text():
 # 기본 로깅 초기화
 init_logging()
 ensure_database_initialized()
+
+# 자동 파일 청소 함수
+def cleanup_old_files():
+    """
+    오래된 임시 파일 자동 삭제
+    - uploads/ 폴더: 24시간 이상 된 파일 삭제
+    - outputs/ 폴더: 24시간 이상 된 파일 삭제
+    """
+    try:
+        logger = logging.getLogger(__name__)
+        deleted_count = 0
+        cutoff_time = datetime.now() - timedelta(hours=24)
+        
+        # uploads/ 폴더 정리
+        uploads_dir = os.path.join(app_dir, settings.UPLOAD_FOLDER)
+        if os.path.exists(uploads_dir):
+            for root, dirs, files in os.walk(uploads_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    try:
+                        file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                        if file_mtime < cutoff_time:
+                            os.remove(file_path)
+                            deleted_count += 1
+                            logger.debug(f"삭제: {file_path} (생성: {file_mtime})")
+                    except Exception as e:
+                        logger.warning(f"파일 삭제 실패: {file_path} - {e}")
+        
+        # outputs/ 폴더 정리
+        outputs_dir = os.path.join(app_dir, settings.OUTPUT_FOLDER)
+        if os.path.exists(outputs_dir):
+            for root, dirs, files in os.walk(outputs_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    try:
+                        file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                        if file_mtime < cutoff_time:
+                            os.remove(file_path)
+                            deleted_count += 1
+                            logger.debug(f"삭제: {file_path} (생성: {file_mtime})")
+                    except Exception as e:
+                        logger.warning(f"파일 삭제 실패: {file_path} - {e}")
+        
+        logger.info(f"✅ 자동 파일 청소 완료: {deleted_count}개 파일 삭제")
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"❌ 자동 파일 청소 실패: {e}", exc_info=True)
+
 
 # 자동 백업 스케줄러 초기화
 def backup_database():
@@ -192,12 +274,22 @@ scheduler.add_job(
     replace_existing=True
 )
 
+# 파일 청소 스케줄러 설정
+scheduler.add_job(
+    func=cleanup_old_files,
+    trigger=CronTrigger(hour=5, minute=0),  # 매일 새벽 05:00
+    id='cleanup_old_files',
+    name='자동 파일 청소 (24시간 이상 된 파일)',
+    replace_existing=True
+)
+
 # 스케줄러 시작
 try:
     scheduler.start()
     logging.getLogger(__name__).info("✅ 자동 백업 스케줄러 시작 (매일 04:00)")
+    logging.getLogger(__name__).info("✅ 자동 파일 청소 스케줄러 시작 (매일 05:00)")
 except Exception as e:
-    logging.getLogger(__name__).error("❌ 백업 스케줄러 시작 실패: %s", e)
+    logging.getLogger(__name__).error("❌ 스케줄러 시작 실패: %s", e)
 
 # 버전 관리 시스템 초기화
 try:
@@ -387,7 +479,7 @@ from routes.admin.activity_log_api import activity_log_bp
 from routes.admin.tax_api import admin_tax_bp
 from routes.api_modules.admin_api import admin_api_bp
 # 기존 user_api (비상시 롤백용으로 보존)
-# from routes.api_modules.user_api import user_api_bp
+from routes.api_modules.user_api import user_api_bp
 # 신형 엔진 (user_api_v2)
 from routes.api_modules.user_api_v2 import user_api_v2_bp
 # from routes.conversion import conversion_bp  # 제거됨 - conversion_engine_routes로 이동
@@ -414,8 +506,8 @@ if "home" not in app.blueprints:
     app.register_blueprint(home_bp)
 if "home_api" not in app.blueprints:
     app.register_blueprint(home_api_bp)
-    if "auth" not in app.blueprints:
-        app.register_blueprint(auth_bp)
+if "auth" not in app.blueprints:
+    app.register_blueprint(auth_bp)
 if "registration" not in app.blueprints:
     app.register_blueprint(registration_bp)
 if "profile" not in app.blueprints:
@@ -439,8 +531,9 @@ if "ops" not in app.blueprints:
 if "admin_api" not in app.blueprints:
     app.register_blueprint(admin_api_bp)
 # 기존 user_api (비상시 롤백용으로 보존)
-# if 'user_api' not in app.blueprints:
-#     app.register_blueprint(user_api_bp)
+# /api/user/apikey 엔드포인트를 위해 활성화
+if 'user_api' not in app.blueprints:
+    app.register_blueprint(user_api_bp)
 # 신형 엔진 (user_api_v2)
 if "user_api_v2" not in app.blueprints:
     app.register_blueprint(user_api_v2_bp)
@@ -605,6 +698,23 @@ def not_found(_):
 @app.errorhandler(500)
 def server_error(_):
     return render_template("errors/500.html"), 500
+
+
+# Rate Limiting 에러 핸들러 (429 Too Many Requests)
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    """Rate Limit 초과 시 에러 메시지 반환"""
+    if request.path.startswith("/api/"):
+        # API 요청인 경우 JSON 응답
+        return jsonify({
+            "success": False,
+            "message": "너무 많은 요청입니다. 잠시 후 다시 시도해주세요.",
+            "error_code": "RATE_LIMIT_EXCEEDED"
+        }), 429
+    else:
+        # 일반 요청인 경우 HTML 응답
+        flash("너무 많은 요청입니다. 잠시 후 다시 시도해주세요.", "error")
+        return render_template("errors/429.html"), 429
 
 
 # 헬스체크 엔드포인트 추가

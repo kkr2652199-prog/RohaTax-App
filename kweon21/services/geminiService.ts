@@ -1,15 +1,65 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ColorTheme, GeneratedContent, SupplementaryInfo } from '../types';
 
-// ✅ 기술 복원: Vite 환경 변수 사용 (브라우저 호환)
-const API_KEY = import.meta.env.VITE_API_KEY;
+// ✅ BYOK 모델: 서버 API를 통해 사용자 API 키 가져오기
+let cachedApiKey: string | null = null;
+let cachedAiInstance: GoogleGenAI | null = null;
 
-if (!API_KEY) {
-  console.error("VITE_API_KEY environment variable is not set.");
-  throw new Error("API_KEY environment variable is not set.");
+/**
+ * 사용자 API 키를 서버에서 가져오는 함수
+ * @returns 사용자 API 키 또는 null
+ */
+async function getUserApiKey(): Promise<string> {
+  // 캐시된 키가 있으면 반환
+  if (cachedApiKey) {
+    return cachedApiKey;
+  }
+
+  try {
+    const response = await fetch('/api/user/apikey');
+    if (!response.ok) {
+      if (response.status === 401) {
+        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        throw new Error('로그인이 필요합니다');
+      }
+      throw new Error(`API 키 조회 실패: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || 'API 키 조회 실패');
+    }
+
+    if (!data.api_key || !data.has_key) {
+      alert('블로그 스튜디오를 사용하려면 "마이페이지"에서 Google API Key를 등록해야 합니다.');
+      throw new Error('API 키가 등록되지 않았습니다');
+    }
+
+    // 캐시에 저장
+    cachedApiKey = data.api_key;
+    cachedAiInstance = new GoogleGenAI({ apiKey: cachedApiKey });
+    return cachedApiKey;
+  } catch (error) {
+    console.error('API 키 가져오기 실패:', error);
+    throw error;
+  }
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+/**
+ * GoogleGenAI 인스턴스를 가져오는 함수
+ * @returns GoogleGenAI 인스턴스
+ */
+async function getAiInstance(): Promise<GoogleGenAI> {
+  if (cachedAiInstance) {
+    return cachedAiInstance;
+  }
+
+  await getUserApiKey();
+  if (!cachedAiInstance) {
+    throw new Error('AI 인스턴스 초기화 실패');
+  }
+  return cachedAiInstance;
+}
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -286,6 +336,8 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, errorMessa
 export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' = '16:9', maxRetries = 3): Promise<string | null> => {
     if (!prompt) return null;
 
+    const ai = await getAiInstance();
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
             console.log(`🖼️ 이미지 생성 시도 ${attempt + 1}/${maxRetries}...`);
@@ -348,6 +400,7 @@ export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' 
 export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldGenerateImage: boolean, shouldGenerateSubImages: boolean, interactiveElementIdea: string | null, rawContent: string | null, additionalRequest: string | null, aspectRatio: '16:9' | '1:1', currentDate: string): Promise<GeneratedContent> => {
   try {
     console.log('📝 블로그 포스트 생성 시작...');
+    const ai = await getAiInstance();
     const prompt = getPrompt(topic, theme, interactiveElementIdea, rawContent, additionalRequest, currentDate);
     
     // ✅ 타임아웃 90초 설정 (긴 콘텐츠 생성 고려)
@@ -455,6 +508,7 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
 export const regenerateBlogPostHtml = async (originalHtml: string, feedback: string, theme: ColorTheme, currentDate: string): Promise<string> => {
     try {
         console.log('🔄 블로그 포스트 재생성 시작...');
+        const ai = await getAiInstance();
         const prompt = getRegenerationPrompt(originalHtml, feedback, theme, currentDate);
         
         // ✅ 타임아웃 90초 설정
@@ -521,6 +575,7 @@ const generateTopics = async (prompt: string, useSearch: boolean = false): Promi
 
         config.temperature = 1.0;
         
+        const ai = await getAiInstance();
         const enhancedPrompt = `${prompt}\n\n(This is a new request. Please generate a completely new and different set of suggestions. Random seed: ${Math.random()})`;
 
         // ✅ 타임아웃 30초 설정 (주제 생성은 빠름)
@@ -650,6 +705,7 @@ export const suggestInteractiveElementForTopic = async (topic: string): Promise<
 
     try {
         // ✅ 기술 복원: gpt-park의 직접 호출 방식
+        const ai = await getAiInstance();
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,

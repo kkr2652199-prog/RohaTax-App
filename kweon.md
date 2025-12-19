@@ -1,4 +1,106 @@
-﻿# [2025-12-19 10:36 KST] - homepage1 나머지 수정 및 신규 파일 커밋 - 커밋 507f6ca
+﻿# [2025-12-19 14:56:21 KST] - 블로그 스튜디오 BYOK 모델 및 키 관리 HUD 구현 - 커밋 f7b5918
+
+*   **한국 시간/날짜:** 2025년 12월 19일 14:56:21 (KST)
+*   **커밋 해시:** f7b5918
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** 블로그 스튜디오 BYOK 모델 구현 및 키 관리 HUD 오버레이 추가
+    1. **BYOK 모델 구현:**
+       - users 테이블에 google_api_key 컬럼 추가
+       - POST/GET /api/user/apikey 엔드포인트 구현
+    2. **프론트엔드 API Key 동적 로딩:**
+       - geminiService.ts, keywordService.ts에서 서버 API로 키 가져오기
+       - 키 미등록 시 사용자 안내 메시지 표시
+    3. **블로그 스튜디오 키 관리 HUD 오버레이:**
+       - templates/studio/studio_overlay.html 생성
+       - 상태 알림바 (상단 오른쪽 고정, 세로 배치)
+       - 키 등록 가이드 모달 (페이지 중앙 배치, 와이드 디자인)
+       - 초등학생 눈높이 4단계 비주얼 가이드
+    4. **Iframe 격리 구조:**
+       - /studio/app 라우트로 순수 React 앱 서빙
+       - React 앱 내부 헤더 CSS 제거 (더블 헤더 방지)
+       - 완전한 스타일 격리 구현
+    5. **Rate Limiting 제외:**
+       - /studio 경로에 @limiter.exempt 적용
+    6. **기타 개선:**
+       - start_server_5001.bat에서 API 키 하드코딩 제거
+       - 모달 디자인 개선 (650px 와이드, 곡면 모서리)
+*   **결과:**
+    - ✅ BYOK 모델 완전 구현
+    - ✅ 키 관리 HUD 오버레이 완성
+    - ✅ Iframe 격리로 스타일 충돌 해결
+    - ✅ 사용자 친화적인 키 등록 가이드 제공
+
+---
+
+# [2025-12-19 12:50:04 KST] - 레드 팀 감사 후 발견된 문제점 및 기타 수정사항 커밋 - 커밋 4014f36
+
+*   **한국 시간/날짜:** 2025년 12월 19일 12:50:04 (KST)
+*   **커밋 해시:** 4014f36
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** 레드 팀 감사 수행 후 발견된 문제점 및 상용화 대비 문서 추가
+    1. **상용화 대비 문서 추가:**
+       - `AUTH_AND_ADMIN_AUDIT.md`: 인증 및 관리자 기능 감사 문서
+       - `LINUX_DEPLOYMENT_CHECKLIST.md`: Linux 배포 체크리스트
+       - `PRODUCTION_RISK_AUDIT.md`: 프로덕션 위험 감사 문서
+       - `UX_AND_MARKETING_AUDIT.md`: UX 및 마케팅 감사 문서
+       - `Procfile`: 프로덕션 배포용 프로세스 파일
+    2. **에러 페이지 추가:**
+       - `templates/errors/429.html`: Rate Limiting 초과 시 표시할 에러 페이지
+    3. **데이터베이스 스키마 업데이트:**
+       - `database/schema.sql`: 스키마 업데이트
+    4. **UI/UX 개선:**
+       - `templates/homepage.html`: 홈페이지 템플릿 개선
+       - `templates/register.html`: 회원가입 페이지 개선
+       - `templates/base.html`: 기본 템플릿 개선
+       - `static/css/register_modern.css`: 회원가입 페이지 스타일 개선
+    5. **라우트 및 코어 로직 개선:**
+       - `routes/conversion_modules/conversion_engine_routes.py`: 변환 엔진 라우트 개선
+       - `routes/home_modules/registration_routes.py`: 회원가입 라우트 개선
+       - `core/db.py`: 데이터베이스 코어 로직 개선
+    6. **의존성 업데이트:**
+       - `requirements.txt`: 패키지 의존성 업데이트
+*   **레드 팀 감사 결과:**
+    - 모바일 호환성 문제 발견 (상): hero.css의 min-width: 640px 고정값
+    - 데이터베이스 스키마 불일치 발견 (중): activity_logs 테이블이 schema.sql에 없음
+    - 기밀 유출: 양호 (환경변수 사용)
+    - 코드 위생: 양호 (임시 파일 없음)
+*   **결과:**
+    - ✅ 상용화 대비 문서화 완료
+    - ✅ Rate Limiting 에러 페이지 추가
+    - ✅ UI/UX 개선사항 반영
+    - ⚠️ 모바일 호환성 및 스키마 불일치 문제는 추후 수정 필요
+
+---
+
+# [2025-12-19 12:38:44 KST] - Rate Limiting 정석 구조 리팩토링 - 커밋 25b3f38
+
+*   **한국 시간/날짜:** 2025년 12월 19일 12:38:44 (KST)
+*   **커밋 해시:** 25b3f38
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** Rate Limiting을 정석적인 Flask 확장 구조로 리팩토링하여 순환 참조 방지 및 코드 정리
+    1. **core/extensions.py 생성:**
+       - Limiter 객체를 중앙에서 관리하는 확장 모듈 생성
+       - `app` 인스턴스 없이 생성 후 `init_app()`으로 초기화하는 구조
+       - 순환 참조 방지를 위한 분리
+    2. **app.py 수정:**
+       - `from flask_limiter import Limiter` 직접 import 삭제
+       - `limiter = Limiter(...)` 직접 생성 코드 삭제
+       - `from core.extensions import limiter` 추가
+       - `limiter.init_app(app)` 초기화 방식으로 변경
+       - Blueprint 등록 후 동적 적용 코드 제거 (`if 'login_post' in auth_bp.view_functions:` 블록 삭제)
+    3. **routes/home_modules/auth_routes.py 수정:**
+       - `from core.extensions import limiter` 추가
+       - `@limiter.limit("5 per minute")` 데코레이터를 `login_post` 함수에 직접 적용
+       - 보안 설정이 라우트 함수 바로 위에 명시되어 가독성 향상
+*   **결과:**
+    - ✅ 순환 참조 문제 해결 (Blueprint에서 app.py를 import하지 않음)
+    - ✅ Clean Code 원칙 준수 (보안 설정이 라우트에 명시)
+    - ✅ 정석적인 Flask 확장 구조 적용
+    - ✅ 서버 재시작 시 ImportError 없이 정상 구동 확인
+
+---
+
+# [2025-12-19 10:36 KST] - homepage1 나머지 수정 및 신규 파일 커밋 - 커밋 507f6ca
 
 *   **한국 시간/날짜:** 2025년 12월 19일 10:36 (KST)
 *   **커밋 해시:** 507f6ca

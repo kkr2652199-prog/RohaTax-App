@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import json
 from core.db import get_conn_optimized as get_conn
+from core.extensions import limiter
 from core.password_utils import verify_password
 
 auth_bp = Blueprint('auth', __name__)
@@ -14,6 +15,7 @@ def login():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login_post():
     logger = logging.getLogger(__name__)
     username = (request.form.get('username') or '').strip()

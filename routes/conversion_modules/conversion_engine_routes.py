@@ -15,6 +15,7 @@ import re
 import traceback
 from datetime import datetime
 
+# Rate Limiting import (순환 참조 방지를 위해 함수 내부에서 import)
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.conversion_engine import ConversionEngine

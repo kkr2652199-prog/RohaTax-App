@@ -71,8 +71,11 @@ echo Stop Server: Ctrl+C
 echo ================================
 
 REM Set Google Gemini API Key (무료 티어: 월 60회)
-set GOOGLE_API_KEY=AIzaSyCZh8sPRFRYPTTr7rBvmzw2UK8KwLDnpeY
-echo Google Gemini API Key configured
+REM 주의: API 키는 .env 파일이나 시스템 환경변수로 관리해야 합니다.
+REM 배치 파일에 하드코딩하지 마세요!
+REM set GOOGLE_API_KEY=
+REM API 키는 .env 파일에서 python-dotenv로 자동 로드됩니다.
+REM 또는 시스템 환경변수로 설정하세요.
 
 REM Start server
 REM 환경 변수를 명시적으로 설정 (dotenv override를 위해)

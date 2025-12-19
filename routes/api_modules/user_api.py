@@ -4,6 +4,9 @@ from core.token_service import get_token_status_from_activity_log
 import sqlite3
 import json
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 user_api_bp = Blueprint('user_api', __name__, url_prefix='/api')
 
@@ -615,5 +618,108 @@ def get_user_activity_logs_v2():
     except Exception as e:
         print(f"Error in get_user_activity_logs_v2: {e}")
         return jsonify({'success': False, 'error': f'서버 오류: {str(e)}'}), 500
+
+
+@user_api_bp.route('/user/apikey', methods=['POST'])
+def save_user_api_key():
+    """
+    사용자 Google API Key 저장 (BYOK 모델)
+    
+    Request Body:
+    {
+        "api_key": "AIzaSy..."
+    }
+    
+    Returns:
+    {
+        "success": bool,
+        "message": str
+    }
+    """
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '요청 데이터가 없습니다'}), 400
+        
+        api_key = data.get('api_key', '').strip()
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API 키가 제공되지 않았습니다'}), 400
+        
+        # 간단한 검증: Google API 키는 보통 "AIzaSy"로 시작
+        if not api_key.startswith('AIzaSy'):
+            return jsonify({'success': False, 'error': '유효하지 않은 Google API 키 형식입니다'}), 400
+        
+        user_id = session['user_id']
+        
+        with get_conn() as conn:
+            # 사용자 존재 확인
+            user = conn.execute(
+                "SELECT id FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
+                (user_id,)
+            ).fetchone()
+            
+            if not user:
+                return jsonify({'success': False, 'error': '사용자를 찾을 수 없습니다'}), 404
+            
+            # API 키 저장 (평문 저장, 추후 암호화 고도화 가능)
+            conn.execute(
+                "UPDATE users SET google_api_key = ?, updated_at = datetime('now') WHERE id = ?",
+                (api_key, user_id)
+            )
+            conn.commit()
+        
+        logger.info(f"User {user_id} saved Google API key")
+        return jsonify({
+            'success': True,
+            'message': 'API 키가 성공적으로 저장되었습니다'
+        })
+    
+    except Exception as e:
+        logger.error(f"Error saving API key: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': f'API 키 저장 중 오류가 발생했습니다: {str(e)}'}), 500
+
+
+@user_api_bp.route('/user/apikey', methods=['GET'])
+def get_user_api_key():
+    """
+    사용자 저장된 Google API Key 조회 (BYOK 모델)
+    
+    Returns:
+    {
+        "success": bool,
+        "api_key": str | null,
+        "has_key": bool
+    }
+    """
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'}), 401
+    
+    try:
+        user_id = session['user_id']
+        
+        with get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            user = conn.execute(
+                "SELECT google_api_key FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
+                (user_id,)
+            ).fetchone()
+            
+            if not user:
+                return jsonify({'success': False, 'error': '사용자를 찾을 수 없습니다'}), 404
+            
+            api_key = user['google_api_key'] if user['google_api_key'] else None
+            
+            return jsonify({
+                'success': True,
+                'api_key': api_key,
+                'has_key': api_key is not None
+            })
+    
+    except Exception as e:
+        logger.error(f"Error getting API key: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': f'API 키 조회 중 오류가 발생했습니다: {str(e)}'}), 500
 
 
