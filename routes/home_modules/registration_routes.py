@@ -31,6 +31,14 @@ def register_post():
     business_type = request.form.get('business_type', '')  # 업태
     business_category = request.form.get('business_category', '')  # 종목
     
+    # 약관 동의 확인
+    terms_agreed = request.form.get('terms_agreed')
+    privacy_agreed = request.form.get('privacy_agreed')
+    
+    if not terms_agreed or not privacy_agreed:
+        flash('이용약관 및 개인정보 수집 및 이용 동의는 필수입니다', 'error')
+        return redirect(url_for('registration.register'))
+    
     # 필수 필드 검증
     if not all([username, business_number, representative_name, company_name, phone, email, password, confirm_password, business_type, business_category]):
         flash('모든 필수 항목을 입력해주세요', 'error')
@@ -131,6 +139,11 @@ def register_post():
                 """,
                 (username, email, business_number)
             ).fetchone()
+            # 약관 동의 일시 기록
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            terms_agreed_value = 1 if terms_agreed == '1' else 0
+            privacy_agreed_value = 1 if privacy_agreed == '1' else 0
+            
             if deleted_row:
                 # 비밀번호를 bcrypt로 해싱
                 hashed_password = hash_password(password)
@@ -140,11 +153,13 @@ def register_post():
                     UPDATE users SET
                         username = ?, email = ?, password = ?, company_name = ?, business_number = ?,
                         representative_name = ?, phone = ?, address = ?, business_type = ?, business_category = ?,
-                        is_active = 1, approval_status = 'approved', is_deleted = 0, deleted_at = NULL
+                        is_active = 1, approval_status = 'approved', is_deleted = 0, deleted_at = NULL,
+                        terms_agreed = ?, privacy_agreed = ?, terms_agreed_at = ?, privacy_agreed_at = ?
                     WHERE id = ?
                     """,
                     (username, email, hashed_password, company_name, business_number,
                      representative_name, phone, address, business_type, business_category,
+                     terms_agreed_value, privacy_agreed_value, current_time, current_time,
                      deleted_row['id'])
                 )
                 user_id = deleted_row['id']
@@ -156,11 +171,13 @@ def register_post():
                 cur = conn.execute(
                 """INSERT INTO users (username, email, password, company_name, business_number, 
                    representative_name, phone, address, business_type, business_category, 
-                   plan_type, monthly_limit, used_count, is_active, is_admin, token_balance, approval_status) 
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   plan_type, monthly_limit, used_count, is_active, is_admin, token_balance, approval_status,
+                   terms_agreed, privacy_agreed, terms_agreed_at, privacy_agreed_at) 
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (username, email, hashed_password, company_name, business_number, 
                 representative_name, phone, address, business_type, business_category,
-                'free', 50, 0, 1, 0, 0, 'approved')
+                'free', 50, 0, 1, 0, 0, 'approved',
+                terms_agreed_value, privacy_agreed_value, current_time, current_time)
             )
                 user_id = cur.lastrowid
             

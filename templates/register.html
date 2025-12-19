@@ -114,6 +114,43 @@
                                    required>
                         </div>
 
+                        {# 약관 동의 영역 #}
+                        <div class="register-form-group register-terms-group">
+                            <div class="register-terms-title">약관 동의</div>
+                            
+                            <div class="register-terms-item">
+                                <label class="register-terms-label">
+                                    <input type="checkbox" 
+                                           name="terms_agreed" 
+                                           id="terms_agreed" 
+                                           value="1" 
+                                           class="register-terms-checkbox" 
+                                           required>
+                                    <span class="register-terms-text">
+                                        <span class="register-terms-required">[필수]</span>
+                                        이용약관 동의
+                                    </span>
+                                    <a href="/terms" target="_blank" class="register-terms-link">약관 보기</a>
+                                </label>
+                            </div>
+                            
+                            <div class="register-terms-item">
+                                <label class="register-terms-label">
+                                    <input type="checkbox" 
+                                           name="privacy_agreed" 
+                                           id="privacy_agreed" 
+                                           value="1" 
+                                           class="register-terms-checkbox" 
+                                           required>
+                                    <span class="register-terms-text">
+                                        <span class="register-terms-required">[필수]</span>
+                                        개인정보 수집 및 이용 동의
+                                    </span>
+                                    <a href="/privacy" target="_blank" class="register-terms-link">약관 보기</a>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="register-button-group">
                             <button type="button" class="register-btn register-btn-primary" id="btnNextStep">다음 단계로</button>
                         </div>
@@ -251,6 +288,8 @@
                 const phone = document.getElementById('phoneNumber');
                 const password = document.getElementById('password');
                 const confirmPassword = document.getElementById('confirmPassword');
+                const termsAgreed = document.getElementById('terms_agreed');
+                const privacyAgreed = document.getElementById('privacy_agreed');
 
                 let isValid = true;
 
@@ -287,6 +326,53 @@
                 if (password.value !== confirmPassword.value) {
                     showValidation(confirmPassword, '❌ 비밀번호가 일치하지 않습니다', 'error');
                     isValid = false;
+                }
+
+                // 약관 동의 확인
+                if (!termsAgreed.checked) {
+                    const termsGroup = termsAgreed.closest('.register-terms-group');
+                    if (termsGroup) {
+                        let errorMsg = termsGroup.querySelector('.register-terms-error');
+                        if (!errorMsg) {
+                            errorMsg = document.createElement('div');
+                            errorMsg.className = 'register-terms-error';
+                            errorMsg.style.color = 'var(--error)';
+                            errorMsg.style.fontSize = '13px';
+                            errorMsg.style.marginTop = '8px';
+                            termsGroup.appendChild(errorMsg);
+                        }
+                        errorMsg.textContent = '❌ 이용약관 동의는 필수입니다';
+                    }
+                    isValid = false;
+                } else {
+                    const termsGroup = termsAgreed.closest('.register-terms-group');
+                    if (termsGroup) {
+                        const errorMsg = termsGroup.querySelector('.register-terms-error');
+                        if (errorMsg) errorMsg.remove();
+                    }
+                }
+
+                if (!privacyAgreed.checked) {
+                    const termsGroup = privacyAgreed.closest('.register-terms-group');
+                    if (termsGroup) {
+                        let errorMsg = termsGroup.querySelector('.register-terms-error');
+                        if (!errorMsg) {
+                            errorMsg = document.createElement('div');
+                            errorMsg.className = 'register-terms-error';
+                            errorMsg.style.color = 'var(--error)';
+                            errorMsg.style.fontSize = '13px';
+                            errorMsg.style.marginTop = '8px';
+                            termsGroup.appendChild(errorMsg);
+                        }
+                        errorMsg.textContent = '❌ 개인정보 수집 및 이용 동의는 필수입니다';
+                    }
+                    isValid = false;
+                } else {
+                    const termsGroup = privacyAgreed.closest('.register-terms-group');
+                    if (termsGroup) {
+                        const errorMsg = termsGroup.querySelector('.register-terms-error');
+                        if (errorMsg) errorMsg.remove();
+                    }
                 }
 
                 return isValid;

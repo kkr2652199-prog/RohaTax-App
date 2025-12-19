@@ -227,6 +227,23 @@ def init_db() -> None:
             conn.execute("ALTER TABLE users ADD COLUMN phone TEXT")
         except Exception:
             pass
+        # Add terms agreement columns if missing
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN terms_agreed INTEGER NOT NULL DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN privacy_agreed INTEGER NOT NULL DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN terms_agreed_at TEXT")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN privacy_agreed_at TEXT")
+        except Exception:
+            pass
         # Add address column if missing (replace referral_code)
         try:
             conn.execute("ALTER TABLE users ADD COLUMN address TEXT")

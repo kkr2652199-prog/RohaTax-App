@@ -4,6 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}로●하 Tax{% endblock %}</title>
+    
+    {# SEO 메타 태그 #}
+    <meta name="description" content="배달대행/퀵서비스 정산서의 국세청 홈택스 표준 양식 자동 변환 서비스. 엑셀 업로드 1초면 끝.">
+    <meta name="keywords" content="전자세금계산서, 엑셀 변환, 배달대행 정산, 로하택스, 홈택스 업로드">
+    <meta name="author" content="RohaTax Team">
+    
+    {# Open Graph (소셜 공유) 메타 태그 #}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="로하택스 (RohaTax)">
+    <meta property="og:title" content="로하택스 - AI 전자세금계산서 변환 솔루션">
+    <meta property="og:description" content="복잡한 정산 데이터, 1초 만에 국세청 표준 양식으로 변환하세요. 무료 체험 가능.">
+    <meta property="og:image" content="https://placehold.co/1200x630/2C5BF0/ffffff?text=RohaTax+AI">
+    <meta property="og:url" content="https://roha-tax.com">
+    
+    {# Twitter Card 메타 태그 #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="로하택스 - AI 전자세금계산서 변환 솔루션">
+    <meta name="twitter:description" content="복잡한 정산 데이터, 1초 만에 국세청 표준 양식으로 변환하세요. 무료 체험 가능.">
+    <meta name="twitter:image" content="https://placehold.co/1200x630/2C5BF0/ffffff?text=RohaTax+AI">
+    
+    {# Favicon (임시 CDN 아이콘) #}
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4c4.png">
+    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4c4.png">
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4c4.png">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v={{ timestamp }}">
     <!-- Core Styles (Base) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/reset.css') }}?v={{ timestamp }}">
