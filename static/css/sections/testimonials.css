@@ -6,21 +6,25 @@
 .testimonials-section {
     background: var(--bg-light);
     padding: 80px 0;
-    overflow-x: hidden;
+    overflow-x: visible; /* 후기 섹션만 가로로 시원하게 개방 */
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 .testimonials-section .container {
     overflow-x: visible;
     position: relative;
+    max-width: 100%;          /* 후기 섹션은 페이지 전체 폭 사용 */
+    padding-left: 40px;
+    padding-right: 40px;
 }
 
 /* Container 내부의 grid가 가로 스크롤 가능하도록 */
 .testimonials-section .container > .testimonials-grid {
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-left: 20px;
-    padding-right: 20px;
-    width: calc(100% + 40px);
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 40px;
+    padding-right: 40px;
+    width: 100%;
 }
 
 .testimonials-header {
@@ -33,7 +37,7 @@
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row;
-    gap: 32px;
+    gap: 40px;                /* 카드 사이 간격도 조금 더 시원하게 */
     margin-bottom: 60px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -41,7 +45,6 @@
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) transparent;
     padding: 20px 0;
-    padding-bottom: 20px;
     -webkit-overflow-scrolling: touch;
     width: 100%;
     max-width: 100%;
@@ -70,12 +73,15 @@
     background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--border-radius-lg);
-    padding: 32px;
+    padding: 24px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     transition: all 0.3s ease;
-    flex: 0 0 350px;
-    min-width: 350px;
-    max-width: 350px;
+    flex: 0 0 320px;
+    min-width: 320px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .testimonial-card:hover {
@@ -102,11 +108,18 @@
 
 /* Testimonial Text */
 .testimonial-text {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--text-secondary);
     line-height: 1.8;
     margin-bottom: 20px;
-    font-style: italic;
+    font-style: normal;
+}
+
+.testimonial-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .testimonial-highlight {
@@ -127,8 +140,8 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-top: 20px;
-    padding-top: 20px;
+    margin-top: 16px;
+    padding-top: 16px;
     border-top: 1px solid var(--card-border);
 }
 
@@ -148,20 +161,21 @@
 }
 
 .author-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .author-title {
     font-size: 0.85rem;
     color: var(--text-secondary);
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .author-company {
     font-size: 0.8rem;
     color: var(--text-muted);
+    letter-spacing: -0.01em;
 }
 
 /* Testimonials Stats */
@@ -184,9 +198,9 @@
     }
     
     .testimonial-card {
-        flex: 0 0 300px;
-        min-width: 300px;
-        max-width: 300px;
+        flex: 0 0 280px;
+        min-width: 280px;
+        max-width: 280px;
     }
 }
 

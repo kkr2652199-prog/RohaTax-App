@@ -1,4 +1,108 @@
-﻿# [2025-12-18 19:00 KST] - homepage1 멤버십 섹션 데이터 소스 통합 및 위치 미세 조정 - 커밋 e88bd79
+﻿# [2025-12-19 10:36 KST] - homepage1 나머지 수정 및 신규 파일 커밋 - 커밋 507f6ca
+
+*   **한국 시간/날짜:** 2025년 12월 19일 10:36 (KST)
+*   **커밋 해시:** 507f6ca
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** 후기 섹션 개선 및 상용화 대비 문서/스크립트 추가
+    1. **후기 섹션 UI/UX 개선:**
+       - `testimonials.css`: 가로 자동 스크롤 캐러셀 스타일 개선
+       - `testimonials.js`: `requestAnimationFrame` 기반 부드러운 무한 스크롤 구현
+       - `_testimonials.html`: 현실적이고 사실 기반의 후기 텍스트로 개선
+    2. **Use Cases 섹션 개선:**
+       - `use-cases.css`: 세무사/대행사 카드의 metric-box 스타일 개선
+       - `_use_cases.html`: 텍스트를 한 줄로 깔끔하게 정리
+    3. **상용화 대비 문서 추가:**
+       - `CLOUDFLARE_IMPACT_ANALYSIS.md`: Cloudflare 도입 시 영향 분석
+       - `CLOUDFLARE_SETUP_GUIDE.md`: Cloudflare 설정 가이드
+       - `DEPLOYMENT_CHECKLIST.md`: 배포 전 체크리스트
+       - `DEPLOYMENT_SCRIPTS_EXPLAINED.md`: 배포 스크립트 설명
+       - `GIT_REMOTE_UPDATE_GUIDE.md`: 원격 서버 업데이트 가이드
+       - `OPERATIONAL_FEATURES_AUDIT.md`: 운영 기능 현황 감사
+       - `PRODUCTION_PRIORITY_TASKS.md`: 상용화 우선순위 작업
+       - `PRODUCTION_SETUP_GUIDE.md`: 프로덕션 환경 설정 가이드
+       - `SECURITY_AND_PRODUCTION_READINESS.md`: 보안 및 상용화 준비도 분석
+       - `SOCIAL_LOGIN_IMPLEMENTATION_GUIDE.md`: 소셜 로그인 구현 가이드
+    4. **데이터베이스 마이그레이션 스크립트:**
+       - `scripts/migrate_to_postgresql.py`: SQLite → PostgreSQL 마이그레이션
+       - `scripts/migrate_to_mysql.py`: SQLite → MySQL 마이그레이션
+    5. **배포 스크립트:**
+       - `scripts/deploy.sh`: 자동화된 배포 스크립트
+*   **결과:**
+    - ✅ 후기 섹션의 현실적인 톤과 부드러운 자동 스크롤 구현
+    - ✅ 상용화를 위한 완전한 문서화 및 배포 준비 완료
+    - ✅ 다양한 데이터베이스 마이그레이션 옵션 제공
+    - ✅ 자동화된 배포 프로세스 구축
+
+---
+
+# [2025-12-19 10:36 KST] - homepage1 점검 모드 및 자동 백업 스케줄러 구현 - 커밋 3f84439
+
+*   **한국 시간/날짜:** 2025년 12월 19일 10:36 (KST)
+*   **커밋 해시:** 3f84439
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** 상용화 대비 핵심 운영 기능인 점검 모드와 자동 백업 스케줄러 구현
+    1. **APScheduler 라이브러리 추가:**
+       - `requirements.txt`에 `APScheduler==3.10.4` 추가
+       - 백그라운드 스케줄링을 위한 필수 라이브러리
+    2. **점검 모드 (Maintenance Mode) 구현:**
+       - `app.py`에 `_check_maintenance_mode()` 미들웨어 함수 추가
+       - `maintenance.flag` 파일 존재 시 모든 페이지 요청을 점검 페이지로 리다이렉트
+       - `/static/` 경로는 제외하여 이미지/CSS 정상 작동 보장
+       - 백도어 기능: 로컬호스트(`127.0.0.1`, `localhost`) 접속 시 점검 모드 무시
+       - 헤더 백도어: `X-Bypass-Maintenance` 헤더로 관리자 우회 가능
+       - HTTP 503 상태 코드 반환
+    3. **점검 페이지 템플릿 생성:**
+       - `templates/maintenance.html` 생성
+       - 깔끔하고 정중한 디자인의 점검 안내 페이지
+       - 점검 시작 시간, 예상 소요 시간, 고객센터 이메일 표시
+       - 그라디언트 배경과 애니메이션 효과 적용
+    4. **자동 백업 스케줄러 구현:**
+       - `backup_database()` 함수 구현
+       - `BackgroundScheduler`를 사용하여 매일 새벽 04:00 자동 실행
+       - 백업 위치: `database/backups/app_YYYYMMDD_HHMMSS.db`
+       - 30일 이상 된 백업 파일 자동 삭제 기능
+       - 백업 시작/완료/삭제 로그 기록
+    5. **사용 가이드 문서 작성:**
+       - `MAINTENANCE_AND_BACKUP_GUIDE.md` 생성
+       - 점검 모드 활성화/비활성화 방법
+       - 백도어 사용법
+       - 백업 스케줄 커스터마이징 방법
+       - 문제 해결 가이드 포함
+*   **테스트 결과:**
+    - ✅ 점검 모드 활성화 테스트 완료 (`maintenance.flag` 파일 생성 → 점검 페이지 표시 확인)
+    - ✅ 점검 모드 비활성화 테스트 완료 (파일 삭제 → 정상 페이지 복구)
+    - ✅ 백도어 기능 확인 (로컬호스트 접속 시 점검 모드 우회)
+    - ✅ 자동 백업 스케줄러 시작 로그 확인
+*   **결과:**
+    - ✅ 상용화를 위한 핵심 운영 기능 완성
+    - ✅ 긴급 점검 시 `touch maintenance.flag` 한 줄로 사이트 제어 가능
+    - ✅ 매일 자동 백업으로 데이터 손실 위험 최소화
+    - ✅ 30일 자동 정리로 디스크 공간 효율적 관리
+
+---
+
+# [2025-12-18 19:30 KST] - homepage1 무료 2종 프로모션 카드 UI/텍스트 강화 - 커밋 84fe022
+
+*   **한국 시간/날짜:** 2025년 12월 18일 19:30 (KST)
+*   **커밋 해시:** 84fe022
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** homepage1 하단 멤버십 섹션의 무료 2종(토큰/기간) 프로모션 카드를 시각적으로 더 강하게 강조
+    1. **핵심 수치 강조:**
+       - `_pricing.html`에서 무료 토큰 수/기간(`token_amount`/`duration_days`)을 `event-number` 클래스로 분리
+       - `pricing.css`에서 `event-number`에 굵은 오렌지 색상, 큰 폰트(1.4rem, 900 weight)를 적용해 “무료 70개 / 1일” 등 숫자가 카드에서 가장 먼저 보이도록 처리
+    2. **혜택 문구 재구성:**
+       - “계정당 1회 무료 제공”, “금액 부담 없이 즉시 사용”, “관리자 승인 없이 자동 적용”을 리스트 항목으로 나눠 줄바꿈/가독성 개선
+       - 기간제 무료 상품에는 “고객 대신 발급 가능”, “(공급자 정보 변경 지원)” 문구를 추가해 골드 요금제의 강점을 무료 이벤트 버전으로 자연스럽게 녹여냄
+    3. **무료 카드 전용 비주얼 강화:**
+       - 무료 2종 카드를 라이트 그라디언트 배경(옅은 노랑/핑크/블루) + 골든 톤 보더/그림자로 변경해 유료 3종과 시각적으로 구분
+       - “무료 (이벤트)” 가격에 `price-free` 클래스를 적용, 그라디언트 텍스트 + 굵은 폰트로 무료 혜택이 한눈에 들어오도록 강조
+*   **결과:**
+    - ✅ 무료 2종 카드가 하단 멤버십 섹션의 “프로모션 핵심 영역”처럼 보이도록 시각적 우선순위 확보
+    - ✅ 토큰 수/기간/혜택 문구가 한눈에 들어와, 사용자가 공짜 혜택의 크기를 직관적으로 인지 가능
+
+---
+
+# [2025-12-18 19:00 KST] - homepage1 멤버십 섹션 데이터 소스 통합 및 위치 미세 조정 - 커밋 e88bd79
 
 *   **한국 시간/날짜:** 2025년 12월 18일 19:00 (KST)
 *   **커밋 해시:** e88bd79

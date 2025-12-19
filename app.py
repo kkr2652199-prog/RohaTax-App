@@ -9,11 +9,15 @@ load_dotenv(override=True)
 import mimetypes
 import os
 import time
-from datetime import datetime
+import shutil
+import logging
+from datetime import datetime, timedelta
 
 import psutil
 from flask import Flask, jsonify, render_template, request, session
 from werkzeug.exceptions import HTTPException
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from config.settings import settings
 from core.change_detector import change_detector
@@ -121,6 +125,80 @@ def inject_text():
 init_logging()
 ensure_database_initialized()
 
+# 자동 백업 스케줄러 초기화
+def backup_database():
+    """
+    데이터베이스 자동 백업 함수
+    - 매일 새벽 04:00에 실행
+    - database/app.db → database/backups/app_YYYYMMDD_HHMMSS.db
+    - 30일 이상 된 백업 파일 자동 삭제
+    """
+    try:
+        logger = logging.getLogger(__name__)
+        logger.info("🔄 자동 백업 시작...")
+        
+        # 백업 디렉토리 확인
+        backup_dir = os.path.join(app_dir, 'database', 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # 원본 DB 파일 경로
+        source_db = os.path.join(app_dir, 'database', 'app.db')
+        
+        if not os.path.exists(source_db):
+            logger.warning("⚠️ 백업할 데이터베이스 파일이 없습니다: %s", source_db)
+            return
+        
+        # 백업 파일명 생성 (YYYYMMDD_HHMMSS 형식)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f'app_{timestamp}.db'
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        # 백업 실행
+        shutil.copy2(source_db, backup_path)
+        backup_size = os.path.getsize(backup_path)
+        logger.info("✅ 백업 완료: %s (크기: %s bytes)", backup_filename, backup_size)
+        
+        # 오래된 백업 파일 삭제 (30일 이상)
+        cutoff_date = datetime.now() - timedelta(days=30)
+        deleted_count = 0
+        
+        for filename in os.listdir(backup_dir):
+            if filename.startswith('app_') and filename.endswith('.db'):
+                file_path = os.path.join(backup_dir, filename)
+                try:
+                    file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                    if file_mtime < cutoff_date:
+                        os.remove(file_path)
+                        deleted_count += 1
+                        logger.info("🗑️ 오래된 백업 파일 삭제: %s", filename)
+                except Exception as e:
+                    logger.warning("⚠️ 백업 파일 삭제 실패 (%s): %s", filename, e)
+        
+        if deleted_count > 0:
+            logger.info("🗑️ 총 %d개의 오래된 백업 파일 삭제 완료", deleted_count)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("❌ 자동 백업 실패: %s", e, exc_info=True)
+
+
+# 백업 스케줄러 설정
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(
+    func=backup_database,
+    trigger=CronTrigger(hour=4, minute=0),  # 매일 새벽 04:00
+    id='daily_backup',
+    name='일일 데이터베이스 백업',
+    replace_existing=True
+)
+
+# 스케줄러 시작
+try:
+    scheduler.start()
+    logging.getLogger(__name__).info("✅ 자동 백업 스케줄러 시작 (매일 04:00)")
+except Exception as e:
+    logging.getLogger(__name__).error("❌ 백업 스케줄러 시작 실패: %s", e)
+
 # 버전 관리 시스템 초기화
 try:
     # 초기 버전 생성 (없는 경우에만)
@@ -140,6 +218,37 @@ try:
 except Exception as e:
     # Python 3.14 Template Strings 사용
     print(f"Version management system initialization failed: {e}")
+
+
+# 점검 모드 미들웨어 (가장 먼저 체크)
+@app.before_request
+def _check_maintenance_mode():
+    """
+    점검 모드 체크
+    - maintenance.flag 파일이 존재하면 점검 모드 활성화
+    - /static/ 경로는 제외
+    - 백도어: 로컬호스트 또는 특정 헤더로 우회 가능
+    """
+    # 정적 파일은 항상 통과
+    if request.path.startswith("/static"):
+        return None
+    
+    # 백도어: 로컬호스트는 점검 모드 무시
+    if request.remote_addr in ['127.0.0.1', 'localhost', '::1']:
+        return None
+    
+    # 백도어: 특정 헤더로 우회 (관리자 테스트용)
+    bypass_header = request.headers.get('X-Bypass-Maintenance', '')
+    if bypass_header == os.getenv('MAINTENANCE_BYPASS_KEY', 'admin-bypass-2025'):
+        return None
+    
+    # 점검 모드 플래그 파일 확인
+    maintenance_flag_path = os.path.join(app_dir, 'maintenance.flag')
+    if os.path.exists(maintenance_flag_path):
+        # 점검 페이지 렌더링
+        maintenance_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        response = render_template('maintenance.html', maintenance_time=maintenance_time)
+        return response, 503  # Service Unavailable
 
 
 # 세션 강제 초기화 훅 제거 (로그인 유지 보장)

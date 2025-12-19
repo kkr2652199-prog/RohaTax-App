@@ -28,21 +28,22 @@
                 </h3>
                 <p class="product-description">
                     {% if free_token and free_token.token_amount %}
-                        {{ free_token.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                        <span class="event-number">{{ free_token.token_amount }}</span>개의 무료 토큰이 즉시 지급됩니다
                     {% elif free_token and free_token.duration_days %}
-                        {{ free_token.duration_days }}일간 무료 이용 가능
+                        <span class="event-number">{{ free_token.duration_days }}</span>일간 무료 이용 가능
                     {% else %}
                         가입 즉시 혜택을 받아보세요
                     {% endif %}
                 </p>
-                <div class="product-price">
+                <div class="product-price price-free">
                     무료<span class="product-price-unit"> (이벤트)</span>
                 </div>
                 <ul class="product-feature-list">
                     {% if free_token and free_token.token_amount %}
-                    <li>{{ free_token.token_amount }}개의 무료 토큰 지급</li>
-                    <li>금액 부담 없이 즉시 사용</li>
-                    <li>관리자 승인 없이 자동 적용</li>
+                    <li class="event-main-benefit"><span class="event-number">{{ free_token.token_amount }}</span>개의 무료 토큰 지급</li>
+                    <li>계정당 1회 무료 제공</li>
+                    <li class="event-note">금액 부담 없이 즉시 사용</li>
+                    <li class="event-note">관리자 승인 없이 자동 적용</li>
                     {% elif free_token and free_token.duration_days %}
                     <li>{{ free_token.duration_days }}일간 무제한 사용</li>
                     <li>모든 기능 이용 가능</li>
@@ -64,25 +65,27 @@
                 </h3>
                 <p class="product-description">
                     {% if free_period and free_period.token_amount %}
-                        {{ free_period.token_amount }}개의 무료 토큰이 즉시 지급됩니다
+                        <span class="event-number">{{ free_period.token_amount }}</span>개의 무료 토큰이 즉시 지급됩니다
                     {% elif free_period and free_period.duration_days %}
-                        {{ free_period.duration_days }}일간 무료 이용 가능
+                        <span class="event-number">{{ free_period.duration_days }}</span>일간 무료 이용 가능
                     {% else %}
                         가입 즉시 혜택을 받아보세요
                     {% endif %}
                 </p>
-                <div class="product-price">
+                <div class="product-price price-free">
                     무료<span class="product-price-unit"> (이벤트)</span>
                 </div>
                 <ul class="product-feature-list">
                     {% if free_period and free_period.token_amount %}
-                    <li>{{ free_period.token_amount }}개의 무료 토큰 지급</li>
-                    <li>금액 부담 없이 즉시 사용</li>
-                    <li>관리자 승인 없이 자동 적용</li>
+                    <li class="event-main-benefit"><span class="event-number">{{ free_period.token_amount }}</span>개의 무료 토큰 지급</li>
+                    <li>계정당 1회 무료 제공</li>
+                    <li class="event-note">금액 부담 없이 즉시 사용</li>
+                    <li class="event-note">관리자 승인 없이 자동 적용</li>
                     {% elif free_period and free_period.duration_days %}
-                    <li>{{ free_period.duration_days }}일간 무제한 사용</li>
-                    <li>모든 기능 이용 가능</li>
-                    <li>자동 갱신 없음</li>
+                    <li class="event-main-benefit">{{ free_period.duration_days }}일간 무제한 사용</li>
+                    <li>고객 대신 발급 가능</li>
+                    <li class="event-note">(공급자 정보 변경 지원)</li>
+                    <li class="event-note">계정당 1회 무료 제공 · 자동 갱신 없음</li>
                     {% else %}
                     <li>신규 회원 전용 혜택</li>
                     <li>가입 즉시 적용</li>
