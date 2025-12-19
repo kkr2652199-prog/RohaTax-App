@@ -1,4 +1,32 @@
-﻿# [2025-12-19 10:36 KST] - homepage1 나머지 수정 및 신규 파일 커밋 - 커밋 507f6ca
+﻿# [2025-12-19 12:38:44 KST] - Rate Limiting 정석 구조 리팩토링 - 커밋 25b3f38
+
+*   **한국 시간/날짜:** 2025년 12월 19일 12:38:44 (KST)
+*   **커밋 해시:** 25b3f38
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** Rate Limiting을 정석적인 Flask 확장 구조로 리팩토링하여 순환 참조 방지 및 코드 정리
+    1. **core/extensions.py 생성:**
+       - Limiter 객체를 중앙에서 관리하는 확장 모듈 생성
+       - `app` 인스턴스 없이 생성 후 `init_app()`으로 초기화하는 구조
+       - 순환 참조 방지를 위한 분리
+    2. **app.py 수정:**
+       - `from flask_limiter import Limiter` 직접 import 삭제
+       - `limiter = Limiter(...)` 직접 생성 코드 삭제
+       - `from core.extensions import limiter` 추가
+       - `limiter.init_app(app)` 초기화 방식으로 변경
+       - Blueprint 등록 후 동적 적용 코드 제거 (`if 'login_post' in auth_bp.view_functions:` 블록 삭제)
+    3. **routes/home_modules/auth_routes.py 수정:**
+       - `from core.extensions import limiter` 추가
+       - `@limiter.limit("5 per minute")` 데코레이터를 `login_post` 함수에 직접 적용
+       - 보안 설정이 라우트 함수 바로 위에 명시되어 가독성 향상
+*   **결과:**
+    - ✅ 순환 참조 문제 해결 (Blueprint에서 app.py를 import하지 않음)
+    - ✅ Clean Code 원칙 준수 (보안 설정이 라우트에 명시)
+    - ✅ 정석적인 Flask 확장 구조 적용
+    - ✅ 서버 재시작 시 ImportError 없이 정상 구동 확인
+
+---
+
+# [2025-12-19 10:36 KST] - homepage1 나머지 수정 및 신규 파일 커밋 - 커밋 507f6ca
 
 *   **한국 시간/날짜:** 2025년 12월 19일 10:36 (KST)
 *   **커밋 해시:** 507f6ca
