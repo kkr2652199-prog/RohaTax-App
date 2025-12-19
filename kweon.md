@@ -1,4 +1,44 @@
-﻿# [2025-12-19 12:38:44 KST] - Rate Limiting 정석 구조 리팩토링 - 커밋 25b3f38
+﻿# [2025-12-19 12:50:04 KST] - 레드 팀 감사 후 발견된 문제점 및 기타 수정사항 커밋 - 커밋 4014f36
+
+*   **한국 시간/날짜:** 2025년 12월 19일 12:50:04 (KST)
+*   **커밋 해시:** 4014f36
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** 레드 팀 감사 수행 후 발견된 문제점 및 상용화 대비 문서 추가
+    1. **상용화 대비 문서 추가:**
+       - `AUTH_AND_ADMIN_AUDIT.md`: 인증 및 관리자 기능 감사 문서
+       - `LINUX_DEPLOYMENT_CHECKLIST.md`: Linux 배포 체크리스트
+       - `PRODUCTION_RISK_AUDIT.md`: 프로덕션 위험 감사 문서
+       - `UX_AND_MARKETING_AUDIT.md`: UX 및 마케팅 감사 문서
+       - `Procfile`: 프로덕션 배포용 프로세스 파일
+    2. **에러 페이지 추가:**
+       - `templates/errors/429.html`: Rate Limiting 초과 시 표시할 에러 페이지
+    3. **데이터베이스 스키마 업데이트:**
+       - `database/schema.sql`: 스키마 업데이트
+    4. **UI/UX 개선:**
+       - `templates/homepage.html`: 홈페이지 템플릿 개선
+       - `templates/register.html`: 회원가입 페이지 개선
+       - `templates/base.html`: 기본 템플릿 개선
+       - `static/css/register_modern.css`: 회원가입 페이지 스타일 개선
+    5. **라우트 및 코어 로직 개선:**
+       - `routes/conversion_modules/conversion_engine_routes.py`: 변환 엔진 라우트 개선
+       - `routes/home_modules/registration_routes.py`: 회원가입 라우트 개선
+       - `core/db.py`: 데이터베이스 코어 로직 개선
+    6. **의존성 업데이트:**
+       - `requirements.txt`: 패키지 의존성 업데이트
+*   **레드 팀 감사 결과:**
+    - 모바일 호환성 문제 발견 (상): hero.css의 min-width: 640px 고정값
+    - 데이터베이스 스키마 불일치 발견 (중): activity_logs 테이블이 schema.sql에 없음
+    - 기밀 유출: 양호 (환경변수 사용)
+    - 코드 위생: 양호 (임시 파일 없음)
+*   **결과:**
+    - ✅ 상용화 대비 문서화 완료
+    - ✅ Rate Limiting 에러 페이지 추가
+    - ✅ UI/UX 개선사항 반영
+    - ⚠️ 모바일 호환성 및 스키마 불일치 문제는 추후 수정 필요
+
+---
+
+# [2025-12-19 12:38:44 KST] - Rate Limiting 정석 구조 리팩토링 - 커밋 25b3f38
 
 *   **한국 시간/날짜:** 2025년 12월 19일 12:38:44 (KST)
 *   **커밋 해시:** 25b3f38
