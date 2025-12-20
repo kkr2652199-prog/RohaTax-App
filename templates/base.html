@@ -48,7 +48,7 @@
     {% endif %}
 </head>
 <body>
-    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path and request.endpoint != 'auth.login' and '/login' not in request.path %}
+    {% if request.endpoint != 'password.forgot_password' and '/forgot-password' not in request.path and request.endpoint != 'auth.login' and '/login' not in request.path and '/studio' not in request.path %}
     {% include 'partials/header.html' %}
     {% endif %}
     <main>
