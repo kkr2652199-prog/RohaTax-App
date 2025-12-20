@@ -1,4 +1,42 @@
-﻿# [2025-12-19 14:56:21 KST] - 블로그 스튜디오 BYOK 모델 및 키 관리 HUD 구현 - 커밋 f7b5918
+﻿# [2025-12-20 18:32:02 KST] - 본진 병합: homepage1 작업 내용 반영 및 불필요 파일 삭제 - 커밋 96d94f3
+
+*   **한국 시간/날짜:** 2025년 12월 20일 18:32:02 (KST)
+*   **커밋 해시:** 96d94f3329c0f157fddb092de20fbbf12498f882
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** homepage1(전초기지)의 모든 변경사항을 본진으로 병합
+    1. **파일 병합:**
+       - `app.py`, `config/settings.py` 병합
+       - `core/email_sender.py`, `core/email_verification_manager.py`, `core/file_validator.py` 병합
+       - `static/js/3d/FurnitureViewer.js`, `static/js/3d/ProductFactory.js` 병합
+       - `templates/admin/furniture_studio.html` 병합
+    2. **불필요 파일 삭제:**
+       - `kweon11/` 폴더 삭제
+       - `kwon3d/` 폴더 삭제
+       - `static/js/3d/gift_box_3d.js` 삭제
+       - `static/js/3d/event_products_3d_scene.js` 삭제
+       - `static/test_kwon3d_enhanced.html` 삭제
+       - `static/css/home_prime.css.backup` 삭제
+       - `static/assets/video/roha_conversion_demo.mp4` 삭제 (290.94 MB)
+    3. **.gitignore 강화:**
+       - `*.backup`, `*.bak`, `~$*` 패턴 추가
+    4. **데이터베이스 병합:**
+       - `database/app.db` 병합
+       - `database/versions.db` 병합
+       - `conversion_stats.db` 병합
+    5. **감사 보고서 추가:**
+       - `DEPLOYMENT_CRITICAL_ISSUES.md`
+       - `PROJECT_AUDIT_REPORT.md`
+       - `SECURITY_AUDIT_REPORT.md`
+       - `VIDEO_FILE_AUDIT_REPORT.md`
+*   **결과:**
+    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
+    - ✅ 불필요 파일 삭제로 약 291 MB 용량 절감
+    - ✅ 본진과 homepage1 동기화 완료
+    - ✅ 데이터베이스 병합 완료
+
+---
+
+# [2025-12-19 14:56:21 KST] - 블로그 스튜디오 BYOK 모델 및 키 관리 HUD 구현 - 커밋 f7b5918
 
 *   **한국 시간/날짜:** 2025년 12월 19일 14:56:21 (KST)
 *   **커밋 해시:** f7b5918
