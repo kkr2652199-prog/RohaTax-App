@@ -8,7 +8,7 @@ from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.utils import row_value
 from core.token_service import calculate_available_tokens
-from ..utils.auth import ensure_login_for_json
+from routes.utils.auth import ensure_login_for_json
 import logging
 
 user_bp = Blueprint('user', __name__)
