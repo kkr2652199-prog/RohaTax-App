@@ -327,7 +327,8 @@ class EmailVerificationManager:
             # 현재는 실제 이메일 발송 대신 로그만 기록
             # 향후 SMTP 서비스 연동 시 실제 발송 구현
             
-            verification_url = f"http://localhost:3000/verify-email/{token}"
+            from config.settings import settings
+            verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
             
             self.logger.info(f"인증 이메일 발송 시뮬레이션:")
             self.logger.info(f"  수신자: {email}")

@@ -37,11 +37,17 @@ class Settings:
     # DEBUG 모드 (기본값 false로 변경, 성능 최적화)
     # 개발 환경에서도 기본적으로 False로 설정하여 성능 저하 방지
     # 필요시 .env 파일에서 DEBUG=true로 명시적 설정
-    DEBUG: bool = get_env("DEBUG", "false").lower() == "true"
-    
-    # 환경별 자동 설정
-    if ENVIRONMENT == "production" and DEBUG:
-        print("⚠️  WARNING: DEBUG mode is enabled in production. This is a security risk!")
+    # 프로덕션 환경에서는 무조건 False로 강제 (보안)
+    if ENVIRONMENT == "production":
+        # 프로덕션 환경에서는 DEBUG 모드 강제 비활성화
+        DEBUG = False
+        if get_env("DEBUG", "false").lower() == "true":
+            print("❌ CRITICAL: DEBUG mode cannot be enabled in production!")
+            print("DEBUG mode is automatically disabled in production for security.")
+            sys.exit(1)
+    else:
+        # 개발/스테이징 환경에서는 환경 변수로 제어
+        DEBUG = get_env("DEBUG", "false").lower() == "true"
     
     PORT: int = int(get_env("PORT", "5001"))  # homepage1 워크트리 기본 포트: 5001
     HOST: str = get_env("HOST", "127.0.0.1")
@@ -69,6 +75,9 @@ class Settings:
     # 토큰 시스템 설정
     DEFAULT_TOKEN_BALANCE: int = int(get_env("DEFAULT_TOKEN_BALANCE", "100"))
     TOKEN_COST_PER_CONVERSION: int = int(get_env("TOKEN_COST_PER_CONVERSION", "1"))
+    
+    # 프론트엔드 URL 설정 (이메일 링크용)
+    FRONTEND_URL: str = get_env("FRONTEND_URL", "http://localhost:3000")
 
 
 settings = Settings()

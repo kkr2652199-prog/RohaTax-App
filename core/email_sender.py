@@ -5,6 +5,7 @@ Flask-Mail을 사용한 이메일 발송 기능
 import logging
 from typing import Optional
 import os
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,12 @@ try:
             if not mail_server:
                 logger.warning("이메일 서버 설정이 없습니다. 콘솔에 토큰을 출력합니다.")
                 logger.info(f"비밀번호 재설정 토큰 - 사용자: {username}, 이메일: {email}, 토큰: {token}")
-                logger.info(f"재설정 URL: http://localhost:3000/reset-password/{token}")
+                reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
+                logger.info(f"재설정 URL: {reset_url}")
                 return False
             
             # 메일 메시지 생성
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
             msg = Message(
                 subject='비밀번호 재설정 요청',
                 recipients=[email],
@@ -58,7 +61,7 @@ try:
 비밀번호 재설정 요청이 접수되었습니다.
 
 다음 링크를 클릭하여 새로운 비밀번호를 설정해주세요:
-http://localhost:3000/reset-password/{token}
+{reset_url}
 
 이 링크는 1시간 동안만 유효합니다.
 만약 비밀번호 재설정을 요청하지 않으셨다면, 이 이메일을 무시하셔도 됩니다.
@@ -89,10 +92,10 @@ RohaTax 팀
             <p>안녕하세요 <strong>{username}</strong>님,</p>
             <p>비밀번호 재설정 요청이 접수되었습니다.</p>
             <p>다음 버튼을 클릭하여 새로운 비밀번호를 설정해주세요:</p>
-            <a href="http://localhost:3000/reset-password/{token}" class="button">비밀번호 재설정</a>
+            <a href="{reset_url}" class="button">비밀번호 재설정</a>
             <p style="margin-top: 30px; font-size: 12px; color: #666;">
                 또는 다음 링크를 브라우저에 복사하여 접속하세요:<br>
-                <a href="http://localhost:3000/reset-password/{token}">http://localhost:3000/reset-password/{token}</a>
+                <a href="{reset_url}">{reset_url}</a>
             </p>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
             <p style="font-size: 12px; color: #666;">
@@ -133,6 +136,7 @@ except ImportError:
         """Flask-Mail이 없을 때 콘솔 출력"""
         logger.warning("이메일 발송 불가 - Flask-Mail 미설치")
         logger.info(f"비밀번호 재설정 토큰 - 수신자: {email}, 사용자: {username}, 토큰: {token}")
-        logger.info(f"재설정 URL: http://localhost:3000/reset-password/{token}")
+        reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
+        logger.info(f"재설정 URL: {reset_url}")
         return False
 

@@ -439,6 +439,8 @@
     <!-- Three.js 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- CSS3DRenderer - HTML/CSS를 3D 객체로 렌더링 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
     <!-- GLTFLoader (3D 모델 로드용) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     
@@ -450,6 +452,22 @@
             }
             if (typeof GLTFLoader !== 'undefined') {
                 THREE.GLTFLoader = GLTFLoader;
+            }
+            // CSS3DRenderer를 전역으로 노출
+            if (typeof CSS3DRenderer !== 'undefined') {
+                window.CSS3DRenderer = CSS3DRenderer;
+                THREE.CSS3DRenderer = CSS3DRenderer;
+                
+                // CSS3DObject도 전역으로 노출 (CSS3DRenderer의 정적 속성)
+                if (CSS3DRenderer.CSS3DObject) {
+                    window.CSS3DObject = CSS3DRenderer.CSS3DObject;
+                    THREE.CSS3DObject = CSS3DRenderer.CSS3DObject;
+                    console.log('✅ [Furniture Studio] CSS3DObject 전역 노출 완료');
+                } else {
+                    console.warn('⚠️ [Furniture Studio] CSS3DRenderer.CSS3DObject를 찾을 수 없습니다.');
+                    console.log('💡 [Furniture Studio] CSS3DRenderer:', CSS3DRenderer);
+                    console.log('💡 [Furniture Studio] CSS3DRenderer 프로토타입:', Object.getPrototypeOf(CSS3DRenderer));
+                }
             }
         }
     </script>
@@ -987,6 +1005,7 @@
                     updateStatus('❌ Crown3D 생성 실패: ' + error.message, true);
                 }
             };
+            
         }
         
         // DOM 로드 완료 후 초기화
