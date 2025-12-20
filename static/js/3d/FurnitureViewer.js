@@ -24,6 +24,7 @@ class FurnitureViewer {
     this.currentProduct = null;
     this.animationId = null;
     this.factory = null; // ProductFactory 참조 (선택적)
+    this.css3dRenderer = null; // CSS3DRenderer (HTML/CSS 렌더링용)
 
     this.init();
   }
@@ -86,6 +87,9 @@ class FurnitureViewer {
 
     // OrbitControls 설정
     this.setupControls();
+    
+    // CSS3DRenderer 초기화 (HTML/CSS 렌더링용)
+    this.initCSS3DRenderer();
 
     // 반응형 처리
     window.addEventListener('resize', () => this.resize());
@@ -94,6 +98,32 @@ class FurnitureViewer {
     this.animate();
 
     console.log('✅ [FurnitureViewer] 초기화 완료');
+  }
+  
+  /**
+   * CSS3DRenderer 초기화 (HTML/CSS를 3D 객체로 렌더링)
+   */
+  initCSS3DRenderer() {
+    try {
+      const CSS3DRendererClass = window.CSS3DRenderer || (typeof CSS3DRenderer !== 'undefined' ? CSS3DRenderer : null);
+      if (CSS3DRendererClass) {
+        this.css3dRenderer = new CSS3DRendererClass();
+        this.css3dRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.css3dRenderer.domElement.style.position = 'absolute';
+        this.css3dRenderer.domElement.style.top = '0';
+        this.css3dRenderer.domElement.style.left = '0';
+        this.css3dRenderer.domElement.style.pointerEvents = 'none';
+        this.css3dRenderer.domElement.style.zIndex = '999';
+        this.container.appendChild(this.css3dRenderer.domElement);
+        console.log('✅ [FurnitureViewer] CSS3DRenderer 초기화 완료');
+      } else {
+        console.warn('⚠️ [FurnitureViewer] CSS3DRenderer를 사용할 수 없습니다.');
+        this.css3dRenderer = null;
+      }
+    } catch (error) {
+      console.error('❌ [FurnitureViewer] CSS3DRenderer 초기화 실패:', error);
+      this.css3dRenderer = null;
+    }
   }
 
   /**
@@ -246,6 +276,11 @@ class FurnitureViewer {
 
     // 렌더링
     this.renderer.render(this.scene, this.camera);
+    
+    // CSS3DRenderer 렌더링 (HTML/CSS 객체)
+    if (this.css3dRenderer) {
+      this.css3dRenderer.render(this.scene, this.camera);
+    }
   }
 
   /**
@@ -260,6 +295,11 @@ class FurnitureViewer {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    
+    // CSS3DRenderer 크기 조정
+    if (this.css3dRenderer) {
+      this.css3dRenderer.setSize(width, height);
+    }
   }
 
   /**

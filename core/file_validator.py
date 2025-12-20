@@ -13,13 +13,16 @@ import time
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 import json
+from config.settings import settings
 
 class FileValidator:
     """파일 이동 및 웹 접근성 검증 시스템"""
     
-    def __init__(self, root_path: str, base_url: str = "http://localhost:8080"):
+    def __init__(self, root_path: str, base_url: str = None):
+        from config.settings import settings
         self.root_path = root_path
-        self.base_url = base_url
+        # base_url이 제공되지 않으면 settings에서 가져오거나 기본값 사용
+        self.base_url = base_url or getattr(settings, 'FRONTEND_URL', 'http://localhost:8080')
         self.validation_log = []
         self.recovery_log = []
         

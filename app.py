@@ -438,10 +438,12 @@ app.config["DATABASE"] = "database/app.db"
 
 # 세션 보안 강화 설정
 app.config["SESSION_COOKIE_HTTPONLY"] = True  # XSS 방지
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF 방지
+app.config["SESSION_COOKIE_SAMESITE"] = (
+    "Strict" if security_config.is_production() else "Lax"
+)  # 프로덕션: Strict, 개발: Lax (CSRF 방지)
 app.config["SESSION_COOKIE_SECURE"] = (
     security_config.is_secure_cookie_required()
-)  # HTTPS 전용
+)  # HTTPS 전용 (프로덕션에서만 True)
 app.config["PERMANENT_SESSION_LIFETIME"] = settings.PERMANENT_SESSION_LIFETIME
 app.config["SESSION_COOKIE_NAME"] = "flask_session"
 app.config["SESSION_COOKIE_PATH"] = "/"  # 쿠키 경로 제한
@@ -788,6 +790,7 @@ start_time = time.time()
 
 # 관리자 전용 가구 디자인 스튜디오
 @app.route("/admin/studio")
+@limiter.exempt  # Rate limit 제외 (관리자 전용 페이지)
 def admin_furniture_studio():
     """관리자 전용 가구 디자인 스튜디오"""
     # 추후 로그인 체크 로직이 들어갈 자리
