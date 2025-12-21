@@ -1,4 +1,39 @@
-﻿# [2025-12-20 18:23:49 KST] - 프로젝트 전역 자율 정밀 진단 및 불필요 자산 삭제 - 커밋 1a91d51
+﻿# [2025-12-21 10:31:33 KST] - React Navbar 제거 및 Flask 헤더 통합, 헤더 메뉴 표시 보장 - 커밋 259cbb3
+
+*   **한국 시간/날짜:** 2025년 12월 21일 10:31:33 (KST)
+*   **커밋 해시:** 259cbb3698448bb0a78a8eb65c9166382ec4ed00
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** React Navbar 제거 및 Flask 헤더 통합, 블로그 스튜디오 헤더 메뉴 표시 보장
+    1. **React Navbar 제거 (`kweon21/App.tsx`):**
+       - Navbar 컴포넌트 import 제거 (Line 7)
+       - JSX에서 `<Navbar />` 사용 부분 제거 (Line 1129)
+       - React 앱이 헤더 없이 본문만 렌더링하도록 변경
+    2. **헤더 z-index 및 표시 보장 (`static/css/layout/header.css`):**
+       - `.navbar` z-index: 1000 → 9999로 상향 조정
+       - `.nav-menu`에 `z-index: 9999`, `visibility: visible`, `opacity: 1` 보장 스타일 추가
+       - `.nav-link`에 `display: inline-block`, `visibility: visible`, `opacity: 1` 보장 스타일 추가
+       - 모든 스타일에 `!important` 적용하여 다른 스타일 덮어쓰기 방지
+    3. **Flask 헤더 표시 조건 수정 (`templates/base.html`):**
+       - `/studio` 경로 제외 조건 제거
+       - 블로그 스튜디오에서도 Flask 헤더가 표시되도록 수정
+    4. **Iframe z-index 조정 (`templates/studio/studio_overlay.html`):**
+       - `.studio-iframe`에 `z-index: 1` 설정
+       - 헤더(z-index: 9999)보다 낮게 설정하여 헤더가 iframe 위에 표시되도록 보장
+*   **결과:**
+    - ✅ React Navbar 제거로 더블 헤더 현상 해결
+    - ✅ Flask 헤더가 블로그 스튜디오에서도 정상 표시
+    - ✅ 모든 헤더 메뉴 항목(기능 소개, 성공 사례, 유료 상점, 3D 체험 상점, AI 블로그 스튜디오, 고객 지원) 정상 표시
+    - ✅ 로그인 상태에 따른 메뉴(워크스페이스, 마이홈, 로그인/회원가입) 정상 표시
+    - ✅ z-index 우선순위: 헤더(9999) > 모달(2000) > 상태바(1000) > iframe(1)
+*   **수정된 파일:**
+    - `kweon21/App.tsx`
+    - `static/css/layout/header.css`
+    - `templates/base.html`
+    - `templates/studio/studio_overlay.html`
+
+---
+
+# [2025-12-20 18:23:49 KST] - 프로젝트 전역 자율 정밀 진단 및 불필요 자산 삭제 - 커밋 1a91d51
 
 *   **한국 시간/날짜:** 2025년 12월 20일 18:23:49 (KST)
 *   **커밋 해시:** 1a91d51f8b5ee7231e6ee0feb32fc1cd09d6be0a
