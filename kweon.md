@@ -1,3 +1,34 @@
+# [2025-12-21 10:35:46 KST] - homepage1 브랜치를 main에 병합 완료 - 커밋 e2568f0
+
+*   **한국 시간/날짜:** 2025년 12월 21일 10:35:46 (KST)
+*   **커밋 해시:** e2568f0feb5fde5c99a978a02dcf22908245f06a
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** homepage1 워크트리의 모든 변경사항을 본진(main 브랜치)에 병합
+    1. **병합된 변경사항:**
+       - React Navbar 제거 및 Flask 헤더 통합
+       - 헤더 메뉴 표시 보장 (z-index 상향 및 스타일 강화)
+       - 블로그 스튜디오 헤더 표시 조건 수정
+       - Iframe z-index 조정
+    2. **병합된 파일:**
+       - `kweon21/App.tsx` - Navbar 컴포넌트 제거
+       - `static/css/layout/header.css` - z-index 및 메뉴 표시 보장
+       - `templates/base.html` - /studio 경로 제외 조건 제거
+       - `templates/studio/studio_overlay.html` - iframe z-index 조정
+       - `kweon.md` - 작업 내역 기록 병합
+       - `.gitignore` - 중복 라인 정리
+    3. **추가된 파일:**
+       - NGROK 관련 가이드 파일들
+       - 패키지 업데이트 관련 스크립트들
+       - 데이터베이스 동기화 스크립트들
+*   **결과:**
+    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
+    - ✅ 병합 충돌 해결 완료 (.gitignore, kweon.md)
+    - ✅ 본진과 homepage1 동기화 완료
+    - ✅ React Navbar 제거 및 Flask 헤더 통합 완료
+    - ✅ 헤더 메뉴 표시 보장 완료
+
+---
+
 # [2025-12-21 10:31:33 KST] - React Navbar 제거 및 Flask 헤더 통합, 헤더 메뉴 표시 보장 - 커밋 259cbb3
 
 *   **한국 시간/날짜:** 2025년 12월 21일 10:31:33 (KST)
