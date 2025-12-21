@@ -12,7 +12,7 @@
     padding: 16px 0 !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 1000 !important;
+    z-index: 9999 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.3s ease !important;
 }
@@ -107,16 +107,24 @@
     margin: 0 !important;
     padding: 0 !important;
     flex-direction: row !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 9999 !important;
 }
 
 .nav-menu {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 2rem;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Navigation Links - Hover Animation */
 .navbar .nav-link {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     color: var(--text-color) !important;
     text-decoration: none !important;
     font-weight: 500;

@@ -28,11 +28,13 @@
     /* Iframe 스타일 - React 앱 격리 */
     .studio-iframe {
         width: 100%;
-        height: calc(100vh - 100px); /* 헤더와 알림바 높이를 뺀 나머지 */
+        height: calc(100vh - 80px); /* Flask 헤더 높이(약 70px) + 여유 공간(10px) */
         border: none;
         display: block;
         margin: 0;
         padding: 0;
+        position: relative;
+        z-index: 1; /* 헤더(z-index: 9999)보다 낮게 설정 */
     }
     
     /* body와 main 태그 스타일 초기화 */

@@ -1,4 +1,39 @@
-﻿# [2025-12-20 18:39:42 KST] - AI 블로그 스튜디오 변경사항 본진 병합 완료 - 커밋 [해시]
+# [2025-12-21 10:31:33 KST] - React Navbar 제거 및 Flask 헤더 통합, 헤더 메뉴 표시 보장 - 커밋 259cbb3
+
+*   **한국 시간/날짜:** 2025년 12월 21일 10:31:33 (KST)
+*   **커밋 해시:** 259cbb3698448bb0a78a8eb65c9166382ec4ed00
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** React Navbar 제거 및 Flask 헤더 통합, 블로그 스튜디오 헤더 메뉴 표시 보장
+    1. **React Navbar 제거 (`kweon21/App.tsx`):**
+       - Navbar 컴포넌트 import 제거 (Line 7)
+       - JSX에서 `<Navbar />` 사용 부분 제거 (Line 1129)
+       - React 앱이 헤더 없이 본문만 렌더링하도록 변경
+    2. **헤더 z-index 및 표시 보장 (`static/css/layout/header.css`):**
+       - `.navbar` z-index: 1000 → 9999로 상향 조정
+       - `.nav-menu`에 `z-index: 9999`, `visibility: visible`, `opacity: 1` 보장 스타일 추가
+       - `.nav-link`에 `display: inline-block`, `visibility: visible`, `opacity: 1` 보장 스타일 추가
+       - 모든 스타일에 `!important` 적용하여 다른 스타일 덮어쓰기 방지
+    3. **Flask 헤더 표시 조건 수정 (`templates/base.html`):**
+       - `/studio` 경로 제외 조건 제거
+       - 블로그 스튜디오에서도 Flask 헤더가 표시되도록 수정
+    4. **Iframe z-index 조정 (`templates/studio/studio_overlay.html`):**
+       - `.studio-iframe`에 `z-index: 1` 설정
+       - 헤더(z-index: 9999)보다 낮게 설정하여 헤더가 iframe 위에 표시되도록 보장
+*   **결과:**
+    - ✅ React Navbar 제거로 더블 헤더 현상 해결
+    - ✅ Flask 헤더가 블로그 스튜디오에서도 정상 표시
+    - ✅ 모든 헤더 메뉴 항목(기능 소개, 성공 사례, 유료 상점, 3D 체험 상점, AI 블로그 스튜디오, 고객 지원) 정상 표시
+    - ✅ 로그인 상태에 따른 메뉴(워크스페이스, 마이홈, 로그인/회원가입) 정상 표시
+    - ✅ z-index 우선순위: 헤더(9999) > 모달(2000) > 상태바(1000) > iframe(1)
+*   **수정된 파일:**
+    - `kweon21/App.tsx`
+    - `static/css/layout/header.css`
+    - `templates/base.html`
+    - `templates/studio/studio_overlay.html`
+
+---
+
+# [2025-12-20 18:39:42 KST] - AI 블로그 스튜디오 변경사항 본진 병합 완료 - 커밋 9c55d28
 
 *   **한국 시간/날짜:** 2025년 12월 20일 18:39:42 (KST)
 *   **커밋 해시:** 9c55d28
@@ -71,6 +106,72 @@
     - ✅ 불필요 파일 삭제로 약 291 MB 용량 절감
     - ✅ 본진과 homepage1 동기화 완료
     - ✅ 데이터베이스 병합 완료
+
+---
+
+# [2025-12-20 18:23:49 KST] - 프로젝트 전역 자율 정밀 진단 및 불필요 자산 삭제 - 커밋 1a91d51
+
+*   **한국 시간/날짜:** 2025년 12월 20일 18:23:49 (KST)
+*   **커밋 해시:** 1a91d51f8b5ee7231e6ee0feb32fc1cd09d6be0a
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 프로젝트 전역 자율 정밀 진단 수행 및 불필요 자산 삭제
+    1. **대용량 중복 파일 삭제:**
+       - `static/assets/video/roha_conversion_demo.mp4` (290.94 MB) 삭제
+       - 실제 사용 중인 `static/videos/roha_conversion_demo.mp4.mp4` 보존
+    2. **백업 파일 삭제:**
+       - `static/css/home_prime.css.backup` 삭제
+    3. **고아 파일(Dead Assets) 삭제:**
+       - `static/js/3d/gift_box_3d.js` 삭제 (GiftBox3D.js 사용 중)
+       - `static/js/3d/event_products_3d_scene.js` 삭제 (참조 없음)
+       - `static/test_kwon3d_enhanced.html` 삭제 (테스트 파일)
+    4. **미사용 폴더 삭제:**
+       - `kweon11/` 폴더 전체 삭제 (참조 없음)
+       - `kwon3d/` 폴더 전체 삭제 (참조 없음)
+    5. **.gitignore 강화:**
+       - `*.backup` 패턴 추가
+       - `*.bak` 패턴 추가
+       - `~$*` 패턴 추가 (Excel 임시 파일)
+    6. **감사 보고서 작성:**
+       - `PROJECT_AUDIT_REPORT.md`: 프로젝트 전역 진단 보고서
+       - `VIDEO_FILE_AUDIT_REPORT.md`: 동영상 파일 감사 보고서
+       - `SECURITY_AUDIT_REPORT.md`: 보안 감사 보고서
+       - `DEPLOYMENT_CRITICAL_ISSUES.md`: 배포 중요 이슈 보고서
+*   **결과:**
+    - ✅ 약 291 MB 용량 절감 (중복 비디오 파일 삭제)
+    - ✅ 고아 파일 3개 삭제 완료
+    - ✅ 미사용 폴더 2개 삭제 완료
+    - ✅ .gitignore 강화로 향후 정크 파일 자동 제외
+    - ✅ 프로젝트 구조 단순화 및 위생 상태 최적화
+    - ✅ 상용 서버 배포 준비 완료
+
+---
+
+# [2025-12-20 13:26:47 KST] - Python 패키지 최신 버전 업데이트 및 버전 관리 도구 추가 - 커밋 4a83068
+
+*   **한국 시간/날짜:** 2025년 12월 20일 13:26:47 (KST)
+*   **커밋 해시:** 4a83068
+*   **작업자:** The Executor (Cursor AI)
+*   **작업 내용:** Python 패키지 최신 버전 업데이트 및 버전 관리 도구 추가
+    1. **패키지 업데이트:**
+       - requirements.txt의 모든 패키지를 최신 버전으로 업데이트
+       - 주요 업데이트: Werkzeug 3.1.4, click 8.3.1, SQLAlchemy 2.0.45, xlrd 2.0.2, psutil 7.1.3, python-dotenv 1.2.1, APScheduler 3.11.1
+       - 메이저 업데이트: bcrypt 5.0.0, Flask-Limiter 4.1.1, gunicorn 23.0.0
+    2. **버전 관리 도구 추가:**
+       - check_package_updates.bat: 패키지 버전 확인 배치 파일
+       - check_updates_simple.py: 간단한 버전 확인 스크립트
+       - check_package_versions.py: PyPI 연동 고급 버전 확인 스크립트
+       - update_and_save_versions.py: 자동 업데이트 및 requirements.txt 갱신 스크립트
+       - update_to_latest.bat: 일괄 업데이트 배치 파일
+       - PACKAGE_UPDATE_GUIDE.md: 패키지 업데이트 가이드 문서
+    3. **기타 파일 추가:**
+       - NGROK 관련 가이드 문서들 (NGROK_GUIDE.md, NGROK_빠른_사용법.txt, NGROK_설치_및_사용_가이드.md)
+       - start_ngrok_tunnel.bat: Ngrok 터널링 배치 파일
+       - 기타 유틸리티 배치 파일들
+*   **결과:**
+    - ✅ 모든 패키지 최신 버전으로 업데이트 완료
+    - ✅ requirements.txt 자동 갱신 완료
+    - ✅ 버전 관리 도구 체계 구축 완료
+>>>>>>> homepage1
 
 ---
 
