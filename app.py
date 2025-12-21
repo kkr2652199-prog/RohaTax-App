@@ -420,12 +420,21 @@ def _log_response(resp):
 # 성능 최적화: 브라우저 캐싱 헤더 추가
 @app.after_request
 def _add_cache_headers(resp):
-    """정적 파일에 캐시 헤더 추가 (1년)"""
+    """정적 파일에 캐시 헤더 추가 (개발 모드에서는 캐시 비활성화)"""
     # 정적 파일 (CSS, JS, 이미지 등)
     if request.path.startswith("/static/"):
-        # 1년 캐시 (31536000초)
-        resp.cache_control.max_age = 31536000
-        resp.cache_control.public = True
+        # 개발 모드에서는 캐시 비활성화 (변경사항 즉시 반영)
+        is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
+        if is_production:
+            # 프로덕션: 1년 캐시 (31536000초)
+            resp.cache_control.max_age = 31536000
+            resp.cache_control.public = True
+        else:
+            # 개발 모드: 캐시 비활성화
+            resp.cache_control.no_cache = True
+            resp.cache_control.no_store = True
+            resp.cache_control.must_revalidate = True
+            resp.cache_control.max_age = 0
     return resp
 
 
@@ -439,7 +448,7 @@ app.config["DATABASE"] = "database/app.db"
 # 세션 보안 강화 설정
 app.config["SESSION_COOKIE_HTTPONLY"] = True  # XSS 방지
 app.config["SESSION_COOKIE_SAMESITE"] = (
-    "Strict" if security_config.is_production() else "Lax"
+    "Strict" if os.environ.get('FLASK_ENV') == 'production' else "Lax"
 )  # 프로덕션: Strict, 개발: Lax (CSRF 방지)
 app.config["SESSION_COOKIE_SECURE"] = (
     security_config.is_secure_cookie_required()

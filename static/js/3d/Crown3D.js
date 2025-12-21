@@ -833,9 +833,7 @@ class Crown3D {
    * @returns {THREE.Group} 왕관 모델 그룹
    */
   static createModel(product = null, position = null, addToScene = true) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Crown3D.js:571',message:'createModel ENTRY',data:{product:!!product,position:position,addToScene:addToScene},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    // 디버깅 코드 제거됨 (프로덕션 배포)
     const group = new THREE.Group();
     group.name = 'Crown3D_Group';
 
@@ -886,10 +884,6 @@ class Crown3D {
     group.userData.rotationSpeed = 0.005;
 
     console.log(`✅ [Crown3D] Imperial Crown 생성 완료: 크기 (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Crown3D.js:621',message:'createModel EXIT',data:{groupName:group.name,childrenCount:group.children.length,size:{x:size.x.toFixed(2),y:size.y.toFixed(2),z:size.z.toFixed(2)}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     return group;
   }
 

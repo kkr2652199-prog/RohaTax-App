@@ -683,11 +683,13 @@ function initActivityFilterBar() {
 }
 
 /**
- * 상세 내역 모달 띄우기
+ * 상세 내역 모달 띄우기 (결제 관리 영수증 스타일 - 완전 동일)
  */
 function showActivityDetailsModal(encodedDetails, date) {
     const modalEl = document.getElementById('activityDetailModal');
     const contentEl = document.getElementById('detail-modal-content');
+    const headerEl = document.getElementById('activity-receipt-header');
+    const subtitleEl = document.getElementById('activity-receipt-subtitle');
 
     if (!modalEl || !contentEl) {
         console.error('[CRITICAL] 상세 모달 요소를 찾을 수 없습니다.');
@@ -696,163 +698,952 @@ function showActivityDetailsModal(encodedDetails, date) {
     }
 
     let data = {};
+    let activityType = '';
+    
     if (!encodedDetails) {
         data = { '내용': '세부 정보가 없습니다.' };
     } else {
         try {
             const decoded = decodeURIComponent(encodedDetails);
             data = JSON.parse(decoded);
+            activityType = data.activity_type || data.type || '';
+            
+            // activity_type이 없으면 데이터에서 추출 시도
+            if (!activityType && decoded) {
+                // 문자열에서 activity_type 패턴 찾기
+                const activityTypeMatch = decoded.match(/activity_type["\s]*[:=]["\s]*([^",}\s]+)/i);
+                if (activityTypeMatch) {
+                    activityType = activityTypeMatch[1];
+                    data.activity_type = activityType;
+                }
+            }
         } catch (e) {
-            // 단순 문자열일 경우
+            // JSON 파싱 실패 시, 문자열에서 정보 추출 시도
             try {
-                data = { '내용': decodeURIComponent(encodedDetails) };
+                const decoded = decodeURIComponent(encodedDetails);
+                
+                // activity_type 추출 시도
+                const activityTypeMatch = decoded.match(/activity_type["\s]*[:=]["\s]*([^",}\s]+)/i) ||
+                                        decoded.match(/GRADE_CHANGE|TOKEN_CHARGE|PAYMENT|LOGIN|LOGOUT|PROFILE/i);
+                if (activityTypeMatch) {
+                    activityType = activityTypeMatch[1] || activityTypeMatch[0];
+                }
+                
+                // 등급 변경 정보 추출
+                const oldPlanMatch = decoded.match(/변경\s*전\s*등급\s*(\w+)/i) || decoded.match(/old_plan["\s]*[:=]["\s]*([^",}\s]+)/i);
+                const newPlanMatch = decoded.match(/변경\s*후\s*등급\s*(\w+)/i) || decoded.match(/new_plan["\s]*[:=]["\s]*([^",}\s]+)/i);
+                const reasonMatch = decoded.match(/사유[:\s]+([^activity_type]+)/i) || decoded.match(/reason["\s]*[:=]["\s]*([^",}]+)/i);
+                
+                data = {
+                    '내용': decoded,
+                    activity_type: activityType || 'UNKNOWN'
+                };
+                
+                if (oldPlanMatch) data.old_plan = oldPlanMatch[1];
+                if (newPlanMatch) data.new_plan = newPlanMatch[1];
+                if (reasonMatch) data.reason = reasonMatch[1].trim();
             } catch (_) {
-                data = { '내용': encodedDetails };
+                data = { 
+                    '내용': encodedDetails,
+                    activity_type: ''
+                };
             }
         }
     }
 
-    // 1. 키 매핑 및 표시 순서 정의 (Dictionary)
-    // product_id 제거, 우선순위 조정
-    const fieldConfigs = [
-        { key: 'product_name', label: '상품명' },
-        { key: 'amount', label: '결제 금액', format: 'currency' },
-        { key: 'price', label: '가격', format: 'currency' },
-        { key: 'cost', label: '비용', format: 'currency' },
-        { key: 'token_amount', label: '충전 토큰', format: 'token' },
-        { key: 'token_change', label: '변동량', format: 'token' },
-        { key: 'tokens', label: '토큰', format: 'token' },
-        { key: 'count', label: '건수', format: 'number' },
-        { key: 'payment_id', label: '결제 번호' },
-        { key: 'order_id', label: '주문 번호' },
-        { key: 'method', label: '결제 수단' },
-        // timestamp는 상단에 별도로 표시하므로 제거
-        { key: 'message', label: '상세 내용' },
-        { key: 'reason', label: '사유' },
-        { key: 'ip_address', label: 'IP 주소' },
-        { key: 'user_agent', label: '접속 환경' },
-        { key: 'filename', label: '파일명' },
-        { key: 'file_size', label: '파일 크기', format: 'filesize' },
-        { key: 'status', label: '상태' },
-        { key: 'error', label: '오류 내용' },
-        { key: 'details', label: '상세' },
-        { key: 'path', label: '경로' },
-        { key: 'injected_at', label: '주입 일시' },
-        { key: 'user_plan_snapshot', label: '요금제 스냅샷' },
-        { key: '내용', label: '내용' }
-    ];
+    // 헤더 색상 고정 (관리자 페이지와 100% 동일)
+    if (headerEl) {
+        headerEl.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+    }
+    if (subtitleEl) {
+        subtitleEl.textContent = 'Payment Receipt';
+    }
 
-    // 출력 제외 키 목록
-    const blacklistKeys = new Set(['product_id', 'timestamp']);
-
-    // 2. 값 포맷팅 헬퍼
-    const formatValue = (val, type) => {
-        if (val === null || val === undefined) return '-';
-        const num = Number(val);
-        
-        if (type === 'currency' && !isNaN(num)) {
-            return num.toLocaleString('ko-KR') + ' 원';
+    // ===== 사용자 정보 가져오기 (모든 영수증에 유저명 표시를 위해) =====
+    const fetchUserInfo = async () => {
+        try {
+            const response = await fetch('/api/user-info', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': window.getCSRFToken ? window.getCSRFToken() : ''
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const userData = result.data.user || result.data;
+                    if (userData) {
+                        // username과 email을 data 객체에 추가
+                        if (userData.username) {
+                            data.username = userData.username;
+                        }
+                        if (userData.email) {
+                            data.email = userData.email;
+                        }
+                        // subscription_end_date도 추가 (Gold 상품용)
+                        if (userData.subscription_end_date) {
+                            data.subscription_end_date = userData.subscription_end_date;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[showActivityDetailsModal] 사용자 정보 조회 실패:', e);
         }
-        if (type === 'token' && !isNaN(num)) {
-            return num.toLocaleString('ko-KR') + ' 개';
-        }
-        if (type === 'number' && !isNaN(num)) {
-            return num.toLocaleString('ko-KR') + ' 건';
-        }
-        if (type === 'filesize' && !isNaN(num)) {
-            return (num / 1024).toFixed(1) + ' KB';
-        }
-        return val;
     };
 
-    let html = '';
-    
-    // 상단 날짜 표시 (우아하게)
-    if (date) {
-        html += `<div class="text-center text-secondary mb-4 small" style="letter-spacing: 0.5px;">${date}</div>`;
-    }
-
-    const processedKeys = new Set();
-
-    // A. 사전에 정의된 키 먼저 렌더링
-    if (typeof data === 'object' && data !== null) {
-        fieldConfigs.forEach(config => {
-            if (blacklistKeys.has(config.key)) return; // 블랙리스트 제외
-
-            if (data.hasOwnProperty(config.key)) {
-                const value = data[config.key];
-                // null이거나 빈 문자열이면 건너뛰기 (옵션)
-                if (value === null || value === '') return;
-
-                let displayValue = formatValue(value, config.format);
-
-                // 객체나 배열인 경우 문자열화
-                if (typeof value === 'object') {
-                    try {
-                        displayValue = JSON.stringify(value);
-                    } catch (_) {
-                        displayValue = String(value);
-                    }
-                }
-
-                // 줄바꿈 방지 및 스타일 처리
-                let valueClass = "text-dark fw-bold text-end pe-0 py-2";
-                let valueStyle = "";
-
-                if (['payment_id', 'order_id'].includes(config.key)) {
-                    valueClass += " text-nowrap small";
-                } else {
-                    valueClass += " text-break";
-                    valueStyle = "word-break: break-word;";
-                }
-
-                html += `
-                    <tr style="border-bottom: 1px dashed #e9ecef;">
-                        <th class="text-secondary fw-normal text-start ps-0 py-2" style="letter-spacing: -0.5px;">${config.label}</th>
-                        <td class="${valueClass}" style="${valueStyle}">${displayValue}</td>
-                    </tr>
-                `;
-                processedKeys.add(config.key);
-            }
-        });
-
-        // B. 사전에 없는 나머지 키 렌더링 (맨 아래로)
-        for (const [key, value] of Object.entries(data)) {
-            if (blacklistKeys.has(key)) continue; // 블랙리스트 제외
-            if (!processedKeys.has(key)) {
-                if (value === null || value === '') continue;
-
-                let displayValue = value;
-                if (typeof value === 'object') {
-                    try {
-                        displayValue = JSON.stringify(value);
-                    } catch (_) {
-                        displayValue = String(value);
-                    }
-                }
-
-                html += `
-                    <tr style="border-bottom: 1px dashed #e9ecef;">
-                        <th class="text-secondary fw-normal text-start ps-0 py-2" style="width: 30%; font-size: 0.85rem;">${key}</th>
-                        <td class="text-muted text-end pe-0 py-2 text-break" style="font-size: 0.85rem; word-break: break-word;">${displayValue}</td>
-                    </tr>
-                `;
-            }
+    // ===== 활동 유형별 맞춤 렌더링 함수 =====
+    const renderByActivityType = () => {
+        console.log('[showActivityDetailsModal] activityType:', activityType, 'data keys:', Object.keys(data));
+        
+        // 등급 변경 데이터가 있지만 activityType이 없는 경우도 처리 (우선순위 높임)
+        if ((data.old_plan || data.from_plan) && (data.new_plan || data.to_plan)) {
+            console.log('[showActivityDetailsModal] 등급 변경 영수증 렌더링 (데이터 기반)');
+            return renderGradeChangeReceipt(data, date);
         }
-    } else {
-        // 객체가 아닌 경우
-         html += `
-            <tr style="border-bottom: 1px dashed #e9ecef;">
-                <th class="text-secondary fw-normal text-start ps-0 py-2" style="width: 30%;">내용</th>
-                <td class="text-dark fw-bold text-end pe-0 py-2 text-break">${data}</td>
+        
+        // activityType이 없으면 기본 영수증 반환
+        if (!activityType) {
+            console.log('[showActivityDetailsModal] activityType 없음, 기본 영수증 렌더링');
+            return renderDefaultReceipt(data, date, activityType);
+        }
+        
+        // 1. 결제 관련 (PAYMENT_SUCCESS, PAYMENT_CANCEL, PAYMENT_REFUND)
+        if (activityType.includes('PAYMENT')) {
+            console.log('[showActivityDetailsModal] 결제 영수증 렌더링');
+            return renderPaymentReceipt(data, date);
+        }
+        
+        // 2. 토큰 충전 (TOKEN_CHARGE, TOKEN_GRANT_BY_ADMIN)
+        if (activityType.includes('TOKEN_CHARGE') || activityType.includes('TOKEN_GRANT')) {
+            console.log('[showActivityDetailsModal] 토큰 충전 영수증 렌더링');
+            // Gold 상품이고 subscription_end_date가 없으면 비동기로 사용자 정보 가져오기
+            const tokenAmount = data.charge_token_amount || data.token_amount || data.token_change || 0;
+            const isUnlimited = tokenAmount === -1 || tokenAmount === '-1';
+            if (isUnlimited && !data.subscription_end_date) {
+                renderTokenChargeReceiptAsync(data, date, contentEl);
+                return '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">영수증 정보를 불러오는 중...</p></div>';
+            }
+            return renderTokenChargeReceipt(data, date);
+        }
+        
+        // 2-1. 토큰 리셋 (TOKEN_RESET_BY_ADMIN)
+        if (activityType.includes('TOKEN_RESET')) {
+            console.log('[showActivityDetailsModal] 토큰 리셋 영수증 렌더링');
+            return renderTokenResetReceipt(data, date);
+        }
+        
+        // 3. 토큰 사용 (TOKEN_USE, FILE_CONVERT)
+        if (activityType.includes('TOKEN_USE') || activityType.includes('FILE_CONVERT')) {
+            console.log('[showActivityDetailsModal] 토큰 사용 영수증 렌더링');
+            return renderTokenUseReceipt(data, date, activityType);
+        }
+        
+        // 4. 토큰 환불 (TOKEN_REFUND, PAYMENT_CANCEL)
+        if (activityType.includes('TOKEN_REFUND') || activityType.includes('REFUND')) {
+            console.log('[showActivityDetailsModal] 토큰 환불 영수증 렌더링');
+            return renderTokenRefundReceipt(data, date);
+        }
+        
+        // 5. 등급 변경 (GRADE_CHANGE)
+        if (activityType.includes('GRADE')) {
+            console.log('[showActivityDetailsModal] 등급 변경 영수증 렌더링');
+            return renderGradeChangeReceipt(data, date);
+        }
+        
+        // 6. 프로필 수정 (PROFILE_UPDATE)
+        if (activityType.includes('PROFILE')) {
+            console.log('[showActivityDetailsModal] 프로필 수정 영수증 렌더링');
+            return renderProfileUpdateReceipt(data, date);
+        }
+        
+        // 7. 로그인/로그아웃 (USER_LOGIN, USER_LOGOUT, LOGIN, LOGOUT)
+        if (activityType.includes('LOGIN') || activityType.includes('LOGOUT')) {
+            console.log('[showActivityDetailsModal] 로그인 영수증 렌더링');
+            return renderLoginReceipt(data, date, activityType);
+        }
+        
+        // 8. 기타 (기본 영수증)
+        console.log('[showActivityDetailsModal] 기본 영수증 렌더링');
+        return renderDefaultReceipt(data, date, activityType);
+    };
+
+    // ===== 유저명과 이메일을 렌더링하는 헬퍼 함수 =====
+    function renderUserAndEmail(data) {
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        return `
+            <tr>
+                <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
             </tr>
         `;
     }
 
-    // 내용 주입 및 모달 표시
-    contentEl.innerHTML = html;
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
+    // ===== 결제 영수증 렌더링 =====
+    function renderPaymentReceipt(data, date) {
+        const productName = data.product_name || '알 수 없음';
+        const amount = data.amount || 0;
+        const orderId = data.order_id || '';
+        const paymentMethod = data.payment_method || data.method || '수동 결제';
+        const status = data.status || 'completed';
+        
+        // 상태 배지
+        const getStatusBadge = (status) => {
+            const statusMap = {
+                'completed': '<span class="badge bg-success">완료</span>',
+                'pending': '<span class="badge bg-warning">대기</span>',
+                'cancelled': '<span class="badge bg-danger">취소</span>',
+                'failed': '<span class="badge bg-secondary">실패</span>'
+            };
+            return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
+        };
+        
+        // 총액 표시
+        const isFree = amount === 0;
+        const totalDisplay = isFree ? '무료' : `₩ ${amount.toLocaleString('ko-KR')}`;
+        
+        // 이용 기간 계산 (구독 상품인 경우)
+        let subscriptionInfo = '';
+        if (data.subscription_end_date || data.free_trial_expired_at) {
+            const endDate = data.subscription_end_date ? new Date(data.subscription_end_date) : 
+                          data.free_trial_expired_at ? new Date(data.free_trial_expired_at) : null;
+            const startDate = date ? new Date(date) : new Date();
+            
+            if (endDate) {
+                const diffTime = endDate.getTime() - startDate.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const startLabel = startDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const endLabel = endDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                
+                subscriptionInfo = `
+                    <tr>
+                        <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                        <td style="padding: 0.5rem 0;">
+                            <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
+                            <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        ${orderId ? `<tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">주문번호</td>
+                            <td style="padding: 0.5rem 0;"><code class="text-primary fw-bold">${orderId}</code></td>
+                        </tr>` : ''}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상품명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${productName}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제일시</td>
+                            <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제수단</td>
+                            <td style="padding: 0.5rem 0;">${paymentMethod}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상태</td>
+                            <td style="padding: 0.5rem 0;">${getStatusBadge(status)}</td>
+                        </tr>
+                        ${subscriptionInfo}
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 토큰 충전 영수증 렌더링 (관리자 결제 관리 영수증과 100% 동일 구조) =====
+    function renderTokenChargeReceipt(data, date) {
+        const tokenAmount = data.charge_token_amount || data.token_amount || data.token_change || 0;
+        const orderId = data.order_id || '';
+        const paymentMethod = data.payment_method || data.pg_provider || data.method || '수동 결제';
+        const isUnlimited = tokenAmount === -1 || tokenAmount === '-1';
+        
+        // 상품명 결정 (관리자와 동일한 로직)
+        let productName = '알 수 없음';
+        let isGoldProduct = false;
+        if (isUnlimited) {
+            productName = 'Gold (무제한)';
+            isGoldProduct = true;
+        } else if (tokenAmount >= 100) {
+            productName = 'Premium';
+        } else {
+            productName = 'Standard';
+        }
+        
+        // 결제일시 포맷팅 (관리자와 동일한 형식)
+        let formattedDate = date || '알 수 없음';
+        if (date && typeof date === 'string') {
+            try {
+                const dateObj = new Date(date);
+                if (!isNaN(dateObj.getTime())) {
+                    formattedDate = dateObj.toLocaleDateString('ko-KR', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            } catch (e) {
+                // 날짜 파싱 실패 시 원본 사용
+            }
+        }
+        
+        // 상태 배지 (관리자와 동일)
+        const status = data.status || 'completed';
+        const getStatusBadge = (status) => {
+            const statusMap = {
+                'completed': '<span class="badge bg-success">완료</span>',
+                'pending': '<span class="badge bg-warning">대기</span>',
+                'cancelled': '<span class="badge bg-danger">취소</span>',
+                'failed': '<span class="badge bg-secondary">실패</span>'
+            };
+            return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
+        };
+        
+        // Total 금액 표시 (관리자와 동일)
+        // order_id가 있으면 결제 기록으로 간주하고 금액 표시
+        let amount = data.amount || data.payment_amount || 0;
+        
+        // amount가 없고 order_id가 있으면 결제 기록으로 간주
+        // (실제로는 결제 API를 호출해야 하지만, 일단 데이터에서 추출 시도)
+        if (!amount && orderId) {
+            // order_id가 있으면 결제 기록이므로, 토큰 개수로 금액 추정 (임시)
+            // 실제로는 결제 API를 호출해야 하지만, 일단 토큰 개수로 표시
+            // Premium: 100토큰 = 30,000원, Standard: 50토큰 = 15,000원 (예시)
+            if (tokenAmount >= 100) {
+                amount = 30000; // Premium 가격
+            } else if (tokenAmount >= 50) {
+                amount = 15000; // Standard 가격
+            }
+        }
+        
+        const isFreePayment = amount === 0;
+        const totalDisplay = isFreePayment
+            ? '무료'
+            : `₩ ${amount.toLocaleString('ko-KR')}`;
+        
+        // 이용 기간 정보 (Gold 상품인 경우)
+        let subscriptionInfo = '';
+        if (isGoldProduct && data.subscription_end_date) {
+            try {
+                const endDate = new Date(data.subscription_end_date);
+                const paymentDate = date ? new Date(date) : new Date();
+                
+                const diffTime = endDate.getTime() - paymentDate.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const startLabel = paymentDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const endLabel = endDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                
+                if (diffDays > 0) {
+                    subscriptionInfo = `
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                            <td style="padding: 0.5rem 0;">
+                                <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
+                                <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    subscriptionInfo = `
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                            <td style="padding: 0.5rem 0;">
+                                <strong class="text-danger">만료됨</strong><br>
+                                <small class="text-muted">${endLabel} 기준 만료</small>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (e) {
+                console.warn('[renderTokenChargeReceipt] 구독 정보 처리 실패:', e);
+            }
+        }
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">주문번호</td>
+                            <td style="padding: 0.5rem 0;"><code class="text-primary fw-bold">${orderId || 'N/A'}</code></td>
+                        </tr>
+                        ${renderUserAndEmail(data)}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상품명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${productName}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제일시</td>
+                            <td style="padding: 0.5rem 0;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">결제수단</td>
+                            <td style="padding: 0.5rem 0;">${paymentMethod}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">상태</td>
+                            <td style="padding: 0.5rem 0;">${getStatusBadge(status)}</td>
+                        </tr>
+                        ${subscriptionInfo}
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 토큰 충전 영수증 비동기 렌더링 (사용자 정보 가져오기) =====
+    async function renderTokenChargeReceiptAsync(data, date, contentEl) {
+        try {
+            // 현재 사용자 정보 가져오기 (subscription_end_date 포함)
+            const response = await fetch('/api/user-info', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': window.getCSRFToken ? window.getCSRFToken() : ''
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    // 사용자 정보에서 subscription_end_date 및 username 가져오기
+                    // API 응답 구조: result.data.user 또는 result.data
+                    const userData = result.data.user || result.data;
+                    if (userData) {
+                        if (userData.subscription_end_date) {
+                            data.subscription_end_date = userData.subscription_end_date;
+                        }
+                        // 실제 사용자 아이디(username) 가져오기
+                        if (userData.username) {
+                            data.username = userData.username;
+                        }
+                        // 이메일도 가져오기
+                        if (userData.email) {
+                            data.email = userData.email;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[renderTokenChargeReceiptAsync] 사용자 정보 조회 실패:', e);
+        }
+        
+        // 영수증 렌더링
+        if (contentEl) {
+            contentEl.innerHTML = renderTokenChargeReceipt(data, date);
+        }
+    }
+
+    // ===== 토큰 리셋 영수증 렌더링 =====
+    function renderTokenResetReceipt(data, date) {
+        const totalDisplay = '초기화 완료';
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">처리 내용</td>
+                            <td style="padding: 0.5rem 0;"><strong>토큰 잔액 초기화</strong></td>
+                        </tr>
+                        ${data.reason ? `<tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">처리 사유</td>
+                            <td style="padding: 0.5rem 0;">${data.reason}</td>
+                        </tr>` : ''}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">처리일시</td>
+                            <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 토큰 사용 영수증 렌더링 =====
+    function renderTokenUseReceipt(data, date, activityType) {
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        if (activityType.includes('FILE_CONVERT')) {
+            // 파일 변환
+            const filename = data.filename || data.file_name || '알 수 없음';
+            const extractedRows = data.extracted_rows || data.count || 0;
+            const tokensUsed = data.tokens_deducted || data.token_change || 0;
+            const tokensDisplay = Math.abs(tokensUsed).toLocaleString('ko-KR') + '개';
+            
+            return `
+                <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                                <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">변환 파일명</td>
+                                <td style="padding: 0.5rem 0;"><strong>${filename}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">변환 건수</td>
+                                <td style="padding: 0.5rem 0;"><strong>${extractedRows.toLocaleString('ko-KR')}건</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">사용된 토큰</td>
+                                <td style="padding: 0.5rem 0;"><strong>${tokensDisplay}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">변환일시</td>
+                                <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                        <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${tokensDisplay}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // 일반 토큰 사용
+            const tokensUsed = data.tokens_deducted || data.token_change || 0;
+            const tokensDisplay = Math.abs(tokensUsed).toLocaleString('ko-KR') + '개';
+            
+            return `
+                <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                                <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">사용된 토큰</td>
+                                <td style="padding: 0.5rem 0;"><strong>${tokensDisplay}</strong></td>
+                            </tr>
+                            ${data.message ? `<tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">사용 목적</td>
+                                <td style="padding: 0.5rem 0;">${data.message}</td>
+                            </tr>` : ''}
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">사용일시</td>
+                                <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                        <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${tokensDisplay}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // ===== 토큰 환불 영수증 렌더링 =====
+    function renderTokenRefundReceipt(data, date) {
+        const refundAmount = data.refund_token_amount || data.token_change || 0;
+        const refundDisplay = Math.abs(refundAmount).toLocaleString('ko-KR') + '개';
+        const orderId = data.order_id || '';
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        ${orderId ? `<tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">주문번호</td>
+                            <td style="padding: 0.5rem 0;"><code class="text-primary fw-bold">${orderId}</code></td>
+                        </tr>` : ''}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">환불된 토큰</td>
+                            <td style="padding: 0.5rem 0;"><strong>${refundDisplay}</strong></td>
+                        </tr>
+                        ${data.reason ? `<tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">환불 사유</td>
+                            <td style="padding: 0.5rem 0;">${data.reason}</td>
+                        </tr>` : ''}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">환불일시</td>
+                            <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${refundDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 등급명 한글 변환 함수 =====
+    function translatePlanName(planName) {
+        const planMap = {
+            'free': '무료',
+            'basic': '베이직',
+            'premium': '프리미엄',
+            'gold': '골드',
+            'gold-vip': '골드 VIP',
+            'platinum': '플래티넘',
+            'enterprise': '엔터프라이즈'
+        };
+        return planMap[planName?.toLowerCase()] || planName || '알 수 없음';
+    }
+
+    // ===== 등급 변경 영수증 렌더링 =====
+    function renderGradeChangeReceipt(data, date) {
+        const oldPlanRaw = data.old_plan || data.from_plan || '알 수 없음';
+        const newPlanRaw = data.new_plan || data.to_plan || '알 수 없음';
+        const oldPlan = translatePlanName(oldPlanRaw);
+        const newPlan = translatePlanName(newPlanRaw);
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        // 사유 한글화 (기술적 표현 제거)
+        let reasonText = '';
+        if (data.reason) {
+            reasonText = data.reason
+                .replace(/관리자에 의한 변경/i, '관리자 변경')
+                .replace(/\(관리자 수동\)/i, '')
+                .replace(/\(.*?\)/g, '')
+                .trim();
+        }
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">이전 등급</td>
+                            <td style="padding: 0.5rem 0;"><strong>${oldPlan}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">새 등급</td>
+                            <td style="padding: 0.5rem 0;"><strong>${newPlan}</strong></td>
+                        </tr>
+                        ${reasonText ? `<tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">변경 사유</td>
+                            <td style="padding: 0.5rem 0;">${reasonText}</td>
+                        </tr>` : ''}
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">변경일시</td>
+                            <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">등급 변경 완료</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 프로필 수정 영수증 렌더링 =====
+    function renderProfileUpdateReceipt(data, date) {
+        const changedFields = data.changed_fields_kr || data.changed_fields || [];
+        const fieldsText = Array.isArray(changedFields) ? changedFields.join(', ') : changedFields;
+        const totalDisplay = '수정 완료';
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">수정 항목</td>
+                            <td style="padding: 0.5rem 0;"><strong>${fieldsText || '프로필 정보'}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">수정일시</td>
+                            <td style="padding: 0.5rem 0;">${date || '알 수 없음'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 로그인/로그아웃 영수증 렌더링 (날짜/시간만) =====
+    function renderLoginReceipt(data, date, activityType) {
+        const isLogin = activityType.includes('LOGIN');
+        const actionText = isLogin ? '로그인' : '로그아웃';
+        const totalDisplay = actionText;
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                            <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted" style="padding: 0.5rem 0;">${actionText} 일시</td>
+                            <td style="padding: 0.5rem 0;"><strong>${date || '알 수 없음'}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 기본 영수증 렌더링 =====
+    function renderDefaultReceipt(data, date, activityType) {
+        // 숨겨야 할 기술적 필드명 목록
+        const hiddenKeys = new Set([
+            'activity_type', 'type', 'log_type', 'id', '_id', 'timestamp', 'created_at', 'updated_at',
+            'old_plan', 'new_plan', 'from_plan', 'to_plan', // 등급 변경 필드는 별도 처리
+            'user_id', 'user_id_str', 'details_summary', 'meta'
+        ]);
+        
+        // 의미있는 필드만 추출하여 표시
+        const displayFields = [];
+        
+        // 기술적 필드명을 한글로 매핑
+        const fieldLabelMap = {
+            'product_name': '상품명',
+            'amount': '금액',
+            'token_change': '토큰 변동량',
+            'tokens': '토큰',
+            'message': '상세 내용',
+            'reason': '사유',
+            'filename': '파일명',
+            'file_name': '파일명',
+            'count': '건수',
+            'extracted_rows': '변환 건수',
+            'order_id': '주문번호',
+            'payment_id': '결제 번호',
+            'payment_method': '결제 수단',
+            'method': '결제 수단',
+            'status': '상태'
+        };
+        
+        // 데이터의 모든 키를 순회하면서 의미있는 필드만 추출
+        Object.keys(data).forEach(key => {
+            // 숨겨야 할 필드는 건너뛰기
+            if (hiddenKeys.has(key)) return;
+            
+            const value = data[key];
+            if (value === null || value === undefined || value === '') return;
+            
+            // 이미 처리된 필드는 건너뛰기
+            if (['product_name', 'amount', 'token_change', 'message', 'reason'].includes(key)) return;
+            
+            // 필드 레이블 가져오기 (매핑에 없으면 원본 키 사용)
+            const label = fieldLabelMap[key] || key.replace(/_/g, ' ');
+            
+            // 값 포맷팅
+            let formattedValue = value;
+            if (typeof value === 'number') {
+                if (key.includes('amount') || key.includes('price') || key.includes('cost')) {
+                    formattedValue = `${value.toLocaleString('ko-KR')}원`;
+                } else if (key.includes('token')) {
+                    formattedValue = `${value.toLocaleString('ko-KR')}개`;
+                } else {
+                    formattedValue = value.toLocaleString('ko-KR');
+                }
+            } else if (typeof value === 'string' && value.length > 100) {
+                formattedValue = value.substring(0, 100) + '...';
+            }
+            
+            displayFields.push({ label, value: formattedValue });
+        });
+        
+        // 우선순위 필드 먼저 추가
+        if (data.product_name) displayFields.unshift({ label: '상품명', value: data.product_name });
+        if (data.amount !== undefined && data.amount !== null) {
+            displayFields.push({ label: '금액', value: `${data.amount.toLocaleString('ko-KR')}원` });
+        }
+        if (data.token_change !== undefined && data.token_change !== null) {
+            const change = Number(data.token_change);
+            displayFields.push({ 
+                label: change > 0 ? '충전된 토큰' : '사용된 토큰', 
+                value: `${change > 0 ? '+' : ''}${Math.abs(change).toLocaleString('ko-KR')}개` 
+            });
+        }
+        if (data.message) displayFields.push({ label: '상세 내용', value: data.message });
+        if (data.reason) displayFields.push({ label: '사유', value: data.reason });
+        
+        // 유저명 먼저 추가
+        const userName = data.username || data.user_name || '사용자';
+        const userEmail = data.email || data.user_email || '';
+        let rowsHtml = `
+            <tr>
+                <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">유저명</td>
+                <td style="padding: 0.5rem 0;"><strong>${userName}</strong>${userEmail ? `<br><small class="text-muted">${userEmail}</small>` : ''}</td>
+            </tr>
+        `;
+        
+        displayFields.forEach(field => {
+            rowsHtml += `
+                <tr>
+                    <td class="text-muted" style="width: 120px; padding: 0.5rem 0;">${field.label}</td>
+                    <td style="padding: 0.5rem 0;"><strong>${field.value}</strong></td>
+                </tr>
+            `;
+        });
+        
+        if (date) {
+            rowsHtml += `
+                <tr>
+                    <td class="text-muted" style="padding: 0.5rem 0;">거래일시</td>
+                    <td style="padding: 0.5rem 0;">${date}</td>
+                </tr>
+            `;
+        }
+        
+        // 총액 계산 (금액 또는 토큰이 있으면 표시)
+        let totalDisplay = '처리 완료';
+        if (data.amount !== undefined && data.amount !== null && data.amount !== 0) {
+            totalDisplay = data.amount === 0 ? '무료' : `₩ ${data.amount.toLocaleString('ko-KR')}`;
+        } else if (data.token_change !== undefined && data.token_change !== null) {
+            const change = Number(data.token_change);
+            totalDisplay = `${change > 0 ? '+' : ''}${Math.abs(change).toLocaleString('ko-KR')}개`;
+        }
+        
+        return `
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table class="table table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tbody>
+                        ${rowsHtml || '<tr><td colspan="2" class="text-center text-muted">상세 정보 없음</td></tr>'}
+                    </tbody>
+                </table>
+                
+                <hr style="border-top: 2px dashed #d1d5db; margin: 1.5rem 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 1.1rem; font-weight: 600;">Total</span>
+                    <span class="fw-bold" style="font-size: 1.5rem; color: #10B981;">${totalDisplay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 영수증 렌더링 실행 (비동기 사용자 정보 가져오기) =====
+    // 사용자 정보를 먼저 가져온 후 영수증 렌더링
+    fetchUserInfo().then(() => {
+        const receiptHtml = renderByActivityType();
+        contentEl.innerHTML = receiptHtml;
+        
+        // 모달 표시
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }).catch(() => {
+        // 사용자 정보 가져오기 실패 시에도 영수증 표시
+        const receiptHtml = renderByActivityType();
+        contentEl.innerHTML = receiptHtml;
+        
+        // 모달 표시
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    });
 }
 
 // ===== 렌더링 함수 =====
@@ -974,19 +1765,29 @@ function createActivityItemHtml(log, index) {
             detailsText = activityTypeText;
         }
         
-        // 모달용 페이로드 (원본 보존)
+        // 모달용 페이로드 (원본 보존 + activity_type 포함)
         const detailsPayload = detailsSource || detailsText || '';
-        let detailPayloadString = '';
+        let detailPayloadObj = {};
+        
+        // details를 객체로 변환
         if (typeof detailsPayload === 'string') {
-            detailPayloadString = detailsPayload;
-        } else {
             try {
-                detailPayloadString = JSON.stringify(detailsPayload);
+                detailPayloadObj = JSON.parse(detailsPayload);
             } catch (_) {
-                detailPayloadString = detailsText || '';
+                detailPayloadObj = { '내용': detailsPayload };
             }
+        } else if (typeof detailsPayload === 'object' && detailsPayload !== null) {
+            detailPayloadObj = detailsPayload;
+        } else {
+            detailPayloadObj = { '내용': String(detailsPayload) };
         }
-        const encodedDetailPayload = encodeURIComponent(detailPayloadString || '');
+        
+        // activity_type 추가 (모달에서 사용)
+        if (activityTypeRaw) {
+            detailPayloadObj.activity_type = activityTypeRaw;
+        }
+        
+        const encodedDetailPayload = encodeURIComponent(JSON.stringify(detailPayloadObj));
         
         // 토큰 변화량 포맷팅
         let tokenChange = '';

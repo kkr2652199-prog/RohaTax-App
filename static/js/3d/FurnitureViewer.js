@@ -184,9 +184,7 @@ class FurnitureViewer {
    * @param {THREE.Group} productGroup - 표시할 가구 객체
    */
   displayProduct(productGroup) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FurnitureViewer.js:156',message:'displayProduct ENTRY',data:{hasProductGroup:!!productGroup,isGroup:productGroup instanceof THREE.Group,currentProduct:!!this.currentProduct,sceneChildrenCount:this.scene.children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
+    // 디버깅 코드 제거됨 (프로덕션 배포)
     if (!productGroup || !(productGroup instanceof THREE.Group)) {
       console.error('[FurnitureViewer] 유효하지 않은 가구 객체입니다.');
       return;
@@ -201,13 +199,7 @@ class FurnitureViewer {
     // 2. 새 가구 추가 (Scene 정중앙)
     this.currentProduct = productGroup.clone(); // 원본 보호를 위해 클론
     this.currentProduct.position.set(0, 0, 0); // 정중앙 배치
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FurnitureViewer.js:171',message:'BEFORE viewer scene.add',data:{clonedGroupName:this.currentProduct.name,sceneChildrenCount:this.scene.children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     this.scene.add(this.currentProduct);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FurnitureViewer.js:172',message:'AFTER viewer scene.add',data:{clonedGroupName:this.currentProduct.name,sceneChildrenCount:this.scene.children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
 
     // 3. 카메라 거리 자동 조정
     this.adjustCamera();

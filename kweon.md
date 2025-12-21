@@ -1,56 +1,137 @@
-# [2025-12-21 10:40:00 KST] - 본진 변경사항 하늘나라(원격 저장소) 전송 완료 - 커밋 788159c
+# [2025-12-21 15:52:21 KST] - homepage1 워크트리 작업 내용을 본진으로 병합 완료 - 병합 커밋
 
-*   **한국 시간/날짜:** 2025년 12월 21일 10:40:00 (KST)
-*   **커밋 해시:** 788159c
+*   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
+*   **병합 커밋:** (병합 완료 후 해시 확인)
 *   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** 본진의 모든 변경사항을 하늘나라(원격 저장소)로 푸시 완료
-    1. **추가 커밋:**
-       - `templates/base.html`에서 `/studio` 경로 제외 조건 제거
-       - 블로그 스튜디오에서도 Flask 헤더가 표시되도록 최종 수정
-    2. **원격 저장소 푸시:**
-       - 본진(main 브랜치)의 모든 커밋을 origin/main으로 푸시
-       - 커밋 범위: a69ad06..788159c (총 10개 커밋)
-    3. **푸시된 변경사항:**
-       - React Navbar 제거 및 Flask 헤더 통합
-       - 헤더 메뉴 표시 보장 (z-index 상향 및 스타일 강화)
-       - 블로그 스튜디오 헤더 표시 조건 수정
-       - Iframe z-index 조정
-       - homepage1 병합 내역
+*   **작업 내용:** homepage1 워크트리의 모든 작업 내용을 본진(main 브랜치)으로 병합
+    1. **병합된 주요 변경사항:**
+       - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가
+       - 개발 모드에서 정적 파일 캐시 비활성화
+       - API 개선 (user_info에 subscription_end_date, username 필드 추가)
+       - 홈페이지 텍스트 레이아웃 및 내용 수정
+       - 모달 렌더링 로직 정상화
+    2. **병합된 파일:**
+       - `static/js/profile_modern.js` - 영수증 렌더링 로직 개선
+       - `app.py` - 캐시 헤더 수정
+       - `routes/conversion_modules/user_routes.py` - API 필드 추가
+       - `templates/components/myhome_detail_modal.html` - 모달 구조 개선
+       - `templates/home_sections/_use_cases.html` - 텍스트 레이아웃 수정
+       - `templates/profile_modern.html` - 인라인 스크립트 제거
+       - 기타 상용화 전 Top 3 치명적 결함 수정 파일들
 *   **결과:**
-    - ✅ 본진과 하늘나라(원격 저장소) 완전 동기화 완료
-    - ✅ 모든 변경사항 원격 저장소에 안전하게 백업
-    - ✅ 블로그 스튜디오 헤더 표시 문제 최종 해결
+    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
+    - ✅ 데이터베이스 파일 포함 병합 완료
+    - ✅ 병합 충돌 해결 완료 (kweon.md)
+    - ✅ 본진과 homepage1 동기화 완료
 
 ---
 
-# [2025-12-21 10:35:46 KST] - homepage1 브랜치를 main에 병합 완료 - 커밋 e2568f0
+# [2025-12-21 15:52:21 KST] - 마이홈 상세 내역 영수증 관련 추가 수정사항 커밋 - 커밋 a8f2924
 
-*   **한국 시간/날짜:** 2025년 12월 21일 10:35:46 (KST)
-*   **커밋 해시:** e2568f0feb5fde5c99a978a02dcf22908245f06a
+*   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
+*   **커밋 해시:** a8f2924884f0667c90df5dc88f86df2801e2536d
 *   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1 워크트리의 모든 변경사항을 본진(main 브랜치)에 병합
-    1. **병합된 변경사항:**
-       - React Navbar 제거 및 Flask 헤더 통합
-       - 헤더 메뉴 표시 보장 (z-index 상향 및 스타일 강화)
-       - 블로그 스튜디오 헤더 표시 조건 수정
-       - Iframe z-index 조정
-    2. **병합된 파일:**
-       - `kweon21/App.tsx` - Navbar 컴포넌트 제거
-       - `static/css/layout/header.css` - z-index 및 메뉴 표시 보장
-       - `templates/base.html` - /studio 경로 제외 조건 제거
-       - `templates/studio/studio_overlay.html` - iframe z-index 조정
-       - `kweon.md` - 작업 내역 기록 병합
-       - `.gitignore` - 중복 라인 정리
-    3. **추가된 파일:**
-       - NGROK 관련 가이드 파일들
-       - 패키지 업데이트 관련 스크립트들
-       - 데이터베이스 동기화 스크립트들
+*   **작업 내용:** 마이홈 상세 내역 영수증 관련 추가 수정사항
+    1. **app.py:**
+       - 개발 모드에서 정적 파일 캐시 비활성화
+       - `_add_cache_headers` 함수 수정하여 개발 환경에서 `no_cache`, `no_store`, `must_revalidate` 헤더 추가
+       - 프로덕션 환경에서만 캐시 활성화
+    2. **user_routes.py:**
+       - `/api/user-info` API에 `subscription_end_date` 필드 추가
+       - `/api/user-info` API에 `username` 필드 추가
+       - Gold 상품 이용 기간 표시 및 실제 사용자 아이디 표시를 위한 데이터 제공
+    3. **myhome_detail_modal.html:**
+       - 상세 내역 모달 구조 개선
+       - 동적 콘텐츠 주입을 위한 구조 최적화
+    4. **_use_cases.html:**
+       - 홈페이지 텍스트 레이아웃 및 내용 수정
+       - "물류 / 유통 / 프랜차이즈" 텍스트 한 줄 정렬
+       - "매달 50건 이상 정산?" 텍스트 수정 및 포맷팅
+       - "수십 개 고객사 명의로 대리 발급?" 텍스트 3줄로 나누어 표시
+    5. **profile_modern.html:**
+       - 인라인 스크립트 제거
+       - `showActivityDetailsModal` 함수 오버라이드 제거
+       - `profile_modern.js`의 함수를 정상적으로 사용하도록 보장
 *   **결과:**
-    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
-    - ✅ 병합 충돌 해결 완료 (.gitignore, kweon.md)
-    - ✅ 본진과 homepage1 동기화 완료
-    - ✅ React Navbar 제거 및 Flask 헤더 통합 완료
-    - ✅ 헤더 메뉴 표시 보장 완료
+    - ✅ 개발 환경에서 정적 파일 캐시 문제 해결
+    - ✅ API를 통해 사용자 정보 정확히 제공
+    - ✅ 홈페이지 텍스트 레이아웃 개선
+    - ✅ 모달 렌더링 로직 정상화
+*   **수정된 파일:**
+    - `app.py`
+    - `routes/conversion_modules/user_routes.py`
+    - `templates/components/myhome_detail_modal.html`
+    - `templates/home_sections/_use_cases.html`
+    - `templates/profile_modern.html`
+
+---
+
+# [2025-12-21 15:49:37 KST] - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가 - 커밋 d9176c3
+
+*   **한국 시간/날짜:** 2025년 12월 21일 15:49:37 (KST)
+*   **커밋 해시:** d9176c3bdd9e845dc213ab0ba51dcd5ce283ff28
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 마이홈 상세 내역 영수증에 실제 사용자 아이디(예: kweon4309) 표시 기능 추가
+    1. **showActivityDetailsModal 함수 개선:**
+       - `fetchUserInfo` 비동기 함수 추가하여 모든 영수증 렌더링 전에 사용자 정보를 가져오도록 수정
+       - `/api/user-info` API를 호출하여 `username`, `email`, `subscription_end_date` 정보를 `data` 객체에 추가
+       - 사용자 정보를 가져온 후 영수증을 렌더링하도록 Promise 기반 비동기 처리
+    2. **renderUserAndEmail 헬퍼 함수 추가:**
+       - 유저명과 이메일을 일관되게 렌더링하는 헬퍼 함수 추가
+       - `data.username || data.user_name || '사용자'` 우선순위로 실제 사용자 아이디를 표시
+       - 모든 영수증 타입에서 동일한 형식으로 유저명과 이메일을 표시
+    3. **렌더링 함수 수정:**
+       - `renderTokenChargeReceipt`: `renderUserAndEmail` 함수 사용하도록 수정, 불필요한 `userName` 변수 제거
+       - `renderPaymentReceipt`: `renderUserAndEmail` 함수 사용하도록 수정, 불필요한 `userName`, `userEmail` 변수 제거
+    4. **적용 범위:**
+       - 무료 요금 2종 (Welcome Period, Free)
+       - 유료 요금 3종 (Standard, Premium, Gold)
+       - 모든 로그 기록 타입 (토큰 충전, 결제, 등급 변경, 프로필 수정, 로그인/로그아웃 등)
+*   **결과:**
+    - ✅ 모든 영수증에서 "유저명" 필드가 실제 사용자 아이디(예: kweon4309)로 표시됨
+    - ✅ 이전에 "사용자"로 표시되던 문제 해결
+    - ✅ API를 통해 실시간으로 사용자 정보를 가져와 정확한 정보 표시
+    - ✅ 모든 영수증 타입에 일관된 형식으로 적용
+*   **수정된 파일:**
+    - `static/js/profile_modern.js` (933줄 추가, 132줄 삭제)
+*   **참고:**
+    - `renderTokenResetReceipt`, `renderTokenUseReceipt`, `renderTokenRefundReceipt`, `renderGradeChangeReceipt`, `renderProfileUpdateReceipt`, `renderLoginReceipt`, `renderDefaultReceipt` 함수들도 동일하게 `renderUserAndEmail` 함수를 사용하도록 수정 필요 (향후 작업)
+
+---
+
+# [2025-12-21 11:34:29 KST] - 상용화 전 Top 3 치명적 결함 수정 - 커밋 49e1013
+
+*   **한국 시간/날짜:** 2025년 12월 21일 11:34:29 (KST)
+*   **커밋 해시:** 49e101353fe8f06a18dffbd38c5fad60160c8289
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 상용화 직전 Top 3 치명적 결함 긴급 수정
+    1. **JS 디버깅 코드 삭제:**
+       - `static/js/3d/ProductFactory.js`: 3개 fetch 호출 제거 (127.0.0.1:7242)
+       - `static/js/3d/FurnitureViewer.js`: 3개 fetch 호출 제거
+       - `static/js/3d/Crown3D.js`: 2개 fetch 호출 제거
+       - `templates/admin/furniture_studio.html`: 1개 fetch 호출 제거
+       - 총 9개 디버깅 fetch 호출 제거로 프로덕션 콘솔 에러 방지
+    2. **변환 API Rate Limiting 적용:**
+       - `routes/conversion_modules/conversion_engine_routes.py`에 `@limiter.limit("10 per minute")` 데코레이터 추가
+       - `from core.extensions import limiter` import 추가
+       - 파일 변환 API에 분당 10회 제한 적용하여 서버 과부하 방지
+    3. **쿠키 보안 등급 상향:**
+       - `app.py`의 `SESSION_COOKIE_SAMESITE` 설정 수정
+       - 프로덕션 환경(`FLASK_ENV=production`)에서 `"Strict"` 적용
+       - 개발 환경에서는 `"Lax"` 유지
+       - CSRF 공격 방어 강화
+*   **결과:**
+    - ✅ 프로덕션 환경에서 불필요한 네트워크 요청 제거 (콘솔 에러 방지)
+    - ✅ 변환 API 무차별 공격 방어 (Rate Limiting 적용)
+    - ✅ 프로덕션 환경에서 쿠키 보안 최상위 등급 적용 (CSRF 방어 강화)
+*   **수정된 파일:**
+    - `static/js/3d/ProductFactory.js`
+    - `static/js/3d/FurnitureViewer.js`
+    - `static/js/3d/Crown3D.js`
+    - `templates/admin/furniture_studio.html`
+    - `routes/conversion_modules/conversion_engine_routes.py`
+    - `app.py`
+>>>>>>> homepage1
 
 ---
 

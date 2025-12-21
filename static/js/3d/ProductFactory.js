@@ -1132,9 +1132,7 @@ class ProductFactory {
    * @returns {THREE.Group} 왕관 모델 그룹
    */
   createCrown3D(position, options = {}) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductFactory.js:1134',message:'createCrown3D ENTRY',data:{position:position,options:options,hasScene:!!this.scene},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    // 디버깅 코드 제거됨 (프로덕션 배포)
     if (typeof Crown3D === 'undefined' && typeof window.Crown3D === 'undefined') {
       console.error('      ❌ [ProductFactory] Crown3D 클래스를 찾을 수 없습니다.');
       return null;
@@ -1169,14 +1167,8 @@ class ProductFactory {
       
       // ✅ 씬에 추가하지 않음 (FurnitureViewer.displayProduct에서만 추가)
       // FurnitureViewer가 클론을 만들어서 자신의 scene에 추가하므로, 여기서는 추가하지 않음
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductFactory.js:1170',message:'SKIP scene.add (FurnitureViewer will add)',data:{groupName:group.name,sceneChildrenCount:this.scene.children.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       
       console.log(`      ✅ [ProductFactory] Crown3D 생성 완료: 위치 (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})`);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductFactory.js:1171',message:'createCrown3D EXIT',data:{returnedGroup:!!group},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       return group;
       
     } catch (error) {
