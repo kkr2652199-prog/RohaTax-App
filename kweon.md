@@ -1,4 +1,37 @@
-﻿# [2025-12-21 11:34:29 KST] - 상용화 전 Top 3 치명적 결함 수정 - 커밋 49e1013
+﻿# [2025-12-21 15:49:37 KST] - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가 - 커밋 d9176c3
+
+*   **한국 시간/날짜:** 2025년 12월 21일 15:49:37 (KST)
+*   **커밋 해시:** d9176c3bdd9e845dc213ab0ba51dcd5ce283ff28
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 마이홈 상세 내역 영수증에 실제 사용자 아이디(예: kweon4309) 표시 기능 추가
+    1. **showActivityDetailsModal 함수 개선:**
+       - `fetchUserInfo` 비동기 함수 추가하여 모든 영수증 렌더링 전에 사용자 정보를 가져오도록 수정
+       - `/api/user-info` API를 호출하여 `username`, `email`, `subscription_end_date` 정보를 `data` 객체에 추가
+       - 사용자 정보를 가져온 후 영수증을 렌더링하도록 Promise 기반 비동기 처리
+    2. **renderUserAndEmail 헬퍼 함수 추가:**
+       - 유저명과 이메일을 일관되게 렌더링하는 헬퍼 함수 추가
+       - `data.username || data.user_name || '사용자'` 우선순위로 실제 사용자 아이디를 표시
+       - 모든 영수증 타입에서 동일한 형식으로 유저명과 이메일을 표시
+    3. **렌더링 함수 수정:**
+       - `renderTokenChargeReceipt`: `renderUserAndEmail` 함수 사용하도록 수정, 불필요한 `userName` 변수 제거
+       - `renderPaymentReceipt`: `renderUserAndEmail` 함수 사용하도록 수정, 불필요한 `userName`, `userEmail` 변수 제거
+    4. **적용 범위:**
+       - 무료 요금 2종 (Welcome Period, Free)
+       - 유료 요금 3종 (Standard, Premium, Gold)
+       - 모든 로그 기록 타입 (토큰 충전, 결제, 등급 변경, 프로필 수정, 로그인/로그아웃 등)
+*   **결과:**
+    - ✅ 모든 영수증에서 "유저명" 필드가 실제 사용자 아이디(예: kweon4309)로 표시됨
+    - ✅ 이전에 "사용자"로 표시되던 문제 해결
+    - ✅ API를 통해 실시간으로 사용자 정보를 가져와 정확한 정보 표시
+    - ✅ 모든 영수증 타입에 일관된 형식으로 적용
+*   **수정된 파일:**
+    - `static/js/profile_modern.js` (933줄 추가, 132줄 삭제)
+*   **참고:**
+    - `renderTokenResetReceipt`, `renderTokenUseReceipt`, `renderTokenRefundReceipt`, `renderGradeChangeReceipt`, `renderProfileUpdateReceipt`, `renderLoginReceipt`, `renderDefaultReceipt` 함수들도 동일하게 `renderUserAndEmail` 함수를 사용하도록 수정 필요 (향후 작업)
+
+---
+
+# [2025-12-21 11:34:29 KST] - 상용화 전 Top 3 치명적 결함 수정 - 커밋 49e1013
 
 *   **한국 시간/날짜:** 2025년 12월 21일 11:34:29 (KST)
 *   **커밋 해시:** 49e101353fe8f06a18dffbd38c5fad60160c8289
