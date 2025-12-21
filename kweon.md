@@ -1,4 +1,39 @@
-﻿# [2025-12-21 10:31:33 KST] - React Navbar 제거 및 Flask 헤더 통합, 헤더 메뉴 표시 보장 - 커밋 259cbb3
+﻿# [2025-12-21 11:34:29 KST] - 상용화 전 Top 3 치명적 결함 수정 - 커밋 49e1013
+
+*   **한국 시간/날짜:** 2025년 12월 21일 11:34:29 (KST)
+*   **커밋 해시:** 49e101353fe8f06a18dffbd38c5fad60160c8289
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 상용화 직전 Top 3 치명적 결함 긴급 수정
+    1. **JS 디버깅 코드 삭제:**
+       - `static/js/3d/ProductFactory.js`: 3개 fetch 호출 제거 (127.0.0.1:7242)
+       - `static/js/3d/FurnitureViewer.js`: 3개 fetch 호출 제거
+       - `static/js/3d/Crown3D.js`: 2개 fetch 호출 제거
+       - `templates/admin/furniture_studio.html`: 1개 fetch 호출 제거
+       - 총 9개 디버깅 fetch 호출 제거로 프로덕션 콘솔 에러 방지
+    2. **변환 API Rate Limiting 적용:**
+       - `routes/conversion_modules/conversion_engine_routes.py`에 `@limiter.limit("10 per minute")` 데코레이터 추가
+       - `from core.extensions import limiter` import 추가
+       - 파일 변환 API에 분당 10회 제한 적용하여 서버 과부하 방지
+    3. **쿠키 보안 등급 상향:**
+       - `app.py`의 `SESSION_COOKIE_SAMESITE` 설정 수정
+       - 프로덕션 환경(`FLASK_ENV=production`)에서 `"Strict"` 적용
+       - 개발 환경에서는 `"Lax"` 유지
+       - CSRF 공격 방어 강화
+*   **결과:**
+    - ✅ 프로덕션 환경에서 불필요한 네트워크 요청 제거 (콘솔 에러 방지)
+    - ✅ 변환 API 무차별 공격 방어 (Rate Limiting 적용)
+    - ✅ 프로덕션 환경에서 쿠키 보안 최상위 등급 적용 (CSRF 방어 강화)
+*   **수정된 파일:**
+    - `static/js/3d/ProductFactory.js`
+    - `static/js/3d/FurnitureViewer.js`
+    - `static/js/3d/Crown3D.js`
+    - `templates/admin/furniture_studio.html`
+    - `routes/conversion_modules/conversion_engine_routes.py`
+    - `app.py`
+
+---
+
+# [2025-12-21 10:31:33 KST] - React Navbar 제거 및 Flask 헤더 통합, 헤더 메뉴 표시 보장 - 커밋 259cbb3
 
 *   **한국 시간/날짜:** 2025년 12월 21일 10:31:33 (KST)
 *   **커밋 해시:** 259cbb3698448bb0a78a8eb65c9166382ec4ed00
