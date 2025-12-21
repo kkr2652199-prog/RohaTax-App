@@ -32,7 +32,7 @@ def user_info():
                 """SELECT id, username, email, company_name, business_number,
                           representative_name, phone, address, business_type, business_category,
                           plan_type, monthly_limit, used_count, is_active, is_admin,
-                          token_balance, tokens_used, created_at
+                          token_balance, tokens_used, created_at, subscription_end_date
                    FROM users WHERE id = ?""",
                 (user_id,)
             ).fetchone()
@@ -62,7 +62,8 @@ def user_info():
                 'is_admin': bool(row_value(user, 'is_admin', 0)),
                 'token_balance': row_value(user, 'token_balance', 0) or 0,
                 'tokens_used': row_value(user, 'tokens_used', 0) or 0,
-                'created_at': row_value(user, 'created_at', '')
+                'created_at': row_value(user, 'created_at', ''),
+                'subscription_end_date': row_value(user, 'subscription_end_date', '')
             }
             
             return success('사용자 정보 조회 성공', data={'user': safe_user_data})

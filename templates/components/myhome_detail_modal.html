@@ -1,27 +1,28 @@
-<!-- 상세 영수증 모달 -->
+<!-- 상세 영수증 모달 (결제 관리 영수증 스타일) -->
 <div class="modal fade" id="activityDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
-            <div class="modal-header border-bottom-0 py-3" style="background-color: #f8f9fa;">
-                <h5 class="modal-title fw-bold fs-6" style="color: #2c3e50;">📄 상세 내역</h5>
-                <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+        <div class="modal-content" style="border: 2px solid #e5e7eb; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+            <!-- 영수증 헤더 -->
+            <div class="modal-header border-bottom-0 pb-0" id="activity-receipt-header" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border-radius: 0.375rem 0.375rem 0 0;">
+                <div class="w-100 text-center">
+                    <h4 class="mb-1 fw-bold">RohaTax</h4>
+                    <p class="mb-0 small opacity-90" id="activity-receipt-subtitle">Payment Receipt</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; right: 1rem; top: 1rem;"></button>
             </div>
-            <div class="modal-body p-0">
-                <div id="detail-date-header" class="pt-4 px-4"></div>
-                <div class="p-4 pt-0">
-                    <table class="table table-borderless mb-0 align-middle" style="font-size: 0.9rem; table-layout: fixed;">
-                        <colgroup>
-                            <col style="width: 25%">
-                            <col style="width: 75%">
-                        </colgroup>
-                        <tbody id="detail-modal-content">
-                            <!-- JS가 데이터를 주입하는 공간 -->
-                        </tbody>
-                    </table>
+            
+            <!-- 영수증 바디 -->
+            <div class="modal-body p-4" style="background: #fafafa;">
+                <div id="detail-modal-content">
+                    <!-- JS가 영수증 스타일 HTML을 주입하는 공간 -->
                 </div>
             </div>
-            <div class="modal-footer border-top-0 justify-content-center pb-4 pt-0">
-                <button type="button" class="btn btn-dark w-100 rounded-pill py-2" data-bs-dismiss="modal">확인</button>
+            
+            <!-- 영수증 푸터 -->
+            <div class="modal-footer border-top-0 pt-0" style="background: #fafafa; border-radius: 0 0 0.375rem 0.375rem;">
+                <div class="w-100 d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
             </div>
         </div>
     </div>
