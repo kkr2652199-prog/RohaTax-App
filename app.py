@@ -439,7 +439,7 @@ app.config["DATABASE"] = "database/app.db"
 # 세션 보안 강화 설정
 app.config["SESSION_COOKIE_HTTPONLY"] = True  # XSS 방지
 app.config["SESSION_COOKIE_SAMESITE"] = (
-    "Strict" if security_config.is_production() else "Lax"
+    "Strict" if os.environ.get('FLASK_ENV') == 'production' else "Lax"
 )  # 프로덕션: Strict, 개발: Lax (CSRF 방지)
 app.config["SESSION_COOKIE_SECURE"] = (
     security_config.is_secure_cookie_required()

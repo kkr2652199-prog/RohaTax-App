@@ -15,7 +15,8 @@ import re
 import traceback
 from datetime import datetime
 
-# Rate Limiting import (순환 참조 방지를 위해 함수 내부에서 import)
+# Rate Limiting import
+from core.extensions import limiter
 from core.db import get_conn_optimized as get_conn
 from core.responses import success, error
 from core.conversion_engine import ConversionEngine
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 # 변환 시작: 파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입
 @conversion_engine_bp.route('/api/convert/start', methods=['POST'])
+@limiter.limit("10 per minute")
 def start_conversion():
     """변환 시작 API (파일 업로드 + 공급받는자 정보 추출 + 템플릿 기입)
 

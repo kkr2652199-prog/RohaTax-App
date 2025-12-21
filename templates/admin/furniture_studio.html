@@ -962,9 +962,7 @@
             
             // Crown3D (왕관 - 외부 GLB 모델)
             document.getElementById('btn-crown3d').onclick = () => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/6cdbf604-cbc7-4e56-ae78-2c8a9e87b4b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'furniture_studio.html:946',message:'BUTTON CLICK',data:{buttonId:'btn-crown3d'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                // #endregion
+                // 디버깅 코드 제거됨 (프로덕션 배포)
                 try {
                     const pos = { x: 0, y: 0, z: 0 };
                     
