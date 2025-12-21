@@ -1,4 +1,44 @@
-﻿# [2025-12-21 15:49:37 KST] - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가 - 커밋 d9176c3
+﻿# [2025-12-21 15:52:21 KST] - 마이홈 상세 내역 영수증 관련 추가 수정사항 커밋 - 커밋 a8f2924
+
+*   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
+*   **커밋 해시:** a8f2924884f0667c90df5dc88f86df2801e2536d
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 마이홈 상세 내역 영수증 관련 추가 수정사항
+    1. **app.py:**
+       - 개발 모드에서 정적 파일 캐시 비활성화
+       - `_add_cache_headers` 함수 수정하여 개발 환경에서 `no_cache`, `no_store`, `must_revalidate` 헤더 추가
+       - 프로덕션 환경에서만 캐시 활성화
+    2. **user_routes.py:**
+       - `/api/user-info` API에 `subscription_end_date` 필드 추가
+       - `/api/user-info` API에 `username` 필드 추가
+       - Gold 상품 이용 기간 표시 및 실제 사용자 아이디 표시를 위한 데이터 제공
+    3. **myhome_detail_modal.html:**
+       - 상세 내역 모달 구조 개선
+       - 동적 콘텐츠 주입을 위한 구조 최적화
+    4. **_use_cases.html:**
+       - 홈페이지 텍스트 레이아웃 및 내용 수정
+       - "물류 / 유통 / 프랜차이즈" 텍스트 한 줄 정렬
+       - "매달 50건 이상 정산?" 텍스트 수정 및 포맷팅
+       - "수십 개 고객사 명의로 대리 발급?" 텍스트 3줄로 나누어 표시
+    5. **profile_modern.html:**
+       - 인라인 스크립트 제거
+       - `showActivityDetailsModal` 함수 오버라이드 제거
+       - `profile_modern.js`의 함수를 정상적으로 사용하도록 보장
+*   **결과:**
+    - ✅ 개발 환경에서 정적 파일 캐시 문제 해결
+    - ✅ API를 통해 사용자 정보 정확히 제공
+    - ✅ 홈페이지 텍스트 레이아웃 개선
+    - ✅ 모달 렌더링 로직 정상화
+*   **수정된 파일:**
+    - `app.py`
+    - `routes/conversion_modules/user_routes.py`
+    - `templates/components/myhome_detail_modal.html`
+    - `templates/home_sections/_use_cases.html`
+    - `templates/profile_modern.html`
+
+---
+
+# [2025-12-21 15:49:37 KST] - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가 - 커밋 d9176c3
 
 *   **한국 시간/날짜:** 2025년 12월 21일 15:49:37 (KST)
 *   **커밋 해시:** d9176c3bdd9e845dc213ab0ba51dcd5ce283ff28
