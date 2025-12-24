@@ -168,8 +168,19 @@ function parseDetails(details, activityType) {
     if (parsedData.reason) return `사유: ${parsedData.reason}`;
     
     if (parsedData.product_name) {
+        // Welcome Event를 회원가입 토큰이벤트로 변환
+        // Welcome Period를 회원가입 무제한이벤트로 변환
+        let productName = parsedData.product_name;
+        const productNameLower = productName.toLowerCase();
+        if (productName === 'Welcome Event' || productNameLower === 'welcome event') {
+            productName = '회원가입 토큰이벤트';
+        } else if (productName === 'Welcome Period' || productName === 'Welcome Period Event' || 
+                   productNameLower === 'welcome period' || productNameLower === 'welcome period event' ||
+                   productNameLower.includes('welcome period')) {
+            productName = '회원가입 무제한이벤트';
+        }
         const amount = parsedData.amount ? `(${parseInt(parsedData.amount).toLocaleString('ko-KR')}원)` : '';
-        return `${parsedData.product_name} ${amount}`.trim();
+        return `${productName} ${amount}`.trim();
     }
     
     // 4. 기타 키 찾기
@@ -787,6 +798,17 @@ function showActivityDetailsModal(encodedDetails, date) {
                         if (userData.subscription_end_date) {
                             data.subscription_end_date = userData.subscription_end_date;
                         }
+                        // free_trial_expired_at도 추가 (기간제 이벤트용)
+                        if (userData.free_trial_expired_at) {
+                            data.free_trial_expired_at = userData.free_trial_expired_at;
+                        }
+                        // 무료 토큰 이벤트 기간 정보 (관리자 일반 사용자 관리 화면과 동일)
+                        if (userData.token_event_start_date) {
+                            data.token_event_start_date = userData.token_event_start_date;
+                        }
+                        if (userData.token_event_expires_at) {
+                            data.token_event_expires_at = userData.token_event_expires_at;
+                        }
                     }
                 }
             }
@@ -820,10 +842,17 @@ function showActivityDetailsModal(encodedDetails, date) {
         // 2. 토큰 충전 (TOKEN_CHARGE, TOKEN_GRANT_BY_ADMIN)
         if (activityType.includes('TOKEN_CHARGE') || activityType.includes('TOKEN_GRANT')) {
             console.log('[showActivityDetailsModal] 토큰 충전 영수증 렌더링');
-            // Gold 상품이고 subscription_end_date가 없으면 비동기로 사용자 정보 가져오기
+            // Gold 상품이거나 기간제 이벤트이고 subscription_end_date 또는 free_trial_expired_at이 없으면 비동기로 사용자 정보 가져오기
             const tokenAmount = data.charge_token_amount || data.token_amount || data.token_change || 0;
             const isUnlimited = tokenAmount === -1 || tokenAmount === '-1';
-            if (isUnlimited && !data.subscription_end_date) {
+            const productName = data.product_name || '';
+            const productNameLower = productName.toLowerCase();
+            const isPeriodEvent = productName === 'Welcome Period' || productName === 'Welcome Period Event' || 
+                                  productNameLower === 'welcome period' || productNameLower === 'welcome period event' ||
+                                  productNameLower.includes('welcome period');
+            
+            // Gold 상품이거나 기간제 이벤트인 경우 사용자 정보 가져오기
+            if ((isUnlimited && !data.subscription_end_date) || (isPeriodEvent && !data.free_trial_expired_at)) {
                 renderTokenChargeReceiptAsync(data, date, contentEl);
                 return '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">영수증 정보를 불러오는 중...</p></div>';
             }
@@ -885,14 +914,43 @@ function showActivityDetailsModal(encodedDetails, date) {
 
     // ===== 결제 영수증 렌더링 =====
     function renderPaymentReceipt(data, date) {
-        const productName = data.product_name || '알 수 없음';
+        let productName = data.product_name || '알 수 없음';
+        // Welcome Event / Welcome Period 한글 변환 및 이벤트 플래그 설정
+        const originalProductName = productName;
+        const productNameLower = productName.toLowerCase();
+        let isTokenEvent = false;     // 회원가입 토큰이벤트
+        let isPeriodEvent = false;    // 회원가입 무제한이벤트
+
+        if (productName === 'Welcome Event' || productNameLower === 'welcome event') {
+            productName = '회원가입 토큰이벤트';
+            isTokenEvent = true;
+        } else if (productName === 'Welcome Period' || productName === 'Welcome Period Event' || 
+                   productNameLower === 'welcome period' || productNameLower === 'welcome period event' ||
+                   productNameLower.includes('welcome period')) {
+            productName = '회원가입 무제한이벤트';
+            isPeriodEvent = true;
+        }
+
         const amount = data.amount || 0;
         const orderId = data.order_id || '';
-        const paymentMethod = data.payment_method || data.method || '수동 결제';
+        let paymentMethod = data.payment_method || data.method || '수동 결제';
         const status = data.status || 'completed';
         
+        // 결제수단: 이벤트인 경우 빨간색 "1회 이용권 사용" (금액과 무관하게)
+        if (isTokenEvent || isPeriodEvent) {
+            paymentMethod = '<span style="color: #dc2626; font-weight: 600;">1회 이용권 사용</span>';
+        }
+
         // 상태 배지
         const getStatusBadge = (status) => {
+            // 이벤트 + 완료 상태인 경우 텍스트 변경 (금액과 무관하게)
+            if ((isTokenEvent || isPeriodEvent) && status === 'completed') {
+                if (isTokenEvent) {
+                    return '<span class="badge bg-success">이벤트 토큰 사용가능</span>';
+                } else if (isPeriodEvent) {
+                    return '<span class="badge bg-success">이벤트 무제한 사용가능</span>';
+                }
+            }
             const statusMap = {
                 'completed': '<span class="badge bg-success">완료</span>',
                 'pending': '<span class="badge bg-warning">대기</span>',
@@ -902,9 +960,10 @@ function showActivityDetailsModal(encodedDetails, date) {
             return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
         };
         
-        // 총액 표시
-        const isFree = amount === 0;
-        const totalDisplay = isFree ? '무료' : `₩ ${amount.toLocaleString('ko-KR')}`;
+        // 총액 표시: 이벤트인 경우 "이벤트"로 표시 (금액과 무관하게)
+        const totalDisplay = (isTokenEvent || isPeriodEvent)
+            ? '이벤트'
+            : (amount === 0 ? '무료' : `₩ ${amount.toLocaleString('ko-KR')}`);
         
         // 이용 기간 계산 (구독 상품인 경우)
         let subscriptionInfo = '';
@@ -917,23 +976,39 @@ function showActivityDetailsModal(encodedDetails, date) {
                 const diffTime = endDate.getTime() - startDate.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
+                // 날짜 포맷 개선: YYYY. MM. DD 형식
                 const startLabel = startDate.toLocaleDateString('ko-KR', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
-                });
+                }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
                 const endLabel = endDate.toLocaleDateString('ko-KR', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
+                }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
+                
+                // 만료일 포맷: YYYY. MM. DD HH:MM
+                const expiredDateStr = endDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
+                const expiredTimeStr = endDate.toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
                 });
                 
                 subscriptionInfo = `
                     <tr>
                         <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
                         <td style="padding: 0.5rem 0;">
-                            <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
-                            <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
+                            <div style="margin-bottom: 0.25rem;">
+                                <strong style="font-size: 1rem; color: #1f2937;">${startLabel} ~ ${endLabel}</strong>
+                                <span style="color: #6b7280; font-size: 0.9rem; margin-left: 0.5rem;">(${diffDays}일)</span>
+                            </div>
+                            <small class="text-success" style="font-size: 0.85rem;">만료일: ${expiredDateStr} ${expiredTimeStr}</small>
                         </td>
                     </tr>
                 `;
@@ -986,19 +1061,41 @@ function showActivityDetailsModal(encodedDetails, date) {
     function renderTokenChargeReceipt(data, date) {
         const tokenAmount = data.charge_token_amount || data.token_amount || data.token_change || 0;
         const orderId = data.order_id || '';
-        const paymentMethod = data.payment_method || data.pg_provider || data.method || '수동 결제';
         const isUnlimited = tokenAmount === -1 || tokenAmount === '-1';
         
-        // 상품명 결정 (관리자와 동일한 로직)
+        // 상품명 결정 (product_name 우선 확인, 없으면 tokenAmount로 판단)
         let productName = '알 수 없음';
         let isGoldProduct = false;
-        if (isUnlimited) {
-            productName = 'Gold (무제한)';
-            isGoldProduct = true;
-        } else if (tokenAmount >= 100) {
-            productName = 'Premium';
+        let isPeriodEvent = false; // 기간제 이벤트 여부 (회원가입 무제한이벤트)
+        let isTokenEvent = false;  // 토큰 이벤트 여부 (회원가입 토큰이벤트)
+        
+        // product_name이 있으면 우선 사용 (Welcome Period 구분을 위해)
+        if (data.product_name) {
+            const productNameLower = data.product_name.toLowerCase();
+            if (data.product_name === 'Welcome Period' || data.product_name === 'Welcome Period Event' || 
+                productNameLower === 'welcome period' || productNameLower === 'welcome period event' ||
+                productNameLower.includes('welcome period')) {
+                productName = '회원가입 무제한이벤트';
+                isPeriodEvent = true; // 기간제 이벤트로 표시
+            } else if (data.product_name === 'Welcome Event' || productNameLower === 'welcome event' ||
+                       data.product_name === '회원가입 토큰이벤트') {
+                productName = '회원가입 토큰이벤트';
+                isTokenEvent = true; // 토큰 이벤트로 표시
+            } else {
+                productName = data.product_name;
+            }
         } else {
-            productName = 'Standard';
+            // product_name이 없으면 tokenAmount로 판단
+            if (isUnlimited) {
+                productName = 'Gold (무제한)';
+                isGoldProduct = true;
+            } else if (tokenAmount >= 100) {
+                productName = 'Premium';
+            } else {
+                // Standard는 회원가입 토큰이벤트로 표시
+                productName = '회원가입 토큰이벤트';
+                isTokenEvent = true; // 토큰 이벤트로 표시
+            }
         }
         
         // 결제일시 포맷팅 (관리자와 동일한 형식)
@@ -1020,9 +1117,23 @@ function showActivityDetailsModal(encodedDetails, date) {
             }
         }
         
-        // 상태 배지 (관리자와 동일)
+        // 결제수단 결정 (이벤트인 경우 특별 처리)
+        let paymentMethod = data.payment_method || data.pg_provider || data.method || '수동 결제';
+        if (isPeriodEvent || isTokenEvent) {
+            paymentMethod = '<span style="color: #dc2626; font-weight: 600;">1회 이용권 사용</span>';
+        }
+        
+        // 상태 배지 (이벤트인 경우 특별 처리)
         const status = data.status || 'completed';
         const getStatusBadge = (status) => {
+            // 이벤트인 경우 특별 표시
+            if ((isPeriodEvent || isTokenEvent) && status === 'completed') {
+                if (isPeriodEvent) {
+                    return '<span class="badge bg-success">이벤트 무제한 사용가능</span>';
+                } else if (isTokenEvent) {
+                    return '<span class="badge bg-success">이벤트 토큰 사용가능</span>';
+                }
+            }
             const statusMap = {
                 'completed': '<span class="badge bg-success">완료</span>',
                 'pending': '<span class="badge bg-warning">대기</span>',
@@ -1032,7 +1143,7 @@ function showActivityDetailsModal(encodedDetails, date) {
             return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
         };
         
-        // Total 금액 표시 (관리자와 동일)
+        // Total 금액 표시 (이벤트인 경우 "이벤트"로 표시)
         // order_id가 있으면 결제 기록으로 간주하고 금액 표시
         let amount = data.amount || data.payment_amount || 0;
         
@@ -1050,51 +1161,93 @@ function showActivityDetailsModal(encodedDetails, date) {
         }
         
         const isFreePayment = amount === 0;
-        const totalDisplay = isFreePayment
-            ? '무료'
-            : `₩ ${amount.toLocaleString('ko-KR')}`;
+        // 이벤트인 경우 Total을 "이벤트"로 표시 (금액과 무관하게)
+        const totalDisplay = (isPeriodEvent || isTokenEvent)
+            ? '이벤트'
+            : (isFreePayment
+                ? '무료'
+                : `₩ ${amount.toLocaleString('ko-KR')}`);
         
-        // 이용 기간 정보 (Gold 상품인 경우)
+        // 이용 기간 정보 (Gold 상품 / 기간제 이벤트 / 무료 토큰 이벤트)
         let subscriptionInfo = '';
-        if (isGoldProduct && data.subscription_end_date) {
+        // 기간제 이벤트(Welcome Period), Gold 상품, 무료 체험, 무료 토큰 이벤트인 경우 이용 기간 표시
+        if (
+            isPeriodEvent ||
+            (isGoldProduct && data.subscription_end_date) ||
+            data.free_trial_expired_at ||
+            (isTokenEvent && data.token_event_expires_at)
+        ) {
             try {
-                const endDate = new Date(data.subscription_end_date);
-                const paymentDate = date ? new Date(date) : new Date();
-                
-                const diffTime = endDate.getTime() - paymentDate.getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                const startLabel = paymentDate.toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-                const endLabel = endDate.toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-                
-                if (diffDays > 0) {
-                    subscriptionInfo = `
-                        <tr>
-                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
-                            <td style="padding: 0.5rem 0;">
-                                <strong>${startLabel} ~ ${endLabel} (${diffDays}일)</strong><br>
-                                <small class="text-success">만료일: ${endDate.toLocaleDateString('ko-KR')} ${endDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</small>
-                            </td>
-                        </tr>
-                    `;
+                let endDate = null;
+                let paymentDate = date ? new Date(date) : new Date();
+
+                // 1) 무료 토큰 이벤트: token_event_start_date ~ token_event_expires_at 사용
+                if (isTokenEvent && data.token_event_expires_at) {
+                    endDate = new Date(data.token_event_expires_at);
+                    if (data.token_event_start_date) {
+                        paymentDate = new Date(data.token_event_start_date);
+                    }
                 } else {
-                    subscriptionInfo = `
-                        <tr>
-                            <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
-                            <td style="padding: 0.5rem 0;">
-                                <strong class="text-danger">만료됨</strong><br>
-                                <small class="text-muted">${endLabel} 기준 만료</small>
-                            </td>
-                        </tr>
-                    `;
+                    // 2) 기간제 / 골드 / 무료 체험: 기존 로직 유지
+                    endDate = data.subscription_end_date
+                        ? new Date(data.subscription_end_date)
+                        : data.free_trial_expired_at
+                            ? new Date(data.free_trial_expired_at)
+                            : null;
+                }
+                
+                if (endDate) {
+                    const diffTime = endDate.getTime() - paymentDate.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    // 날짜 포맷 개선: YYYY. MM. DD 형식
+                    const startLabel = paymentDate.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
+                    const endLabel = endDate.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
+                    
+                    // 만료일 포맷: YYYY. MM. DD HH:MM
+                    const expiredDateStr = endDate.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).replace(/\./g, '.').replace(/\s+/g, ' ').trim();
+                    const expiredTimeStr = endDate.toLocaleTimeString('ko-KR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                    
+                    if (diffDays > 0) {
+                        subscriptionInfo = `
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                                <td style="padding: 0.5rem 0;">
+                                    <div style="margin-bottom: 0.25rem;">
+                                        <strong style="font-size: 1rem; color: #1f2937;">${startLabel} ~ ${endLabel}</strong>
+                                        <span style="color: #6b7280; font-size: 0.9rem; margin-left: 0.5rem;">(${diffDays}일)</span>
+                                    </div>
+                                    <small class="text-success" style="font-size: 0.85rem;">만료일: ${expiredDateStr} ${expiredTimeStr}</small>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        subscriptionInfo = `
+                            <tr>
+                                <td class="text-muted" style="padding: 0.5rem 0;">이용 기간</td>
+                                <td style="padding: 0.5rem 0;">
+                                    <strong class="text-danger" style="font-size: 1rem;">만료됨</strong><br>
+                                    <small class="text-muted" style="font-size: 0.85rem;">${endLabel} 기준 만료</small>
+                                </td>
+                            </tr>
+                        `;
+                    }
                 }
             } catch (e) {
                 console.warn('[renderTokenChargeReceipt] 구독 정보 처리 실패:', e);
@@ -1163,6 +1316,10 @@ function showActivityDetailsModal(encodedDetails, date) {
                         if (userData.subscription_end_date) {
                             data.subscription_end_date = userData.subscription_end_date;
                         }
+                        // free_trial_expired_at도 추가 (기간제 이벤트용)
+                        if (userData.free_trial_expired_at) {
+                            data.free_trial_expired_at = userData.free_trial_expired_at;
+                        }
                         // 실제 사용자 아이디(username) 가져오기
                         if (userData.username) {
                             data.username = userData.username;
@@ -1170,6 +1327,13 @@ function showActivityDetailsModal(encodedDetails, date) {
                         // 이메일도 가져오기
                         if (userData.email) {
                             data.email = userData.email;
+                        }
+                        // 무료 토큰 이벤트 기간 정보도 함께 주입
+                        if (userData.token_event_start_date) {
+                            data.token_event_start_date = userData.token_event_start_date;
+                        }
+                        if (userData.token_event_expires_at) {
+                            data.token_event_expires_at = userData.token_event_expires_at;
                         }
                     }
                 }
@@ -1557,7 +1721,20 @@ function showActivityDetailsModal(encodedDetails, date) {
         });
         
         // 우선순위 필드 먼저 추가
-        if (data.product_name) displayFields.unshift({ label: '상품명', value: data.product_name });
+        if (data.product_name) {
+            // Welcome Event를 회원가입 토큰이벤트로 변환
+            // Welcome Period를 회원가입 무제한이벤트로 변환
+            let productName = data.product_name;
+            const productNameLower = productName.toLowerCase();
+            if (productName === 'Welcome Event' || productNameLower === 'welcome event') {
+                productName = '회원가입 토큰이벤트';
+            } else if (productName === 'Welcome Period' || productName === 'Welcome Period Event' || 
+                       productNameLower === 'welcome period' || productNameLower === 'welcome period event' ||
+                       productNameLower.includes('welcome period')) {
+                productName = '회원가입 무제한이벤트';
+            }
+            displayFields.unshift({ label: '상품명', value: productName });
+        }
         if (data.amount !== undefined && data.amount !== null) {
             displayFields.push({ label: '금액', value: `${data.amount.toLocaleString('ko-KR')}원` });
         }
