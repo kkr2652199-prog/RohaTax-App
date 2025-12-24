@@ -32,7 +32,8 @@ def user_info():
                 """SELECT id, username, email, company_name, business_number,
                           representative_name, phone, address, business_type, business_category,
                           plan_type, monthly_limit, used_count, is_active, is_admin,
-                          token_balance, tokens_used, created_at, subscription_end_date
+                          token_balance, tokens_used, created_at, subscription_end_date,
+                          free_trial_expired_at
                    FROM users WHERE id = ?""",
                 (user_id,)
             ).fetchone()
@@ -63,8 +64,47 @@ def user_info():
                 'token_balance': row_value(user, 'token_balance', 0) or 0,
                 'tokens_used': row_value(user, 'tokens_used', 0) or 0,
                 'created_at': row_value(user, 'created_at', ''),
-                'subscription_end_date': row_value(user, 'subscription_end_date', '')
+                'subscription_end_date': row_value(user, 'subscription_end_date', ''),
+                'free_trial_expired_at': row_value(user, 'free_trial_expired_at', '')
             }
+
+            # 무료 토큰 이벤트 기간 정보 추가 (관리자 일반 사용자 관리와 동일한 로직)
+            try:
+                token_event = conn.execute(
+                    """
+                    SELECT th.created_at AS token_event_start_date,
+                           th.expires_at AS token_event_expires_at
+                    FROM token_history th
+                    JOIN payment_history ph ON ph.user_id = th.user_id 
+                        AND ABS(JULIANDAY(ph.created_at) - JULIANDAY(th.created_at)) < 0.01
+                    JOIN products p ON p.id = ph.product_id
+                    WHERE th.user_id = ?
+                      AND th.change_type = 'grant'
+                      AND th.expires_at IS NOT NULL
+                      AND p.type = 'event'
+                      AND p.price = 0
+                      AND p.token_amount > 0
+                      AND (th.meta IS NULL OR th.meta NOT LIKE '%"deleted": 1%')
+                    ORDER BY th.created_at DESC
+                    LIMIT 1
+                    """,
+                    (user_id,)
+                ).fetchone()
+
+                if token_event:
+                    safe_user_data['token_event_start_date'] = row_value(
+                        token_event, 'token_event_start_date', ''
+                    )
+                    safe_user_data['token_event_expires_at'] = row_value(
+                        token_event, 'token_event_expires_at', ''
+                    )
+                else:
+                    safe_user_data['token_event_start_date'] = ''
+                    safe_user_data['token_event_expires_at'] = ''
+            except Exception as e:
+                logger.error(f"무료 토큰 이벤트 정보 조회 중 오류: {str(e)}")
+                safe_user_data['token_event_start_date'] = ''
+                safe_user_data['token_event_expires_at'] = ''
             
             return success('사용자 정보 조회 성공', data={'user': safe_user_data})
             

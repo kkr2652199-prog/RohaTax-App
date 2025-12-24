@@ -555,7 +555,7 @@ class PaymentService:
                                     'product_name': product_name,
                                     'amount': total_amount,
                                     'token_amount': total_token_amount,
-                                    'message': f"{product_name} 결제 완료 (주문번호: {order_id}) - (결제 자동)"
+                                    'message': f"{'회원가입 토큰이벤트' if product_name == 'Welcome Event' else '회원가입 무제한이벤트' if product_name in ('Welcome Period', 'Welcome Period Event') or (isinstance(product_name, str) and 'welcome period' in product_name.lower()) else product_name} 결제 완료 (주문번호: {order_id}) - (결제 자동)"
                                 },
                                 'token_change': total_token_amount if total_token_amount > 0 else 0,
                                 'potential_cost': 0,
