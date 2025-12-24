@@ -1,4 +1,31 @@
-﻿# [2025-12-24 11:32:12 KST] - 상용화 전 불필요한 파일 정리 및 킷 목록 커밋 - 커밋 649887e
+﻿# [2025-12-24 16:56:26 KST] - 무료 토큰 이벤트 시작일/만료일 표시 로직 추가 - 커밋 23dd396
+
+*   **한국 시간/날짜:** 2025년 12월 24일 16:56:26 (KST)
+*   **커밋 해시:** 23dd396
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 마이홈 상세 모달에서 무료 토큰 이벤트(회원가입 토큰이벤트)의 시작일/만료일 표시 로직 추가
+    1. **백엔드 수정 (`routes/conversion_modules/user_routes.py`):**
+       - `/api/user-info` 엔드포인트에 `token_event_start_date`, `token_event_expires_at` 필드 추가
+       - 관리자 일반 사용자 관리 화면과 동일한 SQL 쿼리로 무료 토큰 이벤트 기간 정보 조회
+       - `token_history`, `payment_history`, `products` 테이블 조인하여 이벤트 상품(type='event', price=0, token_amount>0)의 시작일/만료일 반환
+    2. **프론트엔드 수정 (`static/js/profile_modern.js`):**
+       - `fetchUserInfo` 함수에서 `/api/user-info` 응답의 `token_event_start_date`, `token_event_expires_at` 값을 `data` 객체에 주입하도록 수정
+       - `renderTokenChargeReceipt` 함수에서 무료 토큰 이벤트(`isTokenEvent && data.token_event_expires_at`)인 경우 "이용 기간" 행 추가
+       - 이용 기간 표시 형식: "시작일 ~ 만료일 (N일)" 및 "만료일: YYYY.MM.DD HH:MM"
+       - 관리자 일반 사용자 관리 화면과 동일한 형식으로 표시
+    3. **기존 로직 개선 (`core/payment/service.py`):**
+       - "Welcome Event" -> "회원가입 토큰이벤트" 번역 로직 유지
+*   **통계:**
+    - 총 3개 파일 변경
+    - 284줄 추가, 67줄 삭제
+*   **결과:**
+    - ✅ 무료 토큰 이벤트 영수증에 시작일/만료일 표시 기능 추가 완료
+    - ✅ 관리자 일반 사용자 관리 화면과 동일한 형식으로 표시
+    - ✅ `/api/user-info` API에 무료 토큰 이벤트 기간 정보 포함
+
+---
+
+# [2025-12-24 11:32:12 KST] - 상용화 전 불필요한 파일 정리 및 킷 목록 커밋 - 커밋 649887e
 
 *   **한국 시간/날짜:** 2025년 12월 24일 11:32:12 (KST)
 *   **커밋 해시:** 649887ec304f2c6227b4401582fc62b8cd8169c9
