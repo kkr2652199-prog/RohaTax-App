@@ -58,7 +58,19 @@
       <h3 class="user-name">{{ user.company_name or user.username }}</h3>
       <p class="user-email">{{ user.email }}</p>
       <div class="user-plan-badge">
-        <span class="plan-type">{{ user.plan_type|upper if user.plan_type else 'FREE' }}</span>
+        <span class="plan-type">
+          {% if not user.plan_type or user.plan_type|lower in ['free', ''] %}
+            회원
+          {% elif user.plan_type|lower == 'vip' %}
+            VIP
+          {% elif user.plan_type|lower == 'premium-vip' %}
+            VIP 프리미엄
+          {% elif user.plan_type|lower in ['gold', 'gold-vip'] %}
+            골드 VIP
+          {% else %}
+            {{ user.plan_type|upper }}
+          {% endif %}
+        </span>
         {% if user.plan_type and user.plan_type|lower in ['gold','gold-vip'] %}
         <span class="plan-badge-gold">✨ GOLD</span>
         {% endif %}

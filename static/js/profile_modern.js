@@ -70,14 +70,14 @@ const DROPDOWN_OPTIONS_MAP = {
     ],
     'system': [
         { value: '', text: '전체' },
-        { value: 'USER_LOGIN', text: '로그인' },
+        { value: 'USER_LOGIN', text: '회원 로그인' },
         { value: 'USER_LOGOUT', text: '로그아웃' },
         { value: 'PROFILE_UPDATE', text: '정보 수정' },
         { value: 'SYSTEM', text: '시스템' }
     ],
     'all': [
         { value: '', text: '전체' },
-        { value: 'USER_LOGIN', text: '로그인' },
+        { value: 'USER_LOGIN', text: '회원 로그인' },
         { value: 'TOKEN_CHARGE', text: '토큰 충전' },
         { value: 'TOKEN_USE', text: '토큰 사용' },
         { value: 'FILE_CONVERT', text: '파일 변환' },
@@ -111,7 +111,7 @@ const activityViewState = {
  */
 function translateActivityType(activityType) {
     const typeMap = {
-        'USER_LOGIN': '로그인',
+        'USER_LOGIN': '회원 로그인',
         'USER_LOGOUT': '로그아웃',
         'TOKEN_CHARGE': '토큰 충전',
         'TOKEN_USE': '토큰 사용',
