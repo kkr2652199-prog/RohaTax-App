@@ -1,4 +1,50 @@
-﻿# [2025-12-21 15:52:21 KST] - 마이홈 상세 내역 영수증 관련 추가 수정사항 커밋 - 커밋 a8f2924
+﻿# [2025-12-24 11:32:12 KST] - 상용화 전 불필요한 파일 정리 및 킷 목록 커밋 - 커밋 649887e
+
+*   **한국 시간/날짜:** 2025년 12월 24일 11:32:12 (KST)
+*   **커밋 해시:** 649887ec304f2c6227b4401582fc62b8cd8169c9
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 상용화 전 앱 점검 및 불필요한 개발/디버그 파일 정리
+    1. **삭제된 개발/디버그 스크립트 (12개):**
+       - `buy_and_check.py` - 구매 및 체크 스크립트
+       - `check_activity_details.py` - 활동 내역 체크 스크립트
+       - `check_conversion_logs.py` - 변환 로그 체크 스크립트
+       - `check_package_updates.bat` - 패키지 업데이트 체크 배치 파일
+       - `check_package_versions.py` - 패키지 버전 체크 스크립트
+       - `check_tlschs21_tokens.py` - 토큰 체크 스크립트
+       - `check_updates_simple.py` - 간단 업데이트 체크 스크립트
+       - `debug_template_count.py` - 템플릿 카운트 디버그 스크립트
+       - `diagnose_products.py` - 상품 진단 스크립트
+       - `diagnose_studio.py` - 스튜디오 진단 스크립트
+       - `fix_products_system.py` - 상품 시스템 수정 스크립트
+       - `verify_token_logic.py` - 토큰 로직 검증 스크립트
+    2. **삭제된 기타 파일:**
+       - `.changes/2025-10-13_integration_banner.txt` - 변경 이력 파일
+    3. **추가된 파일:**
+       - `database/clear_all_logs.py` - 통합 관제실 로그 기록 초기화 스크립트
+    4. **수정된 파일:**
+       - `.gitignore` - Git 무시 규칙 업데이트
+       - `PROJECT_AUDIT_REPORT.md` - 프로젝트 감사 보고서 수정
+       - `VIDEO_FILE_AUDIT_REPORT.md` - 비디오 파일 감사 보고서 수정
+       - `config/settings.py` - 설정 파일 수정
+       - `core/email_sender.py` - 이메일 발송 모듈 수정
+       - `core/email_verification_manager.py` - 이메일 인증 관리자 수정
+       - `core/file_validator.py` - 파일 검증 모듈 수정
+       - `static/css/layout/header.css` - 헤더 CSS 수정
+       - `static/js/profile_modern.js` - 프로필 모던 JS 수정
+       - `templates/home_sections/_use_cases.html` - 사용 사례 템플릿 수정
+*   **통계:**
+    - 총 16개 파일 변경
+    - 169줄 추가, 1816줄 삭제
+    - 순 감소: 1647줄 (코드 정리로 인한 대폭 감소)
+*   **결과:**
+    - ✅ 불필요한 개발/디버그 스크립트 정리 완료
+    - ✅ 상용화에 필요한 핵심 파일만 유지
+    - ✅ 코드베이스 정리 및 최적화 완료
+    - ✅ 킷 목록 커밋 완료
+
+---
+
+# [2025-12-21 15:52:21 KST] - 마이홈 상세 내역 영수증 관련 추가 수정사항 커밋 - 커밋 a8f2924
 
 *   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
 *   **커밋 해시:** a8f2924884f0667c90df5dc88f86df2801e2536d
