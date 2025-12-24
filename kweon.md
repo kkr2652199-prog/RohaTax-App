@@ -1,3 +1,28 @@
+# [2025-12-24 11:07:09 KST] - homepage1 DB 동기화 스크립트 추가 및 하늘저장소 푸시 - 커밋 4c6dd17
+
+*   **한국 시간/날짜:** 2025년 12월 24일 11:07:09 (KST)
+*   **커밋 해시:** 4c6dd17
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** homepage1 데이터베이스를 본진으로 동기화하는 스크립트 추가 및 하늘저장소 푸시
+    1. **추가된 파일:**
+       - `sync_db_from_homepage1.bat` - homepage1/database의 DB를 본진 database로 동기화하는 배치 스크립트
+    2. **스크립트 기능:**
+       - `homepage1\database\app.db` → `database\app.db` 복사
+       - `homepage1\database\versions.db` → `database\versions.db` 복사
+       - 대상 디렉토리 자동 생성
+       - 복사 성공/실패 메시지 출력
+    3. **사용 방법:**
+       - 본진 서버(5000 포트) 종료 후 실행
+       - 루트 경로에서 `.\sync_db_from_homepage1.bat` 실행
+       - DB 동기화 완료 후 본진 서버 재시작
+*   **결과:**
+    - ✅ homepage1 DB 동기화 스크립트 생성 완료
+    - ✅ 실제 DB 동기화 수행 완료 (app.db, versions.db)
+    - ✅ 하늘저장소(origin/main)로 푸시 완료
+    - ✅ 커밋 해시: 4c6dd17
+
+---
+
 # [2025-12-21 15:52:21 KST] - homepage1 워크트리 작업 내용을 본진으로 병합 완료 - 병합 커밋 a1adf88
 
 *   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
