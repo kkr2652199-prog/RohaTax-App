@@ -1,3 +1,58 @@
+# [2025-12-24 11:37:08 KST] - homepage1 상용화 정리 작업 본진으로 병합 완료 - 병합 커밋 233a4cd
+
+*   **한국 시간/날짜:** 2025년 12월 24일 11:37:08 (KST)
+*   **병합 커밋 해시:** 233a4cd7a3be59fd295f3ba5b31562ea0f75226c
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** homepage1의 상용화 전 불필요한 파일 정리 작업을 본진(main 브랜치)으로 병합
+    1. **병합된 주요 변경사항:**
+       - 불필요한 개발/디버그 스크립트 12개 삭제
+       - 변경 이력 파일 삭제
+       - 통합 관제실 로그 기록 초기화 스크립트 추가
+       - 코드베이스 정리 및 최적화 (1647줄 순 감소)
+    2. **병합 충돌 해결:**
+       - `.gitignore` - homepage1 버전으로 해결
+       - `kweon.md` - 두 브랜치 내용 통합 (homepage1 최신 내용 우선)
+    3. **삭제된 파일 (12개):**
+       - `buy_and_check.py`
+       - `check_activity_details.py`
+       - `check_conversion_logs.py`
+       - `check_package_updates.bat`
+       - `check_package_versions.py`
+       - `check_tlschs21_tokens.py`
+       - `check_updates_simple.py`
+       - `debug_template_count.py`
+       - `diagnose_products.py`
+       - `diagnose_studio.py`
+       - `fix_products_system.py`
+       - `verify_token_logic.py`
+       - `.changes/2025-10-13_integration_banner.txt`
+    4. **추가된 파일:**
+       - `database/clear_all_logs.py` - 통합 관제실 로그 기록 초기화 스크립트
+    5. **수정된 파일:**
+       - `.gitignore` - Git 무시 규칙 업데이트
+       - `PROJECT_AUDIT_REPORT.md`
+       - `VIDEO_FILE_AUDIT_REPORT.md`
+       - `config/settings.py`
+       - `core/email_sender.py`
+       - `core/email_verification_manager.py`
+       - `core/file_validator.py`
+       - `static/css/layout/header.css`
+       - `static/js/profile_modern.js`
+       - `templates/home_sections/_use_cases.html`
+*   **통계:**
+    - 총 16개 파일 변경
+    - 169줄 추가, 1816줄 삭제
+    - 순 감소: 1647줄 (코드 정리로 인한 대폭 감소)
+*   **결과:**
+    - ✅ homepage1의 상용화 정리 작업 본진에 반영 완료
+    - ✅ 병합 충돌 해결 완료 (.gitignore, kweon.md)
+    - ✅ 불필요한 개발/디버그 스크립트 정리 완료
+    - ✅ 상용화에 필요한 핵심 파일만 유지
+    - ✅ 코드베이스 정리 및 최적화 완료
+    - ⚠️ DB 복사는 서버 실행 중으로 인해 실패 (서버 종료 후 수동 복사 필요)
+
+---
+
 # [2025-12-24 11:32:12 KST] - 상용화 전 불필요한 파일 정리 및 킷 목록 커밋 - 커밋 649887e
 
 *   **한국 시간/날짜:** 2025년 12월 24일 11:32:12 (KST)
