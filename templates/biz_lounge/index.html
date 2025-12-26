@@ -270,13 +270,112 @@
                 </div>
             </section>
             
-            <!-- Section D: 제출 서류 -->
+            <!-- Section D: 대출 이자 계산기 -->
+            <section class="modal-section calculator">
+                <div class="section-header">
+                    <span class="section-icon">💰</span>
+                    <h3 class="section-title">실시간 이자 계산기</h3>
+                    <span class="section-subtitle">(원리금균등상환 기준)</span>
+                </div>
+                <div class="calculator-card">
+                    <div class="calculator-inputs">
+                        <div class="calc-input-group">
+                            <label class="calc-label">대출 금액</label>
+                            <div class="calc-input-wrapper">
+                                <input type="number" id="calcAmount" class="calc-input" placeholder="0" min="0" step="100">
+                                <span class="calc-unit">만원</span>
+                            </div>
+                        </div>
+                        <div class="calc-input-group">
+                            <label class="calc-label">금리</label>
+                            <div class="calc-input-wrapper">
+                                <input type="number" id="calcRate" class="calc-input" placeholder="0.00" min="0" max="100" step="0.01">
+                                <span class="calc-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="calc-input-group">
+                            <label class="calc-label">기간</label>
+                            <select id="calcTerm" class="calc-select">
+                                <option value="12">1년</option>
+                                <option value="24">2년</option>
+                                <option value="36">3년</option>
+                                <option value="60">5년</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="calculator-result" id="calculatorResult">
+                        <!-- 요약 카드 -->
+                        <div class="result-summary" id="resultSummary" style="display: none;">
+                            <div class="summary-item">
+                                <div class="summary-label">거치 기간 동안</div>
+                                <div class="summary-value" id="gracePayment">-</div>
+                                <div class="summary-note" id="graceNote">(이자만)</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">상환 기간 동안</div>
+                                <div class="summary-value" id="repaymentPayment">-</div>
+                                <div class="summary-note">(원금+이자)</div>
+                            </div>
+                            <div class="summary-item highlight">
+                                <div class="summary-label">총 이자 비용</div>
+                                <div class="summary-value highlight-red" id="totalInterest">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">총 상환 금액</div>
+                                <div class="summary-value" id="totalRepayment">-</div>
+                            </div>
+                        </div>
+                        <div class="result-placeholder" id="resultPlaceholder">
+                            <div class="result-label">계산 결과</div>
+                            <div class="result-value">값을 입력해주세요</div>
+                        </div>
+                        
+                        <!-- 상세 테이블 토글 버튼 -->
+                        <button class="detail-toggle-btn" id="detailToggleBtn" onclick="toggleDetailTable()" style="display: none;">
+                            <span id="toggleText">▼ 월별 상환 계획표 보기</span>
+                        </button>
+                        
+                        <!-- 상세 테이블 -->
+                        <div class="detail-table-container" id="detailTableContainer" style="display: none;">
+                            <table class="amortization-table">
+                                <thead>
+                                    <tr>
+                                        <th>회차</th>
+                                        <th>납입금</th>
+                                        <th>원금</th>
+                                        <th>이자</th>
+                                        <th>잔액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amortizationTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Section E: 제출 서류 -->
             <section class="modal-section documents">
                 <div class="section-header">
                     <h3 class="section-title">이 서류들이 필요해요!</h3>
                 </div>
                 <div class="documents-grid" id="documentsGrid">
                     <!-- JavaScript로 동적 생성 -->
+                </div>
+            </section>
+            
+            <!-- Section F: AI 홍보 문구 (준비중) -->
+            <section class="modal-section ai-promo">
+                <div class="section-header">
+                    <span class="section-icon">✨</span>
+                    <h3 class="section-title">사장님, 이 지원금 받아서 가게 홍보도 해보세요!</h3>
+                </div>
+                <div class="ai-promo-content">
+                    <p class="ai-promo-text">로하택스 AI가 지원금을 받으신 사장님을 위한 맞춤형 홍보 문구를 만들어드립니다.</p>
+                    <button class="ai-promo-btn" onclick="goToStudio()">
+                        🤖 이 지원금으로 가게 홍보글 쓰러 가기
+                    </button>
                 </div>
             </section>
         </div>
@@ -401,9 +500,28 @@ function openBizDetailModal(policyId) {
     // 외부 링크 저장
     document.getElementById('applyBtn').setAttribute('data-link', policy.link || '#');
     
+    // 계산기 초기화 (이전 결과 제거)
+    showResultPlaceholder();
+    const detailContainer = document.getElementById('detailTableContainer');
+    if (detailContainer) detailContainer.style.display = 'none';
+    const toggleBtn = document.getElementById('detailToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.style.display = 'none';
+        document.getElementById('toggleText').textContent = '▼ 월별 상환 계획표 보기';
+    }
+    
+    // 계산기 초기값 설정
+    initializeCalculator(policy);
+    
     // 모달 표시
     document.getElementById('bizDetailModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    
+    // 모달 스크롤 초기화
+    const modalContainer = document.querySelector('.biz-modal-container');
+    if (modalContainer) {
+        modalContainer.scrollTop = 0;
+    }
     
     // 체크박스 초기화
     document.querySelectorAll('.qualification-check').forEach(cb => {
@@ -412,10 +530,297 @@ function openBizDetailModal(policyId) {
     checkQualification();
 }
 
+// 계산기 초기값 설정
+function initializeCalculator(policy) {
+    // 대출 금액 추출 (detail_amount에서)
+    let defaultAmount = 0;
+    if (policy.detail_amount) {
+        const amountMatches = policy.detail_amount.match(/(\d+)[억천만]/g);
+        if (amountMatches && amountMatches.length > 0) {
+            let maxAmount = 0;
+            amountMatches.forEach(match => {
+                const num = parseInt(match.replace(/[억천만]/g, ''));
+                if (match.includes('억')) {
+                    maxAmount = Math.max(maxAmount, num * 100000000);
+                } else if (match.includes('천')) {
+                    maxAmount = Math.max(maxAmount, num * 10000000);
+                } else if (match.includes('만')) {
+                    maxAmount = Math.max(maxAmount, num * 10000);
+                }
+            });
+            if (maxAmount > 0) {
+                defaultAmount = Math.floor(maxAmount / 10000); // 만원 단위로 변환
+            }
+        }
+    }
+    
+    // 금리 추출
+    let defaultRate = 0;
+    if (policy.interest_rate_desc) {
+        const rateMatch = policy.interest_rate_desc.match(/(\d+\.?\d*)/);
+        if (rateMatch) {
+            defaultRate = parseFloat(rateMatch[1]);
+        }
+    } else if (policy.rate) {
+        const rateMatch = policy.rate.match(/(\d+\.?\d*)/);
+        if (rateMatch) {
+            defaultRate = parseFloat(rateMatch[1]);
+        }
+    }
+    
+    // 입력값 설정
+    const amountInput = document.getElementById('calcAmount');
+    const rateInput = document.getElementById('calcRate');
+    
+    if (amountInput && defaultAmount > 0) {
+        amountInput.value = defaultAmount;
+    }
+    if (rateInput && defaultRate > 0) {
+        rateInput.value = defaultRate;
+    }
+    
+    // repayment 정보 저장 (계산에 사용)
+    if (amountInput) {
+        amountInput.setAttribute('data-repayment', policy.repayment || '');
+    }
+    
+    // 초기 계산 실행
+    calculateLoan();
+}
+
+// repayment 파싱 함수
+function parseRepayment(repaymentStr) {
+    if (!repaymentStr || repaymentStr.includes('보조금') || repaymentStr.includes('상환 불필요')) {
+        return { graceMonths: 0, repaymentMonths: 0, hasGrace: false };
+    }
+    
+    // "2년 거치 3년 분할상환" 형식 파싱
+    const match = repaymentStr.match(/(\d+)년\s*거치\s*(\d+)년/);
+    if (match) {
+        const graceYears = parseInt(match[1]);
+        const repaymentYears = parseInt(match[2]);
+        return {
+            graceMonths: graceYears * 12,
+            repaymentMonths: repaymentYears * 12,
+            hasGrace: true
+        };
+    }
+    
+    // 거치 기간이 없는 경우 (예: "5년 분할상환")
+    const simpleMatch = repaymentStr.match(/(\d+)년/);
+    if (simpleMatch) {
+        const years = parseInt(simpleMatch[1]);
+        return {
+            graceMonths: 0,
+            repaymentMonths: years * 12,
+            hasGrace: false
+        };
+    }
+    
+    return { graceMonths: 0, repaymentMonths: 0, hasGrace: false };
+}
+
+// 거치 후 분할상환 계산
+function calculateLoan() {
+    const amountInput = document.getElementById('calcAmount');
+    const rateInput = document.getElementById('calcRate');
+    const termSelect = document.getElementById('calcTerm');
+    
+    if (!amountInput || !rateInput || !termSelect) return;
+    
+    const principal = parseFloat(amountInput.value) * 10000; // 만원을 원으로 변환
+    const annualRate = parseFloat(rateInput.value) / 100; // 퍼센트를 소수로 변환
+    const totalMonths = parseInt(termSelect.value);
+    
+    // 유효성 검사
+    if (!principal || principal <= 0 || !annualRate || annualRate <= 0 || !totalMonths || totalMonths <= 0) {
+        showResultPlaceholder();
+        return;
+    }
+    
+    // repayment 정보 파싱
+    const repaymentStr = amountInput.getAttribute('data-repayment') || '';
+    const { graceMonths, repaymentMonths, hasGrace } = parseRepayment(repaymentStr);
+    
+    // 거치 기간이 있고, 총 기간이 거치+상환 기간보다 작거나 같으면 거치 기간 사용
+    let actualGraceMonths = 0;
+    let actualRepaymentMonths = totalMonths;
+    
+    if (hasGrace && graceMonths > 0 && graceMonths + repaymentMonths <= totalMonths) {
+        actualGraceMonths = graceMonths;
+        actualRepaymentMonths = repaymentMonths;
+    } else if (hasGrace && graceMonths > 0) {
+        // 총 기간이 거치+상환보다 작으면 비율로 조정
+        const ratio = totalMonths / (graceMonths + repaymentMonths);
+        actualGraceMonths = Math.floor(graceMonths * ratio);
+        actualRepaymentMonths = totalMonths - actualGraceMonths;
+    }
+    
+    // 월 이자율
+    const monthlyRate = annualRate / 12;
+    
+    // 거치 기간 동안 이자만 납부
+    const gracePayment = principal * monthlyRate;
+    
+    // 상환 기간 동안 원리금 균등 상환
+    let repaymentPayment = 0;
+    if (actualRepaymentMonths > 0) {
+        repaymentPayment = (principal * monthlyRate * Math.pow(1 + monthlyRate, actualRepaymentMonths)) / 
+                          (Math.pow(1 + monthlyRate, actualRepaymentMonths) - 1);
+    }
+    
+    // 총 이자 계산
+    let totalInterest = 0;
+    let schedule = [];
+    let remainingBalance = principal;
+    
+    // 거치 기간 스케줄
+    for (let i = 1; i <= actualGraceMonths; i++) {
+        const interest = remainingBalance * monthlyRate;
+        totalInterest += interest;
+        schedule.push({
+            period: i,
+            payment: interest,
+            principal: 0,
+            interest: interest,
+            balance: remainingBalance
+        });
+    }
+    
+    // 상환 기간 스케줄
+    for (let i = 1; i <= actualRepaymentMonths; i++) {
+        const interest = remainingBalance * monthlyRate;
+        const principalPayment = repaymentPayment - interest;
+        remainingBalance -= principalPayment;
+        totalInterest += interest;
+        
+        schedule.push({
+            period: actualGraceMonths + i,
+            payment: repaymentPayment,
+            principal: principalPayment,
+            interest: interest,
+            balance: Math.max(0, remainingBalance)
+        });
+    }
+    
+    // 총 상환 금액
+    const totalRepayment = principal + totalInterest;
+    
+    // 결과 표시
+    showCalculationResult({
+        graceMonths: actualGraceMonths,
+        repaymentMonths: actualRepaymentMonths,
+        gracePayment: gracePayment,
+        repaymentPayment: repaymentPayment,
+        totalInterest: totalInterest,
+        totalRepayment: totalRepayment,
+        schedule: schedule
+    });
+}
+
+// 결과 표시 함수
+function showCalculationResult(result) {
+    const summaryEl = document.getElementById('resultSummary');
+    const placeholderEl = document.getElementById('resultPlaceholder');
+    const toggleBtn = document.getElementById('detailToggleBtn');
+    
+    // 요약 카드 표시
+    if (result.graceMonths > 0) {
+        document.getElementById('gracePayment').textContent = `${Math.round(result.gracePayment).toLocaleString('ko-KR')}원`;
+        document.getElementById('graceNote').textContent = `(${result.graceMonths}개월, 이자만)`;
+    } else {
+        document.getElementById('gracePayment').textContent = '-';
+        document.getElementById('graceNote').textContent = '(거치 기간 없음)';
+    }
+    
+    document.getElementById('repaymentPayment').textContent = `${Math.round(result.repaymentPayment).toLocaleString('ko-KR')}원`;
+    document.getElementById('totalInterest').textContent = `${Math.round(result.totalInterest).toLocaleString('ko-KR')}원`;
+    document.getElementById('totalRepayment').textContent = `${Math.round(result.totalRepayment).toLocaleString('ko-KR')}원`;
+    
+    summaryEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+    toggleBtn.style.display = 'block';
+    
+    // 상세 테이블 데이터 저장
+    toggleBtn.setAttribute('data-schedule', JSON.stringify(result.schedule));
+}
+
+// 플레이스홀더 표시
+function showResultPlaceholder() {
+    document.getElementById('resultSummary').style.display = 'none';
+    document.getElementById('resultPlaceholder').style.display = 'block';
+    document.getElementById('detailToggleBtn').style.display = 'none';
+    document.getElementById('detailTableContainer').style.display = 'none';
+}
+
+// 상세 테이블 토글
+function toggleDetailTable() {
+    const container = document.getElementById('detailTableContainer');
+    const toggleBtn = document.getElementById('detailToggleBtn');
+    const toggleText = document.getElementById('toggleText');
+    
+    if (container.style.display === 'none') {
+        // 테이블 표시
+        const scheduleStr = toggleBtn.getAttribute('data-schedule');
+        if (scheduleStr) {
+            const schedule = JSON.parse(scheduleStr);
+            renderAmortizationTable(schedule);
+        }
+        container.style.display = 'block';
+        toggleText.textContent = '▲ 월별 상환 계획표 숨기기';
+    } else {
+        // 테이블 숨기기
+        container.style.display = 'none';
+        toggleText.textContent = '▼ 월별 상환 계획표 보기';
+    }
+}
+
+// 상환 계획표 렌더링
+function renderAmortizationTable(schedule) {
+    const tbody = document.getElementById('amortizationTableBody');
+    tbody.innerHTML = '';
+    
+    schedule.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.period}회차</td>
+            <td>${Math.round(item.payment).toLocaleString('ko-KR')}원</td>
+            <td>${Math.round(item.principal).toLocaleString('ko-KR')}원</td>
+            <td>${Math.round(item.interest).toLocaleString('ko-KR')}원</td>
+            <td>${Math.round(item.balance).toLocaleString('ko-KR')}원</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
 // 모달 닫기
 function closeBizDetailModal() {
-    document.getElementById('bizDetailModal').style.display = 'none';
+    const modal = document.getElementById('bizDetailModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     document.body.style.overflow = '';
+    
+    // 계산기 초기화
+    const amountInput = document.getElementById('calcAmount');
+    const rateInput = document.getElementById('calcRate');
+    const termSelect = document.getElementById('calcTerm');
+    if (amountInput) {
+        amountInput.value = '';
+        amountInput.removeAttribute('data-repayment');
+    }
+    if (rateInput) rateInput.value = '';
+    if (termSelect) termSelect.value = '12';
+    
+    // 결과 초기화
+    showResultPlaceholder();
+    const detailContainer = document.getElementById('detailTableContainer');
+    if (detailContainer) detailContainer.style.display = 'none';
+    const toggleBtn = document.getElementById('detailToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.style.display = 'none';
+        document.getElementById('toggleText').textContent = '▼ 월별 상환 계획표 보기';
+    }
 }
 
 // 자격 체크 로직
@@ -453,18 +858,52 @@ function goToApply() {
     }
 }
 
-// 모달 외부 클릭 시 닫기
-document.getElementById('bizDetailModal').addEventListener('click', function(e) {
-    if (e.target.id === 'bizDetailModal') {
-        closeBizDetailModal();
+// AI 블로그 스튜디오로 이동
+function goToStudio() {
+    const confirmed = confirm('지원금 소식, 고객들에게 알리고 매출도 올리세요!\n\nAI 블로그 스튜디오로 이동해서 홍보글을 작성하시겠습니까?');
+    
+    if (confirmed) {
+        window.location.href = '/studio';
     }
-});
+}
 
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeBizDetailModal();
+// 계산기 이벤트 리스너 등록
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('calcAmount');
+    const rateInput = document.getElementById('calcRate');
+    const termSelect = document.getElementById('calcTerm');
+    
+    if (amountInput) {
+        amountInput.addEventListener('input', calculateLoan);
+        amountInput.addEventListener('change', calculateLoan);
     }
+    if (rateInput) {
+        rateInput.addEventListener('input', calculateLoan);
+        rateInput.addEventListener('change', calculateLoan);
+    }
+    if (termSelect) {
+        termSelect.addEventListener('change', calculateLoan);
+    }
+    
+    // 모달 외부 클릭 시 닫기
+    const modal = document.getElementById('bizDetailModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target.id === 'bizDetailModal') {
+                closeBizDetailModal();
+            }
+        });
+    }
+    
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('bizDetailModal');
+            if (modal && modal.style.display === 'flex') {
+                closeBizDetailModal();
+            }
+        }
+    });
 });
 </script>
 {% endblock %}

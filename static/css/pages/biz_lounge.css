@@ -337,9 +337,11 @@
 .loans-table-wrapper {
     background: white;
     border-radius: 0;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     border: 1px solid #e2e8f0;
     box-shadow: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 .loans-table {
@@ -532,10 +534,12 @@
     max-width: 800px;
     width: 100%;
     max-height: 90vh;
+    max-height: calc(100vh - 40px); /* 모바일 viewport 고려 */
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
     animation: slideUp 0.3s ease;
     position: relative;
+    -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
 }
 
 @keyframes slideUp {
@@ -851,6 +855,315 @@
     font-size: 0.95rem;
 }
 
+/* 대출 이자 계산기 섹션 */
+.calculator {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.section-subtitle {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 400;
+    margin-left: 0.5rem;
+}
+
+.calculator-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.calculator-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.calc-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.calc-label {
+    font-size: 0.875rem;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.calc-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+}
+
+.calc-input {
+    flex: 1;
+    border: none;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    font-size: 16px; /* iOS 줌 방지 */
+    outline: none;
+    color: #1a202c;
+    min-width: 0;
+    -moz-appearance: textfield;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.calc-input::-webkit-outer-spin-button,
+.calc-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.calc-input:focus {
+    background: #f7fafc;
+}
+
+.calc-unit {
+    padding: 0.875rem 1rem;
+    background: #f7fafc;
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-left: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.calc-select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #1a202c;
+    background: white;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.calc-select:hover {
+    border-color: #cbd5e0;
+}
+
+.calc-select:focus {
+    border-color: #2C5BF0;
+    background: #f7fafc;
+}
+
+.calculator-result {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 4px;
+    border: 1px solid #bfdbfe;
+}
+
+.result-placeholder {
+    text-align: center;
+}
+
+.result-label {
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.result-value {
+    font-size: clamp(1.2rem, 4vw, 2rem); /* 큰 숫자 대응 - 반응형 폰트 */
+    font-weight: 700;
+    color: #2C5BF0;
+    letter-spacing: -0.02em;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+    min-height: 1.2em;
+    display: block;
+}
+
+/* 요약 카드 */
+.result-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.summary-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: fit-content;
+    overflow: hidden; /* 내용이 넘치지 않도록 */
+}
+
+.summary-item.highlight {
+    grid-column: 1 / -1;
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a202c;
+    letter-spacing: -0.02em;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+    min-height: 1.3em;
+    display: block;
+}
+
+/* 큰 숫자 대응 - 자동 폰트 크기 조정 */
+.summary-value.highlight-red {
+    color: #ea580c;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem); /* 큰 숫자 대응 - 반응형 폰트 */
+}
+
+.summary-note {
+    font-size: 0.75rem;
+    color: #718096;
+    font-weight: 400;
+}
+
+/* 상세 테이블 토글 버튼 */
+.detail-toggle-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2C5BF0;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    margin-top: 1rem;
+}
+
+.detail-toggle-btn:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+}
+
+/* 상세 테이블 */
+.detail-table-container {
+    margin-top: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: white;
+}
+
+.amortization-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.amortization-table thead {
+    position: sticky;
+    top: 0;
+    background: #1a202c;
+    color: white;
+    z-index: 10;
+}
+
+.amortization-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.amortization-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: right;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+}
+
+.amortization-table td:first-child {
+    text-align: center;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.amortization-table tbody tr:hover {
+    background: #f7fafc;
+}
+
+/* AI 홍보 문구 섹션 */
+.ai-promo {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 1.5rem;
+    border-radius: 4px;
+    border: 1px solid #fcd34d;
+}
+
+.ai-promo-content {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.ai-promo-text {
+    font-size: 0.95rem;
+    color: #78350f;
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+
+.ai-promo-btn {
+    background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+    color: #1a202c;
+    border: 2px solid #f59e0b;
+    padding: 0.875rem 2rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.ai-promo-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.ai-promo-btn:active {
+    transform: scale(0.98);
+}
+
 /* 제출 서류 섹션 */
 .documents {
     background: #f8f9fa;
@@ -1001,6 +1314,11 @@
         margin: 0;
         border-radius: 0;
         max-height: 100vh;
+        max-height: calc(100vh - 20px); /* 모바일 여백 고려 */
+    }
+    
+    .ai-promo-btn {
+        max-width: 100%;
     }
     
     .biz-modal-header {
@@ -1027,5 +1345,42 @@
     
     .biz-modal-footer {
         flex-direction: column;
+    }
+    
+    .calculator-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .calc-input {
+        font-size: 16px; /* iOS 줌 방지 */
+    }
+    
+    .result-value {
+        font-size: 1.5rem;
+    }
+    
+    .loans-table-wrapper {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .result-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-item.highlight {
+        grid-column: 1;
+    }
+    
+    .detail-table-container {
+        max-height: 300px;
+    }
+    
+    .amortization-table {
+        font-size: 0.75rem;
+    }
+    
+    .amortization-table th,
+    .amortization-table td {
+        padding: 0.5rem 0.25rem;
     }
 }
