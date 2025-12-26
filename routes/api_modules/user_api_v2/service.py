@@ -23,6 +23,8 @@ class UserService:
         "TOKEN_USE": "토큰 사용",
         "TOKEN_CHARGE": "토큰 충전",
         "LOGIN": "로그인",
+        "USER_LOGIN": "회원 로그인",
+        "USER_LOGOUT": "로그아웃",
         "LOGOUT": "로그아웃",
         "PROFILE_UPDATE": "프로필 수정"
     }

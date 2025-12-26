@@ -1,3 +1,36 @@
+# [2025-12-24 20:29:35 KST] - 활동 유형 번역 및 플랜 타입 한글 표시 개선 - 커밋 eff2e3c
+
+*   **한국 시간/날짜:** 2025년 12월 24일 20:29:35 (KST)
+*   **커밋 해시:** eff2e3c
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 활동 로그의 활동 유형 번역 개선 및 플랜 타입 한글 표시 기능 추가
+    1. **백엔드 수정 (3개 파일):**
+       - `routes/api_modules/user_api.py`: ACTIVITY_TYPE_MAP에 "USER_LOGIN": "회원 로그인" 추가
+       - `routes/api_modules/user_api_v2/service.py`: ACTIVITY_TYPE_MAP에 "USER_LOGIN": "회원 로그인" 추가
+       - `routes/api_modules/user/service.py`: ACTIVITY_TYPE_MAP에 "USER_LOGIN": "회원 로그인" 추가
+       - 모든 API 엔드포인트에서 USER_LOGIN 활동 유형이 "회원 로그인"으로 번역되어 반환되도록 수정
+    2. **프론트엔드 수정 (`static/js/profile_modern.js`):**
+       - `translateActivityType` 함수에 'USER_LOGIN': '회원 로그인' 매핑 추가
+       - `DROPDOWN_OPTIONS_MAP`의 'system' 및 'all' 탭에서 'USER_LOGIN' 옵션을 '회원 로그인'으로 표시하도록 수정
+       - 활동 로그 테이블과 필터 드롭다운에서 "USER_LOGIN"이 "회원 로그인"으로 표시되도록 개선
+    3. **플랜 타입 한글 표시 (`templates/components/myhome_header.html`):**
+       - `plan_type` 값에 따라 한글 표시 로직 추가:
+         - `free` 또는 빈 값 → "회원"
+         - `vip` → "VIP"
+         - `premium-vip` → "VIP 프리미엄"
+         - `gold` 또는 `gold-vip` → "골드 VIP"
+       - 마이홈 헤더의 플랜 배지가 사용자 친화적인 한글 텍스트로 표시되도록 개선
+*   **통계:**
+    - 총 5개 파일 변경
+    - 22줄 추가, 4줄 삭제
+*   **결과:**
+    - ✅ 활동 로그 테이블에서 "USER_LOGIN"이 "회원 로그인"으로 표시
+    - ✅ 필터 드롭다운에서 "회원 로그인" 옵션 제공
+    - ✅ 마이홈 헤더의 플랜 타입이 한글로 표시 (FREE → 회원, VIP → VIP, premium-vip → VIP 프리미엄, gold-vip → 골드 VIP)
+    - ✅ 백엔드와 프론트엔드 모두에서 일관된 번역 제공
+
+---
+
 # [2025-12-24 16:56:26 KST] - 무료 토큰 이벤트 시작일/만료일 표시 로직 추가 - 커밋 23dd396
 
 *   **한국 시간/날짜:** 2025년 12월 24일 16:56:26 (KST)
