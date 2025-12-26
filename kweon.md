@@ -1,3 +1,242 @@
+﻿# [2025-12-26 13:56:36 KST] - 비즈니스 라운지 대규모 업그레이드: DB 기반 전환, 카테고리 확장, 30+ 기능 추가 - 커밋 5eee037
+
+*   **한국 시간/날짜:** 2025년 12월 26일 13:56:36 (KST)
+*   **커밋 해시:** 5eee037
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 비즈니스 라운지를 DB 기반으로 전환하고, 4개 카테고리로 확장하며, 30개 이상의 고급 기능을 추가하여 완전한 정보 플랫폼으로 고도화
+
+## 주요 변경사항
+
+### 1. 데이터베이스 스키마 확장 (`database/schema.sql`)
+*   **policies 테이블 생성:**
+    *   `id`, `target_type` (BIZ/STARTUP/YOUTH/WELFARE), `title`, `agency`, `support_type`
+    *   `amount_desc`, `period_desc`, `d_day`, `detail_json` (JSON 필드)
+    *   `link`, `is_active`, `created_at`, `updated_at`
+*   **데이터 시딩 스크립트 추가 (`scripts/seed_policies.py`):**
+    *   23개의 현실적인 2026년 지원사업 더미 데이터 생성
+    *   4개 카테고리별 데이터 분배 (BIZ: 8개, STARTUP: 5개, YOUTH: 5개, WELFARE: 5개)
+    *   기존 데이터 클리어 기능 포함
+
+### 2. 백엔드 로직 개선 (`routes/biz_lounge_routes.py`)
+*   **DB 기반 데이터 조회:**
+    *   `get_policies_from_db()` 함수: 하드코딩된 더미 데이터 제거
+    *   `target_type` 파라미터로 카테고리별 필터링
+    *   `is_active=1` 조건으로 활성화된 정책만 조회
+*   **금융상품 확장:**
+    *   신용보증재단 상품 4개 추가 (총 8개)
+    *   케이뱅크, 카카오뱅크, 신용보증재단, 토스뱅크 상품 포함
+    *   `guarantee_org` 필드 추가 (보증기관 정보)
+*   **정부 정책자금 3종 추가:**
+    *   소상공인 특례보증 대출
+    *   중소기업 정책자금
+    *   청년창업자금
+
+### 3. 프론트엔드 대규모 확장 (`templates/biz_lounge/index.html`)
+
+#### 3.1 탭 네비게이션 추가
+*   4개 카테고리 탭: 사장님(BIZ), 예비창업(STARTUP), 청년/학생(YOUTH), 임산부/복지(WELFARE)
+*   `switchTab()` 함수: URL 파라미터로 페이지 리로드
+
+#### 3.2 Stage 1 기능: 검색, 필터, 정렬
+*   **실시간 검색:**
+    *   제목, 기관명, 설명, 태그에서 검색
+    *   검색어 하이라이트 기능
+*   **다중 필터:**
+    *   지역 필터 (서울, 경기, 인천, 부산, 대구, 광주, 대전, 울산)
+    *   업종 필터 (소매, 음식, 서비스, 제조, IT, 교육)
+    *   지원 유형 필터 (금융, 보조금, 교육, 바우처, 컨설팅, 장학금)
+*   **정렬 기능:**
+    *   마감 임박순 (D-Day 기준)
+    *   금액 높은순/낮은순
+    *   금리 낮은순
+    *   최신순
+*   **결과 정보:**
+    *   "검색 결과: X개 / 전체 Y개" 표시
+    *   빈 상태(Empty State) 처리
+
+#### 3.3 Stage 2 기능: 비교, 상생금융, 북마크
+*   **금융상품 비교:**
+    *   체크박스로 최대 3개 상품 선택
+    *   비교 모달에서 항목별 나란히 비교
+    *   최적 값 하이라이트 (금리 최저, 한도 최고)
+*   **상생금융 패키지 섹션:**
+    *   신한금융그룹, KB국민은행, 하나은행 상생 프로그램
+    *   카드 그리드 레이아웃
+*   **북마크 기능:**
+    *   localStorage 기반 북마크 저장
+    *   별 아이콘으로 북마크 표시/해제
+    *   페이지 리로드 시 북마크 상태 복원
+
+#### 3.4 Stage 3 기능: 공유, FAQ, 가이드
+*   **공유 기능:**
+    *   Web Share API 지원
+    *   클립보드 복사 폴백
+    *   모달 푸터에 공유 버튼 추가
+*   **FAQ 섹션:**
+    *   아코디언 스타일 FAQ 4개
+    *   키보드 접근성 지원 (Enter/Space)
+    *   부드러운 애니메이션
+*   **신청 가이드 섹션:**
+    *   5단계 신청 가이드
+    *   단계별 아이콘 및 설명
+    *   그리드 레이아웃
+
+#### 3.5 Stage 4 기능: AI 추천, 통계, 알림
+*   **AI 맞춤 추천:**
+    *   Hero 섹션에 "AI 맞춤 추천 받기" 버튼
+    *   업종/지역/금액 입력 모달
+    *   간단한 추천 로직 (점수 기반)
+*   **통계 및 인사이트:**
+    *   전체 지원사업 수
+    *   마감 임박 지원사업 수
+    *   금융상품 수
+    *   카테고리별 통계
+*   **실시간 알림 (준비중):**
+    *   CTA 섹션에 알림 신청 버튼 (비활성화)
+
+#### 3.6 서류 준비 가이드 추가
+*   **필수 서류 체크리스트:**
+    *   동적 체크박스 생성
+    *   진행률 바 (0-100%)
+    *   체크 시 취소선 표시
+    *   서류 준비 완료율 실시간 업데이트
+
+### 4. 스타일링 대규모 확장 (`static/css/pages/biz_lounge.css`)
+
+#### 4.1 새로운 섹션 스타일
+*   **탭 네비게이션:**
+    *   활성 탭 강조
+    *   호버 효과
+    *   모바일 반응형
+*   **상생금융 패키지:**
+    *   카드 그리드 레이아웃
+    *   아이콘 + 제목 + 설명
+*   **FAQ 아코디언:**
+    *   부드러운 전환 애니메이션
+    *   활성 상태 시각적 표시
+*   **신청 가이드:**
+    *   단계별 번호 배지
+    *   그리드 레이아웃
+*   **통계 카드:**
+    *   아이콘 + 숫자 + 라벨
+    *   그리드 레이아웃
+
+#### 4.2 비교 모달 스타일
+*   **비교 테이블:**
+    *   헤더: 상품명 (동적 생성)
+    *   바디: 항목별 비교 (금리, 한도, 대상, 기간, 보증기관, 특징)
+    *   최적 값 하이라이트 (파란색 배경)
+*   **반응형:**
+    *   모바일에서 가로 스크롤
+
+#### 4.3 북마크, 공유 버튼 스타일
+*   **북마크 버튼:**
+    *   별 아이콘 (☆/★)
+    *   북마크 상태에 따른 색상 변경
+*   **공유 버튼:**
+    *   아이콘 버튼 스타일
+    *   모달 푸터에 배치
+
+### 5. 추가 업데이트: UX 고도화
+
+#### 5.1 로딩 상태 및 빈 상태 처리
+*   **로딩 스피너:**
+    *   검색/필터 시 로딩 표시
+    *   회전 애니메이션
+*   **빈 상태 UI:**
+    *   검색 결과 없을 때 안내 메시지
+    *   필터 초기화 버튼
+    *   아이콘 + 제목 + 설명
+
+#### 5.2 인쇄 및 PDF 다운로드
+*   **인쇄 기능:**
+    *   모달 내용을 새 창에서 인쇄
+    *   인쇄 전용 CSS 적용
+*   **PDF 다운로드:**
+    *   준비중 플레이스홀더 (향후 html2pdf.js 연동 가능)
+
+#### 5.3 키보드 접근성 개선
+*   **검색창:**
+    *   Enter: 검색 실행
+    *   ESC: 검색 초기화
+    *   `aria-label` 속성 추가
+*   **FAQ:**
+    *   Enter/Space: 토글
+    *   `role="button"`, `aria-expanded` 속성
+*   **모달:**
+    *   ESC: 모달 닫기
+    *   키보드 포커스 관리
+
+#### 5.4 애니메이션 및 전환 효과
+*   **카드 페이드인:**
+    *   순차적 등장 애니메이션 (0.1s 간격)
+    *   `fadeInUp` 키프레임
+*   **모달 슬라이드업:**
+    *   부드러운 모달 등장
+    *   `slideUp` 키프레임
+*   **호버 효과:**
+    *   카드: 상승 효과 + 그림자
+    *   버튼: 스케일 효과
+*   **스크롤 애니메이션:**
+    *   부드러운 스크롤 (`behavior: 'smooth'`)
+
+#### 5.5 성능 최적화
+*   **will-change 속성:**
+    *   애니메이션 성능 최적화
+*   **지연 로딩:**
+    *   검색 시 200ms 지연으로 로딩 효과
+*   **애니메이션 지연:**
+    *   카드 순차 등장 (성능 최적화)
+
+#### 5.6 에러 처리 및 사용자 피드백
+*   **토스트 메시지:**
+    *   성공/에러 알림 (3초 자동 사라짐)
+    *   `showSuccess()`, `showError()` 함수
+    *   부드러운 등장/사라짐 애니메이션
+*   **북마크 피드백:**
+    *   추가/해제 시 토스트 표시
+*   **공유 피드백:**
+    *   클립보드 복사 성공 시 알림
+
+#### 5.7 스크롤 최상단 버튼
+*   **기능:**
+    *   스크롤 300px 이상 시 표시
+    *   부드러운 스크롤 애니메이션
+    *   원형 버튼 디자인
+*   **모바일 최적화:**
+    *   터치하기 쉬운 크기 (45px)
+
+#### 5.8 모바일 반응형 개선
+*   **그리드 레이아웃:**
+    *   모바일에서 1열로 변경
+*   **버튼 크기:**
+    *   터치하기 쉬운 크기
+*   **토스트 메시지:**
+    *   모바일에서 전체 너비
+*   **모달 푸터:**
+    *   모바일에서 세로 배치
+
+## 통계
+
+*   **총 기능:** 30개 이상
+*   **지원사업:** 23개 (DB 기반)
+*   **금융상품:** 8개 (신용보증재단 포함)
+*   **카테고리:** 4개 (BIZ, STARTUP, YOUTH, WELFARE)
+*   **섹션:** 6개 (지원사업, 금융상품, 상생금융, FAQ, 가이드, 통계)
+*   **파일 변경:** 5개 파일
+*   **추가된 라인:** 2,832줄
+*   **삭제된 라인:** 162줄
+
+## 변경된 파일
+
+1.  `database/schema.sql` - policies 테이블 추가
+2.  `routes/biz_lounge_routes.py` - DB 기반 전환, 금융상품 확장
+3.  `templates/biz_lounge/index.html` - 30+ 기능 추가
+4.  `static/css/pages/biz_lounge.css` - 대규모 스타일 확장
+5.  `scripts/seed_policies.py` - 데이터 시딩 스크립트 (신규)
+
+---
+
 # [2025-12-26 11:15:23 KST] - 비즈니스 라운지 고도화: 2026 데이터 업데이트, 거치 후 분할상환 계산기, AI 홍보 버튼 활성화 - 커밋 b3cc428
 
 *   **한국 시간/날짜:** 2025년 12월 26일 11:15:23 (KST)
@@ -128,7 +367,6 @@
 
 ---
 
->>>>>>> homepage1
 # [2025-12-24 20:29:35 KST] - 활동 유형 번역 및 플랜 타입 한글 표시 개선 - 커밋 eff2e3c
 
 *   **한국 시간/날짜:** 2025년 12월 24일 20:29:35 (KST)
@@ -189,61 +427,6 @@
 
 ---
 
-# [2025-12-24 11:37:08 KST] - homepage1 상용화 정리 작업 본진으로 병합 완료 - 병합 커밋 233a4cd
-
-*   **한국 시간/날짜:** 2025년 12월 24일 11:37:08 (KST)
-*   **병합 커밋 해시:** 233a4cd7a3be59fd295f3ba5b31562ea0f75226c
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1의 상용화 전 불필요한 파일 정리 작업을 본진(main 브랜치)으로 병합
-    1. **병합된 주요 변경사항:**
-       - 불필요한 개발/디버그 스크립트 12개 삭제
-       - 변경 이력 파일 삭제
-       - 통합 관제실 로그 기록 초기화 스크립트 추가
-       - 코드베이스 정리 및 최적화 (1647줄 순 감소)
-    2. **병합 충돌 해결:**
-       - `.gitignore` - homepage1 버전으로 해결
-       - `kweon.md` - 두 브랜치 내용 통합 (homepage1 최신 내용 우선)
-    3. **삭제된 파일 (12개):**
-       - `buy_and_check.py`
-       - `check_activity_details.py`
-       - `check_conversion_logs.py`
-       - `check_package_updates.bat`
-       - `check_package_versions.py`
-       - `check_tlschs21_tokens.py`
-       - `check_updates_simple.py`
-       - `debug_template_count.py`
-       - `diagnose_products.py`
-       - `diagnose_studio.py`
-       - `fix_products_system.py`
-       - `verify_token_logic.py`
-       - `.changes/2025-10-13_integration_banner.txt`
-    4. **추가된 파일:**
-       - `database/clear_all_logs.py` - 통합 관제실 로그 기록 초기화 스크립트
-    5. **수정된 파일:**
-       - `.gitignore` - Git 무시 규칙 업데이트
-       - `PROJECT_AUDIT_REPORT.md`
-       - `VIDEO_FILE_AUDIT_REPORT.md`
-       - `config/settings.py`
-       - `core/email_sender.py`
-       - `core/email_verification_manager.py`
-       - `core/file_validator.py`
-       - `static/css/layout/header.css`
-       - `static/js/profile_modern.js`
-       - `templates/home_sections/_use_cases.html`
-*   **통계:**
-    - 총 16개 파일 변경
-    - 169줄 추가, 1816줄 삭제
-    - 순 감소: 1647줄 (코드 정리로 인한 대폭 감소)
-*   **결과:**
-    - ✅ homepage1의 상용화 정리 작업 본진에 반영 완료
-    - ✅ 병합 충돌 해결 완료 (.gitignore, kweon.md)
-    - ✅ 불필요한 개발/디버그 스크립트 정리 완료
-    - ✅ 상용화에 필요한 핵심 파일만 유지
-    - ✅ 코드베이스 정리 및 최적화 완료
-    - ⚠️ DB 복사는 서버 실행 중으로 인해 실패 (서버 종료 후 수동 복사 필요)
-
----
-
 # [2025-12-24 11:32:12 KST] - 상용화 전 불필요한 파일 정리 및 킷 목록 커밋 - 커밋 649887e
 
 *   **한국 시간/날짜:** 2025년 12월 24일 11:32:12 (KST)
@@ -287,59 +470,6 @@
     - ✅ 상용화에 필요한 핵심 파일만 유지
     - ✅ 코드베이스 정리 및 최적화 완료
     - ✅ 킷 목록 커밋 완료
-
----
-
-# [2025-12-24 11:07:09 KST] - homepage1 DB 동기화 스크립트 추가 및 하늘저장소 푸시 - 커밋 4c6dd17
-
-*   **한국 시간/날짜:** 2025년 12월 24일 11:07:09 (KST)
-*   **커밋 해시:** 4c6dd17
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1 데이터베이스를 본진으로 동기화하는 스크립트 추가 및 하늘저장소 푸시
-    1. **추가된 파일:**
-       - `sync_db_from_homepage1.bat` - homepage1/database의 DB를 본진 database로 동기화하는 배치 스크립트
-    2. **스크립트 기능:**
-       - `homepage1\database\app.db` → `database\app.db` 복사
-       - `homepage1\database\versions.db` → `database\versions.db` 복사
-       - 대상 디렉토리 자동 생성
-       - 복사 성공/실패 메시지 출력
-    3. **사용 방법:**
-       - 본진 서버(5000 포트) 종료 후 실행
-       - 루트 경로에서 `.\sync_db_from_homepage1.bat` 실행
-       - DB 동기화 완료 후 본진 서버 재시작
-*   **결과:**
-    - ✅ homepage1 DB 동기화 스크립트 생성 완료
-    - ✅ 실제 DB 동기화 수행 완료 (app.db, versions.db)
-    - ✅ 하늘저장소(origin/main)로 푸시 완료
-    - ✅ 커밋 해시: 4c6dd17
-
----
-
-# [2025-12-21 15:52:21 KST] - homepage1 워크트리 작업 내용을 본진으로 병합 완료 - 병합 커밋 a1adf88
-
-*   **한국 시간/날짜:** 2025년 12월 21일 15:52:21 (KST)
-*   **병합 커밋 해시:** a1adf8877e76ca31561e1b2e0b2736f64fd3316f
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1 워크트리의 모든 작업 내용을 본진(main 브랜치)으로 병합
-    1. **병합된 주요 변경사항:**
-       - 마이홈 상세 내역 영수증에 실제 사용자 아이디 표시 기능 추가
-       - 개발 모드에서 정적 파일 캐시 비활성화
-       - API 개선 (user_info에 subscription_end_date, username 필드 추가)
-       - 홈페이지 텍스트 레이아웃 및 내용 수정
-       - 모달 렌더링 로직 정상화
-    2. **병합된 파일:**
-       - `static/js/profile_modern.js` - 영수증 렌더링 로직 개선
-       - `app.py` - 캐시 헤더 수정
-       - `routes/conversion_modules/user_routes.py` - API 필드 추가
-       - `templates/components/myhome_detail_modal.html` - 모달 구조 개선
-       - `templates/home_sections/_use_cases.html` - 텍스트 레이아웃 수정
-       - `templates/profile_modern.html` - 인라인 스크립트 제거
-       - 기타 상용화 전 Top 3 치명적 결함 수정 파일들
-*   **결과:**
-    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
-    - ✅ 데이터베이스 파일 포함 병합 완료
-    - ✅ 병합 충돌 해결 완료 (kweon.md)
-    - ✅ 본진과 homepage1 동기화 완료
 
 ---
 
@@ -448,7 +578,6 @@
     - `templates/admin/furniture_studio.html`
     - `routes/conversion_modules/conversion_engine_routes.py`
     - `app.py`
->>>>>>> homepage1
 
 ---
 
@@ -484,82 +613,6 @@
     - `static/css/layout/header.css`
     - `templates/base.html`
     - `templates/studio/studio_overlay.html`
-
----
-
-# [2025-12-20 18:39:42 KST] - AI 블로그 스튜디오 변경사항 본진 병합 완료 - 커밋 9c55d28
-
-*   **한국 시간/날짜:** 2025년 12월 20일 18:39:42 (KST)
-*   **커밋 해시:** 9c55d28
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1의 AI 블로그 스튜디오 최신 변경사항을 본진에 병합
-    1. **kweon21 서비스 파일 업데이트:**
-       - `kweon21/services/geminiService.ts` 병합
-       - `kweon21/services/keywordService.ts` 병합
-    2. **라우트 및 템플릿 업데이트:**
-       - `routes/playground_routes/studio_api.py` 병합
-       - `templates/studio/studio_overlay.html` 병합
-*   **결과:**
-    - ✅ AI 블로그 스튜디오 관련 모든 변경사항 본진에 반영 완료
-    - ✅ homepage1과 본진 동기화 완료
-
----
-
-# [2025-12-20 18:35:27 KST] - 하늘나라(원격 저장소) 동기화 완료 - 커밋 fa0d7df
-
-*   **한국 시간/날짜:** 2025년 12월 20일 18:35:27 (KST)
-*   **커밋 해시:** fa0d7df (kweon.md 기록)
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** 본진의 모든 변경사항을 하늘나라(원격 저장소)로 푸시 완료
-    1. **원격 저장소 푸시:**
-       - 본진(main 브랜치)의 모든 커밋을 origin/main으로 푸시
-       - 커밋 범위: f75c2c1..fa0d7df
-    2. **동기화 완료:**
-       - 본진과 하늘나라(원격 저장소) 100% 일치 확인
-       - 불필요 파일 삭제 내역도 원격 저장소에 반영
-       - 데이터베이스 병합 내역도 원격 저장소에 반영
-*   **결과:**
-    - ✅ 본진과 하늘나라(원격 저장소) 완전 동기화 완료
-    - ✅ 모든 변경사항 원격 저장소에 안전하게 백업
-    - ✅ homepage1로 복귀하여 작업 이어가기 준비 완료
-
----
-
-# [2025-12-20 18:32:02 KST] - 본진 병합: homepage1 작업 내용 반영 및 불필요 파일 삭제 - 커밋 96d94f3
-
-*   **한국 시간/날짜:** 2025년 12월 20일 18:32:02 (KST)
-*   **커밋 해시:** 96d94f3329c0f157fddb092de20fbbf12498f882
-*   **작업자:** The Architect (Cursor AI)
-*   **작업 내용:** homepage1(전초기지)의 모든 변경사항을 본진으로 병합
-    1. **파일 병합:**
-       - `app.py`, `config/settings.py` 병합
-       - `core/email_sender.py`, `core/email_verification_manager.py`, `core/file_validator.py` 병합
-       - `static/js/3d/FurnitureViewer.js`, `static/js/3d/ProductFactory.js` 병합
-       - `templates/admin/furniture_studio.html` 병합
-    2. **불필요 파일 삭제:**
-       - `kweon11/` 폴더 삭제
-       - `kwon3d/` 폴더 삭제
-       - `static/js/3d/gift_box_3d.js` 삭제
-       - `static/js/3d/event_products_3d_scene.js` 삭제
-       - `static/test_kwon3d_enhanced.html` 삭제
-       - `static/css/home_prime.css.backup` 삭제
-       - `static/assets/video/roha_conversion_demo.mp4` 삭제 (290.94 MB)
-    3. **.gitignore 강화:**
-       - `*.backup`, `*.bak`, `~$*` 패턴 추가
-    4. **데이터베이스 병합:**
-       - `database/app.db` 병합
-       - `database/versions.db` 병합
-       - `conversion_stats.db` 병합
-    5. **감사 보고서 추가:**
-       - `DEPLOYMENT_CRITICAL_ISSUES.md`
-       - `PROJECT_AUDIT_REPORT.md`
-       - `SECURITY_AUDIT_REPORT.md`
-       - `VIDEO_FILE_AUDIT_REPORT.md`
-*   **결과:**
-    - ✅ homepage1의 모든 변경사항 본진에 반영 완료
-    - ✅ 불필요 파일 삭제로 약 291 MB 용량 절감
-    - ✅ 본진과 homepage1 동기화 완료
-    - ✅ 데이터베이스 병합 완료
 
 ---
 
@@ -625,7 +678,6 @@
     - ✅ 모든 패키지 최신 버전으로 업데이트 완료
     - ✅ requirements.txt 자동 갱신 완료
     - ✅ 버전 관리 도구 체계 구축 완료
->>>>>>> homepage1
 
 ---
 
