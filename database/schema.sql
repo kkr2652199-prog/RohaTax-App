@@ -233,3 +233,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_customer ON gold_customers(u
 -- 복합 인덱스 (활성 고객 조회 최적화)
 CREATE INDEX IF NOT EXISTS idx_gold_customers_user_active ON gold_customers(user_id, is_deleted);
 
+-- 비즈니스 라운지 지원사업 테이블
+CREATE TABLE IF NOT EXISTS policies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_type TEXT NOT NULL,  -- 타겟 대상: 'BIZ'(사업자), 'YOUTH'(청년/학생), 'WELFARE'(임산부/복지), 'STARTUP'(예비창업)
+  title TEXT NOT NULL,  -- 공고 제목
+  agency TEXT NOT NULL,  -- 주관 기관 (중기부, 교육부, 복지부 등)
+  support_type TEXT NOT NULL,  -- 지원 유형: '금융', '보조금', '교육', '바우처'
+  amount_desc TEXT,  -- 지원 규모/금액 설명 ("최대 1억원")
+  period_desc TEXT,  -- 접수 기간 ("2026.01.01 ~ 2026.01.31")
+  d_day INTEGER,  -- 마감까지 남은 일수
+  end_date TEXT,  -- 마감일 (DATE 형식)
+  detail_json TEXT,  -- 상세 정보(자격, 서류 등)를 담을 JSON 필드
+  link TEXT,  -- 신청 링크
+  is_active INTEGER NOT NULL DEFAULT 1,  -- 공고 진행 여부 (1=진행중, 0=종료)
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- policies 테이블 인덱스
+CREATE INDEX IF NOT EXISTS idx_policies_target_type ON policies(target_type);
+CREATE INDEX IF NOT EXISTS idx_policies_is_active ON policies(is_active);
+CREATE INDEX IF NOT EXISTS idx_policies_support_type ON policies(support_type);
+CREATE INDEX IF NOT EXISTS idx_policies_d_day ON policies(d_day);
+CREATE INDEX IF NOT EXISTS idx_policies_active_target ON policies(is_active, target_type);
+

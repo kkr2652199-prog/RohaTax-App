@@ -2,131 +2,68 @@
 비즈니스 라운지 라우트
 소상공인 지원사업 및 금융 정보 제공 페이지
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from datetime import datetime, timedelta
+import json
+from core.db import get_conn
 
 biz_lounge_bp = Blueprint('biz_lounge', __name__, url_prefix='/biz-lounge')
 
 
-def get_dummy_policies():
-    """더미 지원사업 데이터 생성 (실제 정책자금 공고 수준)"""
-    policies = [
-        {
-            'id': 1,
-            'title': '2026년도 스마트상점 기술보급사업 모집 공고',
-            'organization': '중소벤처기업진흥공단',
-            'org_short': '중기진흥공단',
-            'd_day': 5,
-            'tags': ['#저금리', '#인천'],
-            'status': '접수중',
-            'description': '소상공인 매장의 디지털 전환을 위한 스마트 POS, 무인결제 시스템 등 기술보급 지원',
-            'amount': '최대 5억원',
-            'rate': '연 2.5%',
-            'period': '2026.01.05 ~ 자금 소진 시',
-            'detail_amount': '운전자금 최대 3억원 / 시설자금 최대 5억원',
-            'interest_rate_desc': '정책자금 기준금리 + 0.5%p (변동)',
-            'repayment': '2년 거치 3년 분할상환',
-            'link': 'https://www.semas.or.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '매출과세표준증명원', '대표자 신분증 사본']
-        },
-        {
-            'id': 2,
-            'title': '2026년 상반기 소상공인 경영안정자금 신규 모집',
-            'organization': '소상공인시장진흥공단',
-            'org_short': '소상공인공단',
-            'd_day': 2,
-            'tags': ['#저금리', '#경영안정'],
-            'status': '마감임박',
-            'description': '영업손실 보전 및 자금난 해소를 위한 저금리 대출 지원 (변동금리 적용)',
-            'amount': '매출액의 150% 이내',
-            'rate': '연 3.54%~',
-            'period': '2026.01.10 ~ 자금 소진 시',
-            'detail_amount': '운전자금 최대 7천만원 / 시설자금 최대 1억원',
-            'interest_rate_desc': '정책자금 기준금리 + 0.2%p (변동)',
-            'repayment': '2년 거치 3년 분할상환',
-            'link': 'https://www.semas.or.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '매출과세표준증명원', '소상공인 확인서', '대표자 신분증 사본']
-        },
-        {
-            'id': 3,
-            'title': '2026년 디지털 전환 지원사업 (스마트스토어 구축)',
-            'organization': '과학기술정보통신부',
-            'org_short': '과기정통부',
-            'd_day': 12,
-            'tags': ['#디지털', '#IT'],
-            'status': '접수중',
-            'description': '소상공인 온라인 판매 채널 구축 및 디지털 마케팅 시스템 도입 지원',
-            'amount': '최대 2천만원',
-            'rate': '보조금 80%',
-            'period': '2026.01.15 ~ 02.28',
-            'detail_amount': '보조금 최대 2천만원 (자부담 20%)',
-            'interest_rate_desc': '보조금 형태 (이자 없음)',
-            'repayment': '보조금 (상환 불필요)',
-            'link': 'https://www.msit.go.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '매출과세표준증명원', '사업계획서', '예산서']
-        },
-        {
-            'id': 4,
-            'title': '청년창업사관학교 2026년 1기 모집',
-            'organization': '중소벤처기업부',
-            'org_short': '중기부',
-            'd_day': 8,
-            'tags': ['#청년', '#창업'],
-            'status': '접수중',
-            'description': '만 39세 이하 청년 창업자 대상 창업자금 및 6개월 집중 멘토링 지원',
-            'amount': '최대 1억원',
-            'rate': '연 1.5%',
-            'period': '2026.01.20 ~ 02.15',
-            'detail_amount': '창업자금 최대 1억원 (단일 한도)',
-            'interest_rate_desc': '정책자금 기준금리 + 0.0%p (고정)',
-            'repayment': '3년 거치 2년 분할상환',
-            'link': 'https://www.smba.go.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '대표자 신분증 사본', '창업계획서', '청년 확인서류']
-        },
-        {
-            'id': 5,
-            'title': '지역균형발전 특별자금 (2026년 상반기)',
-            'organization': '한국산업은행',
-            'org_short': '한국산업은행',
-            'd_day': 1,
-            'tags': ['#저금리', '#지역균형'],
-            'status': '마감임박',
-            'description': '지역 중소기업 경쟁력 강화를 위한 장기 저금리 자금 지원 (최대 10년)',
-            'amount': '최대 10억원',
-            'rate': '연 2.0%~',
-            'period': '2026.01.05 ~ 자금 소진 시',
-            'detail_amount': '운전자금 최대 5억원 / 시설자금 최대 10억원',
-            'interest_rate_desc': '정책자금 기준금리 + 0.3%p (변동)',
-            'repayment': '3년 거치 7년 분할상환',
-            'link': 'https://www.kdb.co.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '매출과세표준증명원', '재무제표', '대표자 신분증 사본']
-        },
-        {
-            'id': 6,
-            'title': '2026년 여성기업 성장지원사업 (기술개발 및 시장진입)',
-            'organization': '여성가족부',
-            'org_short': '여가부',
-            'd_day': 15,
-            'tags': ['#여성', '#성장지원'],
-            'status': '접수중',
-            'description': '여성기업 경영역량 강화 및 신시장 진입을 위한 기술개발비 및 마케팅비 지원',
-            'amount': '최대 5천만원',
-            'rate': '보조금 70%',
-            'period': '2026.02.01 ~ 02.20',
-            'detail_amount': '보조금 최대 5천만원 (자부담 30%)',
-            'interest_rate_desc': '보조금 형태 (이자 없음)',
-            'repayment': '보조금 (상환 불필요)',
-            'link': 'https://www.mogef.go.kr',
-            'documents': ['사업자등록증명', '국세납세증명서', '지방세납세증명서', '매출과세표준증명원', '여성기업 확인서', '사업계획서']
-        }
-    ]
-    
-    return policies
+def get_policies_from_db(target_type=None):
+    """데이터베이스에서 지원사업 데이터 조회"""
+    with get_conn() as conn:
+        query = "SELECT * FROM policies WHERE is_active = 1"
+        params = []
+        
+        if target_type:
+            query += " AND target_type = ?"
+            params.append(target_type)
+        
+        query += " ORDER BY d_day ASC, created_at DESC"
+        
+        rows = conn.execute(query, params).fetchall()
+        
+        policies = []
+        for row in rows:
+            # detail_json 파싱
+            detail_data = {}
+            if row['detail_json']:
+                try:
+                    detail_data = json.loads(row['detail_json'])
+                except:
+                    detail_data = {}
+            
+            # 기존 더미 데이터 구조와 호환되도록 변환
+            policy = {
+                'id': row['id'],
+                'title': row['title'],
+                'organization': row['agency'],
+                'org_short': row['agency'].split()[0] if row['agency'] else '',
+                'd_day': row['d_day'] or 0,
+                'tags': detail_data.get('tags', []),
+                'status': '마감임박' if row['d_day'] and row['d_day'] <= 3 else '접수중',
+                'description': detail_data.get('description', ''),
+                'amount': row['amount_desc'] or '',
+                'rate': detail_data.get('rate', ''),
+                'period': row['period_desc'] or '',
+                'detail_amount': detail_data.get('detail_amount', row['amount_desc'] or ''),
+                'interest_rate_desc': detail_data.get('interest_rate_desc', ''),
+                'repayment': detail_data.get('repayment', ''),
+                'link': row['link'] or '',
+                'documents': detail_data.get('documents', []),
+                'target_type': row['target_type'],
+                'support_type': row['support_type']
+            }
+            policies.append(policy)
+        
+        return policies
 
 
 def get_dummy_loans():
-    """더미 금융상품 데이터 생성"""
+    """금융상품 데이터 생성 (일반 은행 + 신용보증재단 연계 상품)"""
     loans = [
+        # 일반 은행 상품
         {
             'id': 1,
             'bank': 'KB국민은행',
@@ -136,7 +73,8 @@ def get_dummy_loans():
             'limit': '최대 3억원',
             'features': ['온라인 신청 가능', '당일 승인', '중도상환 수수료 없음'],
             'target': '소상공인, 자영업자',
-            'term': '최대 5년'
+            'term': '최대 5년',
+            'guarantee_org': None
         },
         {
             'id': 2,
@@ -147,7 +85,8 @@ def get_dummy_loans():
             'limit': '최대 5억원',
             'features': ['신용도 기반 금리', '빠른 심사', '담보 가능'],
             'target': '법인, 개인사업자',
-            'term': '최대 7년'
+            'term': '최대 7년',
+            'guarantee_org': None
         },
         {
             'id': 3,
@@ -158,7 +97,8 @@ def get_dummy_loans():
             'limit': '최대 2억원',
             'features': ['모바일 신청', '24시간 승인', '우대금리 적용'],
             'target': '소상공인',
-            'term': '최대 3년'
+            'term': '최대 3년',
+            'guarantee_org': None
         },
         {
             'id': 4,
@@ -169,7 +109,57 @@ def get_dummy_loans():
             'limit': '최대 10억원',
             'features': ['대출 한도 높음', '장기 상환 가능', '전문 상담 서비스'],
             'target': '중소기업, 법인',
-            'term': '최대 10년'
+            'term': '최대 10년',
+            'guarantee_org': None
+        },
+        # 신용보증재단 연계 상품
+        {
+            'id': 5,
+            'bank': '케이뱅크',
+            'product_name': '사장님 대출',
+            'rate': '3.42%',
+            'rate_detail': '연 3.42% (고정금리)',
+            'limit': '최대 3,000만원',
+            'features': ['비대면 신청', '10분 이내 승인', '신용보증재단 연계'],
+            'target': '개인사업자, 소상공인',
+            'term': '최대 3년',
+            'guarantee_org': '신용보증재단'
+        },
+        {
+            'id': 6,
+            'bank': '카카오뱅크',
+            'product_name': '대구 상생 대출',
+            'rate': '3.35%',
+            'rate_detail': '연 3.35% ~ 4.50% (변동금리)',
+            'limit': '최대 1억원',
+            'features': ['대구 지역 특화', '신용보증재단 연계', '빠른 심사'],
+            'target': '대구 지역 소상공인',
+            'term': '최대 5년',
+            'guarantee_org': '대구신용보증재단'
+        },
+        {
+            'id': 7,
+            'bank': '신용보증재단',
+            'product_name': '특례보증 대출',
+            'rate': '3.20%',
+            'rate_detail': '연 3.20% ~ 4.00% (변동금리)',
+            'limit': '최대 5,000만원',
+            'features': ['저금리 특례보증', '담보 불필요', '빠른 승인'],
+            'target': '소상공인, 자영업자',
+            'term': '최대 5년',
+            'guarantee_org': '신용보증재단'
+        },
+        {
+            'id': 8,
+            'bank': '토스뱅크',
+            'product_name': '토스 비즈론',
+            'rate': '3.50%',
+            'rate_detail': '연 3.50% ~ 5.50% (변동금리)',
+            'limit': '최대 5,000만원',
+            'features': ['모바일 전용', '당일 승인', '신용보증재단 연계'],
+            'target': '소상공인, 자영업자',
+            'term': '최대 3년',
+            'guarantee_org': '신용보증재단'
         }
     ]
     
@@ -179,12 +169,19 @@ def get_dummy_loans():
 @biz_lounge_bp.route('/')
 def index():
     """비즈니스 라운지 메인 페이지"""
-    policies = get_dummy_policies()
+    # URL 파라미터에서 target_type 가져오기 (기본값: BIZ)
+    target_type = request.args.get('target', 'BIZ')
+    
+    # DB에서 데이터 조회
+    policies = get_policies_from_db(target_type=target_type)
+    
+    # 금융상품은 아직 하드코딩 유지 (나중에 확장 가능)
     loans = get_dummy_loans()
     
     return render_template(
         'biz_lounge/index.html',
         policies=policies,
-        loans=loans
+        loans=loans,
+        current_target=target_type
     )
 
