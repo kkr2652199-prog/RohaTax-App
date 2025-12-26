@@ -567,6 +567,15 @@ from routes.payment_routes import payment_bp, _build_shop_context
 if "payment_routes" not in app.blueprints:
     app.register_blueprint(payment_bp)
 
+# 비즈니스 라운지 등록
+from routes.biz_lounge_routes import biz_lounge_bp
+
+if "biz_lounge" not in app.blueprints:
+    app.register_blueprint(biz_lounge_bp)
+    print(
+        f"[biz_lounge] 비즈니스 라운지 가동 완료! (URL Prefix: {biz_lounge_bp.url_prefix})"
+    )
+
 # Order API 등록
 from routes.api_modules.order_api import order_bp
 
