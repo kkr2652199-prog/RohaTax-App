@@ -417,7 +417,7 @@
 .policy-org-badge {
     position: absolute;
     top: 1rem;
-    right: 1rem;
+    left: 1rem;
     background: #f7fafc;
     color: #4a5568;
     padding: 0.25rem 0.75rem;
@@ -425,6 +425,7 @@
     font-size: 0.75rem;
     font-weight: 500;
     border: 1px solid #e2e8f0;
+    z-index: 1;
 }
 
 .policy-badge {
@@ -435,6 +436,7 @@
     border-radius: 2px;
     font-size: 0.7rem;
     font-weight: 600;
+    z-index: 2;
 }
 
 .policy-badge.urgent {
@@ -452,6 +454,7 @@
 .policy-header {
     margin-bottom: 1rem;
     padding-right: 100px;
+    padding-top: 2.5rem; /* 배지 공간 확보 */
 }
 
 .policy-title {
@@ -956,9 +959,6 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
-    padding: 20px;
-    animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
