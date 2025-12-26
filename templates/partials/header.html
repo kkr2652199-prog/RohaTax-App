@@ -10,6 +10,7 @@
             <a href="/shop" class="nav-link">유료 상점</a>
             <a href="/showroom" class="nav-link">3D 체험 상점 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
             <a href="/studio" class="nav-link">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
+            <a href="/biz-lounge" class="nav-link">비즈니스 라운지 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
             <a href="#faq" class="nav-link">고객 지원</a>
             {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
             {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}

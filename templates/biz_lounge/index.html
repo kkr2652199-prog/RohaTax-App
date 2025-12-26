@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+
+{% block title %}비즈니스 라운지 - 로하택스{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/biz_lounge.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="biz-hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <h1 class="hero-title">사장님을 위한 자금 비서</h1>
+            <p class="hero-subtitle">소상공인 지원사업과 금융상품을 한눈에</p>
+            
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="지원사업이나 금융상품을 검색해보세요...">
+                    <button class="search-btn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="filter-container">
+                <div class="filter-group">
+                    <label class="filter-label">지역</label>
+                    <select class="filter-select">
+                        <option value="">전체</option>
+                        <option value="인천">인천</option>
+                        <option value="서울">서울</option>
+                        <option value="경기">경기</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">업종</label>
+                    <select class="filter-select">
+                        <option value="">전체</option>
+                        <option value="소매">소매</option>
+                        <option value="음식">음식</option>
+                        <option value="서비스">서비스</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 1: 지원사업 -->
+<section class="biz-section policies-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">지원사업</h2>
+            <p class="section-description">정부 및 공공기관에서 제공하는 소상공인 지원사업 정보</p>
+        </div>
+        
+        <div class="policies-grid">
+            {% for policy in policies %}
+            <div class="policy-card">
+                {% if policy.status == '마감임박' %}
+                <div class="policy-badge urgent">마감임박</div>
+                {% else %}
+                <div class="policy-badge normal">{{ policy.status }}</div>
+                {% endif %}
+                
+                {% if policy.org_short %}
+                <div class="policy-org-badge">[{{ policy.org_short }}]</div>
+                {% endif %}
+                
+                <div class="policy-header">
+                    <h3 class="policy-title">{{ policy.title }}</h3>
+                    <p class="policy-org">{{ policy.organization }}</p>
+                </div>
+                
+                <div class="policy-body">
+                    <p class="policy-description">{{ policy.description }}</p>
+                    
+                    <div class="policy-info">
+                        <div class="info-item">
+                            <span class="info-label">지원금액</span>
+                            <span class="info-value">{{ policy.amount }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">금리/조건</span>
+                            <span class="info-value">{{ policy.rate }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="policy-tags">
+                        {% for tag in policy.tags %}
+                        <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="policy-footer">
+                    <div>
+                        {% if policy.period %}
+                        <div class="policy-period">접수기간 | {{ policy.period }}</div>
+                        {% endif %}
+                        <div class="d-day" style="margin-top: 0.5rem;">
+                            <span class="d-day-label">D-{{ policy.d_day }}</span>
+                        </div>
+                    </div>
+                    <button class="policy-btn" data-policy-id="{{ policy.id }}" onclick="openBizDetailModal({{ policy.id }})">자세히 보기</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Section 2: 금융상품 -->
+<section class="biz-section loans-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">금융상품</h2>
+            <p class="section-description">은행별 소상공인 맞춤 대출 상품 비교</p>
+        </div>
+        
+        <div class="loans-table-wrapper">
+            <table class="loans-table">
+                <thead>
+                    <tr>
+                        <th>은행</th>
+                        <th>상품명</th>
+                        <th>금리</th>
+                        <th>한도</th>
+                        <th>특징</th>
+                        <th>대상</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in loans %}
+                    <tr>
+                        <td class="bank-name">{{ loan.bank }}</td>
+                        <td class="product-name">{{ loan.product_name }}</td>
+                        <td class="rate-cell">
+                            <span class="rate-value">{{ loan.rate }}</span>
+                            <span class="rate-detail">{{ loan.rate_detail }}</span>
+                        </td>
+                        <td class="limit-cell">{{ loan.limit }}</td>
+                        <td class="features-cell">
+                            <ul class="features-list">
+                                {% for feature in loan.features %}
+                                <li>{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="target-cell">{{ loan.target }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="biz-section cta-section">
+    <div class="section-container">
+        <div class="cta-content">
+            <h2 class="cta-title">내 조건에 맞는 알림 받기</h2>
+            <p class="cta-description">새로운 지원사업이나 금융상품이 등록되면 알려드립니다</p>
+            <button class="cta-btn" disabled>준비중</button>
+        </div>
+    </div>
+</section>
+
+<!-- 스마트 브리핑 모달 -->
+<div id="bizDetailModal" class="biz-modal-overlay" style="display: none;">
+    <div class="biz-modal-container">
+        <div class="biz-modal-header">
+            <div class="modal-header-left">
+                <span class="modal-org-badge" id="modalOrgBadge">[중기부]</span>
+                <h2 class="modal-title" id="modalTitle">2025년도 스마트상점 기술보급사업 모집 공고</h2>
+            </div>
+            <div class="modal-header-right">
+                <div class="d-day-gauge">
+                    <div class="gauge-label">D-<span id="modalDDay">5</span></div>
+                    <div class="gauge-bar">
+                        <div class="gauge-fill" id="gaugeFill"></div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeBizDetailModal()">×</button>
+            </div>
+        </div>
+        
+        <div class="biz-modal-body">
+            <!-- Section A: AI 요약 -->
+            <section class="modal-section ai-summary">
+                <div class="section-header">
+                    <span class="section-icon">🤖</span>
+                    <h3 class="section-title">AI 3줄 요약</h3>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-item">
+                        <span class="check-icon">✓</span>
+                        <span class="summary-text" id="summary1">소상공인 매장의 디지털 전환을 위한 스마트 POS, 무인결제 시스템 등 기술보급 지원</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="check-icon">✓</span>
+                        <span class="summary-text" id="summary2">최대 5억원까지 저금리(연 2.5%)로 지원 가능</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="check-icon">✓</span>
+                        <span class="summary-text" id="summary3">접수기간: 2025.01.15 ~ 01.31 (D-5일 남음)</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Section B: 자가 진단 -->
+            <section class="modal-section self-check">
+                <div class="section-header">
+                    <h3 class="section-title">지원 자격 체크</h3>
+                </div>
+                <div class="check-list">
+                    <label class="check-item">
+                        <input type="checkbox" class="qualification-check" onchange="checkQualification()">
+                        <span class="check-text">업력 1년 이상</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" class="qualification-check" onchange="checkQualification()">
+                        <span class="check-text">소상공인 확인서 보유</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" class="qualification-check" onchange="checkQualification()">
+                        <span class="check-text">사업자등록증 보유</span>
+                    </label>
+                </div>
+                <div class="qualification-status" id="qualificationStatus">
+                    <span class="status-text">자격을 확인해주세요</span>
+                </div>
+            </section>
+            
+            <!-- Section C: 예상 혜택 -->
+            <section class="modal-section benefits">
+                <div class="section-header">
+                    <h3 class="section-title">사장님이 받을 수 있는 혜택</h3>
+                </div>
+                <div class="benefit-amount">
+                    <span class="amount-label">최대</span>
+                    <span class="amount-value" id="benefitAmount">3,000만 원</span>
+                </div>
+                
+                <!-- 금융 상세 정보 테이블 -->
+                <div class="finance-detail-table">
+                    <table class="detail-table">
+                        <tbody>
+                            <tr>
+                                <td class="detail-label">대출한도</td>
+                                <td class="detail-value highlight" id="detailAmount">운전자금 최대 7천만원 / 시설자금 최대 1억원</td>
+                            </tr>
+                            <tr>
+                                <td class="detail-label">금리조건</td>
+                                <td class="detail-value highlight" id="interestRateDesc">정책자금 기준금리 + 0.2%p (변동)</td>
+                            </tr>
+                            <tr>
+                                <td class="detail-label">상환기간</td>
+                                <td class="detail-value" id="repayment">2년 거치 3년 분할상환</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Section D: 제출 서류 -->
+            <section class="modal-section documents">
+                <div class="section-header">
+                    <h3 class="section-title">이 서류들이 필요해요!</h3>
+                </div>
+                <div class="documents-grid" id="documentsGrid">
+                    <!-- JavaScript로 동적 생성 -->
+                </div>
+            </section>
+        </div>
+        
+        <div class="biz-modal-footer">
+            <button class="modal-btn-secondary" onclick="downloadOriginal()">
+                📄 공고문 원본 다운로드
+            </button>
+            <button class="modal-btn-primary pulse-animation" id="applyBtn" onclick="goToApply()" disabled>
+                ⚡ 바로 신청하러 가기
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 더미 데이터 (실제로는 서버에서 받아올 데이터)
+const policyData = {
+    {% for policy in policies %}
+    {{ policy.id }}: {
+        id: {{ policy.id }},
+        title: {{ policy.title | tojson }},
+        organization: {{ policy.organization | tojson }},
+        org_short: {{ policy.org_short | tojson }},
+        d_day: {{ policy.d_day }},
+        status: {{ policy.status | tojson }},
+        description: {{ policy.description | tojson }},
+        amount: {{ policy.amount | tojson }},
+        rate: {{ policy.rate | tojson }},
+        period: {{ policy.period | tojson }},
+        tags: {{ policy.tags | tojson }},
+        detail_amount: {{ policy.detail_amount | tojson }},
+        interest_rate_desc: {{ policy.interest_rate_desc | tojson }},
+        repayment: {{ policy.repayment | tojson }},
+        link: {{ policy.link | tojson }},
+        documents: {{ policy.documents | tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+
+// 모달 열기
+function openBizDetailModal(policyId) {
+    const policy = policyData[policyId];
+    if (!policy) return;
+    
+    // 모달 데이터 채우기
+    document.getElementById('modalOrgBadge').textContent = `[${policy.org_short}]`;
+    document.getElementById('modalTitle').textContent = policy.title;
+    document.getElementById('modalDDay').textContent = policy.d_day;
+    
+    // D-Day 게이지 계산 (30일 기준으로 가정)
+    const gaugePercent = Math.max(0, Math.min(100, (30 - policy.d_day) / 30 * 100));
+    document.getElementById('gaugeFill').style.width = `${gaugePercent}%`;
+    
+    // AI 요약 (더미 데이터 기반)
+    document.getElementById('summary1').textContent = policy.description;
+    document.getElementById('summary2').textContent = `${policy.amount}까지 ${policy.rate}로 지원 가능`;
+    document.getElementById('summary3').textContent = `접수기간: ${policy.period} (D-${policy.d_day}일 남음)`;
+    
+    // 예상 혜택 - 금액 버그 수정 (detail_amount 우선 사용)
+    let displayAmount = policy.detail_amount || policy.amount;
+    
+    // detail_amount에서 가장 큰 금액 추출
+    const amountMatches = displayAmount.match(/(\d+)[억천만]/g);
+    if (amountMatches && amountMatches.length > 0) {
+        // 가장 큰 금액 찾기
+        let maxAmount = 0;
+        amountMatches.forEach(match => {
+            const num = parseInt(match.replace(/[억천만]/g, ''));
+            if (match.includes('억')) {
+                maxAmount = Math.max(maxAmount, num * 100000000);
+            } else if (match.includes('천')) {
+                maxAmount = Math.max(maxAmount, num * 10000000);
+            } else if (match.includes('만')) {
+                maxAmount = Math.max(maxAmount, num * 10000);
+            }
+        });
+        
+        if (maxAmount > 0) {
+            if (maxAmount >= 100000000) {
+                displayAmount = `${(maxAmount / 100000000).toFixed(1)}억 원`;
+            } else if (maxAmount >= 10000) {
+                displayAmount = `${(maxAmount / 10000).toLocaleString()}만 원`;
+            } else {
+                displayAmount = `${maxAmount.toLocaleString()}원`;
+            }
+        }
+    } else {
+        // 숫자가 없는 경우 원본 표시
+        const amountText = displayAmount.replace(/[^0-9]/g, '');
+        if (amountText) {
+            const amountNum = parseInt(amountText);
+            if (amountNum >= 100000000) {
+                displayAmount = `${(amountNum / 100000000).toFixed(1)}억 원`;
+            } else if (amountNum >= 10000) {
+                displayAmount = `${(amountNum / 10000).toLocaleString()}만 원`;
+            } else {
+                displayAmount = `${amountNum.toLocaleString()}원`;
+            }
+        }
+    }
+    document.getElementById('benefitAmount').textContent = displayAmount;
+    
+    // 금융 상세 정보 테이블
+    document.getElementById('detailAmount').textContent = policy.detail_amount || policy.amount;
+    document.getElementById('interestRateDesc').textContent = policy.interest_rate_desc || policy.rate;
+    document.getElementById('repayment').textContent = policy.repayment || '-';
+    
+    // 제출 서류 비주얼화
+    const documentsGrid = document.getElementById('documentsGrid');
+    if (policy.documents && policy.documents.length > 0) {
+        documentsGrid.innerHTML = policy.documents.map(doc => `
+            <div class="document-card">
+                <span class="document-icon">📄</span>
+                <span class="document-name">${doc}</span>
+            </div>
+        `).join('');
+    } else {
+        documentsGrid.innerHTML = '<div class="document-card"><span class="document-name">제출 서류 정보 없음</span></div>';
+    }
+    
+    // 외부 링크 저장
+    document.getElementById('applyBtn').setAttribute('data-link', policy.link || '#');
+    
+    // 모달 표시
+    document.getElementById('bizDetailModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // 체크박스 초기화
+    document.querySelectorAll('.qualification-check').forEach(cb => {
+        cb.checked = false;
+    });
+    checkQualification();
+}
+
+// 모달 닫기
+function closeBizDetailModal() {
+    document.getElementById('bizDetailModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// 자격 체크 로직
+function checkQualification() {
+    const checks = document.querySelectorAll('.qualification-check');
+    const checkedCount = Array.from(checks).filter(cb => cb.checked).length;
+    const statusEl = document.getElementById('qualificationStatus');
+    const applyBtn = document.getElementById('applyBtn');
+    
+    if (checkedCount === checks.length) {
+        statusEl.innerHTML = '<span class="status-text success">✓ 신청 가능합니다!</span>';
+        applyBtn.disabled = false;
+        applyBtn.classList.add('enabled');
+    } else {
+        statusEl.innerHTML = '<span class="status-text">자격을 확인해주세요</span>';
+        applyBtn.disabled = true;
+        applyBtn.classList.remove('enabled');
+    }
+}
+
+// 공고문 다운로드
+function downloadOriginal() {
+    alert('공고문 다운로드 기능은 준비중입니다.');
+}
+
+// 신청하기
+function goToApply() {
+    const applyBtn = document.getElementById('applyBtn');
+    const link = applyBtn.getAttribute('data-link');
+    
+    if (link && link !== '#') {
+        window.open(link, '_blank');
+    } else {
+        alert('신청 페이지 링크가 준비중입니다.');
+    }
+}
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('bizDetailModal').addEventListener('click', function(e) {
+    if (e.target.id === 'bizDetailModal') {
+        closeBizDetailModal();
+    }
+});
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBizDetailModal();
+    }
+});
+</script>
+{% endblock %}
+
