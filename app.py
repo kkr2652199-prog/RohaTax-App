@@ -834,4 +834,7 @@ if __name__ == "__main__":
         # 초기화 중 오류가 발생해도 서버 기동 자체는 시도
         pass
 
-    app.run(host="127.0.0.1", port=settings.PORT, debug=settings.DEBUG)
+    # 서버 환경에서는 0.0.0.0으로 외부 접근 허용
+    host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1")
+    port = int(os.environ.get("FLASK_RUN_PORT", settings.PORT))
+    app.run(host=host, port=port, debug=settings.DEBUG)
