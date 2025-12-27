@@ -1,750 +1,1972 @@
 ================================================================================
 📊 병합 보고서
 ================================================================================
-생성 시간: 2025-12-27 16:31:06
+생성 시간: 2025-12-27 17:51:08
 
 ## 📈 통계
-- 전초기지 파일 수: 604
-- 본진 파일 수: 1221
-- 변경된 파일: 88
-- 새 파일: 10
-- 본진에만 있는 파일: 627
+- 전초기지 파일 수: 1331
+- 본진 파일 수: 2064
+- 변경된 파일: 4
+- 새 파일: 605
+- 본진에만 있는 파일: 1338
 
 ## 🔄 변경된 파일
-- app.py (32327 bytes -> 33167 bytes)
-- conversion_stats.db (20480 bytes -> 20480 bytes)
-- file_manager_config.json (281 bytes -> 281 bytes)
-- kweon.md (135460 bytes -> 137567 bytes)
-- PRODUCTION_RISK_AUDIT.md (7782 bytes -> 8008 bytes)
-- PROJECT_AUDIT_REPORT.md (5401 bytes -> 5554 bytes)
-- SERVER_PRODUCTS_SETUP.md (7935 bytes -> 8209 bytes)
-- start_ngrok_tunnel.bat (3006 bytes -> 3096 bytes)
-- config/settings.py (3429 bytes -> 3517 bytes)
-- core/absolute_guideline_loader.py (13160 bytes -> 12826 bytes)
-- core/ai_auto_split_system.py (22104 bytes -> 21528 bytes)
-- core/ai_rule_enforcer.py (5838 bytes -> 5664 bytes)
-- core/amount_extractor.py (13620 bytes -> 13260 bytes)
-- core/change_detector.py (5820 bytes -> 5659 bytes)
-- core/content.json (3394 bytes -> 3316 bytes)
-- core/conversion_core.py (8626 bytes -> 8389 bytes)
-- core/email_sender.py (5658 bytes -> 5800 bytes)
-- core/email_verification_manager.py (17117 bytes -> 17550 bytes)
-- core/file_change_monitor.py (6526 bytes -> 6373 bytes)
-- core/file_manager.py (23511 bytes -> 22943 bytes)
-- core/file_protection_system.py (19360 bytes -> 18901 bytes)
-- core/file_validator.py (9415 bytes -> 9634 bytes)
-- core/guideline_manager.py (4026 bytes -> 3929 bytes)
-- core/hometax_template_generator.py (17300 bytes -> 16891 bytes)
-- core/industry_config_loader.py (6270 bytes -> 6092 bytes)
-- core/responses.py (479 bytes -> 443 bytes)
-- core/security_enhancement.py (8425 bytes -> 8216 bytes)
-- core/system_manager.py (9981 bytes -> 9704 bytes)
-- core/validation_utils.py (11703 bytes -> 11387 bytes)
-- core/payment/service.py (73158 bytes -> 74655 bytes)
-- core/recipient_extractor/field_extractors.py (15820 bytes -> 15498 bytes)
-- database/clear_all_logs.py (6361 bytes -> 6529 bytes)
-- database/schema.sql (12781 bytes -> 13041 bytes)
-- kweon21/constants.ts (4831 bytes -> 4676 bytes)
-- kweon21/metadata.json (352 bytes -> 347 bytes)
-- kweon21/package-lock.json (90602 bytes -> 88031 bytes)
-- kweon21/package.json (496 bytes -> 474 bytes)
-- kweon21/README.md (573 bytes -> 553 bytes)
-- kweon21/tsconfig.json (570 bytes -> 542 bytes)
-- kweon21/types.ts (3490 bytes -> 3331 bytes)
-- kweon21/components/BlogResultsTable.tsx (2106 bytes -> 2064 bytes)
-- kweon21/components/CurrentStatus.tsx (1617 bytes -> 1575 bytes)
-- kweon21/components/Icon.tsx (3701 bytes -> 3652 bytes)
-- kweon21/components/NaverNewsResults.tsx (5752 bytes -> 5656 bytes)
-- kweon21/components/ResultsTable.tsx (3716 bytes -> 3639 bytes)
-- kweon21/components/Shortcuts.tsx (3514 bytes -> 3426 bytes)
-- kweon21/dist/index.html (2949 bytes -> 2988 bytes)
-- kweon21/hooks/useSearch.ts (2570 bytes -> 2515 bytes)
-- logs/app_2025-12-27.log (202191 bytes -> 116383 bytes)
-- logs/conversion_process_2025-12-27.log (225412 bytes -> 129708 bytes)
-- logs/conversion_stats_2025-12-27.log (202735 bytes -> 116383 bytes)
-- routes/ops.py (352 bytes -> 335 bytes)
-- routes/admin/activity_log_api.py (8997 bytes -> 8782 bytes)
-- routes/api_modules/payment_complete_api.py (5873 bytes -> 5727 bytes)
-- routes/api_modules/user_api.py (30234 bytes -> 30961 bytes)
-- routes/api_modules/user/service.py (18676 bytes -> 19221 bytes)
-- routes/api_modules/user_api_v2/service.py (17218 bytes -> 17669 bytes)
-- routes/conversion_modules/conversion_engine_routes.py (18880 bytes -> 19278 bytes)
-- routes/conversion_modules/user_routes.py (7663 bytes -> 7822 bytes)
-- routes/home_modules/auth_routes.py (8752 bytes -> 8959 bytes)
-- routes/home_modules/profile_routes.py (15700 bytes -> 15386 bytes)
-- scripts/deploy.sh (6246 bytes -> 6489 bytes)
-- scripts/seed_policies.py (33694 bytes -> 34280 bytes)
-- scripts/server_setup.sh (2208 bytes -> 2291 bytes)
-- static/css/conversion.css (22017 bytes -> 21308 bytes)
-- static/css/shop_modern.css (29173 bytes -> 27848 bytes)
-- static/css/components/vip_notice.css (37373 bytes -> 39056 bytes)
-- static/css/components/youtube_demo.css (16699 bytes -> 15999 bytes)
-- static/css/layout/header.css (11524 bytes -> 11989 bytes)
-- static/css/pages/conversion.css (22017 bytes -> 21308 bytes)
-- static/css/sections/hero.css (14777 bytes -> 15421 bytes)
-- static/css/sections/hero_new.css (69339 bytes -> 72342 bytes)
-- static/css/sections/problem-solution.css (9402 bytes -> 9856 bytes)
-- static/js/profile_modern.js (131116 bytes -> 134070 bytes)
-- static/js/modules/console_mirror.js (3610 bytes -> 3515 bytes)
-- static/js/modules/vip_notice.js (7852 bytes -> 8057 bytes)
-- templates/homepage.html (7909 bytes -> 8049 bytes)
-- templates/homepage_new.html (35955 bytes -> 36595 bytes)
-- templates/index.html (2721 bytes -> 2660 bytes)
-- templates/admin/tabs/product_management.html (17664 bytes -> 17336 bytes)
-- templates/components/myhome_header.html (3659 bytes -> 3762 bytes)
-- templates/home_sections/_hero.html (9670 bytes -> 9818 bytes)
-- templates/home_sections/_stats.html (978 bytes -> 954 bytes)
-- templates/home_sections/_testimonials.html (10866 bytes -> 11064 bytes)
-- templates/home_sections/_use_cases.html (4505 bytes -> 4591 bytes)
-- templates/partials/header.html (7483 bytes -> 7628 bytes)
-- templates/partials/vip_notice.html (63179 bytes -> 64671 bytes)
-- templates/studio/studio_overlay.html (14701 bytes -> 15222 bytes)
+- merge_report.txt (36603 bytes -> 106613 bytes)
+- logs/app_2025-12-27.log (238191 bytes -> 230757 bytes)
+- logs/conversion_process_2025-12-27.log (265528 bytes -> 257137 bytes)
+- logs/conversion_stats_2025-12-27.log (238834 bytes -> 231301 bytes)
 
 ## ✨ 새 파일
-- 병합_프로세스_개선_보고서.md (4938 bytes)
-- logs/app_2025-12-24.log.2025-12-24 (1345657 bytes)
-- logs/app_2025-12-24.log.2025-12-25 (2424 bytes)
+- .prettierrc.json.backup (54 bytes)
+- app.py.backup.backup (32327 bytes)
+- AUTH_AND_ADMIN_AUDIT.md.backup (12229 bytes)
+- AUTO_FIX_PRODUCTS.bat.backup (387 bytes)
+- CLOUDFLARE_IMPACT_ANALYSIS.md.backup (7036 bytes)
+- CLOUDFLARE_SETUP_GUIDE.md.backup (8887 bytes)
+- conversion_stats.db.backup.backup (20480 bytes)
+- DEPLOYMENT_CHECKLIST.md.backup (9584 bytes)
+- DEPLOYMENT_CRITICAL_ISSUES.md.backup (8016 bytes)
+- DEPLOYMENT_SCRIPTS_EXPLAINED.md.backup (11217 bytes)
+- DOMAIN_DNS_TROUBLESHOOTING.md.backup (9419 bytes)
+- env.example.backup (849 bytes)
+- eslint.config.js.backup (802 bytes)
+- file_manager_config.json.backup.backup (281 bytes)
+- GIT_REMOTE_UPDATE_GUIDE.md.backup (10520 bytes)
+- kweon.md.backup.backup (135460 bytes)
+- LINUX_DEPLOYMENT_CHECKLIST.md.backup (2822 bytes)
+- MAINTENANCE_AND_BACKUP_GUIDE.md.backup (11243 bytes)
+- NGROK_GUIDE.md.backup (3513 bytes)
+- NGROK_빠른_사용법.txt.backup (2803 bytes)
+- NGROK_설치_및_사용_가이드.md.backup (8907 bytes)
+- OPERATIONAL_FEATURES_AUDIT.md.backup (8211 bytes)
+- package-lock.json.backup (61559 bytes)
+- package.json.backup (685 bytes)
+- PACKAGE_UPDATE_GUIDE.md.backup (3264 bytes)
+- Procfile.backup (98 bytes)
+- PRODUCTION_PRIORITY_TASKS.md.backup (10550 bytes)
+- PRODUCTION_READINESS_FINAL_REPORT.md.backup (10984 bytes)
+- PRODUCTION_RISK_AUDIT.md.backup.backup (7782 bytes)
+- PRODUCTION_SETUP_GUIDE.md.backup (12566 bytes)
+- PROJECT_AUDIT_REPORT.md.backup.backup (5401 bytes)
+- pyproject.toml.backup (143 bytes)
+- requirements.txt.backup (1033 bytes)
+- reset_db.bat.backup (2487 bytes)
+- RULES.md.backup (8546 bytes)
+- SECURITY_AND_PRODUCTION_READINESS.md.backup (11312 bytes)
+- SECURITY_AUDIT_REPORT.md.backup (6078 bytes)
+- seed_products.py.backup (1960 bytes)
+- SERVER_PRODUCTS_SETUP.md.backup.backup (7935 bytes)
+- SOCIAL_LOGIN_IMPLEMENTATION_GUIDE.md.backup (20177 bytes)
+- start_ngrok_tunnel.bat.backup.backup (3006 bytes)
+- start_server_5000.bat.backup (2423 bytes)
+- start_server_5001.bat.backup (2885 bytes)
+- sync_db_from_main.bat.backup (1642 bytes)
+- update_and_save_versions.py.backup (3928 bytes)
+- uv.lock.backup (41666 bytes)
+- UX_AND_MARKETING_AUDIT.md.backup (9865 bytes)
+- VIDEO_FILE_AUDIT_REPORT.md.backup (2600 bytes)
+- WHAT_I_CANNOT_DO.md.backup (13129 bytes)
+- 로그인_문제_해결_가이드.md.backup (5498 bytes)
+- 로컬_서버_차이점_완전_분석.md.backup (5615 bytes)
+- 로컬과_서버_차이점_하나씩_수정.md.backup (2349 bytes)
+- 로컬과_서버_차이점_확인.md.backup (1927 bytes)
+- 메인_vs_변환페이지_비교분석.md.backup (7448 bytes)
+- 배포_자동화_완료_보고서.md.backup (3286 bytes)
+- 병합_자동화_완료_보고서.md.backup (3052 bytes)
+- 병합_프로세스_개선_보고서.md.backup (4938 bytes)
+- 서버_app.py_수정_가이드.md.backup (2866 bytes)
+- 서버_데이터베이스_수정_가이드.md.backup (4432 bytes)
+- 서버_문제_해결_가이드.md.backup (1334 bytes)
+- 서버_배포_자동화_가이드.md.backup (2782 bytes)
+- 서버_실행_명령어_킷.md.backup (7857 bytes)
+- 서버_초기_설정_완전_수정.md.backup (5349 bytes)
+- 서버_파일_생성_가이드.md.backup (6553 bytes)
+- 인터넷_서버_배포_완전_가이드.md.backup (7391 bytes)
+- 하늘저장소_업로드_가이드.md.backup (10356 bytes)
+- .husky/pre-commit.backup (38 bytes)
+- config/absolute_guidelines_v5.json.backup (5870 bytes)
+- config/industry_config.json.backup (30372 bytes)
+- config/settings.py.backup.backup (3429 bytes)
+- core/absolute_guidelines.py.backup (14542 bytes)
+- core/absolute_guideline_loader.py.backup.backup (13160 bytes)
+- core/activity_service.py.backup (3658 bytes)
+- core/ai_auto_split_system.py.backup.backup (22104 bytes)
+- core/ai_judgment_validator.py.backup (13958 bytes)
+- core/ai_rule_enforcer.py.backup.backup (5838 bytes)
+- core/amount_extractor.py.backup.backup (13620 bytes)
+- core/auto_cleanup_system.py.backup (9735 bytes)
+- core/auto_file_splitter.py.backup (7988 bytes)
+- core/auto_recovery_system.py.backup (16849 bytes)
+- core/auto_snapshot_manager.py.backup (5990 bytes)
+- core/cache_system.py.backup (16861 bytes)
+- core/change_detector.py.backup.backup (5820 bytes)
+- core/content.json.backup.backup (3394 bytes)
+- core/content_loader.py.backup (769 bytes)
+- core/conversion_core.py.backup.backup (8626 bytes)
+- core/conversion_engine.py.backup (18183 bytes)
+- core/database_manager.py.backup (6854 bytes)
+- core/data_bus.py.backup (1937 bytes)
+- core/db.py.backup (17894 bytes)
+- core/db_optimizer.py.backup (12882 bytes)
+- core/email_sender.py.backup.backup (5658 bytes)
+- core/email_verification_manager.py.backup.backup (17117 bytes)
+- core/extensions.py.backup (739 bytes)
+- core/file_change_monitor.py.backup.backup (6526 bytes)
+- core/file_manager.py.backup.backup (23511 bytes)
+- core/file_parser.py.backup (29310 bytes)
+- core/file_protection_system.py.backup.backup (19360 bytes)
+- core/file_security.py.backup (10981 bytes)
+- core/file_size_manager.py.backup (8460 bytes)
+- core/file_size_monitor.py.backup (6558 bytes)
+- core/file_upload_helper.py.backup (11883 bytes)
+- core/file_validator.py.backup.backup (9415 bytes)
+- core/guideline_manager.py.backup.backup (4026 bytes)
+- core/hometax_template_generator.py.backup.backup (17300 bytes)
+- core/https_setup.py.backup (9112 bytes)
+- core/industry_config_loader.py.backup.backup (6270 bytes)
+- core/integrated_safety_system.py.backup (14537 bytes)
+- core/logging_setup.py.backup (8056 bytes)
+- core/memory_optimizer.py.backup (14118 bytes)
+- core/monitoring_system.py.backup (13486 bytes)
+- core/notification_system.py.backup (8709 bytes)
+- core/parallel_processor.py.backup (13083 bytes)
+- core/password_reset_utils.py.backup (4843 bytes)
+- core/password_utils.py.backup (3928 bytes)
+- core/responses.py.backup.backup (479 bytes)
+- core/response_time_optimizer.py.backup (16706 bytes)
+- core/safe_file_deletion_system.py.backup (15400 bytes)
+- core/security.py.backup (1464 bytes)
+- core/security_enhancement.py.backup.backup (8425 bytes)
+- core/sms_utils.py.backup (9272 bytes)
+- core/subscription_utils.py.backup (19429 bytes)
+- core/system_manager.py.backup.backup (9981 bytes)
+- core/template_manager.py.backup (8374 bytes)
+- core/token_deduction_processor.py.backup (12139 bytes)
+- core/token_logger.py.backup (1355 bytes)
+- core/token_log_schema.py.backup (1762 bytes)
+- core/token_manager.py.backup (13697 bytes)
+- core/token_service.py.backup (5608 bytes)
+- core/user_profile_service.py.backup (9531 bytes)
+- core/utils.py.backup (731 bytes)
+- core/validation_utils.py.backup.backup (11703 bytes)
+- core/version_manager.py.backup (18355 bytes)
+- core/__init__.py.backup (41 bytes)
+- core/admin_services/settings_service.py.backup (1662 bytes)
+- core/admin_services/token_service.py.backup (17558 bytes)
+- core/admin_services/user_service.py.backup (26123 bytes)
+- core/admin_services/__init__.py.backup (187 bytes)
+- core/engine_processor/base.py.backup (6340 bytes)
+- core/engine_processor/context_manager.py.backup (3170 bytes)
+- core/engine_processor/hometax_template_writer.py.backup (14669 bytes)
+- core/engine_processor/recipient_pipeline.py.backup (5761 bytes)
+- core/engine_processor/response_builder.py.backup (2541 bytes)
+- core/engine_processor/stats_collector.py.backup (2177 bytes)
+- core/engine_processor/__init__.py.backup (861 bytes)
+- core/file_parser_modules/file_validator.py.backup (7323 bytes)
+- core/file_parser_modules/keyword_manager.py.backup (12864 bytes)
+- core/file_parser_utils/column_mapper.py.backup (8411 bytes)
+- core/file_parser_utils/config_builder.py.backup (810 bytes)
+- core/file_parser_utils/data_processor.py.backup (5564 bytes)
+- core/file_parser_utils/header_analyzer.py.backup (14582 bytes)
+- core/file_parser_utils/header_detector.py.backup (6254 bytes)
+- core/file_parser_utils/header_locator.py.backup (24028 bytes)
+- core/file_parser_utils/industry_rules.py.backup (16251 bytes)
+- core/file_parser_utils/number_parser.py.backup (508 bytes)
+- core/file_parser_utils/parallel_runner.py.backup (8624 bytes)
+- core/file_parser_utils/reporting.py.backup (7236 bytes)
+- core/file_parser_utils/scoring_utils.py.backup (7111 bytes)
+- core/file_parser_utils/sheet_evaluator.py.backup (17441 bytes)
+- core/file_parser_utils/validation_pipeline.py.backup (4400 bytes)
+- core/file_parser_utils/validators.py.backup (2840 bytes)
+- core/file_parser_utils/__init__.py.backup (2633 bytes)
+- core/payment/schemas.py.backup (3610 bytes)
+- core/payment/service.py.backup.backup (73158 bytes)
+- core/payment/__init__.py.backup (310 bytes)
+- core/product/schemas.py.backup (6073 bytes)
+- core/product/service.py.backup (11310 bytes)
+- core/product/__init__.py.backup (92 bytes)
+- core/recipient_extractor/column_mapping.py.backup (20506 bytes)
+- core/recipient_extractor/exceptions.py.backup (553 bytes)
+- core/recipient_extractor/field_extractors.py.backup.backup (15820 bytes)
+- core/recipient_extractor/intelligent_features.py.backup (10756 bytes)
+- core/recipient_extractor/main_extractor.py.backup (8532 bytes)
+- core/recipient_extractor/normalizers.py.backup (2510 bytes)
+- core/recipient_extractor/pipeline.py.backup (8657 bytes)
+- core/recipient_extractor/second_priority_handler.py.backup (2800 bytes)
+- core/recipient_extractor/stats_tracker.py.backup (4812 bytes)
+- core/recipient_extractor/utils.py.backup (13316 bytes)
+- core/recipient_extractor/validation.py.backup (9276 bytes)
+- core/recipient_extractor/__init__.py.backup (363 bytes)
+- core/recipient_extractor/rules/base_rules.py.backup (2157 bytes)
+- core/recipient_extractor/rules/priority_stage_one.py.backup (11874 bytes)
+- core/recipient_extractor/rules/priority_stage_two.py.backup (5894 bytes)
+- core/recipient_extractor/rules/__init__.py.backup (389 bytes)
+- core/recipient_extractor/utils/column_scorer.py.backup (18303 bytes)
+- core/recipient_extractor/utils/config_loader.py.backup (2817 bytes)
+- core/recipient_extractor/utils/config_manager.py.backup (3030 bytes)
+- core/recipient_extractor/utils/data_validator.py.backup (8000 bytes)
+- core/recipient_extractor/utils/enhancement_handler.py.backup (12048 bytes)
+- core/recipient_extractor/utils/extractor.py.backup (15526 bytes)
+- core/recipient_extractor/utils/legacy_utils.py.backup (13317 bytes)
+- core/recipient_extractor/utils/row_extractor.py.backup (8603 bytes)
+- core/recipient_extractor/utils/second_priority_detector.py.backup (2144 bytes)
+- core/recipient_extractor/utils/sheet_detector.py.backup (3927 bytes)
+- core/recipient_extractor/utils/sheet_selector.py.backup (9705 bytes)
+- core/recipient_extractor/utils/sub_guideline_processor.py.backup (6355 bytes)
+- core/recipient_extractor/utils/__init__.py.backup (2900 bytes)
+- core/utils/excel_adapter.py.backup (3863 bytes)
+- core/utils/tax_calculator.py.backup (5723 bytes)
+- core/utils/__init__.py.backup (968 bytes)
+- cursor-rules/ai_rule_enforcer.py.backup (5843 bytes)
+- cursor-rules/CURSOR_RULES_SUMMARY.md.backup (3154 bytes)
+- cursor-rules/main.cursorrules.backup (17601 bytes)
+- cursor-rules/README.md.backup (2928 bytes)
+- database/clear_all_logs.py.backup.backup (6361 bytes)
+- database/create_subscription_tables.py.backup (4132 bytes)
+- database/migrate_indexes.py.backup (5656 bytes)
+- database/schema.sql.backup.backup (12781 bytes)
+- database/migrations/001_create_activity_logs.sql.backup (2434 bytes)
+- database/migrations/002_create_payment_history.sql.backup (2002 bytes)
+- database/migrations/003_create_product_packages.sql.backup (1031 bytes)
+- database/migrations/004_add_previous_plan_type.sql.backup (1198 bytes)
+- database/migrations/005_add_source_type_to_token_history.sql.backup (1375 bytes)
+- database/migrations/apply_migration_005.py.backup (3350 bytes)
+- database/migrations/create_activity_logs_model.py.backup (6867 bytes)
+- database/migrations/run_migration_002.py.backup (1110 bytes)
+- database/migrations/run_migration_003.py.backup (1952 bytes)
+- kweon21/App.tsx.backup (94576 bytes)
+- kweon21/BUILD_INSTRUCTIONS.md.backup (1506 bytes)
+- kweon21/constants.ts.backup.backup (4831 bytes)
+- kweon21/index.html.backup (2929 bytes)
+- kweon21/index.tsx.backup (448 bytes)
+- kweon21/metadata.json.backup.backup (352 bytes)
+- kweon21/package-lock.json.backup.backup (90602 bytes)
+- kweon21/package.json.backup.backup (496 bytes)
+- kweon21/README.md.backup.backup (573 bytes)
+- kweon21/tsconfig.json.backup.backup (570 bytes)
+- kweon21/types.ts.backup.backup (3490 bytes)
+- kweon21/vite.config.ts.backup (1398 bytes)
+- kweon21/components/BlogResultsTable.tsx.backup.backup (2106 bytes)
+- kweon21/components/CurrentStatus.tsx.backup.backup (1617 bytes)
+- kweon21/components/Icon.tsx.backup.backup (3701 bytes)
+- kweon21/components/Navbar.tsx.backup (19286 bytes)
+- kweon21/components/NaverNewsResults.tsx.backup.backup (5752 bytes)
+- kweon21/components/ResultsTable.tsx.backup.backup (3716 bytes)
+- kweon21/components/Shortcuts.tsx.backup.backup (3514 bytes)
+- kweon21/data/promptsData.ts.backup (0 bytes)
+- kweon21/dist/index.html.backup.backup (2949 bytes)
+- kweon21/dist/assets/index-CgcUtD30.css.backup (7772 bytes)
+- kweon21/dist/assets/index-DofkCTji.js.backup (516893 bytes)
+- kweon21/hooks/useSearch.ts.backup.backup (2570 bytes)
+- kweon21/services/geminiService.ts.backup (45893 bytes)
+- kweon21/services/keywordService.ts.backup (18229 bytes)
+- kweon21/src/Navbar.css.backup (10710 bytes)
+- logs/app_2025-12-24.log.2025-12-24.backup (1345657 bytes)
+- logs/app_2025-12-24.log.2025-12-25.backup (2424 bytes)
 - logs/app_2025-12-26.log (397471 bytes)
-- logs/conversion_process_2025-12-24.log.2025-12-24 (1499967 bytes)
-- logs/conversion_process_2025-12-24.log.2025-12-25 (2736 bytes)
+- logs/app_2025-12-27.log.backup.backup (202763 bytes)
+- logs/conversion_process_2025-12-24.log.2025-12-24.backup (1499967 bytes)
+- logs/conversion_process_2025-12-24.log.2025-12-25.backup (2736 bytes)
 - logs/conversion_process_2025-12-26.log (444037 bytes)
-- logs/conversion_stats_2025-12-24.log.2025-12-24 (1345657 bytes)
-- logs/conversion_stats_2025-12-24.log.2025-12-25 (2424 bytes)
+- logs/conversion_process_2025-12-27.log.backup.backup (226049 bytes)
+- logs/conversion_stats_2025-12-24.log.2025-12-24.backup (1345657 bytes)
+- logs/conversion_stats_2025-12-24.log.2025-12-25.backup (2424 bytes)
 - logs/conversion_stats_2025-12-26.log (397471 bytes)
+- logs/conversion_stats_2025-12-27.log.backup.backup (203307 bytes)
+- models/activity_log.py.backup (5556 bytes)
+- models/__init__.py.backup (117 bytes)
+- routes/biz_lounge_routes.py.backup (6999 bytes)
+- routes/home.py.backup (2131 bytes)
+- routes/ops.py.backup.backup (352 bytes)
+- routes/payment_routes.py.backup (5938 bytes)
+- routes/__init__.py.backup (121 bytes)
+- routes/admin/activity_log_api.py.backup.backup (8997 bytes)
+- routes/admin/dashboard.py.backup (4928 bytes)
+- routes/admin/payment_api.py.backup (17597 bytes)
+- routes/admin/product_api.py.backup (10062 bytes)
+- routes/admin/settings_api.py.backup (1648 bytes)
+- routes/admin/stats_api.py.backup (6401 bytes)
+- routes/admin/tax_api.py.backup (22395 bytes)
+- routes/admin/token_api.py.backup (5556 bytes)
+- routes/admin/user_api.py.backup (9738 bytes)
+- routes/admin/__init__.py.backup (425 bytes)
+- routes/api_modules/admin_api.py.backup (7156 bytes)
+- routes/api_modules/order_api.py.backup (10313 bytes)
+- routes/api_modules/payment_complete_api.py.backup.backup (5873 bytes)
+- routes/api_modules/user_api.py.backup.backup (30234 bytes)
+- routes/api_modules/__init__.py.backup (0 bytes)
+- routes/api_modules/user/repository.py.backup (21505 bytes)
+- routes/api_modules/user/router.py.backup (8394 bytes)
+- routes/api_modules/user/schemas.py.backup (13581 bytes)
+- routes/api_modules/user/service.py.backup.backup (18676 bytes)
+- routes/api_modules/user/__init__.py.backup (261 bytes)
+- routes/api_modules/user_api_v2/repository.py.backup (14083 bytes)
+- routes/api_modules/user_api_v2/routes.py.backup (7941 bytes)
+- routes/api_modules/user_api_v2/service.py.backup.backup (17218 bytes)
+- routes/api_modules/user_api_v2/__init__.py.backup (314 bytes)
+- routes/conversion_modules/conversion_engine_routes.py.backup.backup (18880 bytes)
+- routes/conversion_modules/conversion_helpers.py.backup (11235 bytes)
+- routes/conversion_modules/conversion_processor.py.backup (9411 bytes)
+- routes/conversion_modules/convert_routes.py.backup (10718 bytes)
+- routes/conversion_modules/gold_customers_routes.py.backup (14348 bytes)
+- routes/conversion_modules/guideline_routes.py.backup (1638 bytes)
+- routes/conversion_modules/main_routes.py.backup (8129 bytes)
+- routes/conversion_modules/page_routes.py.backup (743 bytes)
+- routes/conversion_modules/security_routes.py.backup (4970 bytes)
+- routes/conversion_modules/template_routes.py.backup (6082 bytes)
+- routes/conversion_modules/token_routes.py.backup (8479 bytes)
+- routes/conversion_modules/user_routes.py.backup.backup (7663 bytes)
+- routes/home_modules/api_routes.py.backup (1797 bytes)
+- routes/home_modules/auth_routes.py.backup.backup (8752 bytes)
+- routes/home_modules/email_routes.py.backup (4006 bytes)
+- routes/home_modules/password_routes.py.backup (8667 bytes)
+- routes/home_modules/profile_routes.py.backup.backup (15700 bytes)
+- routes/home_modules/registration_routes.py.backup (12528 bytes)
+- routes/playground_routes/kweon21_routes.py.backup (7569 bytes)
+- routes/playground_routes/studio_api.py.backup (12956 bytes)
+- routes/playground_routes/__init__.py.backup (1063 bytes)
+- routes/utils/auth.py.backup (2960 bytes)
+- routes/utils/__init__.py.backup (56 bytes)
+- scripts/analyze_local_environment.py.backup (4756 bytes)
+- scripts/deploy.sh.backup.backup (6246 bytes)
+- scripts/deploy_server.py.backup (8655 bytes)
+- scripts/migrate_to_mysql.py.backup (9482 bytes)
+- scripts/migrate_to_postgresql.py.backup (13547 bytes)
+- scripts/migration_subscription.py.backup (2359 bytes)
+- scripts/reset_payments.py.backup (2095 bytes)
+- scripts/run_migration_004.py.backup (2240 bytes)
+- scripts/seed_payments.py.backup (7300 bytes)
+- scripts/seed_policies.py.backup.backup (33694 bytes)
+- scripts/seed_products.py.backup (3897 bytes)
+- scripts/seed_products_server.py.backup (4028 bytes)
+- scripts/server_setup.sh.backup.backup (2208 bytes)
+- static/css/admin.css.backup (25102 bytes)
+- static/css/conversion.css.backup.backup (22017 bytes)
+- static/css/homepage.css.backup (40000 bytes)
+- static/css/homepage_specific.css.backup (55604 bytes)
+- static/css/home_prime.css.backup (127757 bytes)
+- static/css/profile_modern.css.backup.backup (21272 bytes)
+- static/css/profile_v2.css.backup.backup (25120 bytes)
+- static/css/register_modern.css.backup (14324 bytes)
+- static/css/shop_modern.css.backup.backup (29173 bytes)
+- static/css/style.css.backup (3503 bytes)
+- static/css/tokens.css.backup (425 bytes)
+- static/css/components/animations.css.backup (3942 bytes)
+- static/css/components/badges.css.backup (2590 bytes)
+- static/css/components/buttons.css.backup (6150 bytes)
+- static/css/components/cards.css.backup (7054 bytes)
+- static/css/components/console_mirror.css.backup (1464 bytes)
+- static/css/components/features_algo.css.backup (1660 bytes)
+- static/css/components/forms.css.backup (3890 bytes)
+- static/css/components/keypad.css.backup (5469 bytes)
+- static/css/components/modals.css.backup (2243 bytes)
+- static/css/components/snowflake_background.css.backup (3397 bytes)
+- static/css/components/vip_notice.css.backup.backup (37373 bytes)
+- static/css/components/youtube_demo.css.backup.backup (16699 bytes)
+- static/css/core/fonts.css.backup (700 bytes)
+- static/css/core/reset.css.backup (2560 bytes)
+- static/css/core/variables.css.backup (1462 bytes)
+- static/css/layout/container.css.backup (2454 bytes)
+- static/css/layout/footer.css.backup (3036 bytes)
+- static/css/layout/header.css.backup.backup (11524 bytes)
+- static/css/pages/admin.css.backup (25102 bytes)
+- static/css/pages/biz_lounge.css.backup (43396 bytes)
+- static/css/pages/conversion.css.backup.backup (22017 bytes)
+- static/css/pages/playground.css.backup (24022 bytes)
+- static/css/pages/profile.css.backup.backup (21272 bytes)
+- static/css/pages/shop.css.backup (41697 bytes)
+- static/css/pages/shop_card_3d.css.backup (4429 bytes)
+- static/css/pages/shop_showroom.css.backup (2210 bytes)
+- static/css/sections/company.css.backup (4041 bytes)
+- static/css/sections/cta.css.backup (1230 bytes)
+- static/css/sections/faq.css.backup (1696 bytes)
+- static/css/sections/features.css.backup (2163 bytes)
+- static/css/sections/hero.css.backup.backup (14777 bytes)
+- static/css/sections/hero_new.css.backup.backup (69339 bytes)
+- static/css/sections/how-it-works.css.backup (24494 bytes)
+- static/css/sections/pricing.css.backup (16324 bytes)
+- static/css/sections/problem-solution.css.backup.backup (9402 bytes)
+- static/css/sections/stats.css.backup (1422 bytes)
+- static/css/sections/testimonials.css.backup (4706 bytes)
+- static/css/sections/use-cases.css.backup (2266 bytes)
+- static/images/hometax_guide/featured.jpeg.backup (449344 bytes)
+- static/images/hometax_guide/Generated.png.backup (1449261 bytes)
+- static/images/hometax_guide/kweo.jpg.backup (206094 bytes)
+- static/images/hometax_guide/step1.png.jpg.backup (423003 bytes)
+- static/images/hometax_guide/step2.png.jpg.backup (480985 bytes)
+- static/images/hometax_guide/step3.png.jpg.backup (401966 bytes)
+- static/images/hometax_guide/step4.png.jpg.backup (425011 bytes)
+- static/images/hometax_guide/step5.png.jpg.backup (550379 bytes)
+- static/images/hometax_guide/step6.png.jpg.backup (565027 bytes)
+- static/images/hometax_guide/step7.png.jpg.backup (714578 bytes)
+- static/images/hometax_guide/step8.png.jpg.backup (579405 bytes)
+- static/js/conversion.js.backup (75223 bytes)
+- static/js/homepage.js.backup (32594 bytes)
+- static/js/profile_modern.js.backup.backup (131116 bytes)
+- static/js/profile_v2.js.backup.backup (60228 bytes)
+- static/js/3d/Chandelier3D.js.backup (12200 bytes)
+- static/js/3d/CinemaController.js.backup (7638 bytes)
+- static/js/3d/Crown3D.js.backup (28741 bytes)
+- static/js/3d/FurnitureViewer.js.backup (11460 bytes)
+- static/js/3d/GiftBox3D.js.backup (34709 bytes)
+- static/js/3d/JewelryDisplay.js.backup (8362 bytes)
+- static/js/3d/LuxeDisplay3D.js.backup (15960 bytes)
+- static/js/3d/MagicFire.js.backup (11288 bytes)
+- static/js/3d/MarketingCopy.js.backup (15000 bytes)
+- static/js/3d/NeonRing.js.backup (3502 bytes)
+- static/js/3d/Pedestal3D.js.backup (4876 bytes)
+- static/js/3d/ProductFactory.js.backup (44654 bytes)
+- static/js/3d/Showroom.js.backup (80850 bytes)
+- static/js/3d/ShowroomBuilder.js.backup (34442 bytes)
+- static/js/3d/TV3D.js.backup (24443 bytes)
+- static/js/3d tv/App.tsx.backup (1468 bytes)
+- static/js/3d tv/index.html.backup (1007 bytes)
+- static/js/3d tv/index.tsx.backup (363 bytes)
+- static/js/3d tv/metadata.json.backup (222 bytes)
+- static/js/3d tv/package.json.backup (570 bytes)
+- static/js/3d tv/README.md.backup (573 bytes)
+- static/js/3d tv/tsconfig.json.backup (570 bytes)
+- static/js/3d tv/vite.config.ts.backup (603 bytes)
+- static/js/3d tv/components/Controls.tsx.backup (2774 bytes)
+- static/js/3d tv/components/Scene.tsx.backup (2239 bytes)
+- static/js/3d tv/components/TVModel.tsx.backup (12333 bytes)
+- static/js/3d-chandelier/App.tsx.backup (4864 bytes)
+- static/js/3d-chandelier/index.html.backup (1225 bytes)
+- static/js/3d-chandelier/index.tsx.backup (363 bytes)
+- static/js/3d-chandelier/metadata.json.backup (233 bytes)
+- static/js/3d-chandelier/package.json.backup (631 bytes)
+- static/js/3d-chandelier/README.md.backup (573 bytes)
+- static/js/3d-chandelier/tsconfig.json.backup (570 bytes)
+- static/js/3d-chandelier/types.ts.backup (195 bytes)
+- static/js/3d-chandelier/vite.config.ts.backup (603 bytes)
+- static/js/3d-chandelier/components/ChandelierParts.tsx.backup (3925 bytes)
+- static/js/3d-chandelier/components/ChandelierScene.tsx.backup (4481 bytes)
+- static/js/admin/activity_log.js.backup (36466 bytes)
+- static/js/admin/admin_management.js.backup (3937 bytes)
+- static/js/admin/dashboard_core.js.backup (2767 bytes)
+- static/js/admin/email_settings.js.backup (8675 bytes)
+- static/js/admin/payment.js.backup (67789 bytes)
+- static/js/admin/product.js.backup (20390 bytes)
+- static/js/admin/stats.js.backup (14813 bytes)
+- static/js/admin/token_history.js.backup (2963 bytes)
+- static/js/admin/user_management.js.backup.backup (43363 bytes)
+- static/js/admin/utils.js.backup (3556 bytes)
+- static/js/components/keypad.js.backup (4207 bytes)
+- static/js/components/snowflake_background.js.backup (13426 bytes)
+- static/js/components/snowflake_controls.js.backup (2657 bytes)
+- static/js/components/token_alert_modal.js.backup (5751 bytes)
+- static/js/components/video_player.js.backup (25044 bytes)
+- static/js/crown-3d/App.tsx.backup (2492 bytes)
+- static/js/crown-3d/index.html.backup (1254 bytes)
+- static/js/crown-3d/index.tsx.backup (363 bytes)
+- static/js/crown-3d/metadata.json.backup (188 bytes)
+- static/js/crown-3d/package.json.backup (541 bytes)
+- static/js/crown-3d/README.md.backup (573 bytes)
+- static/js/crown-3d/tsconfig.json.backup (570 bytes)
+- static/js/crown-3d/vite.config.ts.backup (603 bytes)
+- static/js/crown-3d/components/ImperialCrown.tsx.backup (12525 bytes)
+- static/js/luxedisplay-3d/App.tsx.backup (859 bytes)
+- static/js/luxedisplay-3d/index.html.backup (1852 bytes)
+- static/js/luxedisplay-3d/index.tsx.backup (363 bytes)
+- static/js/luxedisplay-3d/metadata.json.backup (226 bytes)
+- static/js/luxedisplay-3d/package.json.backup (564 bytes)
+- static/js/luxedisplay-3d/README.md.backup (573 bytes)
+- static/js/luxedisplay-3d/tsconfig.json.backup (570 bytes)
+- static/js/luxedisplay-3d/types.ts.backup (297 bytes)
+- static/js/luxedisplay-3d/vite.config.ts.backup (603 bytes)
+- static/js/luxedisplay-3d/components/DesignAdvisor.tsx.backup (3890 bytes)
+- static/js/luxedisplay-3d/components/JewelryBox.tsx.backup (1559 bytes)
+- static/js/luxedisplay-3d/components/Scene.tsx.backup (2989 bytes)
+- static/js/luxedisplay-3d/components/Showcase.tsx.backup (6308 bytes)
+- static/js/luxedisplay-3d/services/gemini.ts.backup.backup (959 bytes)
+- static/js/modules/console_mirror.js.backup.backup (3610 bytes)
+- static/js/modules/vip_notice.js.backup.backup (7852 bytes)
+- static/js/payment/shop.js.backup (32226 bytes)
+- static/js/sections/testimonials.js.backup (6189 bytes)
+- static/videos/README.md.backup (1737 bytes)
+- static/videos/roha_conversion_demo.mp4.mp4.backup (305070711 bytes)
+- templates/admin.html.backup (14552 bytes)
+- templates/admin_dashboard.html.backup (18101 bytes)
+- templates/base.html.backup (4857 bytes)
+- templates/conversion.html.backup (59220 bytes)
+- templates/email_verification_pending.html.backup (8708 bytes)
+- templates/forgot_password.html.backup (12149 bytes)
+- templates/homepage.html.backup.backup (7909 bytes)
+- templates/homepage_new.html.backup.backup (35955 bytes)
+- templates/index.html.backup.backup (2721 bytes)
+- templates/legal.html.backup (898 bytes)
+- templates/login.html.backup (1730 bytes)
+- templates/maintenance.html.backup (6587 bytes)
+- templates/pricing.html.backup (8188 bytes)
+- templates/profile_edit.html.backup (69488 bytes)
+- templates/profile_modern.html.backup (4656 bytes)
+- templates/profile_v2.html.backup (11445 bytes)
+- templates/register.html.backup (39175 bytes)
+- templates/reset_password.html.backup (4331 bytes)
+- templates/admin/furniture_studio.html.backup (46745 bytes)
+- templates/admin/components/activity_log/filters.html.backup (1345 bytes)
+- templates/admin/components/activity_log/pagination.html.backup (382 bytes)
+- templates/admin/components/activity_log/table.html.backup (184 bytes)
+- templates/admin/partials/_admin_list_table.html.backup (521 bytes)
+- templates/admin/partials/_header.html.backup (428 bytes)
+- templates/admin/partials/_live_indicator.html.backup (183 bytes)
+- templates/admin/partials/_stat_cards.html.backup (1637 bytes)
+- templates/admin/partials/_tabs.html.backup (1020 bytes)
+- templates/admin/partials/_user_list_table.html.backup (388 bytes)
+- templates/admin/tabs/activity_log.html.backup (3485 bytes)
+- templates/admin/tabs/payment_management.html.backup (16894 bytes)
+- templates/admin/tabs/product_management.html.backup.backup (17664 bytes)
+- templates/admin/tabs/tax_report.html.backup (18382 bytes)
+- templates/biz_lounge/index.html.backup (83402 bytes)
+- templates/components/3d_keypad.html.backup (1862 bytes)
+- templates/components/chatbot_widget.html.backup (10841 bytes)
+- templates/components/myhome_detail_modal.html.backup (1775 bytes)
+- templates/components/myhome_edit_modal.html.backup (4301 bytes)
+- templates/components/myhome_gold_secret.html.backup (1944 bytes)
+- templates/components/myhome_header.html.backup.backup (3659 bytes)
+- templates/components/myhome_list_view.html.backup (1981 bytes)
+- templates/components/myhome_preview_modal.html.backup (1136 bytes)
+- templates/components/myhome_tabs.html.backup (1333 bytes)
+- templates/components/text_box.html.backup (1009 bytes)
+- templates/components/token_history_table.html.backup (15353 bytes)
+- templates/components/video_player.html.backup (6151 bytes)
+- templates/errors/404.html.backup (443 bytes)
+- templates/errors/429.html.backup (2125 bytes)
+- templates/errors/500.html.backup (385 bytes)
+- templates/home_sections/_company.html.backup (4582 bytes)
+- templates/home_sections/_cta.html.backup (1067 bytes)
+- templates/home_sections/_faq.html.backup (3277 bytes)
+- templates/home_sections/_features.html.backup (4166 bytes)
+- templates/home_sections/_hero.html.backup.backup (9670 bytes)
+- templates/home_sections/_how_it_works.html.backup (16181 bytes)
+- templates/home_sections/_pricing.html.backup (12740 bytes)
+- templates/home_sections/_problem_solution.html.backup (3418 bytes)
+- templates/home_sections/_stats.html.backup.backup (978 bytes)
+- templates/home_sections/_testimonials.html.backup.backup (10866 bytes)
+- templates/home_sections/_use_cases.html.backup.backup (4505 bytes)
+- templates/partials/console_mirror.html.backup (421 bytes)
+- templates/partials/header.html.backup.backup (7483 bytes)
+- templates/partials/vip_notice.html.backup.backup (63179 bytes)
+- templates/payment/shop.html.backup (31806 bytes)
+- templates/payment/showroom.html.backup (18066 bytes)
+- templates/playground/base_playground.html.backup (469 bytes)
+- templates/playground/index.html.backup (5428 bytes)
+- templates/studio/studio_overlay.html.backup.backup (14701 bytes)
+- templates_data/template_config.json.backup (892 bytes)
+- templates_data/excel_templates/standard/홈텍스제공 공식파일(일반)1~50.xlsx.backup (50457 bytes)
+- tests/api_smoke_homepage.py.backup (10581 bytes)
+- tests/debug_convert_sample_invoice4.py.backup (3327 bytes)
+- tests/detailed_test.py.backup (6430 bytes)
+- tests/detailed_test_result.json.backup (859 bytes)
+- tests/e2e_result.json.backup (475 bytes)
+- tests/integration_analysis_result.json.backup (9323 bytes)
+- tests/integration_test.py.backup (8850 bytes)
+- tests/make_report.py.backup (3385 bytes)
+- tests/master_conversion_test.py.backup (15533 bytes)
+- tests/report.html.backup (2859 bytes)
+- tests/run_e2e.py.backup (1736 bytes)
+- tests/run_real_conversion_test.py.backup (12846 bytes)
+- tests/input/kweon.docx.backup (696891 bytes)
+- tests/input/sample_invoice.xlsx.backup (6924938 bytes)
+- tests/input/sample_invoice2.xlsx.backup (6310748 bytes)
+- tests/input/sample_invoice3.xlsx.backup (669302 bytes)
+- tests/input/sample_invoice4.xlsx.backup (1646889 bytes)
+- tests/input/test_auto_fix_data.xlsx.backup (3444 bytes)
+- tests/input/~$sample_invoice4.xlsx.backup (165 bytes)
+- tools/guideline_command_processor.py.backup (9505 bytes)
+- tools/run_parse_once.py.backup (1087 bytes)
+- 공급받는자_규칙/README.md.backup (5686 bytes)
+- 공급받는자_규칙/핵심문서/JSON_규칙_파일_완전분석.md.backup (12422 bytes)
+- 공급받는자_규칙/핵심문서/규칙_우선순위_매트릭스.md.backup (13841 bytes)
+- 공급받는자_규칙/핵심문서/변수_즉시반영_가이드.md.backup (8741 bytes)
+- 공급받는자_규칙/핵심문서/변환시스템_100프로_마스터_보고서.md.backup (17335 bytes)
+- 공급받는자_규칙/핵심문서/변환시스템_종합_가이드.md.backup (9564 bytes)
+- 공급받는자_규칙/핵심문서/새_지침_추가_완전가이드.md.backup (12419 bytes)
+- 공급받는자_규칙/핵심문서/지침_작성_주의사항.md.backup (11282 bytes)
+- 공급받는자_규칙/핵심문서/초보자용_변환시스템_가이드.md.backup (9677 bytes)
+- 변환규칙/README.md.backup (10212 bytes)
+- 변환규칙/공급받는자_완전통합지침_최종본.md.backup (29021 bytes)
+- 변환규칙/규칙_우선순위_매트릭스.md.backup (13841 bytes)
+- 변환규칙/변환시스템_100프로_마스터_보고서.md.backup (17335 bytes)
+- 변환규칙/변환시스템_종합_가이드.md.backup (9564 bytes)
+- 변환규칙/초보자용_변환시스템_가이드.md.backup (9677 bytes)
+- 변환규칙/테스트_자동화_가이드.md.backup (6889 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113201.md.backup (1485 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113412.md.backup (1425 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113656.md.backup (1584 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_120348.md.backup (1583 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_121512.md.backup (1583 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_122829.md.backup (1583 bytes)
+- 변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_154634.md.backup (1583 bytes)
+- 변환규칙/실제테스트_분석결과/영문경로_실제테스트_결과.json.backup (4140 bytes)
+- 변환규칙/테스트_리포트/개선후_sample_invoice.md.backup (1982 bytes)
+- 변환규칙/테스트_리포트/개선후_종합분석.md.backup (3069 bytes)
+- 변환규칙/테스트_리포트/전후비교_분석표.md.backup (5841 bytes)
+- 변환규칙/테스트_리포트/현재상태_sample_invoice.md.backup (1694 bytes)
+- 변환규칙/테스트_리포트/현재상태_종합분석.md.backup (1547 bytes)
+- 절대지침/README.md.backup (2883 bytes)
+- 절대지침/검증규칙/데이터검증규칙.md.backup (12607 bytes)
+- 절대지침/공급받는자정보관리지침/공급받는자_통합관리_절대지침.md.backup (49686 bytes)
+- 절대지침/공급자정보관리지침/공급자정보_통합관리_절대지침.md.backup (10772 bytes)
+- 절대지침/공급자정보규칙/공급자등록규칙.md.backup (1 bytes)
+- 절대지침/공급자정보규칙/홈텍스_공급자정보_기입지침.md.backup (5066 bytes)
+- 절대지침/공급자정보템플릿규칙/홈텍스_공급자정보_템플릿_기입지침.md.backup (0 bytes)
+- 절대지침/공통규칙/가족통합_공통규칙.md.backup (21356 bytes)
+- 절대지침/공통규칙/시트검열_공통규칙.md.backup (9969 bytes)
+- 절대지침/공통규칙/헤더감지_공통규칙.md.backup (8844 bytes)
+- 절대지침/배달대행사정산서지침/배달대행사_공급받는자_절대지침.md.backup (6449 bytes)
+- 절대지침/업종별절대지침/배달대행사_정산서_절대지침.md.backup (55045 bytes)
+- 절대지침/업종별절대지침/일반사업자_정산서_절대지침.md.backup (1792 bytes)
+- 절대지침/유저지침/유저_프로필_수정_지침.md.backup (3237 bytes)
+- 절대지침/전자세금계산서변환구조/변환구조_절대지침.md.backup (7222 bytes)
+- 절대지침/템플릿규칙/공급자정보기입예시.md.backup (1 bytes)
+- 절대지침/템플릿규칙/템플릿기입규칙.md.backup (1 bytes)
+- 절대지침/템플릿규칙/홈텍스_템플릿_기입지침.md.backup (4843 bytes)
 
 ## ⚠️ 본진에만 있는 파일 (삭제 고려)
-- clear_logs.py
-- commit_merge.txt
-- merge_report.txt
-- PRODUCTION_READINESS_REPORT.md
+- merge_to_homepage1_report.txt
 - sync_db_from_homepage1.bat
-- database/app_backup_before_activity_logs_20251116_161614.db
+- 서버_24시간_자동실행_설정_가이드.md
 - database/app_from_homepage1.db
-- database/test_app.db
 - homepage1/.prettierrc.json
+- homepage1/.prettierrc.json.backup
 - homepage1/app.py
+- homepage1/app.py.backup
+- homepage1/app.py.backup.backup
 - homepage1/AUTH_AND_ADMIN_AUDIT.md
+- homepage1/AUTH_AND_ADMIN_AUDIT.md.backup
 - homepage1/AUTO_FIX_PRODUCTS.bat
+- homepage1/AUTO_FIX_PRODUCTS.bat.backup
+- homepage1/clear_logs.py
 - homepage1/CLOUDFLARE_IMPACT_ANALYSIS.md
+- homepage1/CLOUDFLARE_IMPACT_ANALYSIS.md.backup
 - homepage1/CLOUDFLARE_SETUP_GUIDE.md
+- homepage1/CLOUDFLARE_SETUP_GUIDE.md.backup
+- homepage1/commit_merge.txt
 - homepage1/conversion_stats.db
+- homepage1/conversion_stats.db.backup
+- homepage1/conversion_stats.db.backup.backup
 - homepage1/DEPLOYMENT_CHECKLIST.md
+- homepage1/DEPLOYMENT_CHECKLIST.md.backup
 - homepage1/DEPLOYMENT_CRITICAL_ISSUES.md
+- homepage1/DEPLOYMENT_CRITICAL_ISSUES.md.backup
 - homepage1/DEPLOYMENT_SCRIPTS_EXPLAINED.md
+- homepage1/DEPLOYMENT_SCRIPTS_EXPLAINED.md.backup
 - homepage1/DOMAIN_DNS_TROUBLESHOOTING.md
+- homepage1/DOMAIN_DNS_TROUBLESHOOTING.md.backup
 - homepage1/env.example
+- homepage1/env.example.backup
 - homepage1/eslint.config.js
+- homepage1/eslint.config.js.backup
 - homepage1/file_manager_config.json
+- homepage1/file_manager_config.json.backup
+- homepage1/file_manager_config.json.backup.backup
+- homepage1/Git_LFS_설정_완료_가이드.md
 - homepage1/GIT_REMOTE_UPDATE_GUIDE.md
+- homepage1/GIT_REMOTE_UPDATE_GUIDE.md.backup
 - homepage1/kweon.md
+- homepage1/kweon.md.backup
+- homepage1/kweon.md.backup.backup
 - homepage1/LINUX_DEPLOYMENT_CHECKLIST.md
+- homepage1/LINUX_DEPLOYMENT_CHECKLIST.md.backup
 - homepage1/MAINTENANCE_AND_BACKUP_GUIDE.md
+- homepage1/MAINTENANCE_AND_BACKUP_GUIDE.md.backup
+- homepage1/merge_report.txt
+- homepage1/merge_verification_report.txt
 - homepage1/NGROK_GUIDE.md
+- homepage1/NGROK_GUIDE.md.backup
 - homepage1/NGROK_빠른_사용법.txt
+- homepage1/NGROK_빠른_사용법.txt.backup
 - homepage1/NGROK_설치_및_사용_가이드.md
+- homepage1/NGROK_설치_및_사용_가이드.md.backup
 - homepage1/OPERATIONAL_FEATURES_AUDIT.md
+- homepage1/OPERATIONAL_FEATURES_AUDIT.md.backup
 - homepage1/package-lock.json
+- homepage1/package-lock.json.backup
 - homepage1/package.json
+- homepage1/package.json.backup
 - homepage1/PACKAGE_UPDATE_GUIDE.md
+- homepage1/PACKAGE_UPDATE_GUIDE.md.backup
 - homepage1/Procfile
+- homepage1/Procfile.backup
 - homepage1/PRODUCTION_PRIORITY_TASKS.md
+- homepage1/PRODUCTION_PRIORITY_TASKS.md.backup
 - homepage1/PRODUCTION_READINESS_FINAL_REPORT.md
+- homepage1/PRODUCTION_READINESS_FINAL_REPORT.md.backup
+- homepage1/PRODUCTION_READINESS_REPORT.md
 - homepage1/PRODUCTION_RISK_AUDIT.md
+- homepage1/PRODUCTION_RISK_AUDIT.md.backup
+- homepage1/PRODUCTION_RISK_AUDIT.md.backup.backup
 - homepage1/PRODUCTION_SETUP_GUIDE.md
+- homepage1/PRODUCTION_SETUP_GUIDE.md.backup
 - homepage1/PROJECT_AUDIT_REPORT.md
+- homepage1/PROJECT_AUDIT_REPORT.md.backup
+- homepage1/PROJECT_AUDIT_REPORT.md.backup.backup
 - homepage1/pyproject.toml
+- homepage1/pyproject.toml.backup
 - homepage1/requirements.txt
+- homepage1/requirements.txt.backup
 - homepage1/reset_db.bat
+- homepage1/reset_db.bat.backup
 - homepage1/RULES.md
+- homepage1/RULES.md.backup
 - homepage1/SECURITY_AND_PRODUCTION_READINESS.md
+- homepage1/SECURITY_AND_PRODUCTION_READINESS.md.backup
 - homepage1/SECURITY_AUDIT_REPORT.md
+- homepage1/SECURITY_AUDIT_REPORT.md.backup
 - homepage1/seed_products.py
+- homepage1/seed_products.py.backup
 - homepage1/SERVER_PRODUCTS_SETUP.md
+- homepage1/SERVER_PRODUCTS_SETUP.md.backup
+- homepage1/SERVER_PRODUCTS_SETUP.md.backup.backup
 - homepage1/SOCIAL_LOGIN_IMPLEMENTATION_GUIDE.md
+- homepage1/SOCIAL_LOGIN_IMPLEMENTATION_GUIDE.md.backup
 - homepage1/start_ngrok_tunnel.bat
+- homepage1/start_ngrok_tunnel.bat.backup
+- homepage1/start_ngrok_tunnel.bat.backup.backup
 - homepage1/start_server_5000.bat
+- homepage1/start_server_5000.bat.backup
 - homepage1/start_server_5001.bat
+- homepage1/start_server_5001.bat.backup
 - homepage1/sync_db_from_main.bat
+- homepage1/sync_db_from_main.bat.backup
 - homepage1/update_and_save_versions.py
+- homepage1/update_and_save_versions.py.backup
 - homepage1/uv.lock
+- homepage1/uv.lock.backup
 - homepage1/UX_AND_MARKETING_AUDIT.md
+- homepage1/UX_AND_MARKETING_AUDIT.md.backup
 - homepage1/VIDEO_FILE_AUDIT_REPORT.md
+- homepage1/VIDEO_FILE_AUDIT_REPORT.md.backup
 - homepage1/WHAT_I_CANNOT_DO.md
+- homepage1/WHAT_I_CANNOT_DO.md.backup
 - homepage1/로그인_문제_해결_가이드.md
+- homepage1/로그인_문제_해결_가이드.md.backup
 - homepage1/로컬_서버_차이점_완전_분석.md
+- homepage1/로컬_서버_차이점_완전_분석.md.backup
 - homepage1/로컬과_서버_차이점_하나씩_수정.md
+- homepage1/로컬과_서버_차이점_하나씩_수정.md.backup
 - homepage1/로컬과_서버_차이점_확인.md
+- homepage1/로컬과_서버_차이점_확인.md.backup
 - homepage1/메인_vs_변환페이지_비교분석.md
+- homepage1/메인_vs_변환페이지_비교분석.md.backup
 - homepage1/배포_자동화_완료_보고서.md
+- homepage1/배포_자동화_완료_보고서.md.backup
+- homepage1/병합_자동화_완료_보고서.md
+- homepage1/병합_자동화_완료_보고서.md.backup
 - homepage1/병합_프로세스_개선_보고서.md
+- homepage1/병합_프로세스_개선_보고서.md.backup
+- homepage1/상용화_용량_해결_방안.md
+- homepage1/상용화_점검_체크리스트.md
 - homepage1/서버_app.py_수정_가이드.md
+- homepage1/서버_app.py_수정_가이드.md.backup
 - homepage1/서버_데이터베이스_수정_가이드.md
+- homepage1/서버_데이터베이스_수정_가이드.md.backup
 - homepage1/서버_문제_해결_가이드.md
+- homepage1/서버_문제_해결_가이드.md.backup
 - homepage1/서버_배포_자동화_가이드.md
+- homepage1/서버_배포_자동화_가이드.md.backup
 - homepage1/서버_실행_명령어_킷.md
+- homepage1/서버_실행_명령어_킷.md.backup
 - homepage1/서버_초기_설정_완전_수정.md
+- homepage1/서버_초기_설정_완전_수정.md.backup
 - homepage1/서버_파일_생성_가이드.md
+- homepage1/서버_파일_생성_가이드.md.backup
+- homepage1/용량_분석_보고서.md
+- homepage1/인터넷_서버_100프로_동작_보장_가이드.md
 - homepage1/인터넷_서버_배포_완전_가이드.md
+- homepage1/인터넷_서버_배포_완전_가이드.md.backup
+- homepage1/하늘나라_전송_상태_보고서.md
 - homepage1/하늘저장소_업로드_가이드.md
+- homepage1/하늘저장소_업로드_가이드.md.backup
 - homepage1/.husky/pre-commit
+- homepage1/.husky/pre-commit.backup
 - homepage1/config/absolute_guidelines_v5.json
+- homepage1/config/absolute_guidelines_v5.json.backup
 - homepage1/config/industry_config.json
+- homepage1/config/industry_config.json.backup
 - homepage1/config/settings.py
+- homepage1/config/settings.py.backup
+- homepage1/config/settings.py.backup.backup
 - homepage1/core/absolute_guidelines.py
+- homepage1/core/absolute_guidelines.py.backup
 - homepage1/core/absolute_guideline_loader.py
+- homepage1/core/absolute_guideline_loader.py.backup
+- homepage1/core/absolute_guideline_loader.py.backup.backup
 - homepage1/core/activity_service.py
+- homepage1/core/activity_service.py.backup
 - homepage1/core/ai_auto_split_system.py
+- homepage1/core/ai_auto_split_system.py.backup
+- homepage1/core/ai_auto_split_system.py.backup.backup
 - homepage1/core/ai_judgment_validator.py
+- homepage1/core/ai_judgment_validator.py.backup
 - homepage1/core/ai_rule_enforcer.py
+- homepage1/core/ai_rule_enforcer.py.backup
+- homepage1/core/ai_rule_enforcer.py.backup.backup
 - homepage1/core/amount_extractor.py
+- homepage1/core/amount_extractor.py.backup
+- homepage1/core/amount_extractor.py.backup.backup
 - homepage1/core/auto_cleanup_system.py
+- homepage1/core/auto_cleanup_system.py.backup
 - homepage1/core/auto_file_splitter.py
+- homepage1/core/auto_file_splitter.py.backup
 - homepage1/core/auto_recovery_system.py
+- homepage1/core/auto_recovery_system.py.backup
 - homepage1/core/auto_snapshot_manager.py
+- homepage1/core/auto_snapshot_manager.py.backup
 - homepage1/core/cache_system.py
+- homepage1/core/cache_system.py.backup
 - homepage1/core/change_detector.py
+- homepage1/core/change_detector.py.backup
+- homepage1/core/change_detector.py.backup.backup
 - homepage1/core/content.json
+- homepage1/core/content.json.backup
+- homepage1/core/content.json.backup.backup
 - homepage1/core/content_loader.py
+- homepage1/core/content_loader.py.backup
 - homepage1/core/conversion_core.py
+- homepage1/core/conversion_core.py.backup
+- homepage1/core/conversion_core.py.backup.backup
 - homepage1/core/conversion_engine.py
+- homepage1/core/conversion_engine.py.backup
 - homepage1/core/database_manager.py
+- homepage1/core/database_manager.py.backup
 - homepage1/core/data_bus.py
+- homepage1/core/data_bus.py.backup
 - homepage1/core/db.py
+- homepage1/core/db.py.backup
 - homepage1/core/db_optimizer.py
+- homepage1/core/db_optimizer.py.backup
 - homepage1/core/email_sender.py
+- homepage1/core/email_sender.py.backup
+- homepage1/core/email_sender.py.backup.backup
 - homepage1/core/email_verification_manager.py
+- homepage1/core/email_verification_manager.py.backup
+- homepage1/core/email_verification_manager.py.backup.backup
 - homepage1/core/extensions.py
+- homepage1/core/extensions.py.backup
 - homepage1/core/file_change_monitor.py
+- homepage1/core/file_change_monitor.py.backup
+- homepage1/core/file_change_monitor.py.backup.backup
 - homepage1/core/file_manager.py
+- homepage1/core/file_manager.py.backup
+- homepage1/core/file_manager.py.backup.backup
 - homepage1/core/file_parser.py
+- homepage1/core/file_parser.py.backup
 - homepage1/core/file_protection_system.py
+- homepage1/core/file_protection_system.py.backup
+- homepage1/core/file_protection_system.py.backup.backup
 - homepage1/core/file_security.py
+- homepage1/core/file_security.py.backup
 - homepage1/core/file_size_manager.py
+- homepage1/core/file_size_manager.py.backup
 - homepage1/core/file_size_monitor.py
+- homepage1/core/file_size_monitor.py.backup
 - homepage1/core/file_upload_helper.py
+- homepage1/core/file_upload_helper.py.backup
 - homepage1/core/file_validator.py
+- homepage1/core/file_validator.py.backup
+- homepage1/core/file_validator.py.backup.backup
 - homepage1/core/guideline_manager.py
+- homepage1/core/guideline_manager.py.backup
+- homepage1/core/guideline_manager.py.backup.backup
 - homepage1/core/hometax_template_generator.py
+- homepage1/core/hometax_template_generator.py.backup
+- homepage1/core/hometax_template_generator.py.backup.backup
 - homepage1/core/https_setup.py
+- homepage1/core/https_setup.py.backup
 - homepage1/core/industry_config_loader.py
+- homepage1/core/industry_config_loader.py.backup
+- homepage1/core/industry_config_loader.py.backup.backup
 - homepage1/core/integrated_safety_system.py
+- homepage1/core/integrated_safety_system.py.backup
 - homepage1/core/logging_setup.py
+- homepage1/core/logging_setup.py.backup
 - homepage1/core/memory_optimizer.py
+- homepage1/core/memory_optimizer.py.backup
 - homepage1/core/monitoring_system.py
+- homepage1/core/monitoring_system.py.backup
 - homepage1/core/notification_system.py
+- homepage1/core/notification_system.py.backup
 - homepage1/core/parallel_processor.py
+- homepage1/core/parallel_processor.py.backup
 - homepage1/core/password_reset_utils.py
+- homepage1/core/password_reset_utils.py.backup
 - homepage1/core/password_utils.py
+- homepage1/core/password_utils.py.backup
 - homepage1/core/responses.py
+- homepage1/core/responses.py.backup
+- homepage1/core/responses.py.backup.backup
 - homepage1/core/response_time_optimizer.py
+- homepage1/core/response_time_optimizer.py.backup
 - homepage1/core/safe_file_deletion_system.py
+- homepage1/core/safe_file_deletion_system.py.backup
 - homepage1/core/security.py
+- homepage1/core/security.py.backup
 - homepage1/core/security_enhancement.py
+- homepage1/core/security_enhancement.py.backup
+- homepage1/core/security_enhancement.py.backup.backup
 - homepage1/core/sms_utils.py
+- homepage1/core/sms_utils.py.backup
 - homepage1/core/subscription_utils.py
+- homepage1/core/subscription_utils.py.backup
 - homepage1/core/system_manager.py
+- homepage1/core/system_manager.py.backup
+- homepage1/core/system_manager.py.backup.backup
 - homepage1/core/template_manager.py
+- homepage1/core/template_manager.py.backup
 - homepage1/core/token_deduction_processor.py
+- homepage1/core/token_deduction_processor.py.backup
 - homepage1/core/token_logger.py
+- homepage1/core/token_logger.py.backup
 - homepage1/core/token_log_schema.py
+- homepage1/core/token_log_schema.py.backup
 - homepage1/core/token_manager.py
+- homepage1/core/token_manager.py.backup
 - homepage1/core/token_service.py
+- homepage1/core/token_service.py.backup
 - homepage1/core/user_profile_service.py
+- homepage1/core/user_profile_service.py.backup
 - homepage1/core/utils.py
+- homepage1/core/utils.py.backup
 - homepage1/core/validation_utils.py
+- homepage1/core/validation_utils.py.backup
+- homepage1/core/validation_utils.py.backup.backup
 - homepage1/core/version_manager.py
+- homepage1/core/version_manager.py.backup
 - homepage1/core/__init__.py
+- homepage1/core/__init__.py.backup
 - homepage1/core/admin_services/settings_service.py
+- homepage1/core/admin_services/settings_service.py.backup
 - homepage1/core/admin_services/token_service.py
+- homepage1/core/admin_services/token_service.py.backup
 - homepage1/core/admin_services/user_service.py
+- homepage1/core/admin_services/user_service.py.backup
 - homepage1/core/admin_services/__init__.py
+- homepage1/core/admin_services/__init__.py.backup
 - homepage1/core/engine_processor/base.py
+- homepage1/core/engine_processor/base.py.backup
 - homepage1/core/engine_processor/context_manager.py
+- homepage1/core/engine_processor/context_manager.py.backup
 - homepage1/core/engine_processor/hometax_template_writer.py
+- homepage1/core/engine_processor/hometax_template_writer.py.backup
 - homepage1/core/engine_processor/recipient_pipeline.py
+- homepage1/core/engine_processor/recipient_pipeline.py.backup
 - homepage1/core/engine_processor/response_builder.py
+- homepage1/core/engine_processor/response_builder.py.backup
 - homepage1/core/engine_processor/stats_collector.py
+- homepage1/core/engine_processor/stats_collector.py.backup
 - homepage1/core/engine_processor/__init__.py
+- homepage1/core/engine_processor/__init__.py.backup
 - homepage1/core/file_parser_modules/file_validator.py
+- homepage1/core/file_parser_modules/file_validator.py.backup
 - homepage1/core/file_parser_modules/keyword_manager.py
+- homepage1/core/file_parser_modules/keyword_manager.py.backup
 - homepage1/core/file_parser_utils/column_mapper.py
+- homepage1/core/file_parser_utils/column_mapper.py.backup
 - homepage1/core/file_parser_utils/config_builder.py
+- homepage1/core/file_parser_utils/config_builder.py.backup
 - homepage1/core/file_parser_utils/data_processor.py
+- homepage1/core/file_parser_utils/data_processor.py.backup
 - homepage1/core/file_parser_utils/header_analyzer.py
+- homepage1/core/file_parser_utils/header_analyzer.py.backup
 - homepage1/core/file_parser_utils/header_detector.py
+- homepage1/core/file_parser_utils/header_detector.py.backup
 - homepage1/core/file_parser_utils/header_locator.py
+- homepage1/core/file_parser_utils/header_locator.py.backup
 - homepage1/core/file_parser_utils/industry_rules.py
+- homepage1/core/file_parser_utils/industry_rules.py.backup
 - homepage1/core/file_parser_utils/number_parser.py
+- homepage1/core/file_parser_utils/number_parser.py.backup
 - homepage1/core/file_parser_utils/parallel_runner.py
+- homepage1/core/file_parser_utils/parallel_runner.py.backup
 - homepage1/core/file_parser_utils/reporting.py
+- homepage1/core/file_parser_utils/reporting.py.backup
 - homepage1/core/file_parser_utils/scoring_utils.py
+- homepage1/core/file_parser_utils/scoring_utils.py.backup
 - homepage1/core/file_parser_utils/sheet_evaluator.py
+- homepage1/core/file_parser_utils/sheet_evaluator.py.backup
 - homepage1/core/file_parser_utils/validation_pipeline.py
+- homepage1/core/file_parser_utils/validation_pipeline.py.backup
 - homepage1/core/file_parser_utils/validators.py
+- homepage1/core/file_parser_utils/validators.py.backup
 - homepage1/core/file_parser_utils/__init__.py
+- homepage1/core/file_parser_utils/__init__.py.backup
 - homepage1/core/payment/schemas.py
+- homepage1/core/payment/schemas.py.backup
 - homepage1/core/payment/service.py
+- homepage1/core/payment/service.py.backup
+- homepage1/core/payment/service.py.backup.backup
 - homepage1/core/payment/__init__.py
+- homepage1/core/payment/__init__.py.backup
 - homepage1/core/product/schemas.py
+- homepage1/core/product/schemas.py.backup
 - homepage1/core/product/service.py
+- homepage1/core/product/service.py.backup
 - homepage1/core/product/__init__.py
+- homepage1/core/product/__init__.py.backup
 - homepage1/core/recipient_extractor/column_mapping.py
+- homepage1/core/recipient_extractor/column_mapping.py.backup
 - homepage1/core/recipient_extractor/exceptions.py
+- homepage1/core/recipient_extractor/exceptions.py.backup
 - homepage1/core/recipient_extractor/field_extractors.py
+- homepage1/core/recipient_extractor/field_extractors.py.backup
+- homepage1/core/recipient_extractor/field_extractors.py.backup.backup
 - homepage1/core/recipient_extractor/intelligent_features.py
+- homepage1/core/recipient_extractor/intelligent_features.py.backup
 - homepage1/core/recipient_extractor/main_extractor.py
+- homepage1/core/recipient_extractor/main_extractor.py.backup
 - homepage1/core/recipient_extractor/normalizers.py
+- homepage1/core/recipient_extractor/normalizers.py.backup
 - homepage1/core/recipient_extractor/pipeline.py
+- homepage1/core/recipient_extractor/pipeline.py.backup
 - homepage1/core/recipient_extractor/second_priority_handler.py
+- homepage1/core/recipient_extractor/second_priority_handler.py.backup
 - homepage1/core/recipient_extractor/stats_tracker.py
+- homepage1/core/recipient_extractor/stats_tracker.py.backup
 - homepage1/core/recipient_extractor/utils.py
+- homepage1/core/recipient_extractor/utils.py.backup
 - homepage1/core/recipient_extractor/validation.py
+- homepage1/core/recipient_extractor/validation.py.backup
 - homepage1/core/recipient_extractor/__init__.py
+- homepage1/core/recipient_extractor/__init__.py.backup
 - homepage1/core/recipient_extractor/rules/base_rules.py
+- homepage1/core/recipient_extractor/rules/base_rules.py.backup
 - homepage1/core/recipient_extractor/rules/priority_stage_one.py
+- homepage1/core/recipient_extractor/rules/priority_stage_one.py.backup
 - homepage1/core/recipient_extractor/rules/priority_stage_two.py
+- homepage1/core/recipient_extractor/rules/priority_stage_two.py.backup
 - homepage1/core/recipient_extractor/rules/__init__.py
+- homepage1/core/recipient_extractor/rules/__init__.py.backup
 - homepage1/core/recipient_extractor/utils/column_scorer.py
+- homepage1/core/recipient_extractor/utils/column_scorer.py.backup
 - homepage1/core/recipient_extractor/utils/config_loader.py
+- homepage1/core/recipient_extractor/utils/config_loader.py.backup
 - homepage1/core/recipient_extractor/utils/config_manager.py
+- homepage1/core/recipient_extractor/utils/config_manager.py.backup
 - homepage1/core/recipient_extractor/utils/data_validator.py
+- homepage1/core/recipient_extractor/utils/data_validator.py.backup
 - homepage1/core/recipient_extractor/utils/enhancement_handler.py
+- homepage1/core/recipient_extractor/utils/enhancement_handler.py.backup
 - homepage1/core/recipient_extractor/utils/extractor.py
+- homepage1/core/recipient_extractor/utils/extractor.py.backup
 - homepage1/core/recipient_extractor/utils/legacy_utils.py
+- homepage1/core/recipient_extractor/utils/legacy_utils.py.backup
 - homepage1/core/recipient_extractor/utils/row_extractor.py
+- homepage1/core/recipient_extractor/utils/row_extractor.py.backup
 - homepage1/core/recipient_extractor/utils/second_priority_detector.py
+- homepage1/core/recipient_extractor/utils/second_priority_detector.py.backup
 - homepage1/core/recipient_extractor/utils/sheet_detector.py
+- homepage1/core/recipient_extractor/utils/sheet_detector.py.backup
 - homepage1/core/recipient_extractor/utils/sheet_selector.py
+- homepage1/core/recipient_extractor/utils/sheet_selector.py.backup
 - homepage1/core/recipient_extractor/utils/sub_guideline_processor.py
+- homepage1/core/recipient_extractor/utils/sub_guideline_processor.py.backup
 - homepage1/core/recipient_extractor/utils/__init__.py
+- homepage1/core/recipient_extractor/utils/__init__.py.backup
 - homepage1/core/utils/excel_adapter.py
+- homepage1/core/utils/excel_adapter.py.backup
 - homepage1/core/utils/tax_calculator.py
+- homepage1/core/utils/tax_calculator.py.backup
 - homepage1/core/utils/__init__.py
+- homepage1/core/utils/__init__.py.backup
 - homepage1/cursor-rules/ai_rule_enforcer.py
+- homepage1/cursor-rules/ai_rule_enforcer.py.backup
 - homepage1/cursor-rules/CURSOR_RULES_SUMMARY.md
+- homepage1/cursor-rules/CURSOR_RULES_SUMMARY.md.backup
 - homepage1/cursor-rules/main.cursorrules
+- homepage1/cursor-rules/main.cursorrules.backup
 - homepage1/cursor-rules/README.md
+- homepage1/cursor-rules/README.md.backup
+- homepage1/database/app_backup_before_activity_logs_20251116_161614.db
 - homepage1/database/clear_all_logs.py
+- homepage1/database/clear_all_logs.py.backup
+- homepage1/database/clear_all_logs.py.backup.backup
 - homepage1/database/create_subscription_tables.py
+- homepage1/database/create_subscription_tables.py.backup
 - homepage1/database/migrate_indexes.py
+- homepage1/database/migrate_indexes.py.backup
 - homepage1/database/schema.sql
+- homepage1/database/schema.sql.backup
+- homepage1/database/schema.sql.backup.backup
+- homepage1/database/test_app.db
 - homepage1/database/migrations/001_create_activity_logs.sql
+- homepage1/database/migrations/001_create_activity_logs.sql.backup
 - homepage1/database/migrations/002_create_payment_history.sql
+- homepage1/database/migrations/002_create_payment_history.sql.backup
 - homepage1/database/migrations/003_create_product_packages.sql
+- homepage1/database/migrations/003_create_product_packages.sql.backup
 - homepage1/database/migrations/004_add_previous_plan_type.sql
+- homepage1/database/migrations/004_add_previous_plan_type.sql.backup
 - homepage1/database/migrations/005_add_source_type_to_token_history.sql
+- homepage1/database/migrations/005_add_source_type_to_token_history.sql.backup
 - homepage1/database/migrations/apply_migration_005.py
+- homepage1/database/migrations/apply_migration_005.py.backup
 - homepage1/database/migrations/create_activity_logs_model.py
+- homepage1/database/migrations/create_activity_logs_model.py.backup
 - homepage1/database/migrations/run_migration_002.py
+- homepage1/database/migrations/run_migration_002.py.backup
 - homepage1/database/migrations/run_migration_003.py
+- homepage1/database/migrations/run_migration_003.py.backup
 - homepage1/kweon21/App.tsx
+- homepage1/kweon21/App.tsx.backup
 - homepage1/kweon21/BUILD_INSTRUCTIONS.md
+- homepage1/kweon21/BUILD_INSTRUCTIONS.md.backup
 - homepage1/kweon21/constants.ts
+- homepage1/kweon21/constants.ts.backup
+- homepage1/kweon21/constants.ts.backup.backup
 - homepage1/kweon21/index.html
+- homepage1/kweon21/index.html.backup
 - homepage1/kweon21/index.tsx
+- homepage1/kweon21/index.tsx.backup
 - homepage1/kweon21/metadata.json
+- homepage1/kweon21/metadata.json.backup
+- homepage1/kweon21/metadata.json.backup.backup
 - homepage1/kweon21/package-lock.json
+- homepage1/kweon21/package-lock.json.backup
+- homepage1/kweon21/package-lock.json.backup.backup
 - homepage1/kweon21/package.json
+- homepage1/kweon21/package.json.backup
+- homepage1/kweon21/package.json.backup.backup
 - homepage1/kweon21/README.md
+- homepage1/kweon21/README.md.backup
+- homepage1/kweon21/README.md.backup.backup
 - homepage1/kweon21/tsconfig.json
+- homepage1/kweon21/tsconfig.json.backup
+- homepage1/kweon21/tsconfig.json.backup.backup
 - homepage1/kweon21/types.ts
+- homepage1/kweon21/types.ts.backup
+- homepage1/kweon21/types.ts.backup.backup
 - homepage1/kweon21/vite.config.ts
+- homepage1/kweon21/vite.config.ts.backup
 - homepage1/kweon21/components/BlogResultsTable.tsx
+- homepage1/kweon21/components/BlogResultsTable.tsx.backup
+- homepage1/kweon21/components/BlogResultsTable.tsx.backup.backup
 - homepage1/kweon21/components/CurrentStatus.tsx
+- homepage1/kweon21/components/CurrentStatus.tsx.backup
+- homepage1/kweon21/components/CurrentStatus.tsx.backup.backup
 - homepage1/kweon21/components/Icon.tsx
+- homepage1/kweon21/components/Icon.tsx.backup
+- homepage1/kweon21/components/Icon.tsx.backup.backup
 - homepage1/kweon21/components/Navbar.tsx
+- homepage1/kweon21/components/Navbar.tsx.backup
 - homepage1/kweon21/components/NaverNewsResults.tsx
+- homepage1/kweon21/components/NaverNewsResults.tsx.backup
+- homepage1/kweon21/components/NaverNewsResults.tsx.backup.backup
 - homepage1/kweon21/components/ResultsTable.tsx
+- homepage1/kweon21/components/ResultsTable.tsx.backup
+- homepage1/kweon21/components/ResultsTable.tsx.backup.backup
 - homepage1/kweon21/components/Shortcuts.tsx
+- homepage1/kweon21/components/Shortcuts.tsx.backup
+- homepage1/kweon21/components/Shortcuts.tsx.backup.backup
 - homepage1/kweon21/data/promptsData.ts
+- homepage1/kweon21/data/promptsData.ts.backup
 - homepage1/kweon21/dist/index.html
+- homepage1/kweon21/dist/index.html.backup
+- homepage1/kweon21/dist/index.html.backup.backup
 - homepage1/kweon21/dist/assets/index-CgcUtD30.css
+- homepage1/kweon21/dist/assets/index-CgcUtD30.css.backup
 - homepage1/kweon21/dist/assets/index-DofkCTji.js
+- homepage1/kweon21/dist/assets/index-DofkCTji.js.backup
 - homepage1/kweon21/hooks/useSearch.ts
+- homepage1/kweon21/hooks/useSearch.ts.backup
+- homepage1/kweon21/hooks/useSearch.ts.backup.backup
 - homepage1/kweon21/services/geminiService.ts
+- homepage1/kweon21/services/geminiService.ts.backup
 - homepage1/kweon21/services/keywordService.ts
+- homepage1/kweon21/services/keywordService.ts.backup
 - homepage1/kweon21/src/Navbar.css
+- homepage1/kweon21/src/Navbar.css.backup
+- homepage1/logs/app_2025-12-16.log.2025-12-16
+- homepage1/logs/app_2025-12-18.log.2025-12-18
 - homepage1/logs/app_2025-12-24.log.2025-12-24
+- homepage1/logs/app_2025-12-24.log.2025-12-24.backup
 - homepage1/logs/app_2025-12-24.log.2025-12-25
+- homepage1/logs/app_2025-12-24.log.2025-12-25.backup
 - homepage1/logs/app_2025-12-26.log
 - homepage1/logs/app_2025-12-27.log
+- homepage1/logs/app_2025-12-27.log.backup
+- homepage1/logs/app_2025-12-27.log.backup.backup
+- homepage1/logs/conversion_process_2025-12-16.log.2025-12-16
+- homepage1/logs/conversion_process_2025-12-18.log.2025-12-18
 - homepage1/logs/conversion_process_2025-12-24.log.2025-12-24
+- homepage1/logs/conversion_process_2025-12-24.log.2025-12-24.backup
 - homepage1/logs/conversion_process_2025-12-24.log.2025-12-25
+- homepage1/logs/conversion_process_2025-12-24.log.2025-12-25.backup
 - homepage1/logs/conversion_process_2025-12-26.log
 - homepage1/logs/conversion_process_2025-12-27.log
+- homepage1/logs/conversion_process_2025-12-27.log.backup
+- homepage1/logs/conversion_process_2025-12-27.log.backup.backup
+- homepage1/logs/conversion_stats_2025-12-16.log.2025-12-16
+- homepage1/logs/conversion_stats_2025-12-18.log.2025-12-18
 - homepage1/logs/conversion_stats_2025-12-24.log.2025-12-24
+- homepage1/logs/conversion_stats_2025-12-24.log.2025-12-24.backup
 - homepage1/logs/conversion_stats_2025-12-24.log.2025-12-25
+- homepage1/logs/conversion_stats_2025-12-24.log.2025-12-25.backup
 - homepage1/logs/conversion_stats_2025-12-26.log
 - homepage1/logs/conversion_stats_2025-12-27.log
+- homepage1/logs/conversion_stats_2025-12-27.log.backup
+- homepage1/logs/conversion_stats_2025-12-27.log.backup.backup
 - homepage1/models/activity_log.py
+- homepage1/models/activity_log.py.backup
 - homepage1/models/__init__.py
+- homepage1/models/__init__.py.backup
+- homepage1/output/세금계산서_251204_01.xlsx
+- homepage1/output/세금계산서_251204_02.xlsx
+- homepage1/output/세금계산서_251211_01.xlsx
+- homepage1/output/세금계산서_251211_02.xlsx
+- homepage1/output/세금계산서_251211_03.xlsx
+- homepage1/output/세금계산서_251211_04.xlsx
+- homepage1/output/세금계산서_251211_05.xlsx
 - homepage1/routes/biz_lounge_routes.py
+- homepage1/routes/biz_lounge_routes.py.backup
 - homepage1/routes/home.py
+- homepage1/routes/home.py.backup
 - homepage1/routes/ops.py
+- homepage1/routes/ops.py.backup
+- homepage1/routes/ops.py.backup.backup
 - homepage1/routes/payment_routes.py
+- homepage1/routes/payment_routes.py.backup
 - homepage1/routes/__init__.py
+- homepage1/routes/__init__.py.backup
 - homepage1/routes/admin/activity_log_api.py
+- homepage1/routes/admin/activity_log_api.py.backup
+- homepage1/routes/admin/activity_log_api.py.backup.backup
 - homepage1/routes/admin/dashboard.py
+- homepage1/routes/admin/dashboard.py.backup
 - homepage1/routes/admin/payment_api.py
+- homepage1/routes/admin/payment_api.py.backup
 - homepage1/routes/admin/product_api.py
+- homepage1/routes/admin/product_api.py.backup
 - homepage1/routes/admin/settings_api.py
+- homepage1/routes/admin/settings_api.py.backup
 - homepage1/routes/admin/stats_api.py
+- homepage1/routes/admin/stats_api.py.backup
 - homepage1/routes/admin/tax_api.py
+- homepage1/routes/admin/tax_api.py.backup
 - homepage1/routes/admin/token_api.py
+- homepage1/routes/admin/token_api.py.backup
 - homepage1/routes/admin/user_api.py
+- homepage1/routes/admin/user_api.py.backup
 - homepage1/routes/admin/__init__.py
+- homepage1/routes/admin/__init__.py.backup
 - homepage1/routes/api_modules/admin_api.py
+- homepage1/routes/api_modules/admin_api.py.backup
 - homepage1/routes/api_modules/order_api.py
+- homepage1/routes/api_modules/order_api.py.backup
 - homepage1/routes/api_modules/payment_complete_api.py
+- homepage1/routes/api_modules/payment_complete_api.py.backup
+- homepage1/routes/api_modules/payment_complete_api.py.backup.backup
 - homepage1/routes/api_modules/user_api.py
+- homepage1/routes/api_modules/user_api.py.backup
+- homepage1/routes/api_modules/user_api.py.backup.backup
 - homepage1/routes/api_modules/__init__.py
+- homepage1/routes/api_modules/__init__.py.backup
 - homepage1/routes/api_modules/user/repository.py
+- homepage1/routes/api_modules/user/repository.py.backup
 - homepage1/routes/api_modules/user/router.py
+- homepage1/routes/api_modules/user/router.py.backup
 - homepage1/routes/api_modules/user/schemas.py
+- homepage1/routes/api_modules/user/schemas.py.backup
 - homepage1/routes/api_modules/user/service.py
+- homepage1/routes/api_modules/user/service.py.backup
+- homepage1/routes/api_modules/user/service.py.backup.backup
 - homepage1/routes/api_modules/user/__init__.py
+- homepage1/routes/api_modules/user/__init__.py.backup
 - homepage1/routes/api_modules/user_api_v2/repository.py
+- homepage1/routes/api_modules/user_api_v2/repository.py.backup
 - homepage1/routes/api_modules/user_api_v2/routes.py
+- homepage1/routes/api_modules/user_api_v2/routes.py.backup
 - homepage1/routes/api_modules/user_api_v2/service.py
+- homepage1/routes/api_modules/user_api_v2/service.py.backup
+- homepage1/routes/api_modules/user_api_v2/service.py.backup.backup
 - homepage1/routes/api_modules/user_api_v2/__init__.py
+- homepage1/routes/api_modules/user_api_v2/__init__.py.backup
 - homepage1/routes/conversion_modules/conversion_engine_routes.py
+- homepage1/routes/conversion_modules/conversion_engine_routes.py.backup
+- homepage1/routes/conversion_modules/conversion_engine_routes.py.backup.backup
 - homepage1/routes/conversion_modules/conversion_helpers.py
+- homepage1/routes/conversion_modules/conversion_helpers.py.backup
 - homepage1/routes/conversion_modules/conversion_processor.py
+- homepage1/routes/conversion_modules/conversion_processor.py.backup
 - homepage1/routes/conversion_modules/convert_routes.py
+- homepage1/routes/conversion_modules/convert_routes.py.backup
 - homepage1/routes/conversion_modules/gold_customers_routes.py
+- homepage1/routes/conversion_modules/gold_customers_routes.py.backup
 - homepage1/routes/conversion_modules/guideline_routes.py
+- homepage1/routes/conversion_modules/guideline_routes.py.backup
 - homepage1/routes/conversion_modules/main_routes.py
+- homepage1/routes/conversion_modules/main_routes.py.backup
 - homepage1/routes/conversion_modules/page_routes.py
+- homepage1/routes/conversion_modules/page_routes.py.backup
 - homepage1/routes/conversion_modules/security_routes.py
+- homepage1/routes/conversion_modules/security_routes.py.backup
 - homepage1/routes/conversion_modules/template_routes.py
+- homepage1/routes/conversion_modules/template_routes.py.backup
 - homepage1/routes/conversion_modules/token_routes.py
+- homepage1/routes/conversion_modules/token_routes.py.backup
 - homepage1/routes/conversion_modules/user_routes.py
+- homepage1/routes/conversion_modules/user_routes.py.backup
+- homepage1/routes/conversion_modules/user_routes.py.backup.backup
 - homepage1/routes/home_modules/api_routes.py
+- homepage1/routes/home_modules/api_routes.py.backup
 - homepage1/routes/home_modules/auth_routes.py
+- homepage1/routes/home_modules/auth_routes.py.backup
+- homepage1/routes/home_modules/auth_routes.py.backup.backup
 - homepage1/routes/home_modules/email_routes.py
+- homepage1/routes/home_modules/email_routes.py.backup
 - homepage1/routes/home_modules/password_routes.py
+- homepage1/routes/home_modules/password_routes.py.backup
 - homepage1/routes/home_modules/profile_routes.py
+- homepage1/routes/home_modules/profile_routes.py.backup
+- homepage1/routes/home_modules/profile_routes.py.backup.backup
 - homepage1/routes/home_modules/registration_routes.py
+- homepage1/routes/home_modules/registration_routes.py.backup
 - homepage1/routes/playground_routes/kweon21_routes.py
+- homepage1/routes/playground_routes/kweon21_routes.py.backup
 - homepage1/routes/playground_routes/studio_api.py
+- homepage1/routes/playground_routes/studio_api.py.backup
 - homepage1/routes/playground_routes/__init__.py
+- homepage1/routes/playground_routes/__init__.py.backup
 - homepage1/routes/utils/auth.py
+- homepage1/routes/utils/auth.py.backup
 - homepage1/routes/utils/__init__.py
+- homepage1/routes/utils/__init__.py.backup
 - homepage1/scripts/analyze_local_environment.py
+- homepage1/scripts/analyze_local_environment.py.backup
+- homepage1/scripts/check_production_readiness.py
+- homepage1/scripts/compare_local_server.py
+- homepage1/scripts/create_systemd_service.sh
 - homepage1/scripts/deploy.sh
+- homepage1/scripts/deploy.sh.backup
+- homepage1/scripts/deploy.sh.backup.backup
 - homepage1/scripts/deploy_server.py
+- homepage1/scripts/deploy_server.py.backup
 - homepage1/scripts/migrate_to_mysql.py
+- homepage1/scripts/migrate_to_mysql.py.backup
 - homepage1/scripts/migrate_to_postgresql.py
+- homepage1/scripts/migrate_to_postgresql.py.backup
 - homepage1/scripts/migration_subscription.py
+- homepage1/scripts/migration_subscription.py.backup
 - homepage1/scripts/reset_payments.py
+- homepage1/scripts/reset_payments.py.backup
 - homepage1/scripts/run_migration_004.py
+- homepage1/scripts/run_migration_004.py.backup
 - homepage1/scripts/seed_payments.py
+- homepage1/scripts/seed_payments.py.backup
 - homepage1/scripts/seed_policies.py
+- homepage1/scripts/seed_policies.py.backup
+- homepage1/scripts/seed_policies.py.backup.backup
 - homepage1/scripts/seed_products.py
+- homepage1/scripts/seed_products.py.backup
 - homepage1/scripts/seed_products_server.py
+- homepage1/scripts/seed_products_server.py.backup
 - homepage1/scripts/server_setup.sh
+- homepage1/scripts/server_setup.sh.backup
+- homepage1/scripts/server_setup.sh.backup.backup
+- homepage1/scripts/verify_merge.py
 - homepage1/static/css/admin.css
+- homepage1/static/css/admin.css.backup
 - homepage1/static/css/conversion.css
+- homepage1/static/css/conversion.css.backup
+- homepage1/static/css/conversion.css.backup.backup
 - homepage1/static/css/homepage.css
+- homepage1/static/css/homepage.css.backup
 - homepage1/static/css/homepage_specific.css
+- homepage1/static/css/homepage_specific.css.backup
 - homepage1/static/css/home_prime.css
+- homepage1/static/css/home_prime.css.backup
 - homepage1/static/css/profile_modern.css
+- homepage1/static/css/profile_modern.css.backup
+- homepage1/static/css/profile_modern.css.backup.backup
 - homepage1/static/css/profile_v2.css
+- homepage1/static/css/profile_v2.css.backup
+- homepage1/static/css/profile_v2.css.backup.backup
 - homepage1/static/css/register_modern.css
+- homepage1/static/css/register_modern.css.backup
 - homepage1/static/css/shop_modern.css
+- homepage1/static/css/shop_modern.css.backup
+- homepage1/static/css/shop_modern.css.backup.backup
 - homepage1/static/css/style.css
+- homepage1/static/css/style.css.backup
 - homepage1/static/css/tokens.css
+- homepage1/static/css/tokens.css.backup
 - homepage1/static/css/components/animations.css
+- homepage1/static/css/components/animations.css.backup
 - homepage1/static/css/components/badges.css
+- homepage1/static/css/components/badges.css.backup
 - homepage1/static/css/components/buttons.css
+- homepage1/static/css/components/buttons.css.backup
 - homepage1/static/css/components/cards.css
+- homepage1/static/css/components/cards.css.backup
 - homepage1/static/css/components/console_mirror.css
+- homepage1/static/css/components/console_mirror.css.backup
 - homepage1/static/css/components/features_algo.css
+- homepage1/static/css/components/features_algo.css.backup
 - homepage1/static/css/components/forms.css
+- homepage1/static/css/components/forms.css.backup
 - homepage1/static/css/components/keypad.css
+- homepage1/static/css/components/keypad.css.backup
 - homepage1/static/css/components/modals.css
+- homepage1/static/css/components/modals.css.backup
 - homepage1/static/css/components/snowflake_background.css
+- homepage1/static/css/components/snowflake_background.css.backup
 - homepage1/static/css/components/vip_notice.css
+- homepage1/static/css/components/vip_notice.css.backup
+- homepage1/static/css/components/vip_notice.css.backup.backup
 - homepage1/static/css/components/youtube_demo.css
+- homepage1/static/css/components/youtube_demo.css.backup
+- homepage1/static/css/components/youtube_demo.css.backup.backup
 - homepage1/static/css/core/fonts.css
+- homepage1/static/css/core/fonts.css.backup
 - homepage1/static/css/core/reset.css
+- homepage1/static/css/core/reset.css.backup
 - homepage1/static/css/core/variables.css
+- homepage1/static/css/core/variables.css.backup
 - homepage1/static/css/layout/container.css
+- homepage1/static/css/layout/container.css.backup
 - homepage1/static/css/layout/footer.css
+- homepage1/static/css/layout/footer.css.backup
 - homepage1/static/css/layout/header.css
+- homepage1/static/css/layout/header.css.backup
+- homepage1/static/css/layout/header.css.backup.backup
 - homepage1/static/css/pages/admin.css
+- homepage1/static/css/pages/admin.css.backup
 - homepage1/static/css/pages/biz_lounge.css
+- homepage1/static/css/pages/biz_lounge.css.backup
 - homepage1/static/css/pages/conversion.css
+- homepage1/static/css/pages/conversion.css.backup
+- homepage1/static/css/pages/conversion.css.backup.backup
 - homepage1/static/css/pages/playground.css
+- homepage1/static/css/pages/playground.css.backup
 - homepage1/static/css/pages/profile.css
+- homepage1/static/css/pages/profile.css.backup
+- homepage1/static/css/pages/profile.css.backup.backup
 - homepage1/static/css/pages/shop.css
+- homepage1/static/css/pages/shop.css.backup
 - homepage1/static/css/pages/shop_card_3d.css
+- homepage1/static/css/pages/shop_card_3d.css.backup
 - homepage1/static/css/pages/shop_showroom.css
+- homepage1/static/css/pages/shop_showroom.css.backup
 - homepage1/static/css/sections/company.css
+- homepage1/static/css/sections/company.css.backup
 - homepage1/static/css/sections/cta.css
+- homepage1/static/css/sections/cta.css.backup
 - homepage1/static/css/sections/faq.css
+- homepage1/static/css/sections/faq.css.backup
 - homepage1/static/css/sections/features.css
+- homepage1/static/css/sections/features.css.backup
 - homepage1/static/css/sections/hero.css
+- homepage1/static/css/sections/hero.css.backup
+- homepage1/static/css/sections/hero.css.backup.backup
 - homepage1/static/css/sections/hero_new.css
+- homepage1/static/css/sections/hero_new.css.backup
+- homepage1/static/css/sections/hero_new.css.backup.backup
 - homepage1/static/css/sections/how-it-works.css
+- homepage1/static/css/sections/how-it-works.css.backup
 - homepage1/static/css/sections/pricing.css
+- homepage1/static/css/sections/pricing.css.backup
 - homepage1/static/css/sections/problem-solution.css
+- homepage1/static/css/sections/problem-solution.css.backup
+- homepage1/static/css/sections/problem-solution.css.backup.backup
 - homepage1/static/css/sections/stats.css
+- homepage1/static/css/sections/stats.css.backup
 - homepage1/static/css/sections/testimonials.css
+- homepage1/static/css/sections/testimonials.css.backup
 - homepage1/static/css/sections/use-cases.css
+- homepage1/static/css/sections/use-cases.css.backup
 - homepage1/static/images/hometax_guide/featured.jpeg
+- homepage1/static/images/hometax_guide/featured.jpeg.backup
 - homepage1/static/images/hometax_guide/Generated.png
+- homepage1/static/images/hometax_guide/Generated.png.backup
 - homepage1/static/images/hometax_guide/kweo.jpg
+- homepage1/static/images/hometax_guide/kweo.jpg.backup
 - homepage1/static/images/hometax_guide/step1.png.jpg
+- homepage1/static/images/hometax_guide/step1.png.jpg.backup
 - homepage1/static/images/hometax_guide/step2.png.jpg
+- homepage1/static/images/hometax_guide/step2.png.jpg.backup
 - homepage1/static/images/hometax_guide/step3.png.jpg
+- homepage1/static/images/hometax_guide/step3.png.jpg.backup
 - homepage1/static/images/hometax_guide/step4.png.jpg
+- homepage1/static/images/hometax_guide/step4.png.jpg.backup
 - homepage1/static/images/hometax_guide/step5.png.jpg
+- homepage1/static/images/hometax_guide/step5.png.jpg.backup
 - homepage1/static/images/hometax_guide/step6.png.jpg
+- homepage1/static/images/hometax_guide/step6.png.jpg.backup
 - homepage1/static/images/hometax_guide/step7.png.jpg
+- homepage1/static/images/hometax_guide/step7.png.jpg.backup
 - homepage1/static/images/hometax_guide/step8.png.jpg
+- homepage1/static/images/hometax_guide/step8.png.jpg.backup
 - homepage1/static/js/conversion.js
+- homepage1/static/js/conversion.js.backup
 - homepage1/static/js/homepage.js
+- homepage1/static/js/homepage.js.backup
 - homepage1/static/js/profile_modern.js
+- homepage1/static/js/profile_modern.js.backup
+- homepage1/static/js/profile_modern.js.backup.backup
 - homepage1/static/js/profile_v2.js
+- homepage1/static/js/profile_v2.js.backup
+- homepage1/static/js/profile_v2.js.backup.backup
 - homepage1/static/js/3d/Chandelier3D.js
+- homepage1/static/js/3d/Chandelier3D.js.backup
 - homepage1/static/js/3d/CinemaController.js
+- homepage1/static/js/3d/CinemaController.js.backup
 - homepage1/static/js/3d/Crown3D.js
+- homepage1/static/js/3d/Crown3D.js.backup
 - homepage1/static/js/3d/FurnitureViewer.js
+- homepage1/static/js/3d/FurnitureViewer.js.backup
 - homepage1/static/js/3d/GiftBox3D.js
+- homepage1/static/js/3d/GiftBox3D.js.backup
 - homepage1/static/js/3d/JewelryDisplay.js
+- homepage1/static/js/3d/JewelryDisplay.js.backup
 - homepage1/static/js/3d/LuxeDisplay3D.js
+- homepage1/static/js/3d/LuxeDisplay3D.js.backup
 - homepage1/static/js/3d/MagicFire.js
+- homepage1/static/js/3d/MagicFire.js.backup
 - homepage1/static/js/3d/MarketingCopy.js
+- homepage1/static/js/3d/MarketingCopy.js.backup
 - homepage1/static/js/3d/NeonRing.js
+- homepage1/static/js/3d/NeonRing.js.backup
 - homepage1/static/js/3d/Pedestal3D.js
+- homepage1/static/js/3d/Pedestal3D.js.backup
 - homepage1/static/js/3d/ProductFactory.js
+- homepage1/static/js/3d/ProductFactory.js.backup
 - homepage1/static/js/3d/Showroom.js
+- homepage1/static/js/3d/Showroom.js.backup
 - homepage1/static/js/3d/ShowroomBuilder.js
+- homepage1/static/js/3d/ShowroomBuilder.js.backup
 - homepage1/static/js/3d/TV3D.js
+- homepage1/static/js/3d/TV3D.js.backup
 - homepage1/static/js/3d tv/App.tsx
+- homepage1/static/js/3d tv/App.tsx.backup
 - homepage1/static/js/3d tv/index.html
+- homepage1/static/js/3d tv/index.html.backup
 - homepage1/static/js/3d tv/index.tsx
+- homepage1/static/js/3d tv/index.tsx.backup
 - homepage1/static/js/3d tv/metadata.json
+- homepage1/static/js/3d tv/metadata.json.backup
 - homepage1/static/js/3d tv/package.json
+- homepage1/static/js/3d tv/package.json.backup
 - homepage1/static/js/3d tv/README.md
+- homepage1/static/js/3d tv/README.md.backup
 - homepage1/static/js/3d tv/tsconfig.json
+- homepage1/static/js/3d tv/tsconfig.json.backup
 - homepage1/static/js/3d tv/vite.config.ts
+- homepage1/static/js/3d tv/vite.config.ts.backup
 - homepage1/static/js/3d tv/components/Controls.tsx
+- homepage1/static/js/3d tv/components/Controls.tsx.backup
 - homepage1/static/js/3d tv/components/Scene.tsx
+- homepage1/static/js/3d tv/components/Scene.tsx.backup
 - homepage1/static/js/3d tv/components/TVModel.tsx
+- homepage1/static/js/3d tv/components/TVModel.tsx.backup
 - homepage1/static/js/3d-chandelier/App.tsx
+- homepage1/static/js/3d-chandelier/App.tsx.backup
 - homepage1/static/js/3d-chandelier/index.html
+- homepage1/static/js/3d-chandelier/index.html.backup
 - homepage1/static/js/3d-chandelier/index.tsx
+- homepage1/static/js/3d-chandelier/index.tsx.backup
 - homepage1/static/js/3d-chandelier/metadata.json
+- homepage1/static/js/3d-chandelier/metadata.json.backup
 - homepage1/static/js/3d-chandelier/package.json
+- homepage1/static/js/3d-chandelier/package.json.backup
 - homepage1/static/js/3d-chandelier/README.md
+- homepage1/static/js/3d-chandelier/README.md.backup
 - homepage1/static/js/3d-chandelier/tsconfig.json
+- homepage1/static/js/3d-chandelier/tsconfig.json.backup
 - homepage1/static/js/3d-chandelier/types.ts
+- homepage1/static/js/3d-chandelier/types.ts.backup
 - homepage1/static/js/3d-chandelier/vite.config.ts
+- homepage1/static/js/3d-chandelier/vite.config.ts.backup
 - homepage1/static/js/3d-chandelier/components/ChandelierParts.tsx
+- homepage1/static/js/3d-chandelier/components/ChandelierParts.tsx.backup
 - homepage1/static/js/3d-chandelier/components/ChandelierScene.tsx
+- homepage1/static/js/3d-chandelier/components/ChandelierScene.tsx.backup
 - homepage1/static/js/admin/activity_log.js
+- homepage1/static/js/admin/activity_log.js.backup
 - homepage1/static/js/admin/admin_management.js
+- homepage1/static/js/admin/admin_management.js.backup
 - homepage1/static/js/admin/dashboard_core.js
+- homepage1/static/js/admin/dashboard_core.js.backup
 - homepage1/static/js/admin/email_settings.js
+- homepage1/static/js/admin/email_settings.js.backup
 - homepage1/static/js/admin/payment.js
+- homepage1/static/js/admin/payment.js.backup
 - homepage1/static/js/admin/product.js
+- homepage1/static/js/admin/product.js.backup
 - homepage1/static/js/admin/stats.js
+- homepage1/static/js/admin/stats.js.backup
 - homepage1/static/js/admin/token_history.js
+- homepage1/static/js/admin/token_history.js.backup
 - homepage1/static/js/admin/user_management.js
+- homepage1/static/js/admin/user_management.js.backup
+- homepage1/static/js/admin/user_management.js.backup.backup
 - homepage1/static/js/admin/utils.js
+- homepage1/static/js/admin/utils.js.backup
 - homepage1/static/js/components/keypad.js
+- homepage1/static/js/components/keypad.js.backup
 - homepage1/static/js/components/snowflake_background.js
+- homepage1/static/js/components/snowflake_background.js.backup
 - homepage1/static/js/components/snowflake_controls.js
+- homepage1/static/js/components/snowflake_controls.js.backup
 - homepage1/static/js/components/token_alert_modal.js
+- homepage1/static/js/components/token_alert_modal.js.backup
 - homepage1/static/js/components/video_player.js
+- homepage1/static/js/components/video_player.js.backup
 - homepage1/static/js/crown-3d/App.tsx
+- homepage1/static/js/crown-3d/App.tsx.backup
 - homepage1/static/js/crown-3d/index.html
+- homepage1/static/js/crown-3d/index.html.backup
 - homepage1/static/js/crown-3d/index.tsx
+- homepage1/static/js/crown-3d/index.tsx.backup
 - homepage1/static/js/crown-3d/metadata.json
+- homepage1/static/js/crown-3d/metadata.json.backup
 - homepage1/static/js/crown-3d/package.json
+- homepage1/static/js/crown-3d/package.json.backup
 - homepage1/static/js/crown-3d/README.md
+- homepage1/static/js/crown-3d/README.md.backup
 - homepage1/static/js/crown-3d/tsconfig.json
+- homepage1/static/js/crown-3d/tsconfig.json.backup
 - homepage1/static/js/crown-3d/vite.config.ts
+- homepage1/static/js/crown-3d/vite.config.ts.backup
 - homepage1/static/js/crown-3d/components/ImperialCrown.tsx
+- homepage1/static/js/crown-3d/components/ImperialCrown.tsx.backup
 - homepage1/static/js/luxedisplay-3d/App.tsx
+- homepage1/static/js/luxedisplay-3d/App.tsx.backup
 - homepage1/static/js/luxedisplay-3d/index.html
+- homepage1/static/js/luxedisplay-3d/index.html.backup
 - homepage1/static/js/luxedisplay-3d/index.tsx
+- homepage1/static/js/luxedisplay-3d/index.tsx.backup
 - homepage1/static/js/luxedisplay-3d/metadata.json
+- homepage1/static/js/luxedisplay-3d/metadata.json.backup
 - homepage1/static/js/luxedisplay-3d/package.json
+- homepage1/static/js/luxedisplay-3d/package.json.backup
 - homepage1/static/js/luxedisplay-3d/README.md
+- homepage1/static/js/luxedisplay-3d/README.md.backup
 - homepage1/static/js/luxedisplay-3d/tsconfig.json
+- homepage1/static/js/luxedisplay-3d/tsconfig.json.backup
 - homepage1/static/js/luxedisplay-3d/types.ts
+- homepage1/static/js/luxedisplay-3d/types.ts.backup
 - homepage1/static/js/luxedisplay-3d/vite.config.ts
+- homepage1/static/js/luxedisplay-3d/vite.config.ts.backup
 - homepage1/static/js/luxedisplay-3d/components/DesignAdvisor.tsx
+- homepage1/static/js/luxedisplay-3d/components/DesignAdvisor.tsx.backup
 - homepage1/static/js/luxedisplay-3d/components/JewelryBox.tsx
+- homepage1/static/js/luxedisplay-3d/components/JewelryBox.tsx.backup
 - homepage1/static/js/luxedisplay-3d/components/Scene.tsx
+- homepage1/static/js/luxedisplay-3d/components/Scene.tsx.backup
 - homepage1/static/js/luxedisplay-3d/components/Showcase.tsx
+- homepage1/static/js/luxedisplay-3d/components/Showcase.tsx.backup
 - homepage1/static/js/luxedisplay-3d/services/gemini.ts
+- homepage1/static/js/luxedisplay-3d/services/gemini.ts.backup
+- homepage1/static/js/luxedisplay-3d/services/gemini.ts.backup.backup
 - homepage1/static/js/modules/console_mirror.js
+- homepage1/static/js/modules/console_mirror.js.backup
+- homepage1/static/js/modules/console_mirror.js.backup.backup
 - homepage1/static/js/modules/vip_notice.js
+- homepage1/static/js/modules/vip_notice.js.backup
+- homepage1/static/js/modules/vip_notice.js.backup.backup
 - homepage1/static/js/payment/shop.js
+- homepage1/static/js/payment/shop.js.backup
 - homepage1/static/js/sections/testimonials.js
+- homepage1/static/js/sections/testimonials.js.backup
 - homepage1/static/videos/README.md
+- homepage1/static/videos/README.md.backup
 - homepage1/static/videos/roha_conversion_demo.mp4.mp4
+- homepage1/static/videos/roha_conversion_demo.mp4.mp4.backup
 - homepage1/templates/admin.html
+- homepage1/templates/admin.html.backup
 - homepage1/templates/admin_dashboard.html
+- homepage1/templates/admin_dashboard.html.backup
 - homepage1/templates/base.html
+- homepage1/templates/base.html.backup
 - homepage1/templates/conversion.html
+- homepage1/templates/conversion.html.backup
 - homepage1/templates/email_verification_pending.html
+- homepage1/templates/email_verification_pending.html.backup
 - homepage1/templates/forgot_password.html
+- homepage1/templates/forgot_password.html.backup
 - homepage1/templates/homepage.html
+- homepage1/templates/homepage.html.backup
+- homepage1/templates/homepage.html.backup.backup
 - homepage1/templates/homepage_new.html
+- homepage1/templates/homepage_new.html.backup
+- homepage1/templates/homepage_new.html.backup.backup
 - homepage1/templates/index.html
+- homepage1/templates/index.html.backup
+- homepage1/templates/index.html.backup.backup
 - homepage1/templates/legal.html
+- homepage1/templates/legal.html.backup
 - homepage1/templates/login.html
+- homepage1/templates/login.html.backup
 - homepage1/templates/maintenance.html
+- homepage1/templates/maintenance.html.backup
 - homepage1/templates/pricing.html
+- homepage1/templates/pricing.html.backup
 - homepage1/templates/profile_edit.html
+- homepage1/templates/profile_edit.html.backup
 - homepage1/templates/profile_modern.html
+- homepage1/templates/profile_modern.html.backup
 - homepage1/templates/profile_v2.html
+- homepage1/templates/profile_v2.html.backup
 - homepage1/templates/register.html
+- homepage1/templates/register.html.backup
 - homepage1/templates/reset_password.html
+- homepage1/templates/reset_password.html.backup
 - homepage1/templates/admin/furniture_studio.html
+- homepage1/templates/admin/furniture_studio.html.backup
 - homepage1/templates/admin/components/activity_log/filters.html
+- homepage1/templates/admin/components/activity_log/filters.html.backup
 - homepage1/templates/admin/components/activity_log/pagination.html
+- homepage1/templates/admin/components/activity_log/pagination.html.backup
 - homepage1/templates/admin/components/activity_log/table.html
+- homepage1/templates/admin/components/activity_log/table.html.backup
 - homepage1/templates/admin/partials/_admin_list_table.html
+- homepage1/templates/admin/partials/_admin_list_table.html.backup
 - homepage1/templates/admin/partials/_header.html
+- homepage1/templates/admin/partials/_header.html.backup
 - homepage1/templates/admin/partials/_live_indicator.html
+- homepage1/templates/admin/partials/_live_indicator.html.backup
 - homepage1/templates/admin/partials/_stat_cards.html
+- homepage1/templates/admin/partials/_stat_cards.html.backup
 - homepage1/templates/admin/partials/_tabs.html
+- homepage1/templates/admin/partials/_tabs.html.backup
 - homepage1/templates/admin/partials/_user_list_table.html
+- homepage1/templates/admin/partials/_user_list_table.html.backup
 - homepage1/templates/admin/tabs/activity_log.html
+- homepage1/templates/admin/tabs/activity_log.html.backup
 - homepage1/templates/admin/tabs/payment_management.html
+- homepage1/templates/admin/tabs/payment_management.html.backup
 - homepage1/templates/admin/tabs/product_management.html
+- homepage1/templates/admin/tabs/product_management.html.backup
+- homepage1/templates/admin/tabs/product_management.html.backup.backup
 - homepage1/templates/admin/tabs/tax_report.html
+- homepage1/templates/admin/tabs/tax_report.html.backup
 - homepage1/templates/biz_lounge/index.html
+- homepage1/templates/biz_lounge/index.html.backup
 - homepage1/templates/components/3d_keypad.html
+- homepage1/templates/components/3d_keypad.html.backup
 - homepage1/templates/components/chatbot_widget.html
+- homepage1/templates/components/chatbot_widget.html.backup
 - homepage1/templates/components/myhome_detail_modal.html
+- homepage1/templates/components/myhome_detail_modal.html.backup
 - homepage1/templates/components/myhome_edit_modal.html
+- homepage1/templates/components/myhome_edit_modal.html.backup
 - homepage1/templates/components/myhome_gold_secret.html
+- homepage1/templates/components/myhome_gold_secret.html.backup
 - homepage1/templates/components/myhome_header.html
+- homepage1/templates/components/myhome_header.html.backup
+- homepage1/templates/components/myhome_header.html.backup.backup
 - homepage1/templates/components/myhome_list_view.html
+- homepage1/templates/components/myhome_list_view.html.backup
 - homepage1/templates/components/myhome_preview_modal.html
+- homepage1/templates/components/myhome_preview_modal.html.backup
 - homepage1/templates/components/myhome_tabs.html
+- homepage1/templates/components/myhome_tabs.html.backup
 - homepage1/templates/components/text_box.html
+- homepage1/templates/components/text_box.html.backup
 - homepage1/templates/components/token_history_table.html
+- homepage1/templates/components/token_history_table.html.backup
 - homepage1/templates/components/video_player.html
+- homepage1/templates/components/video_player.html.backup
 - homepage1/templates/errors/404.html
+- homepage1/templates/errors/404.html.backup
 - homepage1/templates/errors/429.html
+- homepage1/templates/errors/429.html.backup
 - homepage1/templates/errors/500.html
+- homepage1/templates/errors/500.html.backup
 - homepage1/templates/home_sections/_company.html
+- homepage1/templates/home_sections/_company.html.backup
 - homepage1/templates/home_sections/_cta.html
+- homepage1/templates/home_sections/_cta.html.backup
 - homepage1/templates/home_sections/_faq.html
+- homepage1/templates/home_sections/_faq.html.backup
 - homepage1/templates/home_sections/_features.html
+- homepage1/templates/home_sections/_features.html.backup
 - homepage1/templates/home_sections/_hero.html
+- homepage1/templates/home_sections/_hero.html.backup
+- homepage1/templates/home_sections/_hero.html.backup.backup
 - homepage1/templates/home_sections/_how_it_works.html
+- homepage1/templates/home_sections/_how_it_works.html.backup
 - homepage1/templates/home_sections/_pricing.html
+- homepage1/templates/home_sections/_pricing.html.backup
 - homepage1/templates/home_sections/_problem_solution.html
+- homepage1/templates/home_sections/_problem_solution.html.backup
 - homepage1/templates/home_sections/_stats.html
+- homepage1/templates/home_sections/_stats.html.backup
+- homepage1/templates/home_sections/_stats.html.backup.backup
 - homepage1/templates/home_sections/_testimonials.html
+- homepage1/templates/home_sections/_testimonials.html.backup
+- homepage1/templates/home_sections/_testimonials.html.backup.backup
 - homepage1/templates/home_sections/_use_cases.html
+- homepage1/templates/home_sections/_use_cases.html.backup
+- homepage1/templates/home_sections/_use_cases.html.backup.backup
 - homepage1/templates/partials/console_mirror.html
+- homepage1/templates/partials/console_mirror.html.backup
 - homepage1/templates/partials/header.html
+- homepage1/templates/partials/header.html.backup
+- homepage1/templates/partials/header.html.backup.backup
 - homepage1/templates/partials/vip_notice.html
+- homepage1/templates/partials/vip_notice.html.backup
+- homepage1/templates/partials/vip_notice.html.backup.backup
 - homepage1/templates/payment/shop.html
+- homepage1/templates/payment/shop.html.backup
 - homepage1/templates/payment/showroom.html
+- homepage1/templates/payment/showroom.html.backup
 - homepage1/templates/playground/base_playground.html
+- homepage1/templates/playground/base_playground.html.backup
 - homepage1/templates/playground/index.html
+- homepage1/templates/playground/index.html.backup
 - homepage1/templates/studio/studio_overlay.html
+- homepage1/templates/studio/studio_overlay.html.backup
+- homepage1/templates/studio/studio_overlay.html.backup.backup
 - homepage1/templates_data/template_config.json
+- homepage1/templates_data/template_config.json.backup
 - homepage1/templates_data/excel_templates/standard/홈텍스제공 공식파일(일반)1~50.xlsx
+- homepage1/templates_data/excel_templates/standard/홈텍스제공 공식파일(일반)1~50.xlsx.backup
 - homepage1/tests/api_smoke_homepage.py
+- homepage1/tests/api_smoke_homepage.py.backup
 - homepage1/tests/debug_convert_sample_invoice4.py
+- homepage1/tests/debug_convert_sample_invoice4.py.backup
 - homepage1/tests/detailed_test.py
+- homepage1/tests/detailed_test.py.backup
 - homepage1/tests/detailed_test_result.json
+- homepage1/tests/detailed_test_result.json.backup
 - homepage1/tests/e2e_result.json
+- homepage1/tests/e2e_result.json.backup
 - homepage1/tests/integration_analysis_result.json
+- homepage1/tests/integration_analysis_result.json.backup
 - homepage1/tests/integration_test.py
+- homepage1/tests/integration_test.py.backup
 - homepage1/tests/make_report.py
+- homepage1/tests/make_report.py.backup
 - homepage1/tests/master_conversion_test.py
+- homepage1/tests/master_conversion_test.py.backup
 - homepage1/tests/report.html
+- homepage1/tests/report.html.backup
 - homepage1/tests/run_e2e.py
+- homepage1/tests/run_e2e.py.backup
 - homepage1/tests/run_real_conversion_test.py
+- homepage1/tests/run_real_conversion_test.py.backup
 - homepage1/tests/input/kweon.docx
+- homepage1/tests/input/kweon.docx.backup
 - homepage1/tests/input/sample_invoice.xlsx
+- homepage1/tests/input/sample_invoice.xlsx.backup
 - homepage1/tests/input/sample_invoice2.xlsx
+- homepage1/tests/input/sample_invoice2.xlsx.backup
 - homepage1/tests/input/sample_invoice3.xlsx
+- homepage1/tests/input/sample_invoice3.xlsx.backup
 - homepage1/tests/input/sample_invoice4.xlsx
+- homepage1/tests/input/sample_invoice4.xlsx.backup
 - homepage1/tests/input/test_auto_fix_data.xlsx
+- homepage1/tests/input/test_auto_fix_data.xlsx.backup
 - homepage1/tests/input/~$sample_invoice4.xlsx
+- homepage1/tests/input/~$sample_invoice4.xlsx.backup
 - homepage1/tools/guideline_command_processor.py
+- homepage1/tools/guideline_command_processor.py.backup
 - homepage1/tools/run_parse_once.py
+- homepage1/tools/run_parse_once.py.backup
 - homepage1/공급받는자_규칙/README.md
+- homepage1/공급받는자_규칙/README.md.backup
 - homepage1/공급받는자_규칙/핵심문서/JSON_규칙_파일_완전분석.md
+- homepage1/공급받는자_규칙/핵심문서/JSON_규칙_파일_완전분석.md.backup
 - homepage1/공급받는자_규칙/핵심문서/규칙_우선순위_매트릭스.md
+- homepage1/공급받는자_규칙/핵심문서/규칙_우선순위_매트릭스.md.backup
 - homepage1/공급받는자_규칙/핵심문서/변수_즉시반영_가이드.md
+- homepage1/공급받는자_규칙/핵심문서/변수_즉시반영_가이드.md.backup
 - homepage1/공급받는자_규칙/핵심문서/변환시스템_100프로_마스터_보고서.md
+- homepage1/공급받는자_규칙/핵심문서/변환시스템_100프로_마스터_보고서.md.backup
 - homepage1/공급받는자_규칙/핵심문서/변환시스템_종합_가이드.md
+- homepage1/공급받는자_규칙/핵심문서/변환시스템_종합_가이드.md.backup
 - homepage1/공급받는자_규칙/핵심문서/새_지침_추가_완전가이드.md
+- homepage1/공급받는자_규칙/핵심문서/새_지침_추가_완전가이드.md.backup
 - homepage1/공급받는자_규칙/핵심문서/지침_작성_주의사항.md
+- homepage1/공급받는자_규칙/핵심문서/지침_작성_주의사항.md.backup
 - homepage1/공급받는자_규칙/핵심문서/초보자용_변환시스템_가이드.md
+- homepage1/공급받는자_규칙/핵심문서/초보자용_변환시스템_가이드.md.backup
 - homepage1/변환규칙/README.md
+- homepage1/변환규칙/README.md.backup
 - homepage1/변환규칙/공급받는자_완전통합지침_최종본.md
+- homepage1/변환규칙/공급받는자_완전통합지침_최종본.md.backup
 - homepage1/변환규칙/규칙_우선순위_매트릭스.md
+- homepage1/변환규칙/규칙_우선순위_매트릭스.md.backup
 - homepage1/변환규칙/변환시스템_100프로_마스터_보고서.md
+- homepage1/변환규칙/변환시스템_100프로_마스터_보고서.md.backup
 - homepage1/변환규칙/변환시스템_종합_가이드.md
+- homepage1/변환규칙/변환시스템_종합_가이드.md.backup
 - homepage1/변환규칙/초보자용_변환시스템_가이드.md
+- homepage1/변환규칙/초보자용_변환시스템_가이드.md.backup
 - homepage1/변환규칙/테스트_자동화_가이드.md
+- homepage1/변환규칙/테스트_자동화_가이드.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113201.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113201.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113412.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113412.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113656.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_113656.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_120348.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_120348.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_121512.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_121512.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_122829.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_122829.md.backup
 - homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_154634.md
+- homepage1/변환규칙/실제_테스트_결과/실제_테스트_결과_20251102_154634.md.backup
 - homepage1/변환규칙/실제테스트_분석결과/영문경로_실제테스트_결과.json
+- homepage1/변환규칙/실제테스트_분석결과/영문경로_실제테스트_결과.json.backup
 - homepage1/변환규칙/테스트_리포트/개선후_sample_invoice.md
+- homepage1/변환규칙/테스트_리포트/개선후_sample_invoice.md.backup
 - homepage1/변환규칙/테스트_리포트/개선후_종합분석.md
+- homepage1/변환규칙/테스트_리포트/개선후_종합분석.md.backup
 - homepage1/변환규칙/테스트_리포트/전후비교_분석표.md
+- homepage1/변환규칙/테스트_리포트/전후비교_분석표.md.backup
 - homepage1/변환규칙/테스트_리포트/현재상태_sample_invoice.md
+- homepage1/변환규칙/테스트_리포트/현재상태_sample_invoice.md.backup
 - homepage1/변환규칙/테스트_리포트/현재상태_종합분석.md
+- homepage1/변환규칙/테스트_리포트/현재상태_종합분석.md.backup
 - homepage1/절대지침/README.md
+- homepage1/절대지침/README.md.backup
 - homepage1/절대지침/검증규칙/데이터검증규칙.md
+- homepage1/절대지침/검증규칙/데이터검증규칙.md.backup
 - homepage1/절대지침/공급받는자정보관리지침/공급받는자_통합관리_절대지침.md
+- homepage1/절대지침/공급받는자정보관리지침/공급받는자_통합관리_절대지침.md.backup
 - homepage1/절대지침/공급자정보관리지침/공급자정보_통합관리_절대지침.md
+- homepage1/절대지침/공급자정보관리지침/공급자정보_통합관리_절대지침.md.backup
 - homepage1/절대지침/공급자정보규칙/공급자등록규칙.md
+- homepage1/절대지침/공급자정보규칙/공급자등록규칙.md.backup
 - homepage1/절대지침/공급자정보규칙/홈텍스_공급자정보_기입지침.md
+- homepage1/절대지침/공급자정보규칙/홈텍스_공급자정보_기입지침.md.backup
 - homepage1/절대지침/공급자정보템플릿규칙/홈텍스_공급자정보_템플릿_기입지침.md
+- homepage1/절대지침/공급자정보템플릿규칙/홈텍스_공급자정보_템플릿_기입지침.md.backup
 - homepage1/절대지침/공통규칙/가족통합_공통규칙.md
+- homepage1/절대지침/공통규칙/가족통합_공통규칙.md.backup
 - homepage1/절대지침/공통규칙/시트검열_공통규칙.md
+- homepage1/절대지침/공통규칙/시트검열_공통규칙.md.backup
 - homepage1/절대지침/공통규칙/헤더감지_공통규칙.md
+- homepage1/절대지침/공통규칙/헤더감지_공통규칙.md.backup
 - homepage1/절대지침/배달대행사정산서지침/배달대행사_공급받는자_절대지침.md
+- homepage1/절대지침/배달대행사정산서지침/배달대행사_공급받는자_절대지침.md.backup
 - homepage1/절대지침/업종별절대지침/배달대행사_정산서_절대지침.md
+- homepage1/절대지침/업종별절대지침/배달대행사_정산서_절대지침.md.backup
 - homepage1/절대지침/업종별절대지침/일반사업자_정산서_절대지침.md
+- homepage1/절대지침/업종별절대지침/일반사업자_정산서_절대지침.md.backup
 - homepage1/절대지침/유저지침/유저_프로필_수정_지침.md
+- homepage1/절대지침/유저지침/유저_프로필_수정_지침.md.backup
 - homepage1/절대지침/전자세금계산서변환구조/변환구조_절대지침.md
+- homepage1/절대지침/전자세금계산서변환구조/변환구조_절대지침.md.backup
 - homepage1/절대지침/템플릿규칙/공급자정보기입예시.md
+- homepage1/절대지침/템플릿규칙/공급자정보기입예시.md.backup
 - homepage1/절대지침/템플릿규칙/템플릿기입규칙.md
+- homepage1/절대지침/템플릿규칙/템플릿기입규칙.md.backup
 - homepage1/절대지침/템플릿규칙/홈텍스_템플릿_기입지침.md
-- logs/app_2025-12-16.log.2025-12-16
-- logs/app_2025-12-18.log.2025-12-18
-- logs/conversion_process_2025-12-16.log.2025-12-16
-- logs/conversion_process_2025-12-18.log.2025-12-18
-- logs/conversion_stats_2025-12-16.log.2025-12-16
-- logs/conversion_stats_2025-12-18.log.2025-12-18
-- output/세금계산서_251204_01.xlsx
-- output/세금계산서_251204_02.xlsx
-- output/세금계산서_251211_01.xlsx
-- output/세금계산서_251211_02.xlsx
-- output/세금계산서_251211_03.xlsx
-- output/세금계산서_251211_04.xlsx
-- output/세금계산서_251211_05.xlsx
+- homepage1/절대지침/템플릿규칙/홈텍스_템플릿_기입지침.md.backup
 - scripts/merge_from_homepage1.py
-- scripts/verify_merge.py
+- scripts/merge_to_homepage1.py
+- scripts/setup_24h_service.sh
 
 ## 📋 복사 결과
-- 성공: 104
+- 성공: 609
 - 실패: 0
 - 건너뜀: 0
-- 백업 생성: 94
+- 백업 생성: 4
 
 ================================================================================

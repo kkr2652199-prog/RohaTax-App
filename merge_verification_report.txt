@@ -1,50 +1,57 @@
 ================================================================================
 🔍 병합 검증 보고서
 ================================================================================
-생성 시간: 2025-12-27 16:34:00
+생성 시간: 2025-12-27 17:51:16
 
 ## 📊 검증 통계
-- ✅ 검증 통과: 599개
-- ❌ 해시 불일치: 0개
+- ✅ 검증 통과: 1321개
+- ❌ 해시 불일치: 4개
 - ⚠️ 본진에 없음: 0개
-- ℹ️ 전초기지에 없음: 24개
+- ℹ️ 전초기지에 없음: 8개
 
 ## ✅ 검증 통과 파일
 - .prettierrc.json
+- .prettierrc.json.backup
 - app.py
+- app.py.backup
+- app.py.backup.backup
 - AUTH_AND_ADMIN_AUDIT.md
+- AUTH_AND_ADMIN_AUDIT.md.backup
 - AUTO_FIX_PRODUCTS.bat
+- AUTO_FIX_PRODUCTS.bat.backup
+- clear_logs.py
 - CLOUDFLARE_IMPACT_ANALYSIS.md
+- CLOUDFLARE_IMPACT_ANALYSIS.md.backup
 - CLOUDFLARE_SETUP_GUIDE.md
+- CLOUDFLARE_SETUP_GUIDE.md.backup
+- commit_merge.txt
 - conversion_stats.db
+- conversion_stats.db.backup
+- conversion_stats.db.backup.backup
 - DEPLOYMENT_CHECKLIST.md
-- DEPLOYMENT_CRITICAL_ISSUES.md
-- DEPLOYMENT_SCRIPTS_EXPLAINED.md
-- DOMAIN_DNS_TROUBLESHOOTING.md
-- env.example
-- eslint.config.js
-- file_manager_config.json
-- GIT_REMOTE_UPDATE_GUIDE.md
-- kweon.md
-- LINUX_DEPLOYMENT_CHECKLIST.md
-- MAINTENANCE_AND_BACKUP_GUIDE.md
-- NGROK_GUIDE.md
-- NGROK_빠른_사용법.txt
-... 외 579개
+- DEPLOYMENT_CHECKLIST.md.backup
+... 외 1301개
+
+## ❌ 해시 불일치 파일 (즉시 확인 필요!)
+- merge_report.txt
+  이유: 해시 불일치: 8524ab1e... != 0c368e21...
+- logs/app_2025-12-27.log.backup
+  이유: 해시 불일치: a53d6a44... != a73aaf5a...
+- logs/conversion_process_2025-12-27.log.backup
+  이유: 해시 불일치: 350fa4ee... != 8d69dedc...
+- logs/conversion_stats_2025-12-27.log.backup
+  이유: 해시 불일치: a53d6a44... != e8a53b4a...
 
 ## ℹ️ 전초기지에 없는 파일 (본진 전용)
-- clear_logs.py
-- commit_merge.txt
-- merge_report.txt
-- merge_verification_report.txt
-- PRODUCTION_READINESS_REPORT.md
+- .gitattributes
+- merge_to_homepage1_report.txt
 - sync_db_from_homepage1.bat
-- database/app_backup_before_activity_logs_20251116_161614.db
+- 서버_24시간_자동실행_설정_가이드.md
 - database/app_from_homepage1.db
-- database/test_app.db
-- logs/app_2025-12-16.log.2025-12-16
-... 외 14개
+- scripts/merge_from_homepage1.py
+- scripts/merge_to_homepage1.py
+- scripts/setup_24h_service.sh
 
 ================================================================================
-✅ 모든 파일이 정상적으로 병합되었습니다!
+❌ 검증 실패 - 위 파일들을 확인하고 재병합하세요!
 ================================================================================
