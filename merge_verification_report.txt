@@ -1,0 +1,50 @@
+================================================================================
+🔍 병합 검증 보고서
+================================================================================
+생성 시간: 2025-12-27 16:34:00
+
+## 📊 검증 통계
+- ✅ 검증 통과: 599개
+- ❌ 해시 불일치: 0개
+- ⚠️ 본진에 없음: 0개
+- ℹ️ 전초기지에 없음: 24개
+
+## ✅ 검증 통과 파일
+- .prettierrc.json
+- app.py
+- AUTH_AND_ADMIN_AUDIT.md
+- AUTO_FIX_PRODUCTS.bat
+- CLOUDFLARE_IMPACT_ANALYSIS.md
+- CLOUDFLARE_SETUP_GUIDE.md
+- conversion_stats.db
+- DEPLOYMENT_CHECKLIST.md
+- DEPLOYMENT_CRITICAL_ISSUES.md
+- DEPLOYMENT_SCRIPTS_EXPLAINED.md
+- DOMAIN_DNS_TROUBLESHOOTING.md
+- env.example
+- eslint.config.js
+- file_manager_config.json
+- GIT_REMOTE_UPDATE_GUIDE.md
+- kweon.md
+- LINUX_DEPLOYMENT_CHECKLIST.md
+- MAINTENANCE_AND_BACKUP_GUIDE.md
+- NGROK_GUIDE.md
+- NGROK_빠른_사용법.txt
+... 외 579개
+
+## ℹ️ 전초기지에 없는 파일 (본진 전용)
+- clear_logs.py
+- commit_merge.txt
+- merge_report.txt
+- merge_verification_report.txt
+- PRODUCTION_READINESS_REPORT.md
+- sync_db_from_homepage1.bat
+- database/app_backup_before_activity_logs_20251116_161614.db
+- database/app_from_homepage1.db
+- database/test_app.db
+- logs/app_2025-12-16.log.2025-12-16
+... 외 14개
+
+================================================================================
+✅ 모든 파일이 정상적으로 병합되었습니다!
+================================================================================
