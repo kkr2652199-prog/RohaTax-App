@@ -83,6 +83,8 @@ def kweon21_app(path=""):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+    # iframe에서 로드 가능하도록 X-Frame-Options 설정 (프로덕션 환경에서 DENY 오버라이드)
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
 
@@ -100,6 +102,8 @@ def kweon21_app_assets(filename):
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         resp.headers['Pragma'] = 'no-cache'
         resp.headers['Expires'] = '0'
+        # iframe에서 로드 가능하도록 X-Frame-Options 설정
+        resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
         return resp
     
     return "File not found", 404
