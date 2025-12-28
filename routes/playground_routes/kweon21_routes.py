@@ -200,8 +200,24 @@ def kweon21_index(path):
             503,
         )
     
-    # 오버레이 템플릿 렌더링 (Iframe 방식)
-    return render_template(
-        'studio/studio_overlay.html',
-        has_key=has_key
+    # React 앱을 직접 반환 (iframe 방식 제거)
+    with open(index_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+    
+    # assets 경로를 /studio/app/assets로 변환 (기존 라우트와 호환)
+    html_content = html_content.replace('/assets/', '/studio/app/assets/')
+    html_content = html_content.replace('src="/assets/', 'src="/studio/app/assets/')
+    html_content = html_content.replace('href="/assets/', 'href="/studio/app/assets/')
+    
+    # React 앱 내부 헤더 CSS 제거 (Flask 헤더와 중복 방지)
+    html_content = html_content.replace(
+        '<link rel="stylesheet" href="/static/css/layout/header.css?v=WHITE_BG_FIX_V2">',
+        '<!-- Header CSS removed to prevent duplicate header in iframe -->'
     )
+    
+    response = Response(html_content, mimetype='text/html')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
