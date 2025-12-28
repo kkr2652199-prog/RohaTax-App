@@ -1600,18 +1600,21 @@ async function loadAndRenderActivityLogs() {
         const response = await fetch('/api/v2/user/activity-logs');
         const result = await response.json();
 
-        if (!result.success || !Array.isArray(result.data)) {
+        // API 응답 구조: {success: true, data: {logs: [...], pagination: {...}}}
+        const logs = result.data?.logs || (Array.isArray(result.data) ? result.data : []);
+        
+        if (!result.success || !Array.isArray(logs)) {
             tbody.innerHTML = '<tr><td colspan="9">거래 내역을 불러오는 데 실패했습니다.</td></tr>';
             return;
         }
 
-        if (result.data.length === 0) {
+        if (logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="9">거래 내역이 없습니다.</td></tr>';
             return;
         }
 
         let previousBalance = 0;
-        const rowsHtml = result.data.map(log => {
+        const rowsHtml = logs.map(log => {
             // [수정] TOKEN_RESET_BY_ADMIN의 경우 잔액을 0으로 설정
             let currentBalance;
             if (log.activity_type === 'TOKEN_RESET_BY_ADMIN') {
