@@ -1,4 +1,31 @@
-﻿# [2025-01-28 파일 파싱 오류 디버깅 로깅 강화] - 커밋 82f60e8
+﻿# [2025-01-28 python-calamine 패키지 추가] - 커밋 3e7a91a
+
+*   **커밋 해시:** 3e7a91a
+*   **작업 내용:** 배포 서버 파일 파싱 오류 해결 - python-calamine 패키지 추가
+
+## 문제 원인 확인
+*   배포 서버 가상 환경에 `python-calamine` 패키지가 설치되지 않음
+*   코드에서 `engine='calamine'` 사용하지만 패키지 없어서 파일 파싱 실패
+*   로컬: python-calamine 설치됨 → 정상 작동
+*   배포 서버: python-calamine 없음 → 파싱 실패
+
+## 주요 변경사항
+*   `requirements.txt`에 `python-calamine==0.1.7` 추가
+*   `core/file_parser.py`에서 `engine='calamine'` 사용을 위한 필수 패키지
+
+## 배포 서버 확인 결과
+*   Python 버전: 3.12.3 ✅
+*   pandas: 2.1.4 (설치됨) ✅
+*   openpyxl: 3.1.5 (설치됨) ✅
+*   python-calamine: 없음 ❌ (문제 원인)
+
+## 다음 단계
+*   배포 서버에서 `pip install python-calamine` 실행
+*   또는 `pip install -r requirements.txt` 실행하여 모든 패키지 재설치
+
+---
+
+# [2025-01-28 파일 파싱 오류 디버깅 로깅 강화] - 커밋 82f60e8
 
 *   **커밋 해시:** 82f60e8
 *   **작업 내용:** 배포 서버에서 파일 파싱 실패 원인 파악을 위한 상세 로깅 추가
