@@ -271,15 +271,19 @@ class Showroom {
     window.addEventListener("resize", () => this.onResize());
     
     // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    // 초기 로드 시에는 항상 애니메이션 시작, 이후 visibilitychange에서만 제어
     document.addEventListener("visibilitychange", () => {
-      this.isVisible = !document.hidden;
-      if (this.isVisible && !this.animationId) {
-        // 페이지가 다시 보이면 애니메이션 재개
-        this.animate();
-      } else if (!this.isVisible && this.animationId) {
+      if (document.hidden) {
         // 페이지가 숨겨지면 애니메이션 중지
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
+        if (this.animationId) {
+          cancelAnimationFrame(this.animationId);
+          this.animationId = null;
+        }
+      } else {
+        // 페이지가 다시 보이면 애니메이션 재개
+        if (!this.animationId) {
+          this.animate();
+        }
       }
     });
     
@@ -1435,12 +1439,7 @@ class Showroom {
   }
 
   animate() {
-    // 🚀 CPU 최적화: 페이지가 보이지 않으면 애니메이션 중지
-    if (!this.isVisible) {
-      this.animationId = null;
-      return;
-    }
-    
+    // 🚀 CPU 최적화: visibilitychange 이벤트에서만 제어 (초기 로드는 항상 실행)
     this.animationId = requestAnimationFrame(() => this.animate());
     const currentTime = performance.now();
     const deltaTime = currentTime - this.lastFrameTime;
