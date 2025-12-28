@@ -166,16 +166,9 @@ class SecurityMiddleware:
         # 보안 헤더 설정
         @self.app.after_request
         def set_security_headers(response):
-            # /studio/app 경로는 X-Frame-Options를 SAMEORIGIN으로 설정 (iframe 로드 허용)
-            if request.path.startswith('/studio/app'):
-                headers = self.security_config.get_security_headers().copy()
-                headers['X-Frame-Options'] = 'SAMEORIGIN'
-                for header, value in headers.items():
-                    response.headers[header] = value
-            else:
-                headers = self.security_config.get_security_headers()
-                for header, value in headers.items():
-                    response.headers[header] = value
+            headers = self.security_config.get_security_headers()
+            for header, value in headers.items():
+                response.headers[header] = value
             return response
         
         # CORS 설정
