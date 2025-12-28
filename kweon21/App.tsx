@@ -4,7 +4,6 @@ import { ColorTheme, GeneratedContent } from './types';
 import { generateBlogPost, generateEeatTopicSuggestions, generateCategoryTopicSuggestions, generateEvergreenTopicSuggestions, suggestInteractiveElementForTopic, generateImage, generateTopicsFromMemo, generateLongtailTopicSuggestions, regenerateBlogPostHtml } from './services/geminiService';
 import { CurrentStatus } from './components/CurrentStatus';
 import { Shortcuts } from './components/Shortcuts';
-import { Navbar } from './components/Navbar';
 
 const PageHeader: React.FC<{ onOpenHelp: () => void; }> = ({ onOpenHelp }) => (
   <div className="relative text-center py-8 px-6 bg-white border-b border-[#E5E7EB]">
@@ -1124,12 +1123,8 @@ function App() {
       </button>
   );
 
-  // iframe 내부인지 확인 (Flask 헤더와 중복 방지)
-  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
-
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111111] font-sans flex flex-col">
-      {!isInIframe && <Navbar />}
       <div className="flex-grow">
         <PageHeader onOpenHelp={() => setIsHelpModalOpen(true)} />
         <main className="container mx-auto p-6">
