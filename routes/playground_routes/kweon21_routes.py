@@ -90,6 +90,7 @@ def kweon21_app(path=""):
 
 # Route B: 정적 파일 서빙 (assets, static 등)
 @kweon21_bp.route("/app/assets/<path:filename>")
+@kweon21_bp.route("/assets/<path:filename>")  # /studio/에서도 assets 접근 가능하도록 추가
 @limiter.exempt  # Rate limiting 제외
 def kweon21_app_assets(filename):
     """React 앱의 assets 파일 서빙"""
@@ -204,7 +205,7 @@ def kweon21_index(path):
     with open(index_path, 'r', encoding='utf-8') as f:
         html_content = f.read()
     
-    # assets 경로를 /studio/app/assets로 변환 (기존 라우트와 호환)
+    # assets 경로를 /studio/app/assets로 변환 (/studio/app과 동일한 로직 적용)
     html_content = html_content.replace('/assets/', '/studio/app/assets/')
     html_content = html_content.replace('src="/assets/', 'src="/studio/app/assets/')
     html_content = html_content.replace('href="/assets/', 'href="/studio/app/assets/')
