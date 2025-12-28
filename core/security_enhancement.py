@@ -59,7 +59,7 @@ class SecurityConfig:
                     "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io; "
+                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
                     "connect-src 'self' https://static.cloudflareinsights.com"
                 )
@@ -90,7 +90,7 @@ class SecurityConfig:
                     "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io; "
+                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
                     "connect-src 'self' https://static.cloudflareinsights.com"
                 )
@@ -121,7 +121,7 @@ class SecurityConfig:
                     "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io; "
+                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
                     "connect-src 'self' https://static.cloudflareinsights.com"
                 ),
