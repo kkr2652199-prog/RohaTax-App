@@ -55,6 +55,9 @@ class GiftBox3D {
     this.isOpen = false;
     this.animationId = null;
     this.clock = new THREE.Clock();
+    
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    this.isVisible = !document.hidden;
 
     // 설정 객체 (기본값 포함)
     this.config = {
@@ -175,6 +178,23 @@ class GiftBox3D {
 
     // 반응형 처리
     this.setupResize();
+    
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    // 초기 로드 시에는 항상 애니메이션 시작, 이후 visibilitychange에서만 제어
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        // 페이지가 숨겨지면 애니메이션 중지
+        if (this.animationId) {
+          cancelAnimationFrame(this.animationId);
+          this.animationId = null;
+        }
+      } else {
+        // 페이지가 다시 보이면 애니메이션 재개
+        if (!this.animationId) {
+          this.animate();
+        }
+      }
+    });
 
     // 애니메이션 시작
     this.animate();
@@ -905,6 +925,7 @@ class GiftBox3D {
    * 애니메이션 루프
    */
   animate() {
+    // 🚀 CPU 최적화: visibilitychange 이벤트에서만 제어 (초기 로드는 항상 실행)
     this.animationId = requestAnimationFrame(() => this.animate());
     const delta = this.clock.getDelta();
 
