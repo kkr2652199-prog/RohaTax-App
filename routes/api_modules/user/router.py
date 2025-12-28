@@ -214,6 +214,8 @@ def create_user_api_blueprint() -> Blueprint:
                     activity_type=activity_type
                 )
             
+            # response 구조: {'success': True, 'data': {'logs': [...], 'pagination': {...}}}
+            # response['data']는 {'logs': [...], 'pagination': {...}} 형태
             logs = response['data'].get('logs', [])
             try:
                 log_count = len(logs) if isinstance(logs, list) else 0
@@ -223,7 +225,10 @@ def create_user_api_blueprint() -> Blueprint:
             print(f"[DEBUG] 요청한 user_id: {current_user_id}")
             print(f"[DEBUG] 파라미터: page={page}, limit={limit}, start={start_date}, end={end_date}, type={activity_type}")
             print(f"[DEBUG] 조회된 데이터 개수: {log_count}")
+            print(f"[DEBUG] response['data'] 타입: {type(response['data'])}")
+            print(f"[DEBUG] response['data'] 키: {list(response['data'].keys()) if isinstance(response['data'], dict) else 'not dict'}")
             
+            # response['data']를 그대로 전달 (이미 {'logs': [...], 'pagination': {...}} 형태)
             return success(data=response['data'])
             
         except Exception as e:
