@@ -352,6 +352,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.append('selectedCustomerId', String(window.__selectedGoldCustomer.id));
                 }
 
+                // 디버깅: 전송되는 값 확인
+                console.log('🔍 변환 요청 데이터:', {
+                    template_id: templateId,
+                    issue_date: issueText,
+                    file_name: fileName,
+                    file_name_length: fileName?.length,
+                    file_selected: !!fileInput.files[0],
+                    file_name_from_input: fileInput.files[0]?.name,
+                    csrf_token: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ? '있음' : '없음'
+                });
+
                 // 네트워크 일시 오류(재시작/재로딩 타이밍) 흡수를 위한 1회 자동 재시도
                 async function retryFetch(url, options, retries = 1, delayMs = 400) {
                     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -389,7 +400,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 } catch (parseErr) {
-                    console.error('응답 파싱 실패:', parseErr);
+                    console.error('❌ 응답 파싱 실패:', parseErr);
+                    console.error('❌ 응답 상태:', res.status, res.statusText);
+                    console.error('❌ 응답 헤더:', res.headers);
                     alert((parseErr && parseErr.message ? parseErr.message : '요청 처리 중 오류가 발생했습니다.')
                           .toString()
                           .slice(0, 300));
@@ -398,6 +411,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (!res.ok || !data.success) {
+                    // 디버깅: 서버 응답 상세 로그
+                    console.error('❌ 변환 실패 응답:', {
+                        status: res.status,
+                        statusText: res.statusText,
+                        data: data
+                    });
+                    
                     // 토큰 부족 알림인 경우 모달 표시
                     if (data && data.data && data.data.shortage !== undefined) {
                         TokenAlertModal.show({
@@ -409,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         // 기타 오류: 서버 메시지 또는 HTTP 상태 텍스트 노출
                         const serverMsg = (data && (data.message || data.error)) || res.statusText || '변환 시작 실패';
+                        console.error('❌ 서버 오류 메시지:', serverMsg);
                         alert(String(serverMsg).slice(0, 300));
                     }
                     if (stream) { stream.classList.remove('active'); stream.style.display = 'none'; }

@@ -25,7 +25,7 @@ def normalize_issue_date(s: str) -> str:
     
     지원 형식:
     - "251001" (6자리 숫자)
-    - "25년10월01일" (한글 포함)
+    - "25년10월01일" (한글 포함, 공백 허용)
     - "2025-10-01" (ISO 형식)
     
     Args:
@@ -34,26 +34,52 @@ def normalize_issue_date(s: str) -> str:
     Returns:
         str: ISO 형식 날짜 문자열 (YYYY-MM-DD), 실패 시 빈 문자열
     """
+    if not s:
+        return ''
+    
+    # 공백 제거
+    s = s.strip()
+    
     try:
-        # 251001 형태
+        # 251001 형태 (6자리 숫자)
         if len(s) == 6 and s.isdigit():
             yy = int(s[0:2])
             mm = int(s[2:4])
             dd = int(s[4:6])
             yyyy = 2000 + yy
             return f"{yyyy:04d}-{mm:02d}-{dd:02d}"
-        # 25년10월01일 형태
+        
+        # 25년10월01일 형태 (한글 포함, 공백 허용)
         if '년' in s and '월' in s and '일' in s:
-            yy = int(s.split('년')[0][-2:])
-            rest = s.split('년')[1]
-            mm = int(rest.split('월')[0])
-            dd = int(rest.split('월')[1].split('일')[0])
+            # 공백 제거 후 파싱
+            cleaned = s.replace(' ', '').replace('\t', '').replace('\n', '')
+            
+            # 년도 추출 (마지막 2자리)
+            year_part = cleaned.split('년')[0]
+            yy_str = year_part[-2:] if len(year_part) >= 2 else year_part
+            yy = int(yy_str)
+            
+            # 월 추출
+            rest = cleaned.split('년')[1]
+            month_part = rest.split('월')[0]
+            mm = int(month_part)
+            
+            # 일 추출
+            day_part = rest.split('월')[1].split('일')[0]
+            dd = int(day_part)
+            
             yyyy = 2000 + yy
             return f"{yyyy:04d}-{mm:02d}-{dd:02d}"
-        # ISO 날짜 시도
-        return datetime.fromisoformat(s).date().isoformat()
-    except Exception:
+        
+        # ISO 날짜 시도 (2025-10-01)
+        if '-' in s and len(s) >= 10:
+            return datetime.fromisoformat(s).date().isoformat()
+            
+    except Exception as e:
+        logger.error(f"날짜 정규화 실패: 입력값='{s}', 오류={str(e)}")
         return ''
+    
+    return ''
 
 
 def validate_and_extract_params(request):
@@ -71,6 +97,7 @@ def validate_and_extract_params(request):
     # CSRF 토큰 검증
     csrf_token = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token')
     if not csrf_token:
+        logger.error(f"변환 요청 검증 실패: CSRF 토큰 없음")
         return False, error('보안 토큰이 없습니다. 다시 시도해주세요.', status=403)
     
     # Form Data에서 파라미터 추출
@@ -79,6 +106,8 @@ def validate_and_extract_params(request):
     file_name = (request.form.get('file_name') or '').strip()
     industry_type = (request.form.get('industry_type') or 'delivery').strip()
     guidelines_json = request.form.get('guidelines', '{}')
+    
+    logger.info(f"변환 요청 파라미터 추출: template_id={template_id}, issue_date_raw='{issue_date_raw}', file_name='{file_name}', industry_type={industry_type}")
     
     # 업종별 지침 파싱
     try:
@@ -89,22 +118,31 @@ def validate_and_extract_params(request):
     
     # 파일 업로드 확인
     if 'file' not in request.files:
+        logger.error(f"변환 요청 검증 실패: 'file' 키가 request.files에 없음")
         return False, error('배달대행사 정산서 파일을 업로드해주세요', status=400)
     
     uploaded_file = request.files['file']
     if uploaded_file.filename == '':
+        logger.error(f"변환 요청 검증 실패: uploaded_file.filename이 비어있음")
         return False, error('파일이 선택되지 않았습니다', status=400)
+    
+    logger.info(f"파일 업로드 확인: filename='{uploaded_file.filename}'")
     
     # 필수 파라미터 검증
     if not issue_date_raw:
+        logger.error(f"변환 요청 검증 실패: issue_date_raw가 비어있음")
         return False, error('전자세금일자를 선택하세요', status=400)
     if not file_name:
+        logger.error(f"변환 요청 검증 실패: file_name이 비어있음")
         return False, error('파일명을 입력하세요', status=400)
     
     # issue_date 정규화: "25년10월01일" 또는 "251001" 또는 ISO 모두 수용 → ISO(YYYY-MM-DD)
+    logger.info(f"날짜 정규화 시도: issue_date_raw='{issue_date_raw}'")
     issue_date = normalize_issue_date(issue_date_raw)
     if not issue_date:
-        return False, error('전자세금일자 형식이 올바르지 않습니다', status=400)
+        logger.error(f"변환 요청 검증 실패: 날짜 정규화 실패, issue_date_raw='{issue_date_raw}'")
+        return False, error(f'전자세금일자 형식이 올바르지 않습니다. 입력값: "{issue_date_raw}"', status=400)
+    logger.info(f"날짜 정규화 성공: '{issue_date_raw}' → '{issue_date}'")
     
     # 성공 시 추출된 파라미터 반환
     return True, {
