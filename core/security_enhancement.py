@@ -166,9 +166,20 @@ class SecurityMiddleware:
         # 보안 헤더 설정
         @self.app.after_request
         def set_security_headers(response):
-            headers = self.security_config.get_security_headers()
-            for header, value in headers.items():
-                response.headers[header] = value
+            from flask import request
+            # /studio/app 경로는 라우트에서 직접 헤더를 설정하므로 예외 처리
+            if request.path.startswith('/studio/app'):
+                # X-Frame-Options는 라우트에서 설정하므로 제외
+                headers = self.security_config.get_security_headers()
+                for header, value in headers.items():
+                    if header == 'X-Frame-Options':
+                        continue  # 라우트에서 설정한 값 유지
+                    response.headers[header] = value
+            else:
+                # 다른 경로는 모든 보안 헤더 적용
+                headers = self.security_config.get_security_headers()
+                for header, value in headers.items():
+                    response.headers[header] = value
             return response
         
         # CORS 설정
