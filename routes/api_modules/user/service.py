@@ -466,7 +466,8 @@ class UserService:
                     log_dict.get('details')
                 ) or '세부 정보 없음'
                 
-                result_logs.append(ActivityLogItem(
+                # ActivityLogItem 생성 및 dict 변환
+                item = ActivityLogItem(
                     id=log_dict.get('id', 0),
                     timestamp=log_dict.get('timestamp', ''),
                     user_plan_snapshot=log_dict.get('user_plan_snapshot'),
@@ -477,7 +478,26 @@ class UserService:
                     token_balance_after=log_dict.get('token_balance_after'),
                     activity_type_korean=activity_type_korean,
                     details_summary=details_summary
-                ).dict())
+                )
+                # Pydantic v1/v2 호환
+                if hasattr(item, 'model_dump'):
+                    item_dict = item.model_dump()
+                elif hasattr(item, 'dict'):
+                    item_dict = item.dict()
+                else:
+                    item_dict = {
+                        'id': item.id,
+                        'timestamp': item.timestamp,
+                        'user_plan_snapshot': item.user_plan_snapshot,
+                        'activity_type': item.activity_type,
+                        'details': item.details,
+                        'token_change': item.token_change,
+                        'token_balance_before': item.token_balance_before,
+                        'token_balance_after': item.token_balance_after,
+                        'activity_type_korean': item.activity_type_korean,
+                        'details_summary': item.details_summary
+                    }
+                result_logs.append(item_dict)
             except Exception as e:
                 logger.error(f"활동 로그 변환 오류: {str(e)}, log={log}", exc_info=True)
                 continue
