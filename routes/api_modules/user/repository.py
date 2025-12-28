@@ -430,6 +430,10 @@ class UserRepository:
             paged_query = f"{base_query} LIMIT ? OFFSET ?"
             paged_params = params + [limit, offset]
 
+            # row_factory 설정 확인 및 적용
+            if conn.row_factory is None:
+                conn.row_factory = sqlite3.Row
+            
             cursor = conn.execute(paged_query, tuple(paged_params))
             logs = cursor.fetchall()
 
@@ -454,7 +458,8 @@ class UserRepository:
                     count_query += " AND al.activity_type = ?"
                     count_params.append(activity_type)
 
-            total_count = conn.execute(count_query, tuple(count_params)).fetchone()[0]
+            count_result = conn.execute(count_query, tuple(count_params)).fetchone()
+            total_count = count_result[0] if count_result else 0
 
             self.logger.debug(f"활동 로그 조회 완료: user_id={user_id}, count={len(logs)}, total={total_count}")
             return {

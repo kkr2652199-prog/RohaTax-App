@@ -439,30 +439,48 @@ class UserService:
         # 결과 변환 및 번역 적용
         result_logs = []
         for log in logs:
-            log_dict = dict(log)
-            
-            # 활동 유형 번역
-            activity_type = log_dict.get('activity_type', '')
-            activity_type_korean = self.ACTIVITY_TYPE_MAP.get(activity_type, activity_type)
-            
-            # 상세 정보 요약
-            details_summary = self._summarize_details(
-                activity_type,
-                log_dict.get('details')
-            )
-            
-            result_logs.append(ActivityLogItem(
-                id=log_dict['id'],
-                timestamp=log_dict['timestamp'],
-                user_plan_snapshot=log_dict.get('user_plan_snapshot'),
-                activity_type=activity_type,
-                details=log_dict.get('details'),
-                token_change=log_dict.get('token_change'),
-                token_balance_before=log_dict.get('token_balance_before'),
-                token_balance_after=log_dict.get('token_balance_after'),
-                activity_type_korean=activity_type_korean,
-                details_summary=details_summary
-            ).dict())
+            try:
+                # sqlite3.Row를 dict로 변환
+                if hasattr(log, 'keys'):
+                    log_dict = dict(log)
+                else:
+                    # 튜플인 경우 처리
+                    log_dict = {
+                        'id': log[0] if len(log) > 0 else 0,
+                        'timestamp': log[1] if len(log) > 1 else '',
+                        'user_plan_snapshot': log[2] if len(log) > 2 else None,
+                        'activity_type': log[3] if len(log) > 3 else '',
+                        'details': log[4] if len(log) > 4 else None,
+                        'token_change': log[5] if len(log) > 5 else 0,
+                        'token_balance_before': log[6] if len(log) > 6 else None,
+                        'token_balance_after': log[7] if len(log) > 7 else None,
+                    }
+                
+                # 활동 유형 번역
+                activity_type = log_dict.get('activity_type', '') or ''
+                activity_type_korean = self.ACTIVITY_TYPE_MAP.get(activity_type, activity_type) or activity_type
+                
+                # 상세 정보 요약
+                details_summary = self._summarize_details(
+                    activity_type,
+                    log_dict.get('details')
+                ) or '세부 정보 없음'
+                
+                result_logs.append(ActivityLogItem(
+                    id=log_dict.get('id', 0),
+                    timestamp=log_dict.get('timestamp', ''),
+                    user_plan_snapshot=log_dict.get('user_plan_snapshot'),
+                    activity_type=activity_type,
+                    details=log_dict.get('details'),
+                    token_change=log_dict.get('token_change'),
+                    token_balance_before=log_dict.get('token_balance_before'),
+                    token_balance_after=log_dict.get('token_balance_after'),
+                    activity_type_korean=activity_type_korean,
+                    details_summary=details_summary
+                ).dict())
+            except Exception as e:
+                logger.error(f"활동 로그 변환 오류: {str(e)}, log={log}", exc_info=True)
+                continue
         
         total_pages = (total_count + limit - 1) // limit if limit > 0 else 0
 

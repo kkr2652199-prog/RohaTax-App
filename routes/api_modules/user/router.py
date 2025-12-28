@@ -171,7 +171,17 @@ def create_user_api_blueprint() -> Blueprint:
                 )
             
             # response.data를 직접 전달 (중첩 구조 방지)
-            return success(data=response.data.dict())
+            if hasattr(response, 'data') and response.data:
+                # Pydantic 모델의 dict() 또는 model_dump() 사용
+                if hasattr(response.data, 'model_dump'):
+                    data_dict = response.data.model_dump()
+                elif hasattr(response.data, 'dict'):
+                    data_dict = response.data.dict()
+                else:
+                    data_dict = dict(response.data) if hasattr(response.data, '__dict__') else {}
+                return success(data=data_dict)
+            else:
+                return error('토큰 요약 데이터가 없습니다', status=404)
             
         except ValueError as e:
             return error(str(e), status=404)
