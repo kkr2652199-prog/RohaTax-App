@@ -25,6 +25,9 @@ class FurnitureViewer {
     this.animationId = null;
     this.factory = null; // ProductFactory 참조 (선택적)
     this.css3dRenderer = null; // CSS3DRenderer (HTML/CSS 렌더링용)
+    
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    this.isVisible = !document.hidden;
 
     this.init();
   }
@@ -93,6 +96,19 @@ class FurnitureViewer {
 
     // 반응형 처리
     window.addEventListener('resize', () => this.resize());
+    
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    document.addEventListener("visibilitychange", () => {
+      this.isVisible = !document.hidden;
+      if (this.isVisible && !this.animationId) {
+        // 페이지가 다시 보이면 애니메이션 재개
+        this.animate();
+      } else if (!this.isVisible && this.animationId) {
+        // 페이지가 숨겨지면 애니메이션 중지
+        cancelAnimationFrame(this.animationId);
+        this.animationId = null;
+      }
+    });
 
     // 렌더링 루프 시작
     this.animate();
@@ -254,6 +270,12 @@ class FurnitureViewer {
    * 렌더링 루프
    */
   animate() {
+    // 🚀 CPU 최적화: 페이지가 보이지 않으면 애니메이션 중지
+    if (!this.isVisible) {
+      this.animationId = null;
+      return;
+    }
+    
     this.animationId = requestAnimationFrame(() => this.animate());
 
     // OrbitControls 업데이트

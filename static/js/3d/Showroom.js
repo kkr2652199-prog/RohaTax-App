@@ -149,6 +149,10 @@ class Showroom {
     this._tempRight = new THREE.Vector3();
     this._tempAcceleration = new THREE.Vector3();
 
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    this.animationId = null;
+    this.isVisible = !document.hidden;
+
     // OrbitControls를 시선 회전용으로만 사용 (줌 유지, 이동은 WASD)
     // FPS 컨트롤로 대체 (OrbitControls 제거)
     this.controls = null;
@@ -265,6 +269,20 @@ class Showroom {
     this.setupEvents();
     this.onResize();
     window.addEventListener("resize", () => this.onResize());
+    
+    // 🚀 CPU 최적화: Page Visibility API로 백그라운드에서 애니메이션 일시정지
+    document.addEventListener("visibilitychange", () => {
+      this.isVisible = !document.hidden;
+      if (this.isVisible && !this.animationId) {
+        // 페이지가 다시 보이면 애니메이션 재개
+        this.animate();
+      } else if (!this.isVisible && this.animationId) {
+        // 페이지가 숨겨지면 애니메이션 중지
+        cancelAnimationFrame(this.animationId);
+        this.animationId = null;
+      }
+    });
+    
     this.animate();
     
     // [DEBUG] 전역 노출 (개발자 도구에서 접근 가능)
@@ -1417,7 +1435,13 @@ class Showroom {
   }
 
   animate() {
-    requestAnimationFrame(() => this.animate());
+    // 🚀 CPU 최적화: 페이지가 보이지 않으면 애니메이션 중지
+    if (!this.isVisible) {
+      this.animationId = null;
+      return;
+    }
+    
+    this.animationId = requestAnimationFrame(() => this.animate());
     const currentTime = performance.now();
     const deltaTime = currentTime - this.lastFrameTime;
     this.lastFrameTime = currentTime;
