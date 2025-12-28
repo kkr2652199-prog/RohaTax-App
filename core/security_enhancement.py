@@ -61,7 +61,7 @@ class SecurityConfig:
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com"
+                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
                 )
             }
         }
@@ -92,7 +92,7 @@ class SecurityConfig:
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com"
+                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
                 )
             }
         }
@@ -123,7 +123,7 @@ class SecurityConfig:
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
                     "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com"
+                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
                 ),
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'

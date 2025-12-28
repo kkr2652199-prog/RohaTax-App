@@ -16,7 +16,11 @@ async function getUserApiKey(): Promise<string> {
   }
 
   try {
-    const response = await fetch('/api/user/apikey');
+    // iframe 내부에서도 정상 작동하도록 절대 경로 사용
+    const apiUrl = window.location.origin + '/api/user/apikey';
+    const response = await fetch(apiUrl, {
+      credentials: 'include' // 쿠키 포함
+    });
     if (!response.ok) {
       if (response.status === 401) {
         alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
@@ -604,15 +608,77 @@ const generateTopics = async (prompt: string, useSearch: boolean = false): Promi
         const jsonString = response.text;
         const parsedJson = JSON.parse(jsonString);
 
+        // Google API 오류 응답 처리
+        if (parsedJson.error) {
+            const errorCode = parsedJson.error.code;
+            const errorMessage = parsedJson.error.message;
+            
+            if (errorCode === 403 && errorMessage.includes('leaked')) {
+                throw new Error('API 키가 유출된 것으로 보고되었습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+            } else if (errorCode === 403) {
+                throw new Error(`API 키 권한 오류: ${errorMessage}`);
+            } else if (errorCode === 401) {
+                throw new Error('API 키가 유효하지 않습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+            } else {
+                throw new Error(`Google API 오류 (${errorCode}): ${errorMessage}`);
+            }
+        }
+
         if (!parsedJson.topics || !Array.isArray(parsedJson.topics)) {
             throw new Error("Received malformed JSON response from API for topic suggestion.");
         }
         return parsedJson.topics;
     } catch (error) {
         console.error("Error generating topics:", error);
+        
+        // GoogleGenAI 라이브러리에서 던진 오류 처리
         if (error instanceof Error) {
-            throw new Error(`Failed to generate topics: ${error.message}`);
+            const errorMessage = error.message;
+            const errorString = String(error);
+            
+            // API 키 유출 오류 감지
+            if (errorMessage.includes('leaked') || errorString.includes('leaked') || 
+                errorMessage.includes('403') || errorString.includes('403')) {
+                // JSON 형식의 오류 메시지 파싱 시도
+                try {
+                    const errorJson = JSON.parse(errorMessage);
+                    if (errorJson.error && errorJson.error.message && errorJson.error.message.includes('leaked')) {
+                        throw new Error('API 키가 유출된 것으로 보고되었습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+                    }
+                } catch {
+                    // JSON 파싱 실패 시 일반 메시지 사용
+                }
+                throw new Error('API 키가 유출된 것으로 보고되었습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+            }
+            
+            // API 키 권한 오류
+            if (errorMessage.includes('PERMISSION_DENIED') || errorString.includes('PERMISSION_DENIED') ||
+                errorMessage.includes('403') || errorString.includes('403')) {
+                throw new Error('API 키 권한 오류가 발생했습니다. Google AI Studio에서 API 키를 확인해주세요.');
+            }
+            
+            // API 키 인증 오류
+            if (errorMessage.includes('401') || errorString.includes('401') ||
+                errorMessage.includes('UNAUTHENTICATED') || errorString.includes('UNAUTHENTICATED')) {
+                throw new Error('API 키가 유효하지 않습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+            }
+            
+            // 이미 명확한 오류 메시지가 있으면 그대로 사용
+            if (errorMessage.includes('API 키') || errorMessage.includes('Google API')) {
+                throw error;
+            }
+            
+            throw new Error(`Failed to generate topics: ${errorMessage}`);
         }
+        
+        // 문자열 오류 처리
+        if (typeof error === 'string') {
+            if (error.includes('leaked') || error.includes('403')) {
+                throw new Error('API 키가 유출된 것으로 보고되었습니다. Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요.');
+            }
+            throw new Error(`Failed to generate topics: ${error}`);
+        }
+        
         throw new Error("An unknown error occurred while generating topics.");
     }
 };
