@@ -1124,9 +1124,12 @@ function App() {
       </button>
   );
 
+  // iframe 내부인지 확인 (Flask 헤더와 중복 방지)
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111111] font-sans flex flex-col">
-      <Navbar />
+      {!isInIframe && <Navbar />}
       <div className="flex-grow">
         <PageHeader onOpenHelp={() => setIsHelpModalOpen(true)} />
         <main className="container mx-auto p-6">
