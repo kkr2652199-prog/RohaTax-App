@@ -9,12 +9,9 @@
  * - 사용자 플랜 변경
  */
 
-// 전역 csrfToken 함수가 없다면 안전하게 정의
-if (typeof csrfToken !== 'function') {
-    window.csrfToken = function() {
-        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    };
-}
+// csrfToken은 admin.html에서 이미 선언됨 (const csrfToken = () => ...)
+// HTML에서 선언된 전역 변수를 그대로 사용
+// 중복 선언 방지를 위해 여기서는 선언하지 않음
 
 /**
  * 사용자 목록 로드
@@ -872,14 +869,9 @@ async function editSubscriptionEndDate(userId, username, currentEndDateISO) {
     }
 }
 
-// CSRF 토큰 함수 (admin.html에 정의되어 있지만 안전을 위해 여기서도 정의)
-if (typeof csrfToken === 'undefined') {
-    function csrfToken() {
-        const meta = document.querySelector('meta[name="csrf-token"]');
-        return meta ? meta.getAttribute('content') || '' : '';
-    }
-    window.csrfToken = csrfToken;
-}
+// CSRF 토큰 함수는 admin.html에서 이미 선언됨 (const csrfToken = ...)
+// 중복 선언 방지를 위해 여기서는 선언하지 않음
+// HTML에서 선언된 전역 변수를 그대로 사용
 
 // 전역 스코프에 함수 노출
 window.editSubscriptionEndDate = editSubscriptionEndDate;
