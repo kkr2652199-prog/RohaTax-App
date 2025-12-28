@@ -1,4 +1,71 @@
-﻿# [2025-12-27 16:03:35 KST] - 서버 배포 자동화 시스템 구축 및 인터넷 서버 배포 가이드 완성 - 커밋 0b4e5ca
+﻿# [2025-12-28 14:43:24 KST] - 배포 전 homepage1 전체 백업 및 본진 병합 완료 - 커밋 b6c08f4
+
+*   **한국 시간/날짜:** 2025년 12월 28일 14:43:24 (KST)
+*   **커밋 해시:** b6c08f42a126177065954464e749df4e1e470a29
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 배포 전 homepage1 전초기지 전체 백업 및 본진(main)으로 병합 완료. 마이홈/관리자 대시보드 작업 내용 포함.
+
+## 주요 변경사항
+
+### 1. homepage1 스테이징 및 커밋
+*   **커밋 해시:** b6c08f42a126177065954464e749df4e1e470a29
+*   **변경 파일:** 14개 파일 (434줄 추가, 32줄 삭제)
+*   **작업 내용:**
+    *   마이홈 페이지 API 수정 (활동 로그, 토큰 요약)
+    *   데이터베이스 스키마 동기화 작업
+    *   3D 관련 JavaScript 파일 업데이트
+    *   프로필 편집 템플릿 수정
+    *   DB 동기화 스크립트 추가
+
+### 2. homepage1 → 본진 병합
+*   **병합 스크립트:** `scripts/merge_from_homepage1.py`
+*   **병합된 파일:** 6개
+    *   `static/js/profile_modern.js` (마이홈 페이지 관련)
+    *   `routes/api_modules/user/router.py`
+    *   `file_manager_config.json.backup`
+    *   `merge_report.txt`
+    *   로그 파일 3개
+*   **백업 생성:** 6개 파일 자동 백업
+
+### 3. 수정된 주요 파일
+*   `routes/api_modules/user/router.py` - API 라우터 수정
+*   `routes/api_modules/user/repository.py` - 데이터베이스 쿼리 개선
+*   `routes/api_modules/user/service.py` - 비즈니스 로직 개선
+*   `static/js/profile_modern.js` - 프론트엔드 디버그 로그 추가
+*   `core/security_enhancement.py` - 보안 강화
+*   `templates/profile_edit.html` - 프로필 편집 템플릿 수정
+
+### 4. 추가된 파일
+*   `export_users_to_server.py` - 사용자 데이터 서버 전송 스크립트
+*   `scripts/sync_db_to_server.py` - DB 동기화 스크립트
+*   `temp_sync_db.py` - 임시 DB 동기화 스크립트
+*   `users_data.sql` - 사용자 데이터 SQL
+*   `users_data_fixed.sql` - 수정된 사용자 데이터 SQL
+
+## 병합 프로세스
+
+### 실행 단계
+1. ✅ homepage1 현재 상태 확인
+2. ✅ 모든 변경사항 스테이징 (`git add .`)
+3. ✅ 커밋 실행 (`git commit`)
+4. ✅ 본진(main) 브랜치로 이동
+5. ✅ 병합 전 시뮬레이션 (Dry-Run)
+6. ✅ 실제 병합 실행
+7. ✅ 병합 결과 확인
+
+### 병합 결과
+*   **성공:** 6개 파일 복사 완료
+*   **실패:** 0개
+*   **백업 생성:** 6개 파일
+
+## 다음 단계
+*   본진 변경사항 커밋 (현재 스테이징 안 됨)
+*   데이터베이스 병합 (별도 작업 필요)
+*   서버 배포 준비
+
+---
+
+# [2025-12-27 16:03:35 KST] - 서버 배포 자동화 시스템 구축 및 인터넷 서버 배포 가이드 완성 - 커밋 0b4e5ca
 
 *   **한국 시간/날짜:** 2025년 12월 27일 16:03:35 (KST)
 *   **커밋 해시:** 0b4e5cae9782693ac679f1afe38e8f9f6cf72fe7
