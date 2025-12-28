@@ -166,8 +166,8 @@ def kweon21_index(path):
     user_id = session.get('user_id')
     
     if user_id:
-        from core.db import get_conn_optimized as get_conn
         try:
+            from core.db import get_conn_optimized as get_conn
             with get_conn() as conn:
                 conn.row_factory = sqlite3.Row
                 user = conn.execute(
@@ -176,8 +176,11 @@ def kweon21_index(path):
                 ).fetchone()
                 if user and user['google_api_key']:
                     has_key = True
-        except Exception:
-            pass  # DB 오류 시 False로 유지
+        except Exception as e:
+            # DB 오류 시 False로 유지 (로그는 출력하지 않음, 정상적인 동작)
+            import logging
+            logging.getLogger(__name__).debug(f"API key check failed: {e}")
+            pass
     
     # 빌드 파일 존재 확인
     index_path = os.path.join(dist_dir, "index.html")
