@@ -83,6 +83,8 @@ def kweon21_app(path=""):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+    # iframe에서 로드 가능하도록 X-Frame-Options 설정
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
 
@@ -100,6 +102,7 @@ def kweon21_app_assets(filename):
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         resp.headers['Pragma'] = 'no-cache'
         resp.headers['Expires'] = '0'
+        resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
         return resp
     
     return "File not found", 404
@@ -138,6 +141,7 @@ def kweon21_index(path):
     ):
         resp = send_from_directory(dist_dir, path)
         resp.headers.update(no_cache_headers)
+        resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
         return resp
 
     # B. assets 폴더 내 파일 처리 (기존 호환성 유지)
@@ -148,6 +152,7 @@ def kweon21_index(path):
         if os.path.exists(file_path) and os.path.isfile(file_path):
             resp = send_from_directory(assets_dir, filename)
             resp.headers.update(no_cache_headers)
+            resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
             return resp
 
     # C. /app 경로는 위의 kweon21_app 라우트로 리다이렉트
