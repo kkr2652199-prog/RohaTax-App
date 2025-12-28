@@ -55,8 +55,8 @@ class SecurityConfig:
                 'X-XSS-Protection': '1; mode=block',
                 'Content-Security-Policy': (
                     "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
+                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
+                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
@@ -86,8 +86,8 @@ class SecurityConfig:
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
                 'Content-Security-Policy': (
                     "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
+                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
+                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
@@ -117,8 +117,8 @@ class SecurityConfig:
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
                 'Content-Security-Policy': (
                     "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com; "
+                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
+                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                     "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
