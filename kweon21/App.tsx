@@ -4,6 +4,7 @@ import { ColorTheme, GeneratedContent } from './types';
 import { generateBlogPost, generateEeatTopicSuggestions, generateCategoryTopicSuggestions, generateEvergreenTopicSuggestions, suggestInteractiveElementForTopic, generateImage, generateTopicsFromMemo, generateLongtailTopicSuggestions, regenerateBlogPostHtml } from './services/geminiService';
 import { CurrentStatus } from './components/CurrentStatus';
 import { Shortcuts } from './components/Shortcuts';
+import { Navbar } from './components/Navbar';
 
 const PageHeader: React.FC<{ onOpenHelp: () => void; }> = ({ onOpenHelp }) => (
   <div className="relative text-center py-8 px-6 bg-white border-b border-[#E5E7EB]">
@@ -1125,6 +1126,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111111] font-sans flex flex-col">
+      <Navbar />
       <div className="flex-grow">
         <PageHeader onOpenHelp={() => setIsHelpModalOpen(true)} />
         <main className="container mx-auto p-6">
