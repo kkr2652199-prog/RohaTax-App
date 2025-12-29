@@ -74,15 +74,16 @@
         console.log('비디오 소스 (currentSrc):', video.currentSrc);
         console.log('비디오 readyState:', video.readyState);
         
-        // 비디오 소스가 없으면 명시적으로 로드 시도
-        if (!video.currentSrc && !video.src) {
-            console.log('비디오 소스가 없음, source 태그 확인 중...');
-            const sourceElement = video.querySelector('source');
-            if (sourceElement) {
-                console.log('source 태그 발견:', sourceElement.src);
-                // 비디오 로드 강제 실행
-                video.load();
-            }
+        // 비디오 소스 확인 및 강제 로드
+        const sourceElement = video.querySelector('source');
+        if (sourceElement) {
+            console.log('source 태그 발견:', sourceElement.src);
+        }
+        
+        // 비디오가 아직 로드되지 않았으면 명시적으로 로드
+        if (video.readyState === 0) {
+            console.log('비디오 readyState가 0이므로 load() 호출');
+            video.load();
         }
         
         // 비디오 메타데이터 로드 시
