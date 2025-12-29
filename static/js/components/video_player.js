@@ -157,30 +157,50 @@
             console.log('재생/일시정지 토글 호출');
             console.log('현재 상태 - paused:', video.paused, 'ended:', video.ended, 'readyState:', video.readyState);
             
-            // 비디오가 준비되지 않은 경우 대기
-            if (video.readyState < 2) {
-                console.log('비디오가 아직 준비되지 않음, 대기 중...');
-                return;
-            }
-            
             if (video.paused || video.ended) {
-                console.log('비디오 재생 시작');
-                const playPromise = video.play();
-                
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        console.log('비디오 재생 성공');
-                    }).catch(error => {
-                        console.error('비디오 재생 실패:', error);
-                        // 재생 실패 시 상태 초기화
-                        isPlaying = false;
-                        if (playIcon) playIcon.style.display = 'block';
-                        if (pauseIcon) pauseIcon.style.display = 'none';
-                    });
+                // 비디오가 아직 준비되지 않은 경우 canplay 이벤트를 기다림
+                if (video.readyState < 1) {
+                    console.log('비디오 메타데이터 로드 대기 중...');
+                    video.addEventListener('loadedmetadata', function onMetadataLoaded() {
+                        video.removeEventListener('loadedmetadata', onMetadataLoaded);
+                        console.log('메타데이터 로드 완료, 재생 시도');
+                        attemptPlay();
+                    }, { once: true });
+                    return;
                 }
+                
+                // 메타데이터는 있지만 재생 가능한 데이터가 부족한 경우
+                if (video.readyState < 2) {
+                    console.log('비디오 재생 데이터 로드 대기 중...');
+                    video.addEventListener('canplay', function onCanPlay() {
+                        video.removeEventListener('canplay', onCanPlay);
+                        console.log('재생 가능, 재생 시도');
+                        attemptPlay();
+                    }, { once: true });
+                    return;
+                }
+                
+                attemptPlay();
             } else {
                 console.log('비디오 일시정지');
                 video.pause();
+            }
+        }
+        
+        function attemptPlay() {
+            console.log('비디오 재생 시작');
+            const playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('비디오 재생 성공');
+                }).catch(error => {
+                    console.error('비디오 재생 실패:', error);
+                    // 재생 실패 시 상태 초기화
+                    isPlaying = false;
+                    if (playIcon) playIcon.style.display = 'block';
+                    if (pauseIcon) pauseIcon.style.display = 'none';
+                });
             }
         }
         
