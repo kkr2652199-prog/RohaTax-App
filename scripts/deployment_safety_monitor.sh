@@ -29,9 +29,9 @@ check_service() {
     if systemctl is-active --quiet rohatax; then
         return 0
     else
-        log "❌ CRITICAL: rohatax 서비스가 중지되었습니다!"
+        log "CRITICAL: rohatax service is stopped!"
         systemctl restart rohatax
-        log "🔄 서비스 재시작 시도 완료"
+        log "Service restart attempted"
         return 1
     fi
 }
@@ -40,7 +40,7 @@ check_service() {
 check_disk_space() {
     USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
     if [ "$USAGE" -gt 90 ]; then
-        log "⚠️ WARNING: 디스크 사용량이 ${USAGE}%입니다!"
+        log "WARNING: Disk usage is ${USAGE}%!"
         return 1
     fi
     return 0
@@ -50,7 +50,7 @@ check_disk_space() {
 check_memory() {
     MEMORY=$(free | grep Mem | awk '{printf "%.0f", $3/$2 * 100}')
     if [ "$MEMORY" -gt 90 ]; then
-        log "⚠️ WARNING: 메모리 사용량이 ${MEMORY}%입니다!"
+        log "WARNING: Memory usage is ${MEMORY}%!"
         return 1
     fi
     return 0
@@ -60,13 +60,13 @@ check_memory() {
 check_backups() {
     BACKUP_DIR="$PROJECT_DIR/database/backups"
     if [ ! -d "$BACKUP_DIR" ]; then
-        log "⚠️ WARNING: 백업 디렉토리가 없습니다!"
+        log "WARNING: Backup directory does not exist!"
         return 1
     fi
     
     BACKUP_COUNT=$(find "$BACKUP_DIR" -name "*.db" -mtime -1 | wc -l)
     if [ "$BACKUP_COUNT" -eq 0 ]; then
-        log "⚠️ WARNING: 최근 24시간 내 백업 파일이 없습니다!"
+        log "WARNING: No backup files found in the last 24 hours!"
         return 1
     fi
     
@@ -77,7 +77,7 @@ check_backups() {
 check_health() {
     HEALTH=$(curl -s http://localhost/health 2>/dev/null)
     if [ -z "$HEALTH" ] || echo "$HEALTH" | grep -q '"status":"unhealthy"'; then
-        log "❌ CRITICAL: 헬스체크 실패!"
+        log "CRITICAL: Health check failed!"
         return 1
     fi
     return 0
@@ -90,7 +90,7 @@ check_log_size() {
         if [ -f "$log_file" ]; then
             SIZE=$(du -m "$log_file" | cut -f1)
             if [ "$SIZE" -gt 100 ]; then
-                log "⚠️ WARNING: 로그 파일이 너무 큽니다: $(basename $log_file) (${SIZE}MB)"
+                log "WARNING: Log file is too large: $(basename $log_file) (${SIZE}MB)"
             fi
         fi
     done
@@ -98,7 +98,7 @@ check_log_size() {
 
 # 메인 실행
 main() {
-    log "🔍 안전장치 모니터링 시작"
+    log "Safety monitoring started"
     
     ERRORS=0
     
@@ -110,12 +110,12 @@ main() {
     check_log_size
     
     if [ $ERRORS -eq 0 ]; then
-        log "✅ 모든 안전장치 정상"
+        log "All safety checks passed"
     else
-        log "⚠️ 총 $ERRORS 개의 문제가 발견되었습니다"
+        log "Total $ERRORS issues found"
     fi
     
-    log "🔍 안전장치 모니터링 완료"
+    log "Safety monitoring completed"
 }
 
 main
