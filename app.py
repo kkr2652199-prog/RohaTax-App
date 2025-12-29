@@ -127,6 +127,9 @@ app = Flask(
     static_url_path="/static",  # URL 경로 명시
 )
 
+# MP4 파일 MIME 타입 명시적 설정
+mimetypes.add_type('video/mp4', '.mp4')
+
 # Rate Limiting 초기화 (무차별 공격 방어)
 # extensions 모듈에서 limiter 객체를 가져와 앱에 연결
 limiter.init_app(app)
