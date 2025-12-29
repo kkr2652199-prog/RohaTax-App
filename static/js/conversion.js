@@ -720,7 +720,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // 업로드 헤더 대조(✓/?/✗) 자동 갱신: 1행 헤더 추출 후 전달
                 try{
-                    if (typeof updateVipHeaderComparison === 'function'){
+                    // 전역 함수 또는 window 객체에서 함수 찾기
+                    const updateFn = window.updateVipHeaderComparison || (typeof updateVipHeaderComparison !== 'undefined' ? updateVipHeaderComparison : null);
+                    
+                    if (typeof updateFn === 'function'){
                         const name = (file.name || '').toLowerCase();
                         if (name.endsWith('.csv')){
                             const reader = new FileReader();
@@ -729,36 +732,49 @@ document.addEventListener('DOMContentLoaded', function() {
                                     const text = ev.target && ev.target.result ? String(ev.target.result) : '';
                                     const firstLine = (text.split(/\r?\n/)[0] || '').trim();
                                     const headers = firstLine ? firstLine.split(',').map(s=>s.trim()) : [];
-                                    if (headers.length){ updateVipHeaderComparison(headers); }
-                                }catch(_){/* noop */}
+                                    if (headers.length){ updateFn(headers); }
+                                }catch(e){
+                                    console.warn('CSV 헤더 추출 오류:', e);
+                                }
+                            };
+                            reader.onerror = function(e){
+                                console.warn('파일 읽기 오류:', e);
                             };
                             reader.readAsText(file);
                         } else if (name.endsWith('.xlsx') || name.endsWith('.xls')){
                             // XLSX 라이브러리가 로드되어 있을 때만 사용
-                            if (window.XLSX){
+                            if (window.XLSX && typeof window.XLSX.read === 'function'){
                                 const r = new FileReader();
                                 r.onload = function(ev){
                                     try{
                                         const data = new Uint8Array(ev.target.result);
-                                        const wb = XLSX.read(data, {type:'array'});
+                                        const wb = window.XLSX.read(data, {type:'array'});
                                         const firstSheet = wb.SheetNames && wb.SheetNames[0];
                                         if (!firstSheet) return;
                                         const ws = wb.Sheets[firstSheet];
-                                        const range = XLSX.utils.decode_range(ws['!ref']);
+                                        if (!ws || !ws['!ref']) return;
+                                        const range = window.XLSX.utils.decode_range(ws['!ref']);
                                         const headers = [];
                                         for (let C = range.s.c; C <= range.e.c; C++){
-                                            const cellAddress = XLSX.utils.encode_cell({r: range.s.r, c: C});
+                                            const cellAddress = window.XLSX.utils.encode_cell({r: range.s.r, c: C});
                                             const cell = ws[cellAddress];
                                             headers.push(cell ? String(cell.v).trim() : '');
                                         }
-                                        if (headers.length){ updateVipHeaderComparison(headers); }
-                                    }catch(_){/* noop */}
+                                        if (headers.length){ updateFn(headers); }
+                                    }catch(e){
+                                        console.warn('XLSX 헤더 추출 오류:', e);
+                                    }
+                                };
+                                r.onerror = function(e){
+                                    console.warn('파일 읽기 오류:', e);
                                 };
                                 r.readAsArrayBuffer(file);
                             }
                         }
                     }
-                }catch(_){/* noop */}
+                }catch(e){
+                    console.warn('헤더 대조 갱신 오류:', e);
+                }
             } else {
                 // 파일이 선택되지 않은 경우 원래 상태로 복원
                 label.innerHTML = `

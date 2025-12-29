@@ -85,14 +85,19 @@
             console.log('비디오 로드 시작');
         });
         
-        // 비디오 로드 진행 이벤트
+        // 비디오 로드 진행 이벤트 (최적화: 5% 단위로만 로그)
+        let lastLoggedPercent = -1;
         video.addEventListener('progress', function() {
             if (video.buffered.length > 0) {
                 const bufferedEnd = video.buffered.end(video.buffered.length - 1);
                 const duration = video.duration;
                 if (duration > 0) {
-                    const percent = (bufferedEnd / duration) * 100;
-                    console.log(`비디오 로드 진행: ${percent.toFixed(1)}%`);
+                    const percent = Math.floor((bufferedEnd / duration) * 100);
+                    // 5% 단위로만 로그 출력 (과도한 로그 방지)
+                    if (percent >= lastLoggedPercent + 5) {
+                        lastLoggedPercent = percent;
+                        console.log(`비디오 로드 진행: ${percent}%`);
+                    }
                 }
             }
         });
