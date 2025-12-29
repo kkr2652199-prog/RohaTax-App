@@ -2,6 +2,10 @@
 # 백업 파일 검증 스크립트
 # 매일 새벽 3시 실행 (cron: 0 3 * * *)
 
+# UTF-8 인코딩 설정
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="/home/ubuntu/RohaTax-App"
 BACKUP_DIR="$PROJECT_DIR/database/backups"

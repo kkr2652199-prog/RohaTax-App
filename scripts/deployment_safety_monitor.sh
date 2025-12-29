@@ -2,6 +2,10 @@
 # 배포 서버 안전장치 모니터링 스크립트
 # 매 5분마다 실행 (cron: */5 * * * *)
 
+# UTF-8 인코딩 설정
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="/home/ubuntu/RohaTax-App"
 LOG_DIR="$PROJECT_DIR/logs"
