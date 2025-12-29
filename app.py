@@ -426,18 +426,32 @@ def _add_cache_headers(resp):
     """정적 파일에 캐시 헤더 추가 (개발 모드에서는 캐시 비활성화)"""
     # 정적 파일 (CSS, JS, 이미지 등)
     if request.path.startswith("/static/"):
-        # 개발 모드에서는 캐시 비활성화 (변경사항 즉시 반영)
-        is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
-        if is_production:
-            # 프로덕션: 1년 캐시 (31536000초)
-            resp.cache_control.max_age = 31536000
-            resp.cache_control.public = True
+        # 비디오 파일 최적화: Range Request 지원 및 캐싱
+        if request.path.endswith(('.mp4', '.webm', '.ogg', '.mov')):
+            # Range Request 지원 (비디오 스트리밍 필수)
+            resp.headers['Accept-Ranges'] = 'bytes'
+            # 비디오 파일은 긴 캐시 (변경이 거의 없음)
+            is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
+            if is_production:
+                resp.cache_control.max_age = 31536000  # 1년
+                resp.cache_control.public = True
+            else:
+                # 개발 모드: 짧은 캐시 (비디오는 크므로)
+                resp.cache_control.max_age = 3600  # 1시간
+                resp.cache_control.public = True
         else:
-            # 개발 모드: 캐시 비활성화
-            resp.cache_control.no_cache = True
-            resp.cache_control.no_store = True
-            resp.cache_control.must_revalidate = True
-            resp.cache_control.max_age = 0
+            # 개발 모드에서는 캐시 비활성화 (변경사항 즉시 반영)
+            is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
+            if is_production:
+                # 프로덕션: 1년 캐시 (31536000초)
+                resp.cache_control.max_age = 31536000
+                resp.cache_control.public = True
+            else:
+                # 개발 모드: 캐시 비활성화
+                resp.cache_control.no_cache = True
+                resp.cache_control.no_store = True
+                resp.cache_control.must_revalidate = True
+                resp.cache_control.max_age = 0
     return resp
 
 

@@ -124,14 +124,8 @@
             }
         });
         
-        // 비디오가 아직 로드되지 않았으면 명시적으로 로드
-        if (video.readyState === 0) {
-            console.log('비디오 readyState가 0이므로 load() 호출');
-            // 이벤트 리스너 등록 후 load() 호출
-            setTimeout(function() {
-                video.load();
-            }, 100);
-        }
+        // 비디오는 사용자가 재생 버튼을 클릭할 때만 로드 (preload="none" 최적화)
+        // 초기 로드는 하지 않음 (페이지 로드 성능 향상)
         
         // 비디오 로딩 중
         video.addEventListener('waiting', function() {
@@ -217,30 +211,49 @@
             if (video.paused || video.ended) {
                 // 비디오가 아직 준비되지 않은 경우
                 if (video.readyState < 1) {
-                    console.log('비디오 메타데이터 로드 대기 중...');
-                    // load() 호출로 메타데이터 로드 시작 (무조건 호출)
+                    console.log('비디오 메타데이터 로드 시작...');
+                    // load() 호출로 메타데이터 로드 시작
                     video.load();
                     
-                    // loadedmetadata 이벤트 대기
-                    video.addEventListener('loadedmetadata', function onMetadataLoaded() {
+                    // loadedmetadata 이벤트 대기 (최적화: 한 번만)
+                    const metadataHandler = function onMetadataLoaded() {
                         console.log('메타데이터 로드 완료, canplay 대기');
-                        // canplay 이벤트 대기 후 재생
+                        // canplaythrough 이벤트 사용 (더 많은 데이터 버퍼링)
+                        const canPlayHandler = function onCanPlayThrough() {
+                            video.removeEventListener('canplaythrough', canPlayHandler);
+                            console.log('재생 준비 완료, 재생 시도');
+                            attemptPlay();
+                        };
+                        video.addEventListener('canplaythrough', canPlayHandler, { once: true });
+                        // canplaythrough가 발생하지 않을 경우를 대비해 canplay도 대기
                         video.addEventListener('canplay', function onCanPlay() {
                             video.removeEventListener('canplay', onCanPlay);
-                            console.log('재생 가능, 재생 시도');
-                            attemptPlay();
+                            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
+                                console.log('재생 가능, 재생 시도');
+                                attemptPlay();
+                            }
                         }, { once: true });
-                    }, { once: true });
+                    };
+                    video.addEventListener('loadedmetadata', metadataHandler, { once: true });
                     return;
                 }
                 
                 // 메타데이터는 있지만 재생 가능한 데이터가 부족한 경우
-                if (video.readyState < 2) {
-                    console.log('비디오 재생 데이터 로드 대기 중...');
+                if (video.readyState < 3) { // HAVE_FUTURE_DATA 미만
+                    console.log('비디오 재생 데이터 버퍼링 중...');
+                    // canplaythrough 이벤트 대기 (더 많은 데이터 버퍼링)
+                    video.addEventListener('canplaythrough', function onCanPlayThrough() {
+                        video.removeEventListener('canplaythrough', onCanPlayThrough);
+                        console.log('재생 준비 완료, 재생 시도');
+                        attemptPlay();
+                    }, { once: true });
+                    // canplaythrough가 발생하지 않을 경우를 대비
                     video.addEventListener('canplay', function onCanPlay() {
                         video.removeEventListener('canplay', onCanPlay);
-                        console.log('재생 가능, 재생 시도');
-                        attemptPlay();
+                        if (video.readyState >= 3) {
+                            console.log('재생 가능, 재생 시도');
+                            attemptPlay();
+                        }
                     }, { once: true });
                     return;
                 }
