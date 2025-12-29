@@ -1,4 +1,28 @@
-﻿# [2025-01-28 python-calamine 패키지 추가] - 커밋 3e7a91a
+﻿# [2025-01-28 MP4 비디오 재생 지원] - 커밋 1da7039
+
+*   **커밋 해시:** 1da7039
+*   **작업 내용:** 배포 서버에서 MP4 비디오 재생 지원을 위한 CSP 및 MIME 타입 설정 추가
+
+## 문제 원인
+*   브라우저 콘솔 오류: "Refused to load media from '...' because it violates the following Content Security Policy directive: 'default-src 'self''"
+*   CSP에 `media-src` 지시어가 없어서 비디오 파일 로드가 차단됨
+*   MP4 파일 MIME 타입이 명시적으로 설정되지 않음
+
+## 주요 변경사항
+*   `core/security_enhancement.py`: 모든 환경(development, staging, production)의 CSP에 `media-src 'self' https://commondatastorage.googleapis.com` 추가
+*   `app.py`: MP4 파일 MIME 타입 명시적 설정 (`mimetypes.add_type('video/mp4', '.mp4')`)
+
+## 비디오 파일 경로
+*   로컬 비디오: `/static/videos/roha_conversion_demo.mp4.mp4`
+*   외부 비디오 (백업): `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`
+
+## 다음 단계
+*   배포 서버에서 `git pull` 후 서버 재시작
+*   브라우저에서 비디오 재생 확인
+
+---
+
+# [2025-01-28 python-calamine 패키지 추가] - 커밋 3e7a91a
 
 *   **커밋 해시:** 3e7a91a
 *   **작업 내용:** 배포 서버 파일 파싱 오류 해결 - python-calamine 패키지 추가
