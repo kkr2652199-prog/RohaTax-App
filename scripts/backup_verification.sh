@@ -5,8 +5,16 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="/home/ubuntu/RohaTax-App"
 BACKUP_DIR="$PROJECT_DIR/database/backups"
-LOG_FILE="$PROJECT_DIR/logs/backup_verification.log"
+LOG_DIR="$PROJECT_DIR/logs"
+LOG_FILE="$LOG_DIR/backup_verification.log"
 MAX_BACKUP_AGE=7  # 7일 이상 된 백업 삭제
+
+# 로그 디렉토리 및 파일 권한 확인 및 생성
+mkdir -p "$LOG_DIR"
+touch "$LOG_FILE" 2>/dev/null || true
+chmod 666 "$LOG_FILE" 2>/dev/null || true
+chown ubuntu:ubuntu "$LOG_DIR" 2>/dev/null || true
+chmod 755 "$LOG_DIR" 2>/dev/null || true
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"

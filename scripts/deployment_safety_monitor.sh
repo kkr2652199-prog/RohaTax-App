@@ -4,8 +4,16 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="/home/ubuntu/RohaTax-App"
-LOG_FILE="$PROJECT_DIR/logs/safety_monitor.log"
+LOG_DIR="$PROJECT_DIR/logs"
+LOG_FILE="$LOG_DIR/safety_monitor.log"
 ALERT_EMAIL=""  # 필요시 이메일 설정
+
+# 로그 디렉토리 및 파일 권한 확인 및 생성
+mkdir -p "$LOG_DIR"
+touch "$LOG_FILE" 2>/dev/null || true
+chmod 666 "$LOG_FILE" 2>/dev/null || true
+chown ubuntu:ubuntu "$LOG_DIR" 2>/dev/null || true
+chmod 755 "$LOG_DIR" 2>/dev/null || true
 
 # 로그 함수
 log() {
