@@ -819,6 +819,25 @@ def health_check():
         )
 
 
+# 안전장치 상태 확인 엔드포인트 (관리자 전용)
+@app.route("/api/admin/safety-status")
+def safety_status():
+    """배포 서버 안전장치 상태 확인"""
+    from core.deployment_safety import deployment_safety
+    from core.security import require_admin
+    
+    # 관리자 권한 확인
+    if not require_admin():
+        return jsonify({"error": "관리자 권한이 필요합니다"}), 403
+    
+    try:
+        report = deployment_safety.get_safety_report()
+        return jsonify(report), 200
+    except Exception as e:
+        logger.error(f"안전장치 상태 확인 실패: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # 시작 시간 기록
 start_time = time.time()
 
