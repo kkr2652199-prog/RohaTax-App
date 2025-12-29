@@ -80,11 +80,27 @@
             console.log('source 태그 발견:', sourceElement.src);
         }
         
-        // 비디오가 아직 로드되지 않았으면 명시적으로 로드
-        if (video.readyState === 0) {
-            console.log('비디오 readyState가 0이므로 load() 호출');
-            video.load();
-        }
+        // 비디오 로드 시작 이벤트
+        video.addEventListener('loadstart', function() {
+            console.log('비디오 로드 시작');
+        });
+        
+        // 비디오 로드 진행 이벤트
+        video.addEventListener('progress', function() {
+            if (video.buffered.length > 0) {
+                const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                const duration = video.duration;
+                if (duration > 0) {
+                    const percent = (bufferedEnd / duration) * 100;
+                    console.log(`비디오 로드 진행: ${percent.toFixed(1)}%`);
+                }
+            }
+        });
+        
+        // 비디오 데이터 로드 완료
+        video.addEventListener('loadeddata', function() {
+            console.log('비디오 데이터 로드 완료, readyState:', video.readyState);
+        });
         
         // 비디오 메타데이터 로드 시
         video.addEventListener('loadedmetadata', function() {
@@ -92,6 +108,7 @@
             console.log('비디오 길이:', video.duration);
             console.log('비디오 크기:', video.videoWidth, 'x', video.videoHeight);
             console.log('비디오 currentSrc:', video.currentSrc);
+            console.log('비디오 readyState:', video.readyState);
             
             if (durationDisplay) {
                 durationDisplay.textContent = formatTime(video.duration);
@@ -101,6 +118,15 @@
                 videoPlaceholder.style.display = 'none';
             }
         });
+        
+        // 비디오가 아직 로드되지 않았으면 명시적으로 로드
+        if (video.readyState === 0) {
+            console.log('비디오 readyState가 0이므로 load() 호출');
+            // 이벤트 리스너 등록 후 load() 호출
+            setTimeout(function() {
+                video.load();
+            }, 100);
+        }
         
         // 비디오 로딩 중
         video.addEventListener('waiting', function() {
@@ -184,18 +210,22 @@
             }
             
             if (video.paused || video.ended) {
-                // 비디오가 아직 준비되지 않은 경우 canplay 이벤트를 기다림
+                // 비디오가 아직 준비되지 않은 경우
                 if (video.readyState < 1) {
                     console.log('비디오 메타데이터 로드 대기 중...');
+                    // load() 호출로 메타데이터 로드 시작 (무조건 호출)
+                    video.load();
+                    
+                    // loadedmetadata 이벤트 대기
                     video.addEventListener('loadedmetadata', function onMetadataLoaded() {
-                        video.removeEventListener('loadedmetadata', onMetadataLoaded);
-                        console.log('메타데이터 로드 완료, 재생 시도');
-                        attemptPlay();
+                        console.log('메타데이터 로드 완료, canplay 대기');
+                        // canplay 이벤트 대기 후 재생
+                        video.addEventListener('canplay', function onCanPlay() {
+                            video.removeEventListener('canplay', onCanPlay);
+                            console.log('재생 가능, 재생 시도');
+                            attemptPlay();
+                        }, { once: true });
                     }, { once: true });
-                    // 메타데이터 로드를 위해 load() 호출
-                    if (!video.currentSrc) {
-                        video.load();
-                    }
                     return;
                 }
                 
