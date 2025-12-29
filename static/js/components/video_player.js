@@ -70,13 +70,27 @@
         
         console.log('비디오 플레이어 초기화 시작');
         console.log('비디오 요소:', video);
-        console.log('비디오 소스:', video.src);
+        console.log('비디오 소스 (src):', video.src);
+        console.log('비디오 소스 (currentSrc):', video.currentSrc);
+        console.log('비디오 readyState:', video.readyState);
+        
+        // 비디오 소스가 없으면 명시적으로 로드 시도
+        if (!video.currentSrc && !video.src) {
+            console.log('비디오 소스가 없음, source 태그 확인 중...');
+            const sourceElement = video.querySelector('source');
+            if (sourceElement) {
+                console.log('source 태그 발견:', sourceElement.src);
+                // 비디오 로드 강제 실행
+                video.load();
+            }
+        }
         
         // 비디오 메타데이터 로드 시
         video.addEventListener('loadedmetadata', function() {
             console.log('비디오 메타데이터 로드 완료');
             console.log('비디오 길이:', video.duration);
             console.log('비디오 크기:', video.videoWidth, 'x', video.videoHeight);
+            console.log('비디오 currentSrc:', video.currentSrc);
             
             if (durationDisplay) {
                 durationDisplay.textContent = formatTime(video.duration);
@@ -156,6 +170,17 @@
         function togglePlayPause() {
             console.log('재생/일시정지 토글 호출');
             console.log('현재 상태 - paused:', video.paused, 'ended:', video.ended, 'readyState:', video.readyState);
+            console.log('비디오 currentSrc:', video.currentSrc);
+            
+            // 비디오 소스가 없으면 로드 시도
+            if (!video.currentSrc && !video.src) {
+                console.log('비디오 소스가 없음, 로드 시도');
+                const sourceElement = video.querySelector('source');
+                if (sourceElement && sourceElement.src) {
+                    console.log('source 태그에서 소스 발견:', sourceElement.src);
+                    video.load();
+                }
+            }
             
             if (video.paused || video.ended) {
                 // 비디오가 아직 준비되지 않은 경우 canplay 이벤트를 기다림
@@ -166,6 +191,10 @@
                         console.log('메타데이터 로드 완료, 재생 시도');
                         attemptPlay();
                     }, { once: true });
+                    // 메타데이터 로드를 위해 load() 호출
+                    if (!video.currentSrc) {
+                        video.load();
+                    }
                     return;
                 }
                 
