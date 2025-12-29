@@ -266,19 +266,47 @@
         }
         
         function attemptPlay() {
-            console.log('비디오 재생 시작');
-            const playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('비디오 재생 성공');
-                }).catch(error => {
-                    console.error('비디오 재생 실패:', error);
-                    // 재생 실패 시 상태 초기화
-                    isPlaying = false;
-                    if (playIcon) playIcon.style.display = 'block';
-                    if (pauseIcon) pauseIcon.style.display = 'none';
-                });
+            playAttempted = true;
+            // readyState >= 3 (HAVE_FUTURE_DATA) 이상이면 재생 시도 (더 많은 데이터 버퍼링)
+            if (video.readyState >= 3) {
+                console.log('비디오 재생 시작 (readyState:', video.readyState, ')');
+                const playPromise = video.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('비디오 재생 성공');
+                        isPlaying = true;
+                        if (playIcon) playIcon.style.display = 'none';
+                        if (pauseIcon) pauseIcon.style.display = 'block';
+                    }).catch(error => {
+                        console.error('비디오 재생 실패:', error);
+                        // 재생 실패 시 상태 초기화
+                        isPlaying = false;
+                        if (playIcon) playIcon.style.display = 'block';
+                        if (pauseIcon) pauseIcon.style.display = 'none';
+                        // 재생 실패 시 플레이스홀더 표시
+                        if (videoPlaceholder) {
+                            videoPlaceholder.style.display = 'flex';
+                            if (videoOverlay) {
+                                videoOverlay.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            } else if (video.readyState >= 1) {
+                // HAVE_METADATA는 있지만 데이터가 부족한 경우, canplaythrough 대기
+                console.log('비디오 데이터 버퍼링 중, canplaythrough 대기... (readyState:', video.readyState, ')');
+                video.addEventListener('canplaythrough', function onCanPlayThrough() {
+                    video.removeEventListener('canplaythrough', onCanPlayThrough);
+                    attemptPlay();
+                }, { once: true });
+            } else {
+                console.log('비디오가 아직 준비되지 않음 (메타데이터 대기 중)...');
+                // loadedmetadata 이벤트에서 다시 시도
+                video.addEventListener('loadedmetadata', function onMetadataLoaded() {
+                    video.removeEventListener('loadedmetadata', onMetadataLoaded);
+                    attemptPlay();
+                }, { once: true });
             }
         }
         
