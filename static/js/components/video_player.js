@@ -212,11 +212,32 @@
                 // 비디오가 아직 준비되지 않은 경우
                 if (video.readyState < 1) {
                     console.log('비디오 메타데이터 로드 시작...');
+                    
+                    // 로딩 스피너 표시
+                    if (videoLoading) {
+                        videoLoading.style.display = 'block';
+                    }
+                    
                     // load() 호출로 메타데이터 로드 시작
                     video.load();
                     
+                    // 타임아웃 설정 (30초 후에도 메타데이터가 로드되지 않으면 에러 처리)
+                    const metadataTimeout = setTimeout(() => {
+                        console.error('비디오 메타데이터 로드 타임아웃 (30초)');
+                        if (videoLoading) {
+                            videoLoading.style.display = 'none';
+                        }
+                        if (videoPlaceholder) {
+                            videoPlaceholder.style.display = 'flex';
+                        }
+                        if (videoOverlay) {
+                            videoOverlay.style.display = 'none';
+                        }
+                    }, 30000);
+                    
                     // loadedmetadata 이벤트 대기 (최적화: 한 번만)
                     const metadataHandler = function onMetadataLoaded() {
+                        clearTimeout(metadataTimeout);
                         console.log('메타데이터 로드 완료, canplay 대기');
                         // canplaythrough 이벤트 사용 (더 많은 데이터 버퍼링)
                         const canPlayHandler = function onCanPlayThrough() {
