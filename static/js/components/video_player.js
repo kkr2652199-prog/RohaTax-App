@@ -65,6 +65,7 @@
         let isMuted = false;
         let currentSpeed = 1;
         let hideControlsTimeout = null;
+        let playAttempted = false;
         
         // ==================== 초기화 ====================
         
