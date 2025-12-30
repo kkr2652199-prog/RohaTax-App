@@ -1,0 +1,25 @@
+/**
+ * 푸터 스마트폰 최적화
+ * ============================================
+ */
+
+@media (max-width: 480px) {
+    .footer {
+        padding: 40px 16px 20px 16px !important;
+    }
+    
+    .footer-content {
+        flex-direction: column !important;
+        gap: 32px !important;
+    }
+    
+    .footer-section {
+        width: 100% !important;
+    }
+    
+    .footer-links {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+}
+

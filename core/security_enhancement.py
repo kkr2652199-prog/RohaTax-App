@@ -52,18 +52,7 @@ class SecurityConfig:
             'SECURITY_HEADERS': {
                 'X-Content-Type-Options': 'nosniff',
                 'X-Frame-Options': 'SAMEORIGIN',
-                'X-XSS-Protection': '1; mode=block',
-                'Content-Security-Policy': (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
-                    "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "media-src 'self' https://commondatastorage.googleapis.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
-                )
+                'X-XSS-Protection': '1; mode=block'
             }
         }
     
@@ -85,17 +74,7 @@ class SecurityConfig:
                 'X-Frame-Options': 'DENY',
                 'X-XSS-Protection': '1; mode=block',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-                'Content-Security-Policy': (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
-                    "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "media-src 'self' https://commondatastorage.googleapis.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
-                )
+                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'"
             }
         }
     
@@ -117,17 +96,7 @@ class SecurityConfig:
                 'X-Frame-Options': 'DENY',
                 'X-XSS-Protection': '1; mode=block',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-                'Content-Security-Policy': (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://unpkg.com https://cdn.tailwindcss.com; "
-                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-                    "img-src 'self' data: https://cdn.jsdelivr.net https://assets.codepen.io https://images.unsplash.com; "
-                    "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-                    "media-src 'self' https://commondatastorage.googleapis.com; "
-                    "connect-src 'self' https://static.cloudflareinsights.com https://generativelanguage.googleapis.com https://ai.googleapis.com https://us-central1-aiplatform.googleapis.com"
-                ),
+                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'",
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
             },
@@ -169,20 +138,9 @@ class SecurityMiddleware:
         # 보안 헤더 설정
         @self.app.after_request
         def set_security_headers(response):
-            from flask import request
-            # /studio/app 경로는 라우트에서 직접 헤더를 설정하므로 예외 처리
-            if request.path.startswith('/studio/app'):
-                # X-Frame-Options는 라우트에서 설정하므로 제외
-                headers = self.security_config.get_security_headers()
-                for header, value in headers.items():
-                    if header == 'X-Frame-Options':
-                        continue  # 라우트에서 설정한 값 유지
-                    response.headers[header] = value
-            else:
-                # 다른 경로는 모든 보안 헤더 적용
-                headers = self.security_config.get_security_headers()
-                for header, value in headers.items():
-                    response.headers[header] = value
+            headers = self.security_config.get_security_headers()
+            for header, value in headers.items():
+                response.headers[header] = value
             return response
         
         # CORS 설정

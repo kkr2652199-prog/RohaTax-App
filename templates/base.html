@@ -36,6 +36,18 @@
     <!-- Layout Styles (Base) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/header.css') }}?v={{ timestamp }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/footer.css') }}?v={{ timestamp }}">
+    
+    <!-- 스마트폰 전용 최적화 CSS (모듈화 - 모든 페이지에 일괄 적용) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/01_global.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/02_header.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/03_hero.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/04_shop.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/05_showroom.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/06_buttons_forms.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/07_modals.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/08_footer.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/09_common.css') }}?v={{ timestamp }}">
+    
     {% block head_extra %}{% endblock %}
     {% if csrf_token is defined %}
         {% if csrf_token is callable %}

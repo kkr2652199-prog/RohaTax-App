@@ -1,0 +1,62 @@
+/**
+ * 유료 상점 페이지 스마트폰 최적화
+ * ============================================
+ */
+
+@media (max-width: 480px) {
+    /* 상품 그리드 - 한 줄에 하나씩 */
+    .paid-product-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 0 16px !important;
+    }
+    
+    .event-product-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 0 16px !important;
+    }
+    
+    /* 상품 카드 최적화 */
+    .product-card {
+        padding: 20px 16px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .product-icon {
+        font-size: 2.5rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .product-name {
+        font-size: 1.25rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .product-description {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .product-price {
+        font-size: 1.75rem !important;
+    }
+    
+    /* 상점 히어로 섹션 */
+    .shop-hero-section {
+        padding: 40px 16px !important;
+        text-align: center !important;
+    }
+    
+    .shop-hero-title {
+        font-size: 24px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .shop-hero-subtitle {
+        font-size: 14px !important;
+    }
+}
+

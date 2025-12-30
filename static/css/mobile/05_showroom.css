@@ -1,0 +1,19 @@
+/**
+ * 3D 체험 상점 페이지 스마트폰 최적화
+ * ============================================
+ */
+
+@media (max-width: 480px) {
+    /* 3D 히어로 섹션 제거 (상단 헤더에 바로가기 버튼이 있으므로 불필요) */
+    .showroom-hero-mobile {
+        display: none !important;
+    }
+    
+    /* 캔버스 컨테이너 조정 - 헤더 아래부터 시작 */
+    #canvas-container {
+        top: 60px !important;
+        bottom: 0 !important;
+        height: calc(100vh - 60px) !important;
+    }
+}
+

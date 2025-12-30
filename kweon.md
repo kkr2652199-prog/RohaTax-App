@@ -1,4 +1,41 @@
-﻿# [2025-12-30 15:33:27 KST] - 개발 환경에서 rate limit 완화 설정 - 커밋 e19a219
+﻿# [2025-12-30 17:43:59 KST] - 네비게이션 메뉴 텍스트 변경: 비즈니스 라운지 → 소상공인 대출상품
+
+*   **한국 시간/날짜:** 2025년 12월 30일 17:43:59 (KST)
+*   **커밋 해시:** d7ebca5 (네비게이션 메뉴 텍스트 변경), d0ac603 (kweon.md 기록)
+*   **작업자:** Commander & The Executor Team
+*   **작업 내용:** 네비게이션 메뉴의 "비즈니스 라운지 NEW" 텍스트를 "소상공인 대출상품 NEW"로 변경
+
+## 주요 변경사항
+
+### 1. 네비게이션 메뉴 텍스트 변경
+*   **파일:** `templates/partials/header.html`
+*   **변경 내용:**
+    *   PC/데스크톱 네비게이션 메뉴: "비즈니스 라운지 NEW" → "소상공인 대출상품 NEW"
+    *   모바일 사이드 메뉴: "비즈니스 라운지 NEW" → "소상공인 대출상품 NEW"
+*   **목적:** 메뉴명을 더 명확하고 사용자 친화적으로 변경하여 소상공인 대출상품 페이지임을 명확히 표시
+
+## 수정된 위치
+
+1. **PC/데스크톱 네비게이션** (라인 19)
+   ```html
+   <a href="/biz-lounge" class="nav-link">소상공인 대출상품 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+   ```
+
+2. **모바일 사이드 메뉴** (라인 88)
+   ```html
+   <a href="/biz-lounge" class="mobile-side-menu-item">소상공인 대출상품 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+   ```
+
+## 결과
+
+*   ✅ PC/데스크톱 네비게이션 메뉴 텍스트 변경 완료
+*   ✅ 모바일 사이드 메뉴 텍스트 변경 완료
+*   ✅ NEW 배지 유지
+*   ✅ 링크 경로(/biz-lounge) 유지
+
+---
+
+# [2025-12-30 15:33:27 KST] - 개발 환경에서 rate limit 완화 설정 - 커밋 e19a219
 
 *   **한국 시간/날짜:** 2025년 12월 30일 15:33:27 (KST)
 *   **커밋 해시:** e19a21923961e869e83107ce0b9e0f60b7ea50f5
@@ -41,163 +78,121 @@
 
 ---
 
-# [2025-12-30 13:52:04 KST] - homepage1 데이터베이스 복원 및 데이터베이스 관리 스크립트 추가 - 커밋 93e67c4
+# [2025-12-28 19:11:49 KST] - CSP Google API 도메인 추가 및 API 키 오류 처리 개선 - 커밋 c3792b6
 
-*   **한국 시간/날짜:** 2025년 12월 30일 13:52:04 (KST)
-*   **커밋 해시:** 93e67c4efc457c58a3271e85bdb96b222ef139b5
-*   **작업 내용:** homepage1 데이터베이스를 본진으로 복원하여 상품 정보 복구 및 데이터베이스 관리 스크립트 추가
-
-## 문제 상황
-*   본진 데이터베이스 초기화 과정에서 상품 정보(products, product_packages)가 삭제됨
-*   homepage1 데이터베이스에는 정상적인 상품 정보가 존재 (products: 5개, product_packages: 7개)
-*   Flask 서버가 데이터베이스 파일을 사용 중이어서 직접 파일 교체 불가
+*   **한국 시간/날짜:** 2025년 12월 28일 19:11:49 (KST)
+*   **커밋 해시:** c3792b6b41b492c02789287ed92e32f5a6268069
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** CSP에 Google API 도메인 추가 및 API 키 유출/권한 오류 처리 개선. 블로그 스튜디오 카테고리별 주제 추천 기능 오류 수정.
 
 ## 주요 변경사항
 
-### 1. 데이터베이스 복원 스크립트 추가
-*   `scripts/check_database.py`: 본진과 homepage1 데이터베이스 상태 비교 스크립트
-*   `scripts/copy_homepage1_db_force.py`: homepage1 데이터베이스를 본진으로 복사하는 스크립트
-*   `scripts/restore_db_from_homepage1.py`: SQLite ATTACH/VACUUM INTO를 사용한 안전한 복원 스크립트
-*   `scripts/restore_db_from_homepage1_safe.py`: 개선된 복원 스크립트 (.new 파일 생성 후 수동 교체)
-*   `scripts/apply_new_database.bat`: 새 데이터베이스 파일 적용 배치 스크립트
-*   `scripts/clear_user_payment_data.py`: 사용자 및 결제 데이터만 선택적으로 삭제하는 스크립트
-*   `scripts/reset_database.py`: 데이터베이스 완전 초기화 스크립트
-*   `scripts/reset_database_force.py`: 강제 초기화 스크립트
+### 1. CSP (Content Security Policy) 수정
+*   **파일:** `core/security_enhancement.py`
+*   **변경 내용:**
+    *   `connect-src`에 Google API 도메인 추가:
+        *   `https://generativelanguage.googleapis.com` (Gemini API)
+        *   `https://ai.googleapis.com` (AI Platform API)
+        *   `https://us-central1-aiplatform.googleapis.com` (AI Platform 지역별 엔드포인트)
+    *   개발/스테이징/프로덕션 환경 모두에 적용
+    *   **목적:** GoogleGenAI 라이브러리가 Gemini API에 연결할 수 있도록 허용
 
-### 2. 데이터베이스 복원 완료
-*   homepage1/database/app.db → database/app.db 복사 완료
-*   복원된 데이터:
-    *   products: 5개
-    *   product_packages: 7개
-    *   subscription_plans: 3개
-    *   users: 5개
-*   본진과 homepage1 데이터베이스 상태 동일 확인
+### 2. API 키 오류 처리 개선
+*   **파일:** `kweon21/services/geminiService.ts`, `kweon21/services/keywordService.ts`
+*   **변경 내용:**
+    *   API 키 유출 오류 감지 및 명확한 메시지 표시
+    *   403 (PERMISSION_DENIED), 401 (UNAUTHENTICATED) 오류 처리
+    *   JSON 응답 내 오류 처리 개선
+    *   사용자에게 "Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요" 안내
+*   **목적:** 사용자가 API 키 문제를 쉽게 파악하고 해결할 수 있도록 개선
 
-### 3. 서버 재가동
-*   Flask 서버 종료 후 데이터베이스 파일 교체
-*   서버 재가동 완료 (포트 5000)
-*   HTTP 상태 코드 200 OK 확인
+### 3. React 앱 빌드
+*   **파일:** `kweon21/dist/index.html`
+*   **변경 내용:** 수정된 서비스 파일 반영을 위한 React 앱 재빌드
 
-## 복원 결과
-*   ✅ 상품 정보 완전 복구 (products, product_packages)
-*   ✅ 관리자 대시보드에서 상품 금액 정보 정상 표시
-*   ✅ 데이터베이스 관리 스크립트 체계 구축
-*   ✅ 향후 데이터베이스 복원/백업 프로세스 자동화 준비 완료
+## 해결된 문제
 
-## 다음 단계
-*   배포 서버에서도 동일한 데이터베이스 복원 필요 시 스크립트 활용 가능
-*   정기적인 데이터베이스 백업 프로세스 구축 권장
+1. **"Failed to fetch" 오류**
+   *   **원인:** CSP가 Google API 도메인을 차단
+   *   **해결:** `connect-src`에 Google API 도메인 추가
 
----
-
-# [2025-01-28 MP4 비디오 재생 지원] - 커밋 1da7039
-
-*   **커밋 해시:** 1da7039
-*   **작업 내용:** 배포 서버에서 MP4 비디오 재생 지원을 위한 CSP 및 MIME 타입 설정 추가
-
-## 문제 원인
-*   브라우저 콘솔 오류: "Refused to load media from '...' because it violates the following Content Security Policy directive: 'default-src 'self''"
-*   CSP에 `media-src` 지시어가 없어서 비디오 파일 로드가 차단됨
-*   MP4 파일 MIME 타입이 명시적으로 설정되지 않음
-
-## 주요 변경사항
-*   `core/security_enhancement.py`: 모든 환경(development, staging, production)의 CSP에 `media-src 'self' https://commondatastorage.googleapis.com` 추가
-*   `app.py`: MP4 파일 MIME 타입 명시적 설정 (`mimetypes.add_type('video/mp4', '.mp4')`)
-
-## 비디오 파일 경로
-*   로컬 비디오: `/static/videos/roha_conversion_demo.mp4.mp4`
-*   외부 비디오 (백업): `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`
-
-## 다음 단계
-*   배포 서버에서 `git pull` 후 서버 재시작
-*   브라우저에서 비디오 재생 확인
-
----
-
-# [2025-01-28 python-calamine 패키지 추가] - 커밋 3e7a91a
-
-*   **커밋 해시:** 3e7a91a
-*   **작업 내용:** 배포 서버 파일 파싱 오류 해결 - python-calamine 패키지 추가
-
-## 문제 원인 확인
-*   배포 서버 가상 환경에 `python-calamine` 패키지가 설치되지 않음
-*   코드에서 `engine='calamine'` 사용하지만 패키지 없어서 파일 파싱 실패
-*   로컬: python-calamine 설치됨 → 정상 작동
-*   배포 서버: python-calamine 없음 → 파싱 실패
-
-## 주요 변경사항
-*   `requirements.txt`에 `python-calamine==0.1.7` 추가
-*   `core/file_parser.py`에서 `engine='calamine'` 사용을 위한 필수 패키지
-
-## 배포 서버 확인 결과
-*   Python 버전: 3.12.3 ✅
-*   pandas: 2.1.4 (설치됨) ✅
-*   openpyxl: 3.1.5 (설치됨) ✅
-*   python-calamine: 없음 ❌ (문제 원인)
-
-## 다음 단계
-*   배포 서버에서 `pip install python-calamine` 실행
-*   또는 `pip install -r requirements.txt` 실행하여 모든 패키지 재설치
-
----
-
-# [2025-01-28 파일 파싱 오류 디버깅 로깅 강화] - 커밋 82f60e8
-
-*   **커밋 해시:** 82f60e8
-*   **작업 내용:** 배포 서버에서 파일 파싱 실패 원인 파악을 위한 상세 로깅 추가
-
-## 주요 변경사항
-
-### 1. 파일 파싱 오류 디버깅 로깅 강화 (`core/file_upload_helper.py`)
-*   파일 경로 존재 여부 확인 로깅 추가
-*   Import 오류 상세 로깅 추가 (필수 모듈 import 실패 시)
-*   파싱 예외 상세 로깅 추가 (스택 트레이스 포함)
-*   예외 처리 강화: 각 단계별 try-except 블록 추가
-*   오류 메시지 상세화: parsing_status와 error_message 포함
-
-## 배포 서버 오류 상황
-*   브라우저 콘솔 오류: "파일에서 템플릿 건수를 계산할 수 없습니다. 파일 형식을 확인해주세요."
-*   HTTP 상태: 400 Bad Request
-*   원인 추정: 파일 파싱 단계에서 실패 (pandas, openpyxl, python-calamine 패키지 누락 가능성)
-
-## 다음 단계
-*   배포 서버 로그 확인하여 정확한 오류 원인 파악
-*   필요 시 Python 패키지 설치 확인 및 파일 경로 권한 확인
-
----
-
-# [2025-01-28 변환 페이지 400 오류 수정] - 커밋 8fdea88
-
-*   **커밋 해시:** 8fdea88
-*   **작업 내용:** 배포 서버에서 변환 페이지 400 오류 수정 - 날짜 정규화 함수 개선 및 검증 로깅 추가
-
-## 주요 변경사항
-
-### 1. 날짜 정규화 함수 개선 (`routes/conversion_modules/conversion_helpers.py`)
-*   공백 처리 추가: 날짜 문자열의 공백, 탭, 개행 문자 제거
-*   안전한 파싱 로직: "25년10월01일" 형식 파싱 시 예외 처리 강화
-*   다양한 날짜 형식 지원: "251001", "25년10월01일", "2025-10-01" 모두 지원
-*   상세한 오류 로깅: 정규화 실패 시 입력값과 오류 메시지 로깅
-
-### 2. 서버 측 검증 로깅 추가 (`routes/conversion_modules/conversion_helpers.py`)
-*   CSRF 토큰 검증 실패 로깅
-*   파라미터 추출 로깅 (template_id, issue_date_raw, file_name 등)
-*   파일 업로드 확인 로깅
-*   날짜 정규화 과정 상세 로깅 (시도 → 성공/실패)
-
-### 3. 프론트엔드 디버깅 로그 추가 (`static/js/conversion.js`)
-*   전송되는 데이터 확인 로그: `🔍 변환 요청 데이터:`
-*   서버 응답 상세 로그: `❌ 변환 실패 응답:` (오류 발생 시)
-*   HTTP 상태 코드 및 서버 메시지 확인 가능
+2. **"API key was reported as leaked" 오류**
+   *   **원인:** Google API 키가 유출된 것으로 표시되어 차단
+   *   **해결:** 명확한 오류 메시지 표시 및 사용자 안내 개선
 
 ## 테스트 결과
-*   로컬 서버(5000 포트)에서 변환 기능 정상 작동 확인
-*   날짜 형식 "25년10월01일" 정상 파싱 확인
-*   파일 업로드 및 변환 프로세스 정상 작동 확인
 
-## 배포 준비
-*   변경사항 커밋 완료 (8fdea88)
-*   배포 서버에 적용 대기 중
+*   로컬 서버 (`http://localhost:5000/studio/`) 정상 작동 확인
+*   API 키 관리 기능 정상 작동 확인
+*   `/studio/` 경로로 접근 시 `studio_overlay.html` 렌더링 확인
+*   iframe 내부에서 React 앱 정상 로드 확인
+
+---
+
+# [2025-12-28 14:43:24 KST] - 배포 전 homepage1 전체 백업 및 본진 병합 완료 - 커밋 b6c08f4
+
+*   **한국 시간/날짜:** 2025년 12월 28일 14:43:24 (KST)
+*   **커밋 해시:** b6c08f42a126177065954464e749df4e1e470a29
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 배포 전 homepage1 전초기지 전체 백업 및 본진(main)으로 병합 완료. 마이홈/관리자 대시보드 작업 내용 포함.
+
+## 주요 변경사항
+
+### 1. homepage1 스테이징 및 커밋
+*   **커밋 해시:** b6c08f42a126177065954464e749df4e1e470a29
+*   **변경 파일:** 14개 파일 (434줄 추가, 32줄 삭제)
+*   **작업 내용:**
+    *   마이홈 페이지 API 수정 (활동 로그, 토큰 요약)
+    *   데이터베이스 스키마 동기화 작업
+    *   3D 관련 JavaScript 파일 업데이트
+    *   프로필 편집 템플릿 수정
+    *   DB 동기화 스크립트 추가
+
+### 2. homepage1 → 본진 병합
+*   **병합 스크립트:** `scripts/merge_from_homepage1.py`
+*   **병합된 파일:** 6개
+    *   `static/js/profile_modern.js` (마이홈 페이지 관련)
+    *   `routes/api_modules/user/router.py`
+    *   `file_manager_config.json.backup`
+    *   `merge_report.txt`
+    *   로그 파일 3개
+*   **백업 생성:** 6개 파일 자동 백업
+
+### 3. 수정된 주요 파일
+*   `routes/api_modules/user/router.py` - API 라우터 수정
+*   `routes/api_modules/user/repository.py` - 데이터베이스 쿼리 개선
+*   `routes/api_modules/user/service.py` - 비즈니스 로직 개선
+*   `static/js/profile_modern.js` - 프론트엔드 디버그 로그 추가
+*   `core/security_enhancement.py` - 보안 강화
+*   `templates/profile_edit.html` - 프로필 편집 템플릿 수정
+
+### 4. 추가된 파일
+*   `export_users_to_server.py` - 사용자 데이터 서버 전송 스크립트
+*   `scripts/sync_db_to_server.py` - DB 동기화 스크립트
+*   `temp_sync_db.py` - 임시 DB 동기화 스크립트
+*   `users_data.sql` - 사용자 데이터 SQL
+*   `users_data_fixed.sql` - 수정된 사용자 데이터 SQL
+
+## 병합 프로세스
+
+### 실행 단계
+1. ✅ homepage1 현재 상태 확인
+2. ✅ 모든 변경사항 스테이징 (`git add .`)
+3. ✅ 커밋 실행 (`git commit`)
+4. ✅ 본진(main) 브랜치로 이동
+5. ✅ 병합 전 시뮬레이션 (Dry-Run)
+6. ✅ 실제 병합 실행
+7. ✅ 병합 결과 확인
+
+### 병합 결과
+*   **성공:** 6개 파일 복사 완료
+*   **실패:** 0개
+*   **백업 생성:** 6개 파일
+
+## 다음 단계
+*   본진 변경사항 커밋 (현재 스테이징 안 됨)
+*   데이터베이스 병합 (별도 작업 필요)
+*   서버 배포 준비
 
 ---
 

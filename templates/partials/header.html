@@ -4,13 +4,19 @@
         <a href="/" class="nav-logo">
             <span class="logo-text">로하택스</span>
         </a>
+        <!-- 햄버거 메뉴 버튼 (스마트폰 전용) -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="메뉴 열기">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="nav-menu">
             <a href="#features" class="nav-link">기능 소개</a>
             <a href="#testimonials" class="nav-link">성공 사례</a>
             <a href="/shop" class="nav-link">유료 상점</a>
             <a href="/showroom" class="nav-link">3D 체험 상점 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
             <a href="/studio" class="nav-link">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
-            <a href="/biz-lounge" class="nav-link">비즈니스 라운지 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+            <a href="/biz-lounge" class="nav-link">소상공인 대출상품 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
             <a href="#faq" class="nav-link">고객 지원</a>
             {# 로그인 체크: session의 user_id, _user_id(Flask-Login), 또는 current_user 객체 확인 #}
             {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}
@@ -68,6 +74,28 @@
     {% endif %}
 </nav>
 
+<!-- 모바일 사이드 메뉴 (스마트폰 전용) -->
+<div class="mobile-side-menu-overlay" id="mobileMenuOverlay"></div>
+<div class="mobile-side-menu" id="mobileSideMenu">
+    <div class="mobile-side-menu-header">
+        <span class="logo-text">로하택스</span>
+    </div>
+    <a href="#features" class="mobile-side-menu-item">기능 소개</a>
+    <a href="#testimonials" class="mobile-side-menu-item">성공 사례</a>
+    <a href="/shop" class="mobile-side-menu-item">유료 상점</a>
+    <a href="/showroom" class="mobile-side-menu-item">3D 체험 상점 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+    <a href="/studio" class="mobile-side-menu-item">AI 블로그 스튜디오 <span class="beta-badge">New</span></a>
+    <a href="/biz-lounge" class="mobile-side-menu-item">소상공인 대출상품 <span class="beta-badge" style="background-color: #FFD700; color: #000;">NEW</span></a>
+    <a href="#faq" class="mobile-side-menu-item">고객 지원</a>
+    {% if session.get('user_id') or session.get('_user_id') or (current_user is defined and current_user.is_authenticated) %}
+        <a href="/conversion" class="mobile-side-menu-item">워크스페이스</a>
+        <a href="/profile/edit" class="mobile-side-menu-item">마이홈</a>
+    {% else %}
+        <a href="/login" class="mobile-side-menu-item">로그인</a>
+        <a href="/register" class="mobile-side-menu-item">회원가입</a>
+    {% endif %}
+</div>
+
 <script>
 // 유저 메뉴 토글 함수 (전역 함수로 등록)
 function toggleUserMenu(event) {
@@ -79,11 +107,16 @@ function toggleUserMenu(event) {
     const userMenuTrigger = document.getElementById('userMenuTrigger');
     const userMenuDropdown = document.getElementById('userMenuDropdown');
     
-    if (userMenuDropdown) {
+    if (userMenuDropdown && userMenuTrigger) {
         const isActive = userMenuDropdown.classList.toggle('active');
         // aria-expanded 업데이트
-        if (userMenuTrigger) {
-            userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        
+        // 스마트폰에서 드롭다운 위치 조정
+        if (isActive && window.innerWidth <= 480) {
+            const rect = userMenuTrigger.getBoundingClientRect();
+            userMenuDropdown.style.top = (rect.bottom + 8) + 'px';
+            userMenuDropdown.style.right = (window.innerWidth - rect.right) + 'px';
         }
     }
 }
@@ -101,7 +134,28 @@ function toggleUserMenu(event) {
                 e.stopPropagation();
                 const isActive = userMenuDropdown.classList.toggle('active');
                 userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+                
+                // 스마트폰에서 드롭다운 위치 조정
+                if (isActive && window.innerWidth <= 480) {
+                    const rect = userMenuTrigger.getBoundingClientRect();
+                    userMenuDropdown.style.top = (rect.bottom + 8) + 'px';
+                    userMenuDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                }
             }, true);
+            
+            // 터치 이벤트도 지원 (스마트폰)
+            userMenuTrigger.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const isActive = userMenuDropdown.classList.toggle('active');
+                userMenuTrigger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+                
+                if (isActive && window.innerWidth <= 480) {
+                    const rect = userMenuTrigger.getBoundingClientRect();
+                    userMenuDropdown.style.top = (rect.bottom + 8) + 'px';
+                    userMenuDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                }
+            }, { passive: false });
             
             // 외부 클릭 시 드롭다운 닫기
             document.addEventListener('click', function(e) {
@@ -140,6 +194,47 @@ function toggleUserMenu(event) {
         document.addEventListener('DOMContentLoaded', initLogoScroll);
     } else {
         initLogoScroll();
+    }
+    
+    // 모바일 햄버거 메뉴 토글
+    function initMobileMenu() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileSideMenu = document.getElementById('mobileSideMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+        
+        if (mobileMenuToggle && mobileSideMenu && mobileMenuOverlay) {
+            function toggleMobileMenu() {
+                const isActive = mobileSideMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                mobileMenuToggle.classList.toggle('active');
+                
+                // body 스크롤 잠금
+                if (isActive) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            mobileMenuOverlay.addEventListener('click', toggleMobileMenu);
+            
+            // 사이드 메뉴 항목 클릭 시 메뉴 닫기
+            const menuItems = mobileSideMenu.querySelectorAll('.mobile-side-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    setTimeout(() => {
+                        toggleMobileMenu();
+                    }, 100);
+                });
+            });
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileMenu);
+    } else {
+        initMobileMenu();
     }
 })();
 </script>

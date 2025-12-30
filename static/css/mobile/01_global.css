@@ -1,0 +1,29 @@
+/**
+ * 전역 스마트폰 최적화
+ * ============================================
+ * 
+ * 스마트폰 화면(최대 480px) 전역 스타일
+ */
+
+@media (max-width: 480px) {
+    /* 스크롤바 숨김 (iOS Safari 최적화) */
+    body {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: hidden;
+    }
+    
+    /* 컨테이너 최적화 */
+    .container {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        max-width: 100% !important;
+    }
+}
+
+/* 기본적으로 모바일 메뉴 숨김 (스마트폰에서만 표시) */
+.mobile-menu-toggle,
+.mobile-side-menu,
+.mobile-side-menu-overlay {
+    display: none !important;
+}
+

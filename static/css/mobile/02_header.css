@@ -1,0 +1,432 @@
+/**
+ * 헤더 네비게이션 스마트폰 최적화
+ * ============================================
+ * 
+ * 모든 페이지에 일괄 적용되는 헤더 스타일
+ */
+
+@media (max-width: 480px) {
+    /* 네비게이션 바 전체 최적화 */
+    .navbar {
+        padding: 12px 0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        background: #ffffff !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1000 !important;
+    }
+    
+    /* 네비게이션 컨테이너 최적화 */
+    .navbar .nav-container {
+        max-width: 100% !important;
+        padding: 0 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+    
+    /* 로고 최적화 */
+    .navbar .nav-logo {
+        flex-shrink: 0 !important;
+        padding: 8px 0 !important;
+        order: 2 !important; /* 햄버거 메뉴 다음에 배치 */
+        margin-left: 0 !important;
+    }
+    
+    .navbar .nav-logo .logo-text {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #2C5BF0 !important;
+        white-space: nowrap !important;
+    }
+    
+    /* 네비게이션 메뉴 - 햄버거 메뉴로 변경 (네이버/쿠팡 스타일) */
+    .navbar .nav-menu {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 0 !important;
+        flex: 1 !important;
+        justify-content: flex-end !important;
+    }
+    
+    /* 메인 네비게이션 링크 숨기기 (햄버거 메뉴로 대체) */
+    .navbar .nav-menu > .nav-link:not(.login-btn):not(.signup-btn):not([href="/conversion"]):not([href="/profile/edit"]) {
+        display: none !important;
+    }
+    
+    /* 햄버거 메뉴 버튼 추가 (스마트폰 전용) - 왼쪽에 배치 */
+    .mobile-menu-toggle {
+        display: flex !important;
+    }
+    
+    .navbar .mobile-menu-toggle {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 8px !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        gap: 5px !important;
+        margin-right: 12px !important;
+        -webkit-tap-highlight-color: transparent !important;
+        flex-shrink: 0 !important;
+        order: 1 !important; /* 맨 왼쪽에 배치 */
+    }
+    
+    .navbar .mobile-menu-toggle span {
+        display: block !important;
+        width: 22px !important;
+        height: 2px !important;
+        background: #374151 !important;
+        border-radius: 2px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .navbar .mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(6px, 6px) !important;
+    }
+    
+    .navbar .mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0 !important;
+    }
+    
+    .navbar .mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(6px, -6px) !important;
+    }
+    
+    /* 모바일 사이드 메뉴 (스마트폰 전용) */
+    .mobile-side-menu {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        background: #ffffff !important;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15) !important;
+        z-index: 10005 !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 !important;
+    }
+    
+    .mobile-side-menu.active {
+        left: 0 !important;
+    }
+    
+    .mobile-side-menu-overlay {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        z-index: 10004 !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(2px) !important;
+    }
+    
+    .mobile-side-menu-overlay.active {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .mobile-side-menu-header {
+        padding: 20px 24px !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        margin-bottom: 0 !important;
+        background: #f9fafb !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1 !important;
+    }
+    
+    .mobile-side-menu-header .logo-text {
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        color: #2C5BF0 !important;
+    }
+    
+    .mobile-side-menu-item {
+        display: flex !important;
+        align-items: center !important;
+        padding: 16px 24px !important;
+        color: #374151 !important;
+        text-decoration: none !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        transition: all 0.2s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    
+    .mobile-side-menu-item:hover,
+    .mobile-side-menu-item:active {
+        background: #f3f4f6 !important;
+        color: #2C5BF0 !important;
+        padding-left: 28px !important;
+    }
+    
+    .mobile-side-menu-item .beta-badge {
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+        margin-left: 8px !important;
+        background: #F59E0B !important;
+        color: white !important;
+        border-radius: 4px !important;
+        font-weight: 700 !important;
+        vertical-align: middle !important;
+    }
+    
+    /* 워크스페이스/마이홈 링크도 사이드 메뉴에서만 표시 */
+    .navbar .nav-link[href="/conversion"],
+    .navbar .nav-link[href="/profile/edit"] {
+        display: none !important;
+    }
+    
+    /* 네비게이션 링크 최적화 (일관된 디자인) */
+    .navbar .nav-link {
+        flex-shrink: 0 !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: nowrap;
+        border-radius: 8px !important;
+        background: transparent !important;
+        color: #374151 !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 36px !important;
+        position: relative !important;
+    }
+    
+    .navbar .nav-link:hover,
+    .navbar .nav-link:active {
+        background: #f3f4f6 !important;
+        color: #2C5BF0 !important;
+    }
+    
+    /* 로그인/회원가입 버튼 최적화 */
+    .navbar .nav-link.login-btn,
+    .navbar .nav-link.signup-btn {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        min-height: 36px !important;
+    }
+    
+    .navbar .nav-link.login-btn {
+        background: transparent !important;
+        color: #2C5BF0 !important;
+        border: 1px solid #2C5BF0 !important;
+    }
+    
+    .navbar .nav-link.login-btn:hover {
+        background: #2C5BF0 !important;
+        color: #ffffff !important;
+    }
+    
+    .navbar .nav-link.signup-btn {
+        background: #2C5BF0 !important;
+        color: #ffffff !important;
+        border: 1px solid #2C5BF0 !important;
+    }
+    
+    .navbar .nav-link.signup-btn:hover {
+        background: #1e40af !important;
+        border-color: #1e40af !important;
+    }
+    
+    /* 베타 배지 최적화 (일관된 스타일) */
+    .navbar .nav-link .beta-badge {
+        font-size: 9px !important;
+        padding: 2px 5px !important;
+        margin-left: 4px !important;
+        border-radius: 4px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        vertical-align: middle !important;
+    }
+    
+    /* 사용자 메뉴 최적화 - 항상 보이도록 오른쪽 고정 */
+    .navbar .user-menu {
+        flex-shrink: 0 !important;
+        margin-left: 0 !important;
+        position: relative !important;
+        z-index: 10002 !important;
+        order: 999 !important; /* 항상 맨 오른쪽에 배치 */
+    }
+    
+    .navbar .user-menu-trigger {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        min-height: 36px !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 10003 !important;
+        -webkit-tap-highlight-color: transparent !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: #f3f4f6 !important;
+        transition: background 0.2s ease !important;
+        white-space: nowrap !important;
+    }
+    
+    .navbar .user-menu-trigger:hover,
+    .navbar .user-menu-trigger:active {
+        background: #e5e7eb !important;
+    }
+    
+    /* 사용자 메뉴 트리거 클릭 영역 확대 */
+    .navbar .user-menu-trigger * {
+        pointer-events: none !important;
+    }
+    
+    /* 사용자 이름 텍스트 - 전체 표시 (tlschs21 전체 표시) */
+    .navbar .user-menu-trigger span:not(.dropdown-arrow) {
+        display: inline-block !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: #374151 !important;
+        max-width: none !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+    }
+    
+    .navbar .user-menu-trigger .dropdown-arrow {
+        display: inline-block !important;
+        font-size: 10px !important;
+        color: #6b7280 !important;
+        margin-left: 4px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .navbar .user-menu .user-avatar {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 12px !important;
+    }
+    
+    /* 사용자 메뉴 드롭다운 - 기본 상태 (숨김) */
+    .navbar .user-menu-dropdown {
+        position: absolute !important;
+        right: 0 !important;
+        left: auto !important;
+        min-width: 280px !important;
+        max-width: calc(100vw - 32px) !important;
+        top: calc(100% + 8px) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: translateY(-10px) scale(0.95) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 10001 !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        list-style: none !important;
+        margin: 0 !important;
+        pointer-events: none !important;
+        overflow: visible !important;
+    }
+    
+    /* 사용자 메뉴 드롭다운 - 활성 상태 (표시) */
+    .navbar .user-menu-dropdown.active {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) scale(1) !important;
+        display: grid !important;
+        pointer-events: auto !important;
+    }
+    
+    /* 드롭다운 항목 클릭 가능하도록 */
+    .navbar .user-menu-dropdown-item {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+    
+    .navbar .user-menu-dropdown-item {
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+        margin-bottom: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        text-decoration: none !important;
+        color: #374151 !important;
+        background: #f9fafb !important;
+        transition: all 0.2s ease !important;
+        min-height: 60px !important;
+    }
+    
+    .navbar .user-menu-dropdown-item:hover,
+    .navbar .user-menu-dropdown-item:active {
+        background: #f3f4f6 !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .navbar .user-menu-dropdown-item .keycap-icon {
+        font-size: 24px !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .navbar .user-menu-dropdown-item .keycap-text {
+        font-size: 12px !important;
+        font-weight: 500 !important;
+    }
+    
+    .navbar .user-menu-dropdown-item.logout {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        grid-column: 1 / -1 !important;
+    }
+    
+    .navbar .user-menu-dropdown-item.logout:hover {
+        background: #fee2e2 !important;
+    }
+    
+    /* 관리자 대시보드 링크 최적화 */
+    .navbar + a[href="/admin"] {
+        position: fixed !important;
+        top: 12px !important;
+        right: 12px !important;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
+        z-index: 10001 !important;
+    }
+    
+    /* 워크스페이스/마이홈 링크 최적화 */
+    .navbar .nav-link[href="/conversion"],
+    .navbar .nav-link[href="/profile/edit"] {
+        display: none !important; /* 드롭다운 메뉴에만 표시 */
+    }
+}
+
