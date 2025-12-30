@@ -1,4 +1,53 @@
-﻿# [2025-01-28 MP4 비디오 재생 지원] - 커밋 1da7039
+﻿# [2025-12-30 13:52:04 KST] - homepage1 데이터베이스 복원 및 데이터베이스 관리 스크립트 추가 - 커밋 93e67c4
+
+*   **한국 시간/날짜:** 2025년 12월 30일 13:52:04 (KST)
+*   **커밋 해시:** 93e67c4efc457c58a3271e85bdb96b222ef139b5
+*   **작업 내용:** homepage1 데이터베이스를 본진으로 복원하여 상품 정보 복구 및 데이터베이스 관리 스크립트 추가
+
+## 문제 상황
+*   본진 데이터베이스 초기화 과정에서 상품 정보(products, product_packages)가 삭제됨
+*   homepage1 데이터베이스에는 정상적인 상품 정보가 존재 (products: 5개, product_packages: 7개)
+*   Flask 서버가 데이터베이스 파일을 사용 중이어서 직접 파일 교체 불가
+
+## 주요 변경사항
+
+### 1. 데이터베이스 복원 스크립트 추가
+*   `scripts/check_database.py`: 본진과 homepage1 데이터베이스 상태 비교 스크립트
+*   `scripts/copy_homepage1_db_force.py`: homepage1 데이터베이스를 본진으로 복사하는 스크립트
+*   `scripts/restore_db_from_homepage1.py`: SQLite ATTACH/VACUUM INTO를 사용한 안전한 복원 스크립트
+*   `scripts/restore_db_from_homepage1_safe.py`: 개선된 복원 스크립트 (.new 파일 생성 후 수동 교체)
+*   `scripts/apply_new_database.bat`: 새 데이터베이스 파일 적용 배치 스크립트
+*   `scripts/clear_user_payment_data.py`: 사용자 및 결제 데이터만 선택적으로 삭제하는 스크립트
+*   `scripts/reset_database.py`: 데이터베이스 완전 초기화 스크립트
+*   `scripts/reset_database_force.py`: 강제 초기화 스크립트
+
+### 2. 데이터베이스 복원 완료
+*   homepage1/database/app.db → database/app.db 복사 완료
+*   복원된 데이터:
+    *   products: 5개
+    *   product_packages: 7개
+    *   subscription_plans: 3개
+    *   users: 5개
+*   본진과 homepage1 데이터베이스 상태 동일 확인
+
+### 3. 서버 재가동
+*   Flask 서버 종료 후 데이터베이스 파일 교체
+*   서버 재가동 완료 (포트 5000)
+*   HTTP 상태 코드 200 OK 확인
+
+## 복원 결과
+*   ✅ 상품 정보 완전 복구 (products, product_packages)
+*   ✅ 관리자 대시보드에서 상품 금액 정보 정상 표시
+*   ✅ 데이터베이스 관리 스크립트 체계 구축
+*   ✅ 향후 데이터베이스 복원/백업 프로세스 자동화 준비 완료
+
+## 다음 단계
+*   배포 서버에서도 동일한 데이터베이스 복원 필요 시 스크립트 활용 가능
+*   정기적인 데이터베이스 백업 프로세스 구축 권장
+
+---
+
+# [2025-01-28 MP4 비디오 재생 지원] - 커밋 1da7039
 
 *   **커밋 해시:** 1da7039
 *   **작업 내용:** 배포 서버에서 MP4 비디오 재생 지원을 위한 CSP 및 MIME 타입 설정 추가
