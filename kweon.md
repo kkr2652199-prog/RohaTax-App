@@ -1,4 +1,98 @@
-﻿# [2025-12-28 14:43:24 KST] - 배포 전 homepage1 전체 백업 및 본진 병합 완료 - 커밋 b6c08f4
+﻿# [2025-12-30 15:33:27 KST] - 개발 환경에서 rate limit 완화 설정 - 커밋 e19a219
+
+*   **한국 시간/날짜:** 2025년 12월 30일 15:33:27 (KST)
+*   **커밋 해시:** e19a21923961e869e83107ce0b9e0f60b7ea50f5
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** 개발 환경에서 Flask-Limiter의 rate limit을 완화하여 개발 중 요청 제한 초과 문제 해결
+
+## 주요 변경사항
+
+### 1. Rate Limit 환경별 설정 분리
+*   **파일:** `core/extensions.py`
+*   **변경 내용:**
+    *   개발 환경: "10000 per day", "1000 per hour"로 매우 완화된 제한
+    *   프로덕션 환경: 기존 제한 유지 ("200 per day", "50 per hour")
+    *   `FLASK_ENV` 환경 변수로 개발/프로덕션 구분
+*   **목적:** 개발 중 반복적인 페이지 새로고침이나 테스트 시 rate limit에 걸리지 않도록 개선
+
+### 2. 개발 환경 localhost 제외 로직 추가
+*   **파일:** `app.py`
+*   **변경 내용:**
+    *   `exempt_localhost_from_rate_limit()` 함수 추가
+    *   개발 환경에서 localhost (127.0.0.1, ::1) 접근 시 rate limit 제외
+    *   `settings.DEBUG` 또는 `FLASK_ENV != 'production'` 조건으로 개발 환경 판단
+*   **목적:** 로컬 개발 시 추가적인 편의성 제공
+
+## 해결된 문제
+
+1. **"요청 제한 초과" 오류 화면 표시**
+   *   **원인:** Flask-Limiter의 기본 제한("200 per day", "50 per hour")이 개발 중 반복 요청에 적용됨
+   *   **해결:** 개발 환경에서 제한을 50배 완화 (1000 per hour)하여 실질적으로 제한 없이 개발 가능
+
+2. **개발 편의성 저하**
+   *   **원인:** 페이지 새로고침, 테스트 등으로 인한 빈번한 요청으로 제한 초과
+   *   **해결:** 개발 환경과 프로덕션 환경을 분리하여 개발 편의성 확보
+
+## 테스트 결과
+
+*   개발 환경에서 페이지 새로고침 반복 시 정상 작동 확인
+*   프로덕션 환경 설정은 기존과 동일하게 유지되어 보안 유지
+*   Rate limit 에러 페이지(429.html) 표시 문제 해결
+
+---
+
+# [2025-12-28 19:11:49 KST] - CSP Google API 도메인 추가 및 API 키 오류 처리 개선 - 커밋 c3792b6
+
+*   **한국 시간/날짜:** 2025년 12월 28일 19:11:49 (KST)
+*   **커밋 해시:** c3792b6b41b492c02789287ed92e32f5a6268069
+*   **작업자:** The Architect (Cursor AI)
+*   **작업 내용:** CSP에 Google API 도메인 추가 및 API 키 유출/권한 오류 처리 개선. 블로그 스튜디오 카테고리별 주제 추천 기능 오류 수정.
+
+## 주요 변경사항
+
+### 1. CSP (Content Security Policy) 수정
+*   **파일:** `core/security_enhancement.py`
+*   **변경 내용:**
+    *   `connect-src`에 Google API 도메인 추가:
+        *   `https://generativelanguage.googleapis.com` (Gemini API)
+        *   `https://ai.googleapis.com` (AI Platform API)
+        *   `https://us-central1-aiplatform.googleapis.com` (AI Platform 지역별 엔드포인트)
+    *   개발/스테이징/프로덕션 환경 모두에 적용
+    *   **목적:** GoogleGenAI 라이브러리가 Gemini API에 연결할 수 있도록 허용
+
+### 2. API 키 오류 처리 개선
+*   **파일:** `kweon21/services/geminiService.ts`, `kweon21/services/keywordService.ts`
+*   **변경 내용:**
+    *   API 키 유출 오류 감지 및 명확한 메시지 표시
+    *   403 (PERMISSION_DENIED), 401 (UNAUTHENTICATED) 오류 처리
+    *   JSON 응답 내 오류 처리 개선
+    *   사용자에게 "Google AI Studio에서 새로운 API 키를 발급받아 등록해주세요" 안내
+*   **목적:** 사용자가 API 키 문제를 쉽게 파악하고 해결할 수 있도록 개선
+
+### 3. React 앱 빌드
+*   **파일:** `kweon21/dist/index.html`
+*   **변경 내용:** 수정된 서비스 파일 반영을 위한 React 앱 재빌드
+
+## 해결된 문제
+
+1. **"Failed to fetch" 오류**
+   *   **원인:** CSP가 Google API 도메인을 차단
+   *   **해결:** `connect-src`에 Google API 도메인 추가
+
+2. **"API key was reported as leaked" 오류**
+   *   **원인:** Google API 키가 유출된 것으로 표시되어 차단
+   *   **해결:** 명확한 오류 메시지 표시 및 사용자 안내 개선
+
+## 테스트 결과
+
+*   로컬 서버 (`http://localhost:5000/studio/`) 정상 작동 확인
+*   API 키 관리 기능 정상 작동 확인
+*   `/studio/` 경로로 접근 시 `studio_overlay.html` 렌더링 확인
+*   iframe 내부에서 React 앱 정상 로드 확인
+
+---
+
+# [2025-12-28 14:43:24 KST] - 배포 전 homepage1 전체 백업 및 본진 병합 완료 - 커밋 b6c08f4
 
 *   **한국 시간/날짜:** 2025년 12월 28일 14:43:24 (KST)
 *   **커밋 해시:** b6c08f42a126177065954464e749df4e1e470a29

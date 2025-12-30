@@ -1,0 +1,45 @@
+/**
+ * 히어로 섹션 스마트폰 최적화
+ * ============================================
+ */
+
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 40px 16px !important;
+    }
+    
+    .hero-title {
+        font-size: 28px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+        margin-bottom: 24px !important;
+    }
+    
+    /* 히어로 이미지 최적화 */
+    .hero-dashboard-img,
+    .hero-featured-image-wrapper,
+    .hero-kweo-image-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 16/9 !important;
+        object-fit: contain !important;
+    }
+    
+    /* 타겟 오디언스 카드 최적화 */
+    .hero-target-audience {
+        position: relative !important;
+        margin-top: 32px !important;
+    }
+    
+    .target-card {
+        padding: 20px 16px !important;
+        margin-bottom: 16px !important;
+    }
+}
+

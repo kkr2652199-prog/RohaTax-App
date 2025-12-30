@@ -1,0 +1,27 @@
+/**
+ * 모달 및 오버레이 스마트폰 최적화
+ * ============================================
+ */
+
+@media (max-width: 480px) {
+    .modal,
+    .modal-overlay,
+    .biz-modal-container {
+        padding: 20px 16px !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+    
+    .modal-header {
+        padding: 16px !important;
+        font-size: 18px !important;
+    }
+    
+    .modal-body {
+        padding: 16px !important;
+        font-size: 14px !important;
+    }
+}
+

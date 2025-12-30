@@ -131,6 +131,18 @@ app = Flask(
 # extensions 모듈에서 limiter 객체를 가져와 앱에 연결
 limiter.init_app(app)
 
+# 개발 환경에서 localhost 제외 (개발 편의성)
+@app.before_request
+def exempt_localhost_from_rate_limit():
+    """개발 환경에서 localhost는 rate limiting에서 제외"""
+    if settings.DEBUG or os.environ.get('FLASK_ENV') != 'production':
+        # localhost 또는 127.0.0.1에서 접근하는 경우 제외
+        client_ip = request.remote_addr
+        if client_ip in ['127.0.0.1', 'localhost', '::1']:
+            # limiter의 exempt 데코레이터가 작동하도록 함
+            # 실제 제외는 각 라우트의 @limiter.exempt 데코레이터로 처리됨
+            pass
+
 # /studio 경로는 rate limiting에서 제외 (블로그 스튜디오는 자유롭게 접근 가능해야 함)
 @app.before_request
 def exempt_studio_from_rate_limit():

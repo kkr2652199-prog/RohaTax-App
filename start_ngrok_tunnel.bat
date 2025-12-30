@@ -83,7 +83,10 @@ echo.
 echo ================================
 echo.
 
-REM Ngrok 실행 (포트 5001)
+REM Ngrok 실행 (포트 5001 - homepage1 기본 포트)
+echo [중요] 포트 5001로 터널을 생성합니다.
+echo [중요] 서버가 포트 5001에서 실행 중이어야 합니다.
+echo.
 %NGROK_CMD% http 5001
 
 pause

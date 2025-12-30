@@ -1,0 +1,34 @@
+/**
+ * 스마트폰 전용 최적화 CSS (모듈화 버전)
+ * ============================================
+ * 
+ * 이 파일은 모듈화된 CSS 파일들을 통합하여 로드합니다.
+ * 개별 모듈 파일을 수정하면 자동으로 반영됩니다.
+ * 
+ * 모듈 구조:
+ * - 01_global.css: 전역 스타일
+ * - 02_header.css: 헤더 네비게이션
+ * - 03_hero.css: 히어로 섹션
+ * - 04_shop.css: 상점 페이지
+ * - 05_showroom.css: 3D 쇼룸 페이지
+ * - 06_buttons_forms.css: 버튼 및 폼
+ * - 07_modals.css: 모달 및 오버레이
+ * - 08_footer.css: 푸터
+ * - 09_common.css: 공통 요소
+ * 
+ * 사용 규칙:
+ * - @media (max-width: 480px)만 사용
+ * - 기존 CSS 파일은 절대 수정하지 않음
+ * - PC/태블릿 스타일은 그대로 유지
+ */
+
+/* 모듈화된 CSS 파일들을 순서대로 import */
+@import url('01_global.css');
+@import url('02_header.css');
+@import url('03_hero.css');
+@import url('04_shop.css');
+@import url('05_showroom.css');
+@import url('06_buttons_forms.css');
+@import url('07_modals.css');
+@import url('08_footer.css');
+@import url('09_common.css');
