@@ -76,26 +76,16 @@ def calculate_count_and_parse(file_path: str, industry_type: str = 'delivery') -
     """
     try:
         logger.info(f"템플릿 건수 계산 및 파싱 시작: 파일={os.path.basename(file_path)}, 업종={industry_type}")
-        logger.info(f"파일 경로 확인: file_path={file_path}, 존재 여부={os.path.exists(file_path) if file_path else False}")
         
         # 파일 파싱 (단 한 번만 실행)
-        try:
-            from core.file_parser import FileParser
-            from core.recipient_extractor import RecipientExtractor
-        except ImportError as import_err:
-            logger.error(f"필수 모듈 import 실패: {str(import_err)}")
-            return (0, {'parsing_status': 'error', 'error_message': f'필수 모듈 import 실패: {str(import_err)}'})
+        from core.file_parser import FileParser
+        from core.recipient_extractor import RecipientExtractor
         
-        try:
-            file_parser = FileParser()
-            parsed_data = file_parser.parse_file(file_path)
-        except Exception as parse_err:
-            logger.error(f"파일 파싱 중 예외 발생: {str(parse_err)}", exc_info=True)
-            return (0, {'parsing_status': 'error', 'error_message': f'파일 파싱 중 오류: {str(parse_err)}'})
+        file_parser = FileParser()
+        parsed_data = file_parser.parse_file(file_path)
         
         if not parsed_data or parsed_data.get('parsing_status') != 'success':
-            error_msg = parsed_data.get('error_message', '알 수 없는 오류') if parsed_data else '파싱 데이터 없음'
-            logger.warning(f"파일 파싱 실패 또는 데이터 없음: parsing_status={parsed_data.get('parsing_status') if parsed_data else None}, error_message={error_msg}")
+            logger.warning("파일 파싱 실패 또는 데이터 없음")
             return (0, parsed_data if parsed_data else {})
         
         # [The Architect Fix] 토큰 계산 시 강제 통합 수행

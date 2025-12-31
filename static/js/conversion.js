@@ -352,17 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.append('selectedCustomerId', String(window.__selectedGoldCustomer.id));
                 }
 
-                // 디버깅: 전송되는 값 확인
-                console.log('🔍 변환 요청 데이터:', {
-                    template_id: templateId,
-                    issue_date: issueText,
-                    file_name: fileName,
-                    file_name_length: fileName?.length,
-                    file_selected: !!fileInput.files[0],
-                    file_name_from_input: fileInput.files[0]?.name,
-                    csrf_token: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ? '있음' : '없음'
-                });
-
                 // 네트워크 일시 오류(재시작/재로딩 타이밍) 흡수를 위한 1회 자동 재시도
                 async function retryFetch(url, options, retries = 1, delayMs = 400) {
                     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -400,9 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 } catch (parseErr) {
-                    console.error('❌ 응답 파싱 실패:', parseErr);
-                    console.error('❌ 응답 상태:', res.status, res.statusText);
-                    console.error('❌ 응답 헤더:', res.headers);
+                    console.error('응답 파싱 실패:', parseErr);
                     alert((parseErr && parseErr.message ? parseErr.message : '요청 처리 중 오류가 발생했습니다.')
                           .toString()
                           .slice(0, 300));
@@ -411,13 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (!res.ok || !data.success) {
-                    // 디버깅: 서버 응답 상세 로그
-                    console.error('❌ 변환 실패 응답:', {
-                        status: res.status,
-                        statusText: res.statusText,
-                        data: data
-                    });
-                    
                     // 토큰 부족 알림인 경우 모달 표시
                     if (data && data.data && data.data.shortage !== undefined) {
                         TokenAlertModal.show({
@@ -429,7 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         // 기타 오류: 서버 메시지 또는 HTTP 상태 텍스트 노출
                         const serverMsg = (data && (data.message || data.error)) || res.statusText || '변환 시작 실패';
-                        console.error('❌ 서버 오류 메시지:', serverMsg);
                         alert(String(serverMsg).slice(0, 300));
                     }
                     if (stream) { stream.classList.remove('active'); stream.style.display = 'none'; }
@@ -720,10 +699,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // 업로드 헤더 대조(✓/?/✗) 자동 갱신: 1행 헤더 추출 후 전달
                 try{
-                    // 전역 함수 또는 window 객체에서 함수 찾기
-                    const updateFn = window.updateVipHeaderComparison || (typeof updateVipHeaderComparison !== 'undefined' ? updateVipHeaderComparison : null);
-                    
-                    if (typeof updateFn === 'function'){
+                    if (typeof updateVipHeaderComparison === 'function'){
                         const name = (file.name || '').toLowerCase();
                         if (name.endsWith('.csv')){
                             const reader = new FileReader();
@@ -732,49 +708,36 @@ document.addEventListener('DOMContentLoaded', function() {
                                     const text = ev.target && ev.target.result ? String(ev.target.result) : '';
                                     const firstLine = (text.split(/\r?\n/)[0] || '').trim();
                                     const headers = firstLine ? firstLine.split(',').map(s=>s.trim()) : [];
-                                    if (headers.length){ updateFn(headers); }
-                                }catch(e){
-                                    console.warn('CSV 헤더 추출 오류:', e);
-                                }
-                            };
-                            reader.onerror = function(e){
-                                console.warn('파일 읽기 오류:', e);
+                                    if (headers.length){ updateVipHeaderComparison(headers); }
+                                }catch(_){/* noop */}
                             };
                             reader.readAsText(file);
                         } else if (name.endsWith('.xlsx') || name.endsWith('.xls')){
                             // XLSX 라이브러리가 로드되어 있을 때만 사용
-                            if (window.XLSX && typeof window.XLSX.read === 'function'){
+                            if (window.XLSX){
                                 const r = new FileReader();
                                 r.onload = function(ev){
                                     try{
                                         const data = new Uint8Array(ev.target.result);
-                                        const wb = window.XLSX.read(data, {type:'array'});
+                                        const wb = XLSX.read(data, {type:'array'});
                                         const firstSheet = wb.SheetNames && wb.SheetNames[0];
                                         if (!firstSheet) return;
                                         const ws = wb.Sheets[firstSheet];
-                                        if (!ws || !ws['!ref']) return;
-                                        const range = window.XLSX.utils.decode_range(ws['!ref']);
+                                        const range = XLSX.utils.decode_range(ws['!ref']);
                                         const headers = [];
                                         for (let C = range.s.c; C <= range.e.c; C++){
-                                            const cellAddress = window.XLSX.utils.encode_cell({r: range.s.r, c: C});
+                                            const cellAddress = XLSX.utils.encode_cell({r: range.s.r, c: C});
                                             const cell = ws[cellAddress];
                                             headers.push(cell ? String(cell.v).trim() : '');
                                         }
-                                        if (headers.length){ updateFn(headers); }
-                                    }catch(e){
-                                        console.warn('XLSX 헤더 추출 오류:', e);
-                                    }
-                                };
-                                r.onerror = function(e){
-                                    console.warn('파일 읽기 오류:', e);
+                                        if (headers.length){ updateVipHeaderComparison(headers); }
+                                    }catch(_){/* noop */}
                                 };
                                 r.readAsArrayBuffer(file);
                             }
                         }
                     }
-                }catch(e){
-                    console.warn('헤더 대조 갱신 오류:', e);
-                }
+                }catch(_){/* noop */}
             } else {
                 // 파일이 선택되지 않은 경우 원래 상태로 복원
                 label.innerHTML = `

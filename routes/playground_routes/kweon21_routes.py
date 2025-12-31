@@ -83,8 +83,6 @@ def kweon21_app(path=""):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
-    # iframe에서 로드 가능하도록 X-Frame-Options 설정 (프로덕션 환경에서 DENY 오버라이드)
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
 
@@ -102,8 +100,6 @@ def kweon21_app_assets(filename):
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         resp.headers['Pragma'] = 'no-cache'
         resp.headers['Expires'] = '0'
-        # iframe에서 로드 가능하도록 X-Frame-Options 설정
-        resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
         return resp
     
     return "File not found", 404
@@ -164,8 +160,8 @@ def kweon21_index(path):
     user_id = session.get('user_id')
     
     if user_id:
+        from core.db import get_conn_optimized as get_conn
         try:
-            from core.db import get_conn_optimized as get_conn
             with get_conn() as conn:
                 conn.row_factory = sqlite3.Row
                 user = conn.execute(
@@ -174,11 +170,8 @@ def kweon21_index(path):
                 ).fetchone()
                 if user and user['google_api_key']:
                     has_key = True
-        except Exception as e:
-            # DB 오류 시 False로 유지 (로그는 출력하지 않음, 정상적인 동작)
-            import logging
-            logging.getLogger(__name__).debug(f"API key check failed: {e}")
-            pass
+        except Exception:
+            pass  # DB 오류 시 False로 유지
     
     # 빌드 파일 존재 확인
     index_path = os.path.join(dist_dir, "index.html")
@@ -202,7 +195,7 @@ def kweon21_index(path):
             503,
         )
     
-    # studio_overlay.html 템플릿 렌더링 (Flask 헤더, API 키 모달 포함)
+    # 오버레이 템플릿 렌더링 (Iframe 방식)
     return render_template(
         'studio/studio_overlay.html',
         has_key=has_key

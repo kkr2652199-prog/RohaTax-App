@@ -297,42 +297,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 성능 최적화: 이미지 lazy loading (개선된 버전)
+    // 성능 최적화: 이미지 lazy loading
     const images = document.querySelectorAll('img[data-src]');
-    if (images.length > 0) {
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    // data-src가 있으면 src로 이동
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.removeAttribute('data-src');
-                        img.classList.remove('lazy');
-                    }
-                    imageObserver.unobserve(img);
-                }
-            });
-        }, {
-            rootMargin: '50px' // 뷰포트 50px 전에 미리 로드
-        });
-        
-        images.forEach(img => {
-            // 초기에는 placeholder 또는 작은 이미지 표시
-            if (!img.src) {
-                img.style.opacity = '0';
-                img.style.transition = 'opacity 0.3s';
+    const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('lazy');
+                imageObserver.unobserve(img);
             }
-            imageObserver.observe(img);
         });
-        
-        // 이미지 로드 완료 시 페이드인 효과
-        images.forEach(img => {
-            img.addEventListener('load', function() {
-                this.style.opacity = '1';
-            });
-        });
-    }
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
     
     // 섹션으로 스크롤하는 함수
     function scrollToSection(sectionId) {
@@ -807,16 +785,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         console.log('🖱️ 마우스 클릭 효과가 초기화되었습니다.');
-        // mouseEffect가 정의된 경우에만 로그 출력
-        if (mouseEffect1 || mouseEffect2) {
-            const activeMouseEffect = mouseEffect1 || mouseEffect2;
-            console.log('🔍 마우스 효과 최종 상태:', {
-                element: activeMouseEffect,
-                opacity: activeMouseEffect.style.opacity,
-                zIndex: activeMouseEffect.style.zIndex,
-                background: activeMouseEffect.style.background
-            });
-        }
+        console.log('🔍 마우스 효과 최종 상태:', {
+            element: mouseEffect,
+            opacity: mouseEffect.style.opacity,
+            zIndex: mouseEffect.style.zIndex,
+            background: mouseEffect.style.background
+        });
     }
     
     // 홈택스 가이드 슬라이더 초기화

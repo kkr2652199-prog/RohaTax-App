@@ -49,7 +49,7 @@ class Settings:
         # 개발/스테이징 환경에서는 환경 변수로 제어
         DEBUG = get_env("DEBUG", "false").lower() == "true"
     
-    PORT: int = int(get_env("PORT", "5001"))  # homepage1 워크트리 기본 포트: 5001
+    PORT: int = int(get_env("PORT", "5000"))  # 본진(main) 워크트리 기본 포트: 5000
     HOST: str = get_env("HOST", "127.0.0.1")
     
     # 데이터베이스 설정

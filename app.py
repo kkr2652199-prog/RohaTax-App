@@ -127,9 +127,6 @@ app = Flask(
     static_url_path="/static",  # URL 경로 명시
 )
 
-# MP4 파일 MIME 타입 명시적 설정
-mimetypes.add_type('video/mp4', '.mp4')
-
 # Rate Limiting 초기화 (무차별 공격 방어)
 # extensions 모듈에서 limiter 객체를 가져와 앱에 연결
 limiter.init_app(app)
@@ -438,32 +435,18 @@ def _add_cache_headers(resp):
     """정적 파일에 캐시 헤더 추가 (개발 모드에서는 캐시 비활성화)"""
     # 정적 파일 (CSS, JS, 이미지 등)
     if request.path.startswith("/static/"):
-        # 비디오 파일 최적화: Range Request 지원 및 캐싱
-        if request.path.endswith(('.mp4', '.webm', '.ogg', '.mov')):
-            # Range Request 지원 (비디오 스트리밍 필수)
-            resp.headers['Accept-Ranges'] = 'bytes'
-            # 비디오 파일은 긴 캐시 (변경이 거의 없음)
-            is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
-            if is_production:
-                resp.cache_control.max_age = 31536000  # 1년
-                resp.cache_control.public = True
-            else:
-                # 개발 모드: 짧은 캐시 (비디오는 크므로)
-                resp.cache_control.max_age = 3600  # 1시간
-                resp.cache_control.public = True
+        # 개발 모드에서는 캐시 비활성화 (변경사항 즉시 반영)
+        is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
+        if is_production:
+            # 프로덕션: 1년 캐시 (31536000초)
+            resp.cache_control.max_age = 31536000
+            resp.cache_control.public = True
         else:
-            # 개발 모드에서는 캐시 비활성화 (변경사항 즉시 반영)
-            is_production = os.environ.get('FLASK_ENV') == 'production' and not settings.DEBUG
-            if is_production:
-                # 프로덕션: 1년 캐시 (31536000초)
-                resp.cache_control.max_age = 31536000
-                resp.cache_control.public = True
-            else:
-                # 개발 모드: 캐시 비활성화
-                resp.cache_control.no_cache = True
-                resp.cache_control.no_store = True
-                resp.cache_control.must_revalidate = True
-                resp.cache_control.max_age = 0
+            # 개발 모드: 캐시 비활성화
+            resp.cache_control.no_cache = True
+            resp.cache_control.no_store = True
+            resp.cache_control.must_revalidate = True
+            resp.cache_control.max_age = 0
     return resp
 
 
@@ -829,25 +812,6 @@ def health_check():
             ),
             503,
         )
-
-
-# 안전장치 상태 확인 엔드포인트 (관리자 전용)
-@app.route("/api/admin/safety-status")
-def safety_status():
-    """배포 서버 안전장치 상태 확인"""
-    from core.deployment_safety import deployment_safety
-    from core.security import require_admin
-    
-    # 관리자 권한 확인
-    if not require_admin():
-        return jsonify({"error": "관리자 권한이 필요합니다"}), 403
-    
-    try:
-        report = deployment_safety.get_safety_report()
-        return jsonify(report), 200
-    except Exception as e:
-        logger.error(f"안전장치 상태 확인 실패: {e}")
-        return jsonify({"error": str(e)}), 500
 
 
 # 시작 시간 기록

@@ -17,11 +17,7 @@ async function getUserApiKey(): Promise<string> {
   }
 
   try {
-    // iframe 내부에서도 정상 작동하도록 절대 경로 사용
-    const apiUrl = window.location.origin + '/api/user/apikey';
-    const response = await fetch(apiUrl, {
-      credentials: 'include' // 쿠키 포함
-    });
+    const response = await fetch('/api/user/apikey');
     if (!response.ok) {
       if (response.status === 401) {
         alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
