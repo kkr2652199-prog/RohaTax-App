@@ -14,6 +14,7 @@ from flask import (
     Response,
     redirect,
     render_template,
+    request,
     send_file,
     send_from_directory,
     session,
@@ -43,7 +44,17 @@ def kweon21_app(path=""):
     """
     순수한 React 앱을 Iframe에서 로드하기 위한 라우트.
     Flask base.html 상속 없이 kweon21/dist/index.html을 그대로 반환.
+    
+    직접 접근 시 /studio로 리다이렉트 (Iframe 내부에서만 사용)
     """
+    # Iframe이 아닌 직접 접근 차단
+    referer = request.headers.get('Referer', '')
+    sec_fetch_dest = request.headers.get('Sec-Fetch-Dest', '')
+    
+    # Iframe에서 로드된 경우가 아니면 리다이렉트
+    if sec_fetch_dest != 'iframe' and '/studio' not in referer:
+        return redirect(url_for('kweon21.kweon21_index'))
+    
     dist_dir = os.path.abspath(KWEON21_DIST_DIR)
     index_path = os.path.join(dist_dir, "index.html")
     
