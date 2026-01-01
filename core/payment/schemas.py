@@ -63,7 +63,7 @@ class PaymentResponse(BaseModel):
     class Config:
         """Pydantic 설정"""
         use_enum_values = True
-        from_attributes = True  # Pydantic V2: orm_mode -> from_attributes
+        orm_mode = True
 
 
 class PaymentCreateManual(BaseModel):

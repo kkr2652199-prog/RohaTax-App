@@ -322,16 +322,6 @@ def seed_demo() -> None:
             """)
         conn.commit()
 
-def _column_exists(conn: sqlite3.Connection, table_name: str, column_name: str) -> bool:
-    """컬럼이 존재하는지 확인"""
-    try:
-        cursor = conn.execute(f"PRAGMA table_info({table_name})")
-        columns = [row[1] for row in cursor.fetchall()]
-        return column_name in columns
-    except Exception:
-        return False
-
-
 def _apply_migrations(conn: sqlite3.Connection):
     """마이그레이션 파일들을 자동으로 적용"""
     migrations_dir = os.path.join(os.path.dirname(DB_PATH), 'migrations')
@@ -358,33 +348,12 @@ def _apply_migrations(conn: sqlite3.Connection):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     sql_script = f.read()
-                
-                # 특정 마이그레이션 파일의 컬럼 추가를 안전하게 처리
-                # 004_add_previous_plan_type.sql: payment_history.previous_plan_type
-                if '004_add_previous_plan_type.sql' in sql_file:
-                    if not _column_exists(conn, 'payment_history', 'previous_plan_type'):
-                        conn.executescript(sql_script)
-                        logger.info(f"마이그레이션 적용 완료: {sql_file}")
-                    else:
-                        logger.debug(f"마이그레이션 건너뛰기 ({sql_file}): previous_plan_type 컬럼이 이미 존재합니다")
-                # 005_add_source_type_to_token_history.sql: token_history.source_type
-                elif '005_add_source_type_to_token_history.sql' in sql_file:
-                    if not _column_exists(conn, 'token_history', 'source_type'):
-                        conn.executescript(sql_script)
-                        logger.info(f"마이그레이션 적용 완료: {sql_file}")
-                    else:
-                        logger.debug(f"마이그레이션 건너뛰기 ({sql_file}): source_type 컬럼이 이미 존재합니다")
-                else:
-                    # 다른 마이그레이션 파일은 기존 방식대로 실행
+                    # executescript는 여러 SQL 문을 한 번에 실행할 수 있게 해줍니다.
                     conn.executescript(sql_script)
-                    logger.info(f"마이그레이션 적용 완료: {sql_file}")
-                    
+                logger.info(f"마이그레이션 적용 완료: {sql_file}")
             except sqlite3.Error as e:
-                # 중복 컬럼 오류는 경고만 출력 (이미 처리됨)
-                error_msg = str(e).lower()
-                if "duplicate column name" in error_msg or "already exists" in error_msg:
-                    logger.debug(f"마이그레이션 건너뛰기 ({sql_file}): {e}")
-                else:
+                # 테이블이 이미 존재하는 경우는 무시 (CREATE TABLE IF NOT EXISTS)
+                if "already exists" not in str(e).lower():
                     logger.warning(f"마이그레이션 적용 중 오류 ({sql_file}): {e}")
             except Exception as e:
                 logger.warning(f"마이그레이션 파일 읽기 실패 ({sql_file}): {e}")
