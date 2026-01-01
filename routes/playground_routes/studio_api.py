@@ -63,11 +63,34 @@ def _check_rate_limit(user_id: int) -> tuple[bool, Optional[str]]:
     return True, None
 
 
-def _get_api_key() -> str:
-    """서버 환경변수에서 API 키 가져오기"""
+def _get_api_key(user_id: int) -> str:
+    """
+    사용자별 API 키 가져오기 (BYOK 모델)
+    1. 사용자 데이터베이스에서 google_api_key 조회
+    2. 없으면 서버 환경변수에서 fallback
+    """
+    from core.db import get_conn
+    
+    # 1. 사용자별 API 키 조회 (BYOK 모델)
+    try:
+        with get_conn() as conn:
+            conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+            user = conn.execute(
+                "SELECT google_api_key FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
+                (user_id,)
+            ).fetchone()
+            
+            if user and user.get('google_api_key'):
+                api_key = user['google_api_key'].strip()
+                if api_key and api_key.startswith('AIzaSy'):
+                    return api_key
+    except Exception as e:
+        logger.warning(f"사용자 API 키 조회 실패 (user_id={user_id}): {e}")
+    
+    # 2. Fallback: 서버 환경변수에서 가져오기
     api_key = os.environ.get('GOOGLE_API_KEY') or os.environ.get('GEMINI_API_KEY')
     if not api_key:
-        raise ValueError("서버 환경변수에 GOOGLE_API_KEY 또는 GEMINI_API_KEY가 설정되지 않았습니다.")
+        raise ValueError("API 키가 설정되지 않았습니다. 마이페이지에서 Google API Key를 등록하거나, 서버 관리자에게 문의하세요.")
     return api_key
 
 
@@ -123,8 +146,8 @@ def generate():
                 'error': 'action 파라미터가 필요합니다.'
             }), 400
         
-        # 4. API 키 가져오기
-        api_key = _get_api_key()
+        # 4. API 키 가져오기 (사용자별 키 우선)
+        api_key = _get_api_key(user_id)
         
         # 5. Google Generative AI 호출
         try:
@@ -160,11 +183,12 @@ def generate():
         })
         
     except ValueError as e:
-        logger.error(f"API 키 오류: {str(e)}")
+        logger.error(f"API 키 오류 (user_id={user_id}): {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
-        }), 500
+            'error': str(e),
+            'error_code': 'API_KEY_NOT_FOUND'
+        }), 400
     except Exception as e:
         logger.error(f"블로그 생성 중 오류 발생: {str(e)}", exc_info=True)
         return jsonify({
