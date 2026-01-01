@@ -15,32 +15,58 @@ async function getUserApiKey(): Promise<string> {
     return cachedApiKey;
   }
 
+  // ✅ 무한 재시도 방지: 한 번만 시도하고 실패하면 에러 throw
   try {
-    const response = await fetch('/api/user/apikey');
+    console.log('[getUserApiKey] API 키 조회 시작...');
+    const response = await fetch('/api/user/apikey', {
+      method: 'GET',
+      credentials: 'include', // 세션 쿠키 포함
+      // ✅ 타임아웃 설정 (10초)
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    console.log('[getUserApiKey] 서버 응답 상태:', response.status);
+    
     if (!response.ok) {
       if (response.status === 401) {
-        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
-        throw new Error('로그인이 필요합니다');
+        const errorMsg = '로그인이 필요합니다. 로그인 후 다시 시도해주세요.';
+        console.error('[getUserApiKey] 인증 실패:', errorMsg);
+        alert(errorMsg);
+        throw new Error(errorMsg);
       }
-      throw new Error(`API 키 조회 실패: ${response.status}`);
+      const errorMsg = `API 키 조회 실패: HTTP ${response.status}`;
+      console.error('[getUserApiKey] HTTP 에러:', errorMsg);
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
+    console.log('[getUserApiKey] 서버 응답 데이터:', { success: data.success, has_key: data.has_key });
+    
     if (!data.success) {
-      throw new Error(data.error || 'API 키 조회 실패');
+      const errorMsg = data.error || 'API 키 조회 실패';
+      console.error('[getUserApiKey] 서버에서 실패 응답:', errorMsg);
+      throw new Error(errorMsg);
     }
 
     if (!data.api_key || !data.has_key) {
+      const errorMsg = 'API 키가 등록되지 않았습니다';
+      console.error('[getUserApiKey] API 키 없음:', errorMsg);
       alert('블로그 스튜디오를 사용하려면 "마이페이지"에서 Google API Key를 등록해야 합니다.');
-      throw new Error('API 키가 등록되지 않았습니다');
+      throw new Error(errorMsg);
     }
 
     // 캐시에 저장
     cachedApiKey = data.api_key;
     cachedAiInstance = new GoogleGenAI({ apiKey: cachedApiKey });
+    console.log('[getUserApiKey] API 키 캐시 완료');
     return cachedApiKey;
   } catch (error) {
-    console.error('API 키 가져오기 실패:', error);
+    console.error('[getUserApiKey] API 키 가져오기 실패:', error);
+    // ✅ 에러 스택 트레이스 포함
+    if (error instanceof Error) {
+      console.error('[getUserApiKey] 에러 스택:', error.stack);
+    }
+    // ✅ 무한 재시도 방지: 에러를 그대로 throw (재시도 로직 없음)
     throw error;
   }
 }
@@ -617,7 +643,7 @@ const generateTopics = async (prompt: string, useSearch: boolean = false): Promi
     }
 };
 
-export const generateEeatTopicSuggestions = (category: string, subCategory: string, currentDate: string): Promise<string[]> => {
+export const generateEeatTopicSuggestions = async (category: string, subCategory: string, currentDate: string): Promise<string[]> => {
   const prompt = `
     당신은 구글 검색 상위 노출을 위한 콘텐츠 전략을 수립하는 최상위 SEO 전문가입니다.
     당신의 임무는 구글의 E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) 원칙을 극대화하여, 실제 사용자의 문제를 해결하고 검색 결과에서 눈에 띄는 실용적인 블로그 포스트 주제 10가지를 제안하는 것입니다.
@@ -635,10 +661,105 @@ export const generateEeatTopicSuggestions = (category: string, subCategory: stri
 
     결과는 반드시 한국어로, 창의적이고 클릭을 유도하는 구체적인 제목 형식으로 제안해주세요.
   `;
-  return generateTopics(prompt);
+  
+  // ✅ 서버 API를 통해 호출
+  return await _callServerApiForTopics(prompt, false, 'E-EAT 주제 생성');
 };
 
-export const generateCategoryTopicSuggestions = (category: string, currentDate: string): Promise<string[]> => {
+/**
+ * 서버 API를 통해 주제를 생성하는 공통 함수
+ * @param prompt 프롬프트
+ * @param useSearch Google Search 도구 사용 여부
+ * @param functionName 함수 이름 (에러 로깅용)
+ */
+async function _callServerApiForTopics(prompt: string, useSearch: boolean, functionName: string): Promise<string[]> {
+  const startTime = Date.now();
+  console.log(`[${functionName}] 서버 API 호출 시작...`);
+  
+  try {
+    const response = await fetch('/api/studio/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // 세션 쿠키 포함
+      body: JSON.stringify({
+        action: 'generateTopics',
+        params: {
+          prompt: prompt,
+          useSearch: useSearch,
+          responseSchema: {
+            type: 'object',
+            properties: {
+              topics: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'An array of 10 creative and SEO-optimized blog post topics in Korean.'
+              }
+            },
+            required: ['topics']
+          }
+        }
+      })
+    });
+
+    const elapsedTime = Date.now() - startTime;
+    console.log(`[${functionName}] 서버 응답 수신 (${elapsedTime}ms), 상태: ${response.status}`);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        console.error(`[${functionName}] 서버 에러 응답:`, errorData);
+      } catch (e) {
+        const text = await response.text().catch(() => '');
+        console.error(`[${functionName}] 서버 에러 응답 (JSON 파싱 실패):`, text);
+      }
+      throw new Error(`서버 오류 (${response.status}): ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    console.log(`[${functionName}] 서버 응답 데이터:`, { success: data.success, hasData: !!data.data });
+
+    if (!data.success) {
+      const errorMsg = data.error || data.message || '주제 생성 실패';
+      console.error(`[${functionName}] 서버에서 실패 응답:`, errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (!data.data) {
+      console.error(`[${functionName}] 서버 응답에 data가 없음:`, data);
+      throw new Error('서버 응답에 데이터가 없습니다.');
+    }
+
+    // useSearch가 true인 경우 topics가 배열이 아닐 수 있음
+    let topics: string[] = [];
+    if (Array.isArray(data.data.topics)) {
+      topics = data.data.topics;
+    } else if (Array.isArray(data.data)) {
+      topics = data.data;
+    } else {
+      console.error(`[${functionName}] 서버 응답 형식이 올바르지 않음:`, data.data);
+      throw new Error('서버 응답 형식이 올바르지 않습니다. topics 배열을 찾을 수 없습니다.');
+    }
+
+    console.log(`[${functionName}] 주제 생성 완료 (${topics.length}개)`);
+    return topics;
+  } catch (error) {
+    const elapsedTime = Date.now() - startTime;
+    console.error(`[${functionName}] 주제 생성 실패 (${elapsedTime}ms):`, error);
+    
+    // 에러 스택 트레이스 포함
+    if (error instanceof Error) {
+      console.error(`[${functionName}] 에러 스택:`, error.stack);
+      throw new Error(`${functionName} 실패: ${error.message}`);
+    }
+    throw new Error(`${functionName} 중 알 수 없는 오류가 발생했습니다.`);
+  }
+}
+
+export const generateCategoryTopicSuggestions = async (category: string, currentDate: string): Promise<string[]> => {
   const prompt = `
     당신은 창의적인 콘텐츠 기획자입니다.
     '${category}' 카테고리와 관련된 흥미로운 블로그 포스트 주제 10가지를 추천해주세요.
@@ -646,10 +767,12 @@ export const generateCategoryTopicSuggestions = (category: string, currentDate: 
     오늘은 ${currentDate} 입니다. 제안하는 주제는 오늘 날짜를 기준으로 최신 트렌드를 반영해야 합니다. **시의성이 필요하여 연도를 표시할 경우, 월과 일은 제외하고 연도만 사용해주세요.** 단, 연도가 주제의 핵심이 아닌 이상 불필하게 포함하지 마세요.
     결과는 반드시 한국어로, 구체적인 제목 형식으로 제안해주세요.
   `;
-  return generateTopics(prompt);
+  
+  // ✅ 서버 API를 통해 호출
+  return await _callServerApiForTopics(prompt, false, '카테고리별 주제 생성');
 };
 
-export const generateEvergreenTopicSuggestions = (category: string, subCategory: string, currentDate: string): Promise<string[]> => {
+export const generateEvergreenTopicSuggestions = async (category: string, subCategory: string, currentDate: string): Promise<string[]> => {
   const prompt = `
     당신은 블로그 콘텐츠 전략가입니다.
     시간이 지나도 가치가 변하지 않아 꾸준한 트래픽을 유도할 수 있는 '에버그린 콘텐츠' 주제 10가지를 추천해주세요.
@@ -659,10 +782,12 @@ export const generateEvergreenTopicSuggestions = (category: string, subCategory:
     주제는 초보자도 쉽게 이해할 수 있으면서도, 깊이 있는 정보를 담을 수 있는 형태여야 합니다.
     결과는 반드시 한국어로, "OOO 하는 방법", "초보자를 위한 OOO 완벽 가이드" 와 같이 구체적인 제목 형식으로 제안해주세요.
   `;
-  return generateTopics(prompt);
+  
+  // ✅ 서버 API를 통해 호출
+  return await _callServerApiForTopics(prompt, false, '에버그린 주제 생성');
 };
 
-export const generateLongtailTopicSuggestions = (category: string, currentDate: string): Promise<string[]> => {
+export const generateLongtailTopicSuggestions = async (category: string, currentDate: string): Promise<string[]> => {
   const prompt = `
     당신은 SEO 전문가이며, 특히 롱테일 키워드 전략에 능숙합니다.
     '${category}' 분야에서 경쟁이 비교적 낮으면서도 구매 또는 전환 가능성이 높은 타겟 독자를 공략할 수 있는 '롱테일 키워드' 기반 블로그 주제 10가지를 추천해주세요.
@@ -674,10 +799,12 @@ export const generateLongtailTopicSuggestions = (category: string, currentDate: 
 
     **아주 중요**: 응답은 오직 추천 주제 10가지의 목록만 포함해야 합니다. 서론, 부연 설명, 숫자, 글머리 기호 등 어떠한 추가 텍스트도 절대 포함하지 말고, 각 주제를 개행으로만 구분해서 반환해주세요.
   `;
-  return generateTopics(prompt, true);
+  
+  // ✅ 서버 API를 통해 호출 (useSearch: true)
+  return await _callServerApiForTopics(prompt, true, '롱테일 주제 생성');
 };
 
-export const generateTopicsFromMemo = (memo: string, currentDate: string): Promise<string[]> => {
+export const generateTopicsFromMemo = async (memo: string, currentDate: string): Promise<string[]> => {
   const prompt = `
     당신은 뛰어난 편집자이자 콘텐츠 기획자입니다.
     아래에 제공된 메모/초안의 핵심 내용을 분석하고, 이 내용을 바탕으로 가장 매력적인 블로그 포스트 주제 10가지를 추천해주세요.
@@ -691,7 +818,9 @@ export const generateTopicsFromMemo = (memo: string, currentDate: string): Promi
     
     결과는 반드시 한국어로, 구체적인 제목 형식으로 제안해주세요.
   `;
-  return generateTopics(prompt);
+  
+  // ✅ 서버 API를 통해 호출
+  return await _callServerApiForTopics(prompt, false, '메모 기반 주제 생성');
 };
 
 export const suggestInteractiveElementForTopic = async (topic: string): Promise<string> => {

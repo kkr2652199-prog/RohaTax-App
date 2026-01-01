@@ -785,12 +785,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         console.log('🖱️ 마우스 클릭 효과가 초기화되었습니다.');
-        console.log('🔍 마우스 효과 최종 상태:', {
-            element: mouseEffect,
-            opacity: mouseEffect.style.opacity,
-            zIndex: mouseEffect.style.zIndex,
-            background: mouseEffect.style.background
-        });
     }
     
     // 홈택스 가이드 슬라이더 초기화

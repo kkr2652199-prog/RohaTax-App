@@ -17,10 +17,16 @@ async function getUserApiKey(): Promise<string> {
   }
 
   try {
-    const response = await fetch('/api/user/apikey');
+    console.log('[keywordService] API 키 조회 시작...');
+    const response = await fetch('/api/user/apikey', {
+      method: 'GET',
+      credentials: 'include',
+      // ✅ 타임아웃 10초 설정
+      signal: AbortSignal.timeout(10000)
+    });
+    
     if (!response.ok) {
       if (response.status === 401) {
-        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
         throw new Error('로그인이 필요합니다');
       }
       throw new Error(`API 키 조회 실패: ${response.status}`);
@@ -32,16 +38,16 @@ async function getUserApiKey(): Promise<string> {
     }
 
     if (!data.api_key || !data.has_key) {
-      alert('블로그 스튜디오를 사용하려면 "마이페이지"에서 Google API Key를 등록해야 합니다.');
       throw new Error('API 키가 등록되지 않았습니다');
     }
 
     // 캐시에 저장
     cachedApiKey = data.api_key;
     cachedAiInstance = new GoogleGenAI({ apiKey: cachedApiKey });
+    console.log('[keywordService] API 키 캐시 완료');
     return cachedApiKey;
   } catch (error) {
-    console.error('API 키 가져오기 실패:', error);
+    console.error('[keywordService] API 키 가져오기 실패:', error);
     throw error;
   }
 }
