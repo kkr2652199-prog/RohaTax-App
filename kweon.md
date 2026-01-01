@@ -1,4 +1,11 @@
-﻿# [2026-01-01 21:05:00 KST] - 홈페이지 JS 에러(Lucide/mouseEffect) 및 CSP 완전 해결
+﻿# [2026-01-01 21:35:00 KST] - 브라우저 캐싱 최적화 및 스튜디오 자산 경로 오류 해결
+- 커밋 해시: a6de38f
+- 작업 상세 내역:
+  1. **브라우저 캐싱 활성화**: `app.py`에서 매초 변경되던 `timestamp`를 서버 시작 시 고정된 `VERSION_TIMESTAMP`로 변경하여 30개 이상의 CSS/JS 파일이 매번 다시 로드되는 현상을 해결(속도 대폭 향상).
+  2. **AI 블로그 스튜디오 경로 수정**: `kweon21/dist/index.html` 내 자산 경로를 절대 경로에서 상대 경로로 변경하여 배포 서버에서의 404 에러를 해결.
+  3. **성능 정밀 진단**: 브라우저 Performance API 분석을 통해 TTFB(Time To First Byte) 및 DOM Complete 시간 최적화 포인트 확인.
+
+# [2026-01-01 21:05:00 KST] - 홈페이지 JS 에러(Lucide/mouseEffect) 및 CSP 완전 해결
 - 커밋 해시: 6d5b005
 - 작업 상세 내역:
   1. **홈페이지 JS 에러 원천 해결**: 사용자가 제보한 `lucide is not defined` 및 `mouseEffect is not defined` 에러를 유발하던 외부 라이브러리(Unsplash, Lucide) 차단 문제와 JS 로직을 전면 수정하여 쾌적한 브라우징 환경 구축.
