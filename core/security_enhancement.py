@@ -74,7 +74,7 @@ class SecurityConfig:
                 'X-Frame-Options': 'DENY',
                 'X-XSS-Protection': '1; mode=block',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' https://cdn.jsdelivr.net data:"
+                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' https://generativelanguage.googleapis.com https://api.openweathermap.org"
             }
         }
     
@@ -96,7 +96,7 @@ class SecurityConfig:
                 'X-Frame-Options': 'DENY',
                 'X-XSS-Protection': '1; mode=block',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' https://cdn.jsdelivr.net data:",
+                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' https://generativelanguage.googleapis.com https://api.openweathermap.org",
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
             },
