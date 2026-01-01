@@ -138,9 +138,21 @@ class SecurityMiddleware:
         # 보안 헤더 설정
         @self.app.after_request
         def set_security_headers(response):
-            headers = self.security_config.get_security_headers()
-            for header, value in headers.items():
-                response.headers[header] = value
+            # /studio/app 경로는 iframe에서 로드되므로 X-Frame-Options 예외 처리
+            from flask import request
+            if request.path.startswith('/studio/app'):
+                # X-Frame-Options만 SAMEORIGIN으로 설정, 나머지는 전역 설정 유지
+                headers = self.security_config.get_security_headers()
+                for header, value in headers.items():
+                    if header == 'X-Frame-Options':
+                        response.headers[header] = 'SAMEORIGIN'
+                    else:
+                        response.headers[header] = value
+            else:
+                # 다른 경로는 전역 설정 그대로 적용
+                headers = self.security_config.get_security_headers()
+                for header, value in headers.items():
+                    response.headers[header] = value
             return response
         
         # CORS 설정
