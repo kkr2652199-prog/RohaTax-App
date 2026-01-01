@@ -195,6 +195,8 @@ def generate():
             result = _handle_generate_topics(genai, params)
         elif action == 'suggestInteractiveElement':
             result = _handle_suggest_interactive_element(genai, params)
+        elif action == 'proxyAI':
+            result = _handle_proxy_ai(genai, params)
         else:
             return jsonify({
                 'success': False,
@@ -275,23 +277,34 @@ def _handle_generate(genai, params: Dict[str, Any]) -> Dict[str, Any]:
     # TypeScript 스키마를 Python 딕셔너리로 변환
     response_schema = _convert_typescript_schema_to_python(response_schema_raw) if response_schema_raw else None
     
-    # GenerationConfig 딕셔너리 생성 (google.generativeai는 딕셔너리도 받음)
+    # GenerationConfig 딕셔너리 생성
     generation_config_dict = {
         "response_mime_type": "application/json"
     }
     if response_schema:
         generation_config_dict["response_schema"] = response_schema
     
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        generation_config=generation_config_dict
-    )
+    # 모델 시도 순서 (최신 모델부터)
+    models_to_try = ["gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    last_error = None
     
-    response = model.generate_content(prompt)
-    json_string = response.text
-    parsed_json = json.loads(json_string)
-    
-    return parsed_json
+    for model_name in models_to_try:
+        try:
+            logger.info(f"📝 [_handle_generate] 모델 시도 중: {model_name}")
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                generation_config=generation_config_dict
+            )
+            response = model.generate_content(prompt)
+            json_string = response.text
+            parsed_json = json.loads(json_string)
+            return parsed_json
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"⚠️ [_handle_generate] {model_name} 실패: {last_error}")
+            continue
+            
+    raise ValueError(f"모든 AI 모델 호출 실패. 마지막 에러: {last_error}")
 
 
 def _handle_regenerate(genai, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -312,36 +325,73 @@ def _handle_regenerate(genai, params: Dict[str, Any]) -> Dict[str, Any]:
     if response_schema:
         generation_config_dict["response_schema"] = response_schema
     
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        generation_config=generation_config_dict
-    )
+    models_to_try = ["gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    last_error = None
     
-    response = model.generate_content(prompt)
-    json_string = response.text
-    parsed_json = json.loads(json_string)
-    
-    return parsed_json
+    for model_name in models_to_try:
+        try:
+            logger.info(f"🔄 [_handle_regenerate] 모델 시도 중: {model_name}")
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                generation_config=generation_config_dict
+            )
+            response = model.generate_content(prompt)
+            json_string = response.text
+            parsed_json = json.loads(json_string)
+            return parsed_json
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"⚠️ [_handle_regenerate] {model_name} 실패: {last_error}")
+            continue
+            
+    raise ValueError(f"모든 AI 모델 호출 실패. 마지막 에러: {last_error}")
 
 
 def _handle_generate_image(genai, params: Dict[str, Any]) -> Dict[str, Any]:
-    """이미지 생성 처리"""
+    """이미지 생성 처리 (Imagen 모델 사용)"""
     prompt = params.get('prompt')
     aspect_ratio = params.get('aspectRatio', '16:9')
     
     if not prompt:
         raise ValueError("prompt 파라미터가 필요합니다.")
     
-    # Imagen API 사용 (Google Generative AI의 이미지 생성)
-    # 참고: 실제 구현은 Google의 Imagen API 문서를 참조해야 함
-    # 여기서는 예시로 구조만 제공
     try:
-        # 실제 구현 시 Google의 이미지 생성 API 호출
-        # 현재는 구조만 제공
-        raise NotImplementedError("이미지 생성 기능은 추후 구현 예정입니다.")
+        logger.info(f"📸 [_handle_generate_image] 이미지 생성 시작: prompt='{prompt[:50]}...', ratio={aspect_ratio}")
+        
+        # Imagen 모델 인스턴스 생성
+        # 참고: 모델명은 버전에 따라 다를 수 있음 (imagen-3.0-generate-001, imagen-3.0-fast-generate-001 등)
+        model = genai.GenerativeModel('imagen-3.0-generate-001')
+        
+        # 이미지 생성 호출
+        response = model.generate_images(
+            prompt=prompt,
+            number_of_images=1,
+            aspect_ratio=aspect_ratio,
+            output_mime_type='image/jpeg'
+        )
+        
+        if response.generated_images:
+            image_bytes = response.generated_images[0].image.image_bytes
+            import base64
+            image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+            
+            logger.info("✅ [_handle_generate_image] 이미지 생성 성공")
+            return {
+                'imageBytes': f"data:image/jpeg;base64,{image_b64}"
+            }
+        else:
+            logger.error("[_handle_generate_image] 생성된 이미지가 없습니다.")
+            raise ValueError("이미지를 생성할 수 없습니다. (응답이 비어있음)")
+            
     except Exception as e:
-        logger.error(f"이미지 생성 오류: {str(e)}")
-        raise
+        error_msg = str(e)
+        logger.error(f"❌ [_handle_generate_image] 이미지 생성 중 오류 발생: {error_msg}")
+        
+        # 모델을 찾을 수 없는 경우 등 특정 에러에 대한 폴백이나 상세 안내
+        if "not found" in error_msg.lower():
+            raise ValueError("이미지 생성 모델을 찾을 수 없습니다. 서버 설정을 확인해주세요.")
+        
+        raise ValueError(f"이미지 생성 실패: {error_msg}")
 
 
 def _handle_generate_topics(genai, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -366,31 +416,38 @@ def _handle_generate_topics(genai, params: Dict[str, Any]) -> Dict[str, Any]:
     
     config_dict['temperature'] = 1.0
     
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        generation_config=config_dict
-    )
+    models_to_try = ["gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    last_error = None
     
     import hashlib
     random_seed = int(hashlib.md5(prompt.encode()).hexdigest(), 16) % 10000
     enhanced_prompt = f"{prompt}\n\n(This is a new request. Please generate a completely new and different set of suggestions. Random seed: {random_seed})"
-    response = model.generate_content(enhanced_prompt)
-    
-    if use_search:
-        # 검색 결과는 JSON이 아닐 수 있음
-        text = response.text
-        lines = text.split('\n')
-        lines = [line.strip() for line in lines if line.strip()]
-        # 서두 문장 제거
-        if lines and (lines[0].endswith('입니다.') or lines[0].endswith('입니다:')):
-            lines.pop(0)
-        import re
-        topics = [re.sub(r'^(\d+\.|-|\*)\s*', '', line).strip() for line in lines if line.strip()]
-        return {'topics': topics}
-    else:
-        json_string = response.text
-        parsed_json = json.loads(json_string)
-        return parsed_json
+
+    for model_name in models_to_try:
+        try:
+            logger.info(f"💡 [_handle_generate_topics] 모델 시도 중: {model_name}")
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                generation_config=config_dict
+            )
+            response = model.generate_content(enhanced_prompt)
+            
+            if use_search:
+                text = response.text
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                if lines and (lines[0].endswith('입니다.') or lines[0].endswith('입니다:')):
+                    lines.pop(0)
+                import re
+                topics = [re.sub(r'^(\d+\.|-|\*)\s*', '', line).strip() for line in lines if line.strip()]
+                return {'topics': topics}
+            else:
+                return json.loads(response.text)
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"⚠️ [_handle_generate_topics] {model_name} 실패: {last_error}")
+            continue
+            
+    raise ValueError(f"주제 생성 실패. 마지막 에러: {last_error}")
 
 
 def _handle_suggest_interactive_element(genai, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -408,15 +465,73 @@ def _handle_suggest_interactive_element(genai, params: Dict[str, Any]) -> Dict[s
         Just return the idea itself, without any introductory phrases.
     '''
     
-    generation_config = {
+    config_dict = {
         "temperature": 0.8
     }
     
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        generation_config=generation_config
-    )
+    models_to_try = ["gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    last_error = None
     
-    response = model.generate_content(prompt)
-    return {'suggestion': response.text.strip()}
+    for model_name in models_to_try:
+        try:
+            logger.info(f"💡 [_handle_suggest_interactive_element] 모델 시도 중: {model_name}")
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                generation_config=config_dict
+            )
+            response = model.generate_content(prompt)
+            return {'suggestion': response.text.strip()}
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"⚠️ [_handle_suggest_interactive_element] {model_name} 실패: {last_error}")
+            continue
+            
+    raise ValueError(f"요소 제안 실패. 마지막 에러: {last_error}")
+
+
+def _handle_proxy_ai(genai, params: Dict[str, Any]) -> Dict[str, Any]:
+    """범용 AI 프록시 처리 (keywordService 등에서 사용)"""
+    prompt = params.get('prompt')
+    model_name = params.get('model', 'gemini-1.5-flash')
+    config_raw = params.get('config', {})
+    
+    if not prompt:
+        raise ValueError("prompt 파라미터가 필요합니다.")
+    
+    # 설정 변환
+    config = {}
+    if config_raw.get('tools'):
+        import google.generativeai as genai_module
+        config['tools'] = [genai_module.protos.Tool(google_search={})]
+        
+    if config_raw.get('responseMimeType'):
+        config['response_mime_type'] = config_raw['responseMimeType']
+        
+    if config_raw.get('responseSchema'):
+        config['response_schema'] = _convert_typescript_schema_to_python(config_raw['responseSchema'])
+        
+    if config_raw.get('temperature'):
+        config['temperature'] = config_raw['temperature']
+
+    # 모델 시도 순서
+    models_to_try = [model_name, "gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    last_error = None
+    
+    for m in models_to_try:
+        try:
+            logger.info(f"🌐 [_handle_proxy_ai] 모델 시도 중: {m}")
+            model = genai.GenerativeModel(
+                model_name=m,
+                generation_config=config if not config_raw.get('tools') else None,
+                tools=config.get('tools')
+            )
+            # generation_config는 generate_content의 인자로도 전달 가능
+            response = model.generate_content(prompt, generation_config=config if not config_raw.get('tools') else config)
+            return {'text': response.text}
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"⚠️ [_handle_proxy_ai] {m} 실패: {last_error}")
+            continue
+            
+    raise ValueError(f"AI 호출 실패. 마지막 에러: {last_error}")
 
