@@ -153,16 +153,17 @@ def exempt_studio_from_rate_limit():
         pass
 
 
+# 서버 시작 시간 (캐시 무력화용 - 서버 재시작 시에만 변경됨)
+VERSION_TIMESTAMP = int(time.time())
+
 # 전역 텍스트 주입
 @app.context_processor
 def inject_text():
-    from datetime import datetime
-
     return {
         "text": CONTENT_CACHE,
         "t": get_text,
         "csrf_token": generate_csrf_token,
-        "timestamp": int(datetime.now().timestamp()),  # 캐시 무력화용 타임스탬프
+        "timestamp": VERSION_TIMESTAMP,  # 매번 바뀌지 않고 서버 재시작 시에만 갱신
     }
 
 
