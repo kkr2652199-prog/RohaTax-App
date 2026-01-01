@@ -87,10 +87,26 @@ def check_network_connections():
     """네트워크 연결 확인"""
     print("\n[8단계] 활성 네트워크 연결 수")
     print("-" * 60)
-    established, _ = run_command("netstat -an | grep ESTABLISHED | wc -l")
-    time_wait, _ = run_command("netstat -an | grep TIME_WAIT | wc -l")
-    print(f"ESTABLISHED 연결 수: {established}")
-    print(f"TIME_WAIT 연결 수: {time_wait}")
+    # ss 명령어 우선 사용 (더 현대적이고 대부분의 리눅스에 기본 설치됨)
+    established, code1 = run_command("ss -an | grep ESTABLISHED | wc -l")
+    if code1 != 0:
+        # ss가 없으면 netstat 시도
+        established, code1 = run_command("netstat -an | grep ESTABLISHED | wc -l")
+    
+    time_wait, code2 = run_command("ss -an | grep TIME_WAIT | wc -l")
+    if code2 != 0:
+        # ss가 없으면 netstat 시도
+        time_wait, code2 = run_command("netstat -an | grep TIME_WAIT | wc -l")
+    
+    if code1 == 0 and code2 == 0:
+        print(f"ESTABLISHED 연결 수: {established}")
+        print(f"TIME_WAIT 연결 수: {time_wait}")
+    else:
+        print("⚠️  netstat 또는 ss 명령어를 찾을 수 없습니다")
+        print("   네트워크 연결 확인을 건너뜁니다")
+        established = "0"
+        time_wait = "0"
+    
     return established, time_wait
 
 def check_database():

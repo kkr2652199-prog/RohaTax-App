@@ -54,8 +54,17 @@ echo ""
 # 8. 네트워크 연결 확인 (많은 연결이 있으면 문제)
 echo "[8단계] 활성 네트워크 연결 수"
 echo "----------------------------------------"
-echo "ESTABLISHED 연결 수: $(netstat -an | grep ESTABLISHED | wc -l)"
-echo "TIME_WAIT 연결 수: $(netstat -an | grep TIME_WAIT | wc -l)"
+# netstat 대신 ss 명령어 사용 (더 현대적이고 대부분의 리눅스에 기본 설치됨)
+if command -v ss &> /dev/null; then
+    echo "ESTABLISHED 연결 수: $(ss -an | grep ESTABLISHED | wc -l)"
+    echo "TIME_WAIT 연결 수: $(ss -an | grep TIME_WAIT | wc -l)"
+elif command -v netstat &> /dev/null; then
+    echo "ESTABLISHED 연결 수: $(netstat -an | grep ESTABLISHED | wc -l)"
+    echo "TIME_WAIT 연결 수: $(netstat -an | grep TIME_WAIT | wc -l)"
+else
+    echo "⚠️  netstat 또는 ss 명령어를 찾을 수 없습니다"
+    echo "   네트워크 연결 확인을 건너뜁니다"
+fi
 echo ""
 
 # 9. 데이터베이스 파일 크기 및 잠금 확인
