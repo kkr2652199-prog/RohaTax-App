@@ -83,6 +83,8 @@ def kweon21_app(path=""):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+    # iframe에서 로드할 수 있도록 X-Frame-Options 설정
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
 
