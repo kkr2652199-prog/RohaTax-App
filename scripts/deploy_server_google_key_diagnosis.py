@@ -114,11 +114,27 @@ def check_environment_variables():
     if google_key:
         print(f"   길이: {len(google_key)}")
         print(f"   앞 10자: {google_key[:10]}...")
+        print(f"   뒤 10자: ...{google_key[-10:]}")
+        # API 키 형식 검증
+        if google_key.startswith('AIzaSy'):
+            print(f"   형식: ✅ 유효 (AIzaSy로 시작)")
+        elif len(google_key) >= 20:
+            print(f"   형식: ⚠️ 확인 필요 (길이는 충분하지만 AIzaSy로 시작하지 않음)")
+        else:
+            print(f"   형식: ❌ 유효하지 않음 (너무 짧음)")
     
     print(f"\nGEMINI_API_KEY: {'✅ 설정됨' if gemini_key else '❌ 설정 안 됨'}")
     if gemini_key:
         print(f"   길이: {len(gemini_key)}")
         print(f"   앞 10자: {gemini_key[:10]}...")
+        print(f"   뒤 10자: ...{gemini_key[-10:]}")
+        # API 키 형식 검증
+        if gemini_key.startswith('AIzaSy'):
+            print(f"   형식: ✅ 유효 (AIzaSy로 시작)")
+        elif len(gemini_key) >= 20:
+            print(f"   형식: ⚠️ 확인 필요 (길이는 충분하지만 AIzaSy로 시작하지 않음)")
+        else:
+            print(f"   형식: ❌ 유효하지 않음 (너무 짧음)")
     
     # .env 파일 확인
     env_file = PROJECT_ROOT / '.env'
@@ -140,45 +156,72 @@ def check_environment_variables():
 
 
 def test_api_key_retrieval():
-    """실제 _get_api_key 함수 로직 테스트"""
+    """실제 _get_api_key 함수 로직 테스트 (가상환경 사용)"""
     print("\n" + "="*60)
     print("[3단계] API 키 조회 로직 테스트")
     print("="*60)
     
+    # 가상환경 경로 확인
+    venv_path = PROJECT_ROOT / 'venv'
+    venv_python = venv_path / 'bin' / 'python3'
+    
+    if not venv_python.exists():
+        print("⚠️ 가상환경을 찾을 수 없습니다. 직접 테스트를 건너뜁니다.")
+        print("   대신 수동으로 다음 명령어를 실행하세요:")
+        print(f"   source {venv_path}/bin/activate")
+        print(f"   python3 -c \"from routes.playground_routes.studio_api import _get_api_key; print(_get_api_key(2))\"")
+        return
+    
     try:
-        # sys.path에 프로젝트 루트 추가
-        sys.path.insert(0, str(PROJECT_ROOT))
+        import subprocess
         
-        from routes.playground_routes.studio_api import _get_api_key
+        # 가상환경의 Python으로 테스트 스크립트 실행
+        test_script = f"""
+import sys
+sys.path.insert(0, '{PROJECT_ROOT}')
+from routes.playground_routes.studio_api import _get_api_key
+import sqlite3
+
+DB_PATH = '{DB_PATH}'
+conn = sqlite3.connect(DB_PATH)
+conn.row_factory = sqlite3.Row
+cursor = conn.cursor()
+cursor.execute("SELECT id FROM users WHERE COALESCE(is_deleted, 0) = 0 LIMIT 3")
+test_user_ids = [row['id'] for row in cursor.fetchall()]
+conn.close()
+
+print(f"테스트 사용자 ID: {{test_user_ids}}")
+
+for user_id in test_user_ids:
+    try:
+        print(f"[테스트] user_id={{user_id}}에서 API 키 조회 시도...")
+        api_key = _get_api_key(user_id)
+        print(f"✅ 성공! API 키 길이: {{len(api_key)}}, 앞 10자: {{api_key[:10]}}...")
+    except Exception as e:
+        print(f"❌ 실패: {{e}}")
+        import traceback
+        traceback.print_exc()
+"""
         
-        # 데이터베이스에서 사용자 ID 가져오기
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM users WHERE COALESCE(is_deleted, 0) = 0 LIMIT 3")
-        test_user_ids = [row['id'] for row in cursor.fetchall()]
-        conn.close()
+        result = subprocess.run(
+            [str(venv_python), '-c', test_script],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT)
+        )
         
-        if not test_user_ids:
-            print("⚠️ 테스트할 사용자가 없습니다.")
-            return
-        
-        print(f"\n테스트 사용자 ID: {test_user_ids}\n")
-        
-        for user_id in test_user_ids:
-            try:
-                print(f"[테스트] user_id={user_id}에서 API 키 조회 시도...")
-                api_key = _get_api_key(user_id)
-                print(f"✅ 성공! API 키 길이: {len(api_key)}, 앞 10자: {api_key[:10]}...")
-            except Exception as e:
-                print(f"❌ 실패: {e}")
-                import traceback
-                traceback.print_exc()
-            print()
+        if result.returncode == 0:
+            print(result.stdout)
+        else:
+            print(f"❌ 테스트 실행 실패:")
+            print(result.stderr)
+            print("\n수동 테스트 방법:")
+            print(f"   source {venv_path}/bin/activate")
+            print(f"   python3 -c \"from routes.playground_routes.studio_api import _get_api_key; print(_get_api_key(2))\"")
             
-    except ImportError as e:
-        print(f"❌ 모듈 import 실패: {e}")
-        print("   프로젝트 루트 경로 확인 필요")
+    except subprocess.TimeoutExpired:
+        print("⚠️ 테스트 실행 시간 초과")
     except Exception as e:
         print(f"❌ 테스트 중 오류 발생: {e}")
         import traceback
