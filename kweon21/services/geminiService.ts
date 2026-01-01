@@ -1,9 +1,7 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { ColorTheme, GeneratedContent, SupplementaryInfo } from '../types';
+import { ColorTheme, GeneratedContent } from '../types';
 
-// ✅ BYOK 모델: 서버 API를 통해 사용자 API 키 가져오기
+// ✅ BYOK 모델: 서버 API를 통해 사용자 API 키 가져오기 (캐싱용)
 let cachedApiKey: string | null = null;
-let cachedAiInstance: GoogleGenAI | null = null;
 
 /**
  * 사용자 API 키를 서버에서 가져오는 함수
@@ -57,7 +55,6 @@ async function getUserApiKey(): Promise<string> {
 
     // 캐시에 저장
     cachedApiKey = data.api_key;
-    cachedAiInstance = new GoogleGenAI({ apiKey: cachedApiKey });
     console.log('[getUserApiKey] API 키 캐시 완료');
     return cachedApiKey;
   } catch (error) {
@@ -71,61 +68,46 @@ async function getUserApiKey(): Promise<string> {
   }
 }
 
-/**
- * GoogleGenAI 인스턴스를 가져오는 함수
- * @returns GoogleGenAI 인스턴스
- */
-async function getAiInstance(): Promise<GoogleGenAI> {
-  if (cachedAiInstance) {
-    return cachedAiInstance;
-  }
-
-  await getUserApiKey();
-  if (!cachedAiInstance) {
-    throw new Error('AI 인스턴스 초기화 실패');
-  }
-  return cachedAiInstance;
-}
-
+// ✅ responseSchema 정의 (서버 API 호출 시 파라미터로 전달)
 const responseSchema = {
-    type: Type.OBJECT,
+    type: 'object',
     properties: {
         blogPostHtml: {
-            type: Type.STRING,
+            type: 'string',
             description: "The full HTML content of the blog post with inline styles."
         },
         supplementaryInfo: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
                 keywords: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING },
+                    type: 'array',
+                    items: { type: 'string' },
                     description: "An array of 10 relevant SEO keywords."
                 },
                 imagePrompt: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A detailed DALL-E prompt in English to generate a featured image."
                 },
                 altText: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A concise, descriptive alt text in Korean for the featured image, optimized for SEO and accessibility."
                 },
                 seoTitles: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING },
+                    type: 'array',
+                    items: { type: 'string' },
                     description: "블로그 썸네일에 사용하기 적합한, 강력하고 요약된 제목 5개의 배열입니다. 제목은 간결하고 시선을 사로잡아야 합니다. 썸네일에서의 더 나은 시각적 구성을 위해, 제안하는 줄바꿈 위치에 슬래시('/')를 사용해주세요."
                 },
                 subImagePrompts: {
-                    type: Type.ARRAY,
+                    type: 'array',
                     items: {
-                        type: Type.OBJECT,
+                        type: 'object',
                         properties: {
                             prompt: {
-                                type: Type.STRING,
+                                type: 'string',
                                 description: "A detailed DALL-E prompt in English for a sub-image."
                             },
                             altText: {
-                                type: Type.STRING,
+                                type: 'string',
                                 description: "A concise, descriptive alt text in Korean for the sub-image, optimized for SEO and accessibility. It should be directly related to the topic."
                             }
                         },
@@ -137,22 +119,22 @@ const responseSchema = {
             required: ["keywords", "imagePrompt", "altText", "seoTitles", "subImagePrompts"]
         },
         socialMediaPosts: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
                 threads: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A short, engaging post for Threads in Korean, written in an informal 'ban-mal' tone. Must include emojis, encourage conversation, contain exactly one relevant hashtag, and use line breaks for readability."
                 },
                 instagram: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A visually-focused caption for Instagram in Korean with line breaks for readability. It must include 5-10 relevant hashtags and a call-to-action."
                 },
                 facebook: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A slightly longer post for Facebook in Korean that summarizes the blog post, using line breaks to separate paragraphs. It should encourage shares and comments."
                 },
                 x: {
-                    type: Type.STRING,
+                    type: 'string',
                     description: "A concise post for X (formerly Twitter) in Korean, under 280 characters, with line breaks for readability. It must include 2-3 key hashtags and a link placeholder [BLOG_POST_LINK]."
                 }
             },
@@ -163,10 +145,10 @@ const responseSchema = {
 };
 
 const regenerationResponseSchema = {
-    type: Type.OBJECT,
+    type: 'object',
     properties: {
         blogPostHtml: {
-            type: Type.STRING,
+            type: 'string',
             description: "The full, revised HTML content of the blog post with inline styles, based on the user's feedback."
         }
     },
@@ -358,95 +340,86 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, errorMessa
     ]);
 };
 
-// ✅ Rate Limit 재시도 로직 포함 이미지 생성
+// ✅ Rate Limit 재시도 로직 포함 이미지 생성 (서버 프록시 사용)
 export const generateImage = async (prompt: string, aspectRatio: '16:9' | '1:1' = '16:9', maxRetries = 3): Promise<string | null> => {
     if (!prompt) return null;
 
-    const ai = await getAiInstance();
+    const startTime = Date.now();
+    console.log(`🖼️ [generateImage] 이미지 생성 시도 (서버 프록시)...`);
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-            console.log(`🖼️ 이미지 생성 시도 ${attempt + 1}/${maxRetries}...`);
-            
-            // ✅ 타임아웃 60초 설정
-            const imageResponse = await withTimeout(
-                ai.models.generateImages({
-                    model: 'imagen-4.0-generate-001',
+    try {
+        const response = await fetch('/api/studio/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                action: 'generateImage',
+                params: {
                     prompt: prompt,
-                    config: {
-                        numberOfImages: 1,
-                        outputMimeType: 'image/jpeg',
-                        aspectRatio: aspectRatio,
-                    },
-                }),
-                60000,
-                'Image generation timeout (60s)'
-            );
-
-            if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
-                console.log(`✅ 이미지 생성 성공!`);
-                return imageResponse.generatedImages[0].image.imageBytes;
-            }
-            return null;
-            
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.error(`❌ 이미지 생성 실패 (시도 ${attempt + 1}):`, errorMessage);
-            
-            // Rate Limit 또는 타임아웃 감지
-            const isRateLimit = errorMessage.includes('429') || 
-                               errorMessage.includes('Rate limit') || 
-                               errorMessage.includes('quota');
-            const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout');
-            
-            // 마지막 시도가 아니면 재시도
-            if (attempt < maxRetries - 1 && (isRateLimit || isTimeout)) {
-                const waitTime = isRateLimit ? 5000 * (attempt + 1) : 3000;
-                console.log(`⏳ ${waitTime/1000}초 후 재시도...`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-                continue;
-            }
-            
-            // 최종 실패
-            if (attempt === maxRetries - 1) {
-                if (isRateLimit) {
-                    throw new Error('이미지 생성 할당량 초과. 잠시 후 다시 시도해주세요.');
-                } else if (isTimeout) {
-                    throw new Error('이미지 생성 시간 초과. 네트워크를 확인해주세요.');
-                } else {
-                    throw new Error(`이미지 생성 실패: ${errorMessage}`);
+                    aspectRatio: aspectRatio
                 }
-            }
+            })
+        });
+
+        const elapsedTime = Date.now() - startTime;
+        console.log(`🖼️ [generateImage] 서버 응답 수신 (${elapsedTime}ms), 상태: ${response.status}`);
+
+        if (!response.ok) {
+            throw new Error(`이미지 생성 서버 오류: ${response.status}`);
         }
+
+        const data = await response.json();
+        if (!data.success || !data.data || !data.data.imageBytes) {
+            throw new Error(data.error || '이미지 생성 실패');
+        }
+
+        console.log(`✅ [generateImage] 이미지 생성 성공!`);
+        return data.data.imageBytes;
+        
+    } catch (error) {
+        console.error(`❌ [generateImage] 최종 실패:`, error);
+        throw error;
     }
-    return null;
 };
 
 
 export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldGenerateImage: boolean, shouldGenerateSubImages: boolean, interactiveElementIdea: string | null, rawContent: string | null, additionalRequest: string | null, aspectRatio: '16:9' | '1:1', currentDate: string): Promise<GeneratedContent> => {
+  const startTime = Date.now();
   try {
-    console.log('📝 블로그 포스트 생성 시작...');
-    const ai = await getAiInstance();
+    console.log('📝 [generateBlogPost] 블로그 포스트 생성 시작 (서버 프록시)...');
+    
     const prompt = getPrompt(topic, theme, interactiveElementIdea, rawContent, additionalRequest, currentDate);
     
-    // ✅ 타임아웃 90초 설정 (긴 콘텐츠 생성 고려)
-    const contentResponse = await withTimeout(
-        ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: responseSchema,
-            },
-        }),
-        90000,
-        '블로그 포스트 생성 시간 초과 (90초). 네트워크를 확인하거나 더 짧은 주제로 시도해주세요.'
-    );
-    
-    console.log('✅ 블로그 콘텐츠 생성 완료!');
+    const response = await fetch('/api/studio/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+            action: 'generate',
+            params: {
+                prompt: prompt,
+                responseSchema: responseSchema
+            }
+        })
+    });
 
-    const jsonString = contentResponse.text;
-    const parsedJson = JSON.parse(jsonString);
+    const elapsedTime = Date.now() - startTime;
+    console.log(`📝 [generateBlogPost] 서버 응답 수신 (${elapsedTime}ms), 상태: ${response.status}`);
+
+    if (!response.ok) {
+        throw new Error(`포스트 생성 서버 오류: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.data) {
+        throw new Error(data.error || '포스트 생성 실패');
+    }
+
+    const parsedJson = data.data;
 
     if (
         !parsedJson.blogPostHtml ||
@@ -458,23 +431,22 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
         !Array.isArray(parsedJson.supplementaryInfo.subImagePrompts) ||
         !parsedJson.socialMediaPosts
     ) {
-        throw new Error("Received malformed JSON response from API for content generation.");
+        throw new Error("서버에서 잘못된 형식의 JSON 응답을 받았습니다.");
     }
     
     // ✅ 대표 이미지 생성
     let imageBase64: string | null = null;
     if (shouldGenerateImage) {
         try {
-            console.log('📸 대표 이미지 생성 중...');
+            console.log('📸 [generateBlogPost] 대표 이미지 생성 중...');
             imageBase64 = await generateImage(parsedJson.supplementaryInfo.imagePrompt, aspectRatio);
         } catch (error) {
-            console.error('대표 이미지 생성 실패:', error);
-            // 이미지 실패해도 포스트는 계속 생성
+            console.error('[generateBlogPost] 대표 이미지 생성 실패:', error);
             imageBase64 = null;
         }
     }
     
-    // ✅ 서브 이미지 순차 생성 (Rate Limit 방지)
+    // ✅ 서브 이미지 순차 생성
     let subImages: { prompt: string; altText: string; base64: string | null }[] | null = null;
     if (parsedJson.supplementaryInfo.subImagePrompts && parsedJson.supplementaryInfo.subImagePrompts.length > 0) {
         const subImagePromptObjects: { prompt: string; altText: string }[] = parsedJson.supplementaryInfo.subImagePrompts;
@@ -482,25 +454,22 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
         const subImageBase64s: (string | null)[] = [];
         
         if (shouldGenerateSubImages) {
-            console.log(`🖼️ 서브 이미지 ${subImagePromptObjects.length}개 순차 생성 시작...`);
+            console.log(`🖼️ [generateBlogPost] 서브 이미지 ${subImagePromptObjects.length}개 순차 생성 시작...`);
             
             for (let i = 0; i < subImagePromptObjects.length; i++) {
                 try {
-                    console.log(`📸 서브 이미지 ${i + 1}/${subImagePromptObjects.length} 생성 중...`);
+                    console.log(`📸 [generateBlogPost] 서브 이미지 ${i + 1}/${subImagePromptObjects.length} 생성 중...`);
                     const img = await generateImage(subImagePromptObjects[i].prompt, '16:9');
                     subImageBase64s.push(img);
                     
-                    // Rate Limit 방지: 각 이미지 사이 2초 대기
                     if (i < subImagePromptObjects.length - 1) {
-                        console.log('⏳ Rate Limit 방지를 위해 2초 대기...');
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 } catch (error) {
-                    console.error(`서브 이미지 ${i + 1} 생성 실패:`, error);
-                    subImageBase64s.push(null); // 실패해도 계속 진행
+                    console.error(`[generateBlogPost] 서브 이미지 ${i + 1} 생성 실패:`, error);
+                    subImageBase64s.push(null);
                 }
             }
-            console.log(`✅ 서브 이미지 생성 완료 (성공: ${subImageBase64s.filter(img => img !== null).length}개)`);
         } else {
             subImageBase64s.push(...subImagePromptObjects.map(() => null));
         }
@@ -525,121 +494,54 @@ export const generateBlogPost = async (topic: string, theme: ColorTheme, shouldG
   } catch (error) {
     console.error("Error generating blog post:", error);
     if (error instanceof Error) {
-        throw new Error(`Failed to generate content: ${error.message}`);
+        throw new Error(`블로그 생성 실패: ${error.message}`);
     }
-    throw new Error("An unknown error occurred while generating the blog post.");
+    throw new Error("블로그 생성 중 알 수 없는 오류가 발생했습니다.");
   }
 };
 
 export const regenerateBlogPostHtml = async (originalHtml: string, feedback: string, theme: ColorTheme, currentDate: string): Promise<string> => {
+    const startTime = Date.now();
     try {
-        console.log('🔄 블로그 포스트 재생성 시작...');
-        const ai = await getAiInstance();
+        console.log('🔄 [regenerateBlogPostHtml] 블로그 포스트 재생성 시작 (서버 프록시)...');
+        
         const prompt = getRegenerationPrompt(originalHtml, feedback, theme, currentDate);
         
-        // ✅ 타임아웃 90초 설정
-        const contentResponse = await withTimeout(
-            ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: regenerationResponseSchema,
-                },
-            }),
-            90000,
-            '블로그 포스트 재생성 시간 초과 (90초). 네트워크를 확인해주세요.'
-        );
-        
-        console.log('✅ 블로그 포스트 재생성 완료!');
+        const response = await fetch('/api/studio/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                action: 'regenerate',
+                params: {
+                    prompt: prompt,
+                    responseSchema: regenerationResponseSchema
+                }
+            })
+        });
 
-        const jsonString = contentResponse.text;
-        const parsedJson = JSON.parse(jsonString);
+        const elapsedTime = Date.now() - startTime;
+        console.log(`🔄 [regenerateBlogPostHtml] 서버 응답 수신 (${elapsedTime}ms), 상태: ${response.status}`);
 
-        if (!parsedJson.blogPostHtml) {
-            throw new Error("Received malformed JSON response from API for content regeneration.");
+        if (!response.ok) {
+            throw new Error(`재생성 서버 오류: ${response.status}`);
         }
 
-        return parsedJson.blogPostHtml;
+        const data = await response.json();
+        if (!data.success || !data.data || !data.data.blogPostHtml) {
+            throw new Error(data.error || '재생성 실패');
+        }
+
+        return data.data.blogPostHtml;
 
     } catch (error) {
         console.error("Error regenerating blog post HTML:", error);
         if (error instanceof Error) {
-            throw new Error(`Failed to regenerate content: ${error.message}`);
+            throw new Error(`재생성 실패: ${error.message}`);
         }
-        throw new Error("An unknown error occurred while regenerating the blog post.");
-    }
-};
-
-const topicSuggestionSchema = {
-    type: Type.OBJECT,
-    properties: {
-        topics: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "An array of 10 creative and SEO-optimized blog post topics in Korean."
-        }
-    },
-    required: ["topics"]
-};
-
-const generateTopics = async (prompt: string, useSearch: boolean = false): Promise<string[]> => {
-    try {
-        const config: {
-            responseMimeType?: "application/json",
-            responseSchema?: typeof topicSuggestionSchema,
-            tools?: {googleSearch: {}}[],
-            temperature?: number;
-        } = {};
-        
-        if (useSearch) {
-             config.tools = [{googleSearch: {}}];
-        } else {
-             config.responseMimeType = "application/json";
-             config.responseSchema = topicSuggestionSchema;
-        }
-
-        config.temperature = 1.0;
-        
-        const ai = await getAiInstance();
-        const enhancedPrompt = `${prompt}\n\n(This is a new request. Please generate a completely new and different set of suggestions. Random seed: ${Math.random()})`;
-
-        // ✅ 타임아웃 30초 설정 (주제 생성은 빠름)
-        const response = await withTimeout(
-            ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: enhancedPrompt,
-                config: config,
-            }),
-            30000,
-            '주제 생성 시간 초과 (30초). 네트워크를 확인해주세요.'
-        );
-
-        if (useSearch) {
-            const text = response.text;
-            // When using googleSearch, the output is not guaranteed to be JSON.
-            // We'll parse it as a simple newline-separated list.
-            let lines = text.split('\n').map(topic => topic.trim()).filter(Boolean);
-            // Heuristically remove a potential introductory sentence.
-            if (lines.length > 1 && (lines[0].includes('다음은') || lines[0].endsWith('입니다.') || lines[0].endsWith('입니다:'))) {
-                lines.shift();
-            }
-            return lines.map(topic => topic.replace(/^(\d+\.|-|\*)\s*/, '').trim()).filter(Boolean);
-        }
-
-        const jsonString = response.text;
-        const parsedJson = JSON.parse(jsonString);
-
-        if (!parsedJson.topics || !Array.isArray(parsedJson.topics)) {
-            throw new Error("Received malformed JSON response from API for topic suggestion.");
-        }
-        return parsedJson.topics;
-    } catch (error) {
-        console.error("Error generating topics:", error);
-        if (error instanceof Error) {
-            throw new Error(`Failed to generate topics: ${error.message}`);
-        }
-        throw new Error("An unknown error occurred while generating topics.");
+        throw new Error("재생성 중 알 수 없는 오류가 발생했습니다.");
     }
 };
 
@@ -824,30 +726,43 @@ export const generateTopicsFromMemo = async (memo: string, currentDate: string):
 };
 
 export const suggestInteractiveElementForTopic = async (topic: string): Promise<string> => {
-    const prompt = `
-        You are a creative web developer and UI/UX designer.
-        For the blog post topic "${topic}", suggest a single, simple, and engaging interactive element idea that can be implemented using only HTML, CSS, and vanilla JavaScript.
-        The idea should be concise and described in a single sentence in Korean.
-        For example: "간단한 투자 수익률을 계산해주는 계산기" or "나에게 맞는 커피 원두를 추천해주는 퀴즈".
-        Just return the idea itself, without any introductory phrases.
-    `;
-
+    const startTime = Date.now();
     try {
-        // ✅ 기술 복원: gpt-park의 직접 호출 방식
-        const ai = await getAiInstance();
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                temperature: 0.8,
+        console.log('💡 [suggestInteractiveElementForTopic] 인터랙티브 요소 제안 시작 (서버 프록시)...');
+        
+        const response = await fetch('/api/studio/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
+            credentials: 'include',
+            body: JSON.stringify({
+                action: 'suggestInteractiveElement',
+                params: {
+                    topic: topic
+                }
+            })
         });
-        return response.text.trim();
+
+        const elapsedTime = Date.now() - startTime;
+        console.log(`💡 [suggestInteractiveElementForTopic] 서버 응답 수신 (${elapsedTime}ms), 상태: ${response.status}`);
+
+        if (!response.ok) {
+            throw new Error(`제안 서버 오류: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.data || !data.data.suggestion) {
+            throw new Error(data.error || '제안 실패');
+        }
+
+        return data.data.suggestion;
+
     } catch (error) {
         console.error("Error suggesting interactive element:", error);
         if (error instanceof Error) {
-            throw new Error(`Failed to suggest interactive element: ${error.message}`);
+            throw new Error(`인터랙티브 요소 제안 실패: ${error.message}`);
         }
-        throw new Error("An unknown error occurred while suggesting an interactive element.");
+        throw new Error("인터랙티브 요소 제안 중 알 수 없는 오류가 발생했습니다.");
     }
 };

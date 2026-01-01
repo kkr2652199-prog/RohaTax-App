@@ -1,50 +1,28 @@
 
 import type { WeatherData, SearchSource, KeywordData, BlogPostData, NaverNewsData, GoogleSerpData, PaaItem, KeywordMetrics, GeneratedTopic, BlogStrategyReportData, RecommendedKeyword, SustainableTopicCategory, SerpStrategyReportData, NewsStrategyIdea } from '../types';
-import { GoogleGenAI, Type } from "@google/genai";
 
-// ✅ BYOK 모델: 서버 API를 통해 사용자 API 키 가져오기
+// ✅ BYOK 모델: 서버 API를 통해 사용자 API 키 가져오기 (캐싱용)
 let cachedApiKey: string | null = null;
-let cachedAiInstance: GoogleGenAI | null = null;
 
 /**
  * 사용자 API 키를 서버에서 가져오는 함수
- * @returns 사용자 API 키 또는 null
  */
 async function getUserApiKey(): Promise<string> {
-  // 캐시된 키가 있으면 반환
-  if (cachedApiKey) {
-    return cachedApiKey;
-  }
+  if (cachedApiKey) return cachedApiKey;
 
   try {
     console.log('[keywordService] API 키 조회 시작...');
     const response = await fetch('/api/user/apikey', {
       method: 'GET',
       credentials: 'include',
-      // ✅ 타임아웃 10초 설정
       signal: AbortSignal.timeout(10000)
     });
     
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('로그인이 필요합니다');
-      }
-      throw new Error(`API 키 조회 실패: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`API 키 조회 실패: ${response.status}`);
     const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || 'API 키 조회 실패');
-    }
+    if (!data.success || !data.api_key) throw new Error(data.error || 'API 키 없음');
 
-    if (!data.api_key || !data.has_key) {
-      throw new Error('API 키가 등록되지 않았습니다');
-    }
-
-    // 캐시에 저장
     cachedApiKey = data.api_key;
-    cachedAiInstance = new GoogleGenAI({ apiKey: cachedApiKey });
-    console.log('[keywordService] API 키 캐시 완료');
     return cachedApiKey;
   } catch (error) {
     console.error('[keywordService] API 키 가져오기 실패:', error);
@@ -53,30 +31,34 @@ async function getUserApiKey(): Promise<string> {
 }
 
 /**
- * GoogleGenAI 인스턴스를 가져오는 함수
- * @returns GoogleGenAI 인스턴스
+ * 서버 AI 프록시 호출 함수
  */
-async function getAiInstance(): Promise<GoogleGenAI> {
-  if (cachedAiInstance) {
-    return cachedAiInstance;
-  }
+async function _callAiProxy(prompt: string, model: string = 'gemini-1.5-flash', config: any = {}): Promise<string> {
+    const startTime = Date.now();
+    console.log(`🌐 [_callAiProxy] AI 호출 시작 (model: ${model})...`);
+    
+    try {
+        const response = await fetch('/api/studio/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                action: 'proxyAI',
+                params: { prompt, model, config }
+            })
+        });
 
-  await getUserApiKey();
-  if (!cachedAiInstance) {
-    throw new Error('AI 인스턴스 초기화 실패');
-  }
-  return cachedAiInstance;
+        if (!response.ok) throw new Error(`AI 프록시 오류: ${response.status}`);
+        const data = await response.json();
+        if (!data.success || !data.data || !data.data.text) throw new Error(data.error || 'AI 응답 데이터 없음');
+
+        console.log(`✅ [_callAiProxy] AI 호출 성공 (${Date.now() - startTime}ms)`);
+        return data.data.text;
+    } catch (error) {
+        console.error(`❌ [_callAiProxy] AI 호출 실패:`, error);
+        throw error;
+    }
 }
-
-// ✅ 타임아웃 헬퍼 함수
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
-    return Promise.race([
-        promise,
-        new Promise<T>((_, reject) => 
-            setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
-        )
-    ]);
-};
 
 /**
  * Extracts and parses a JSON object from a string that may contain markdown and other text.
@@ -162,7 +144,6 @@ function extractJsonFromText(text: string): any {
 }
 
 export const fetchCurrentWeather = async (): Promise<WeatherData> => {
-    // ✅ 기술 복원: gpt-park의 작동하는 날씨 정보 로직
     const prompt = `
     오늘 서울의 현재 날씨를 Google 검색을 사용해서 알려주세요. 
     온도, 날씨 상태(예: 맑음, 구름 많음), 풍속, 습도를 포함해야 합니다. 
@@ -179,109 +160,81 @@ export const fetchCurrentWeather = async (): Promise<WeatherData> => {
     `.trim();
 
     try {
-        const ai = await getAiInstance();
-        // ✅ 타임아웃 20초 설정
-        const response = await withTimeout(
-            ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-                config: {
-                    tools: [{ googleSearch: {} }],
-                }
-            }),
-            20000,
-            '날씨 정보 조회 시간 초과 (20초)'
-        );
-        const parsed = extractJsonFromText(response.text);
+        const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { tools: [{ googleSearch: {} }] });
+        const parsed = extractJsonFromText(text);
         if (parsed.temperature && parsed.condition && parsed.wind && parsed.humidity) {
             return parsed as WeatherData;
         } else {
             throw new Error('AI 응답이 날씨 데이터 형식이 아닙니다.');
         }
     } catch (error) {
-        console.error("날씨 정보 조회 중 Gemini API 오류:", error);
-        if (error instanceof Error) {
-            throw new Error(`실시간 날씨 정보를 가져오는 데 실패했습니다: ${error.message}`);
-        }
-        throw new Error("실시간 날씨 정보를 가져오는 데 실패했습니다.");
+        console.error("날씨 정보 조회 오류:", error);
+        throw error;
     }
 };
 
-// FIX: Implemented all missing functions to resolve export errors.
-
 export const generateTopicsFromMainKeyword = async (mainKeyword: string): Promise<GeneratedTopic[]> => {
-    const ai = await getAiInstance();
     const prompt = `"${mainKeyword}" 키워드 하나만을 사용하여, SEO에 최적화된 블로그 포스트 주제 3개를 생성해주세요. 각 주제에는 id(1부터 시작), title, thumbnailCopy(썸네일 문구), strategy(구체적인 공략법)가 포함되어야 합니다. JSON 배열 형식으로만 응답해주세요.`;
     const responseSchema = {
-        type: Type.ARRAY,
+        type: 'array',
         items: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-                id: { type: Type.INTEGER },
-                title: { type: Type.STRING },
-                thumbnailCopy: { type: Type.STRING },
-                strategy: { type: Type.STRING },
+                id: { type: 'integer' },
+                title: { type: 'string' },
+                thumbnailCopy: { type: 'string' },
+                strategy: { type: 'string' },
             },
             required: ['id', 'title', 'thumbnailCopy', 'strategy'],
         }
     };
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json", responseSchema }
-    });
-    return JSON.parse(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { responseMimeType: "application/json", responseSchema });
+    return JSON.parse(text);
 };
 
 export const generateTopicsFromAllKeywords = async (mainKeyword: string, relatedKeywords: string[]): Promise<GeneratedTopic[]> => {
-    const ai = await getAiInstance();
     const prompt = `메인 키워드 "${mainKeyword}"와 연관 키워드 [${relatedKeywords.join(', ')}]를 조합하여, SEO에 최적화된 블로그 포스트 주제 3개를 생성해주세요. 각 주제에는 id(1부터 시작), title, thumbnailCopy(썸네일 문구), strategy(구체적인 공략법)가 포함되어야 합니다. JSON 배열 형식으로만 응답해주세요.`;
     const responseSchema = {
-        type: Type.ARRAY,
+        type: 'array',
         items: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-                id: { type: Type.INTEGER },
-                title: { type: Type.STRING },
-                thumbnailCopy: { type: Type.STRING },
-                strategy: { type: Type.STRING },
+                id: { type: 'integer' },
+                title: { type: 'string' },
+                thumbnailCopy: { type: 'string' },
+                strategy: { type: 'string' },
             },
             required: ['id', 'title', 'thumbnailCopy', 'strategy'],
         }
     };
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json", responseSchema }
-    });
-    return JSON.parse(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { responseMimeType: "application/json", responseSchema });
+    return JSON.parse(text);
 };
 
 export const generateBlogStrategy = async (mainKeyword: string, blogPosts: BlogPostData[]): Promise<BlogStrategyReportData> => {
-    const ai = await getAiInstance();
     const postTitles = blogPosts.map(p => p.title).join('\n');
     const prompt = `메인 키워드 "${mainKeyword}"에 대한 상위 블로그 포스트 제목들입니다:\n${postTitles}\n\n이 제목들을 분석하여 다음 정보를 포함하는 공략 리포트를 생성해주세요:\n- analysis: { structure, characteristics, commonKeywords } - 제목들의 구조적/감성적 특징 및 공통 키워드 분석.\n- suggestions: 1위를 공략하기 위한 새로운 블로그 주제 제안 3개 (id, title, thumbnailCopy, strategy 포함). JSON 형식으로만 응답해주세요.`;
     const responseSchema = {
-        type: Type.OBJECT,
+        type: 'object',
         properties: {
             analysis: {
-                type: Type.OBJECT,
+                type: 'object',
                 properties: {
-                    structure: { type: Type.STRING },
-                    characteristics: { type: Type.STRING },
-                    commonKeywords: { type: Type.STRING },
+                    structure: { type: 'string' },
+                    characteristics: { type: 'string' },
+                    commonKeywords: { type: 'string' },
                 },
                 required: ['structure', 'characteristics', 'commonKeywords'],
             },
             suggestions: {
-                type: Type.ARRAY,
+                type: 'array',
                 items: {
-                    type: Type.OBJECT,
+                    type: 'object',
                     properties: {
-                        id: { type: Type.INTEGER },
-                        title: { type: Type.STRING },
-                        thumbnailCopy: { type: Type.STRING },
-                        strategy: { type: Type.STRING },
+                        id: { type: 'integer' },
+                        title: { type: 'string' },
+                        thumbnailCopy: { type: 'string' },
+                        strategy: { type: 'string' },
                     },
                     required: ['id', 'title', 'thumbnailCopy', 'strategy'],
                 }
@@ -289,108 +242,64 @@ export const generateBlogStrategy = async (mainKeyword: string, blogPosts: BlogP
         },
         required: ['analysis', 'suggestions'],
     };
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json", responseSchema }
-    });
-    return JSON.parse(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { responseMimeType: "application/json", responseSchema });
+    return JSON.parse(text);
 };
 
 export const fetchRecommendedKeywords = async (): Promise<RecommendedKeyword[]> => {
-    const ai = await getAiInstance();
     const prompt = `오늘 날짜를 기준으로 대한민국에서 블로그 주제로 다루기 좋은 최신 이슈 키워드 4개를 추천해주세요. 구글 검색을 활용하여 실시간 트렌드를 반영해야 합니다. 각 키워드에는 id, keyword, reason(선정 이유), title(추천 블로그 제목), thumbnailCopy, strategy가 포함되어야 합니다. JSON 배열 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { tools: [{ googleSearch: {} }] });
+    return extractJsonFromText(text);
 };
 
 export const generateSustainableTopics = async (keyword: string): Promise<SustainableTopicCategory[]> => {
-    const ai = await getAiInstance();
     const prompt = `"${keyword}"라는 하나의 키워드를 가지고, 4가지 다른 관점(초보자 가이드, 심층 분석, 문제 해결, 최신 트렌드)에서 블로그 주제를 발굴해주세요. 각 카테고리별로 3개의 주제를 제안해야 합니다. 각 주제에는 title, keywords(관련 키워드 배열), strategy가 포함되어야 합니다. JSON 배열(SustainableTopicCategory[]) 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash');
+    return extractJsonFromText(text);
 };
 
 export const generateSerpStrategy = async (mainKeyword: string, serpData: GoogleSerpData): Promise<SerpStrategyReportData> => {
-    const ai = await getAiInstance();
     const prompt = `메인 키워드 "${mainKeyword}"와 SERP 데이터(${JSON.stringify(serpData)})를 기반으로 콘텐츠 전략 리포트를 생성해주세요. analysis(핵심 사용자 의도 분석 및 필러 포스트 제안)와 suggestions(콘텐츠 갭을 공략할 주제 3개)를 포함해야 합니다. JSON 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash');
+    return extractJsonFromText(text);
 };
 
 export const generateStrategyFromNews = async (news: NaverNewsData[]): Promise<NewsStrategyIdea[]> => {
-    const ai = await getAiInstance();
     const newsTitles = news.map(n => n.title).join('\n');
     const prompt = `다음 최신 뉴스 제목들을 기반으로, 블로거가 시의성 있게 다룰 수 있는 블로그 포스트 아이디어 3개를 제안해주세요.\n${newsTitles}\n\n각 아이디어는 id, title, keywords(핵심 키워드 배열), strategy(콘텐츠 전략)를 포함해야 합니다. JSON 배열 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash');
+    return extractJsonFromText(text);
 };
 
 export const generateRelatedKeywords = async (keyword: string): Promise<GoogleSerpData> => {
-    const ai = await getAiInstance();
     const prompt = `"${keyword}" 키워드에 대한 Google 검색 결과 페이지(SERP)를 분석하여 다음 정보를 추출해주세요.\n- related_searches: '관련 검색어' 목록에서 8개 추출.\n- people_also_ask: '다른 사람들이 함께 찾는 질문(PAA)' 섹션에서 질문 4개와 그에 대한 간단한 답변, 그리고 해당 질문에 대한 블로그 콘텐츠 갭 분석(공략 포인트)을 제공.\n\nJSON 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { tools: [{ googleSearch: {} }] });
+    return extractJsonFromText(text);
 };
 
 export const fetchRelatedKeywords = async (keyword: string, source: SearchSource): Promise<KeywordData[]> => {
-    const ai = await getAiInstance();
     const prompt = `"${keyword}"에 대한 ${source} 자동완성 연관검색어 10개를 생성해주세요. 다른 설명 없이 JSON 배열 형식(["키워드1", "키워드2", ...])으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    const keywords: string[] = extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash');
+    const keywords: string[] = extractJsonFromText(text);
     return keywords.map((kw, index) => ({ id: index + 1, keyword: kw }));
 };
 
 export const fetchNaverBlogPosts = async (keyword: string, clientId: string, clientSecret: string): Promise<BlogPostData[]> => {
-    const ai = await getAiInstance();
     const prompt = `"${keyword}"에 대한 네이버 블로그 검색 결과 상위 10개를 생성해주세요. 실제 검색 결과처럼 제목, URL, 간단한 설명을 포함해야 합니다. 다른 설명 없이 JSON 배열 형식으로만 응답해주세요. URL은 naver.com 도메인을 사용해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    const parsed = extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash');
+    const parsed = extractJsonFromText(text);
     return parsed.map((item: any, index: number) => ({ ...item, id: index + 1 }));
 };
 
 export const analyzeKeywordCompetition = async (keyword: string): Promise<KeywordMetrics> => {
-    const ai = await getAiInstance();
     const prompt = `당신은 SEO 및 콘텐츠 마케팅 전문가입니다. 키워드 "${keyword}"에 대한 심층적인 경쟁력 분석 리포트를 생성해주세요. Google 검색을 활용하여 최신 데이터를 반영해야 합니다. opportunityScore(0-100), searchVolumeEstimate(0-100), competitionScore(0-100), analysis 객체(title, reason, opportunity, threat, consumptionAndIssues, conclusion), 그리고 opportunityScore가 80 미만일 경우 strategy 객체(expandedKeywords, blogTopics)를 포함해야 합니다. JSON 형식으로만 응답해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
-    });
-    return extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { tools: [{ googleSearch: {} }] });
+    return extractJsonFromText(text);
 };
 
 export const fetchNaverNews = async (keyword: string, clientId: string, clientSecret: string): Promise<NaverNewsData[]> => {
-    const ai = await getAiInstance();
     const prompt = `"${keyword}"에 대한 네이버 뉴스 검색 결과 5개를 생성해주세요. 실제 뉴스처럼 제목, URL, 간단한 설명, 발행일을 포함해야 합니다. 다른 설명 없이 JSON 배열 형식으로만 응답해주세요. URL은 news.naver.com 도메인을 사용해주세요. 발행일은 ISO 8601 형식으로 해주세요.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
-    });
-    const parsed = extractJsonFromText(response.text);
+    const text = await _callAiProxy(prompt, 'gemini-1.5-flash', { tools: [{ googleSearch: {} }] });
+    const parsed = extractJsonFromText(text);
     return parsed.map((item: any, index: number) => ({ ...item, id: index + 1 }));
 };
