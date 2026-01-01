@@ -69,28 +69,52 @@ def _get_api_key(user_id: int) -> str:
     1. 사용자 데이터베이스에서 google_api_key 조회
     2. 없으면 서버 환경변수에서 fallback
     """
+    import sqlite3
     from core.db import get_conn
     
+    # user_id 유효성 검사
+    if not user_id:
+        logger.warning("_get_api_key: user_id가 None이거나 0입니다.")
+        # user_id가 없어도 환경변수에서 가져올 수 있으므로 계속 진행
+    
     # 1. 사용자별 API 키 조회 (BYOK 모델)
-    try:
-        with get_conn() as conn:
-            conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
-            user = conn.execute(
-                "SELECT google_api_key FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
-                (user_id,)
-            ).fetchone()
-            
-            if user and user.get('google_api_key'):
-                api_key = user['google_api_key'].strip()
-                if api_key and api_key.startswith('AIzaSy'):
-                    return api_key
-    except Exception as e:
-        logger.warning(f"사용자 API 키 조회 실패 (user_id={user_id}): {e}")
+    if user_id:
+        try:
+            logger.info(f"[_get_api_key] 사용자 API 키 조회 시작 (user_id={user_id})")
+            with get_conn() as conn:
+                # sqlite3.Row 사용 (더 안정적)
+                conn.row_factory = sqlite3.Row
+                user = conn.execute(
+                    "SELECT google_api_key FROM users WHERE id = ? AND COALESCE(is_deleted, 0) = 0",
+                    (user_id,)
+                ).fetchone()
+                
+                if user:
+                    api_key = user['google_api_key'] if user['google_api_key'] else None
+                    if api_key:
+                        api_key = api_key.strip()
+                        # API 키 유효성 검사 (AIzaSy로 시작하거나 최소 20자 이상)
+                        if api_key and (api_key.startswith('AIzaSy') or len(api_key) >= 20):
+                            logger.info(f"[_get_api_key] 사용자 API 키 발견 (user_id={user_id}, 길이={len(api_key)})")
+                            return api_key
+                        else:
+                            logger.warning(f"[_get_api_key] 사용자 API 키 형식이 올바르지 않음 (user_id={user_id}, 길이={len(api_key) if api_key else 0})")
+                    else:
+                        logger.info(f"[_get_api_key] 사용자 API 키가 NULL (user_id={user_id})")
+                else:
+                    logger.warning(f"[_get_api_key] 사용자를 찾을 수 없음 (user_id={user_id})")
+        except Exception as e:
+            logger.error(f"[_get_api_key] 사용자 API 키 조회 중 예외 발생 (user_id={user_id}): {e}", exc_info=True)
     
     # 2. Fallback: 서버 환경변수에서 가져오기
+    logger.info("[_get_api_key] 서버 환경변수에서 API 키 조회 시도")
     api_key = os.environ.get('GOOGLE_API_KEY') or os.environ.get('GEMINI_API_KEY')
     if not api_key:
-        raise ValueError("API 키가 설정되지 않았습니다. 마이페이지에서 Google API Key를 등록하거나, 서버 관리자에게 문의하세요.")
+        error_msg = "API 키가 설정되지 않았습니다. 마이페이지에서 Google API Key를 등록하거나, 서버 관리자에게 문의하세요."
+        logger.error(f"[_get_api_key] {error_msg} (user_id={user_id})")
+        raise ValueError(error_msg)
+    
+    logger.info(f"[_get_api_key] 서버 환경변수에서 API 키 사용 (길이={len(api_key)})")
     return api_key
 
 
@@ -183,17 +207,21 @@ def generate():
         })
         
     except ValueError as e:
-        logger.error(f"API 키 오류 (user_id={user_id}): {str(e)}")
+        error_msg = str(e)
+        logger.error(f"[generate] API 키 오류 (user_id={user_id}): {error_msg}")
         return jsonify({
             'success': False,
-            'error': str(e),
-            'error_code': 'API_KEY_NOT_FOUND'
+            'error': error_msg,
+            'error_code': 'API_KEY_NOT_FOUND',
+            'user_id': user_id
         }), 400
     except Exception as e:
-        logger.error(f"블로그 생성 중 오류 발생: {str(e)}", exc_info=True)
+        error_msg = str(e)
+        logger.error(f"[generate] 블로그 생성 중 오류 발생 (user_id={user_id}): {error_msg}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': f'블로그 생성 중 오류가 발생했습니다: {str(e)}'
+            'error': f'블로그 생성 중 오류가 발생했습니다: {error_msg}',
+            'user_id': user_id
         }), 500
 
 
