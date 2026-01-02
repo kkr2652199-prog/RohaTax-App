@@ -112,17 +112,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 홈택스 가이드 슬라이더 로직
+    // 홈택스 가이드 슬라이더 로직 (How it Works 섹션)
     function initHometaxGuideSlider() {
-        const slider = document.querySelector('.hometax-guide-slider');
-        const slides = document.querySelectorAll('.guide-slide');
-        const prevBtn = document.getElementById('prevGuide');
-        const nextBtn = document.getElementById('nextGuide');
+        const sliderContainer = document.querySelector('.hometax-guide-slider-container');
+        const slides = document.querySelectorAll('.slide');
+        const tabs = document.querySelectorAll('.tab-item');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
         const playPauseBtn = document.getElementById('playPauseBtn');
-        const progressFill = document.querySelector('.progress-fill');
-        const subtitleText = document.querySelector('.guide-subtitle');
+        const subtitleText = document.getElementById('subtitleText');
         
-        if (!slider || slides.length === 0) return;
+        if (!sliderContainer || slides.length === 0) return;
         
         let currentIndex = 0;
         let isPlaying = false;
@@ -131,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 단계별 설명 텍스트
         const subtitleTexts = [
-            "", // 1단계 (메인)
             "국세청 홈택스 로그인 후 '사업장선택'을 클릭합니다.",
             "변환할 사업자를 선택하고 '사업자전환' 버튼을 누릅니다.",
             "상단 메뉴에서 '전자세금계산서' → '일괄발급'을 선택합니다.",
@@ -142,53 +141,61 @@ document.addEventListener('DOMContentLoaded', function() {
             "최종적으로 '일괄발급' 버튼을 눌러 발행을 완료합니다."
         ];
 
-        // 텍스트 타이핑 효과
-        function typeText(element, text) {
-            if (!element) return;
-            element.textContent = text;
-        }
-
         function showSlide(index) {
-            slides.forEach((slide, i) => {
-                slide.classList.remove('active');
-                if (i === index) {
-                    slide.classList.add('active');
-                }
-            });
+            // 모든 슬라이드와 탭 비활성화
+            slides.forEach(slide => slide.classList.remove('active'));
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 현재 슬라이드와 탭 활성화
+            if (slides[index]) slides[index].classList.add('active');
+            if (tabs[index]) tabs[index].classList.add('active');
             
             // 텍스트 업데이트
-typeText(subtitleText, subtitleTexts[index] || "");
+            if (subtitleText) {
+                subtitleText.textContent = subtitleTexts[index] || "";
+            }
             
-            // 프로그레스 바 업데이트
-            updateProgressBar(index);
+            currentIndex = index;
         }
 
         function nextSlide() {
-            currentIndex = (currentIndex + 1) % totalSlides;
-            showSlide(currentIndex);
+            let nextIndex = (currentIndex + 1) % totalSlides;
+            showSlide(nextIndex);
         }
 
         function prevSlide() {
-            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-            showSlide(currentIndex);
+            let prevIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            showSlide(prevIndex);
         }
 
         function togglePlay() {
             isPlaying = !isPlaying;
+            if (!playPauseBtn) return;
+            
             const btnIcon = playPauseBtn.querySelector('.btn-icon');
             
             if (isPlaying) {
-                btnIcon.setAttribute('data-lucide', 'pause');
+                if (btnIcon) {
+                    btnIcon.setAttribute('data-lucide', 'pause');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
                 autoPlayInterval = setInterval(nextSlide, 5000);
             } else {
-                btnIcon.setAttribute('data-lucide', 'play');
+                if (btnIcon) {
+                    btnIcon.setAttribute('data-lucide', 'play');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
                 clearInterval(autoPlayInterval);
             }
-            
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
         }
+
+        // 탭 클릭 이벤트 바인딩
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                showSlide(index);
+                if (isPlaying) togglePlay(); // 클릭 시 자동 재생 중지
+            });
+        });
 
         if (prevBtn) prevBtn.addEventListener('click', () => {
             prevSlide();
@@ -201,13 +208,6 @@ typeText(subtitleText, subtitleTexts[index] || "");
         });
 
         if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlay);
-
-        function updateProgressBar(index) {
-            if (progressFill) {
-                const progress = ((index + 1) / totalSlides) * 100;
-                progressFill.style.width = progress + '%';
-            }
-        }
         
         // 초기화
         showSlide(0);
@@ -220,16 +220,6 @@ typeText(subtitleText, subtitleTexts[index] || "");
     function initMouseClickEffect() {
         const effects = document.querySelectorAll('.mouse-click-effect');
         if (effects.length === 0) return;
-        
-        effects.forEach(effect => {
-            effect.style.opacity = '1';
-            effect.style.zIndex = '9999';
-            effect.style.background = 'transparent';
-            effect.style.border = 'none';
-            
-            const ripple = effect.querySelector('.click-ripple');
-            if (ripple) ripple.style.display = 'none';
-        });
         
         let isEffectPlaying = false;
         
@@ -248,13 +238,13 @@ typeText(subtitleText, subtitleTexts[index] || "");
             }, 4000);
         }
         
-        const guideSlides = document.querySelectorAll('.guide-slide');
-        guideSlides.forEach((slide, index) => {
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach((slide, index) => {
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                         if (slide.classList.contains('active')) {
-                            setTimeout(() => showEffect(index), 1000);
+                            setTimeout(() => showEffect(index), 500);
                         }
                     }
                 });
