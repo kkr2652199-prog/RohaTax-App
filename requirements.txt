@@ -41,6 +41,9 @@ Flask-Limiter==4.1.1
 # Production WSGI Server (Linux 배포 필수)
 gunicorn==23.0.0
 
+# AI Blog Studio (Gemini API)
+google-generativeai==0.8.4
+
 # ================================================================
 # Optional Dependencies (선택사항)
 # ================================================================
