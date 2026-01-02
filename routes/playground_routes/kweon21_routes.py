@@ -68,10 +68,12 @@ def kweon21_app(path=""):
     with open(index_path, 'r', encoding='utf-8') as f:
         html_content = f.read()
     
-    # assets 경로를 /studio/app/assets로 변환
-    html_content = html_content.replace('/assets/', '/studio/app/assets/')
+    # assets 경로 변환 (절대 경로와 상대 경로 모두 대응)
     html_content = html_content.replace('src="/assets/', 'src="/studio/app/assets/')
     html_content = html_content.replace('href="/assets/', 'href="/studio/app/assets/')
+    # /studio/assets/ 형태도 변환 (Vite base 대응)
+    html_content = html_content.replace('src="/studio/assets/', 'src="/studio/app/assets/')
+    html_content = html_content.replace('href="/studio/assets/', 'href="/studio/app/assets/')
     
     # React 앱 내부 헤더 CSS 제거 (Flask 헤더와 중복 방지)
     html_content = html_content.replace(
