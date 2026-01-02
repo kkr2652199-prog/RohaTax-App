@@ -101,9 +101,11 @@ def kweon21_app_assets(filename):
     
     if os.path.exists(file_path) and os.path.isfile(file_path):
         resp = send_from_directory(assets_dir, filename)
-        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        resp.headers['Pragma'] = 'no-cache'
-        resp.headers['Expires'] = '0'
+        
+        # ✅ 성능 최적화: Vite 빌드 자산(해시 포함된 파일)은 영구 캐싱 허용
+        # 예: index-D1Bvm99_.js -> 파일명이 바뀌지 않으므로 1년 캐시 가능
+        resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+        
         # iframe에서 로드할 수 있도록 X-Frame-Options 설정
         resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
         return resp
@@ -129,7 +131,8 @@ def kweon21_index(path):
 
     dist_dir = os.path.abspath(KWEON21_DIST_DIR)
 
-    # ✅ 캐시 무력화: React 앱은 항상 최신 상태 유지
+    # ✅ 캐시 무력화 (HTML/API만): React 앱 메인은 항상 최신 상태 유지
+    # 단, JS/CSS 등 정적 파일은 아래에서 캐싱 처리됨
     no_cache_headers = {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
@@ -143,7 +146,11 @@ def kweon21_index(path):
         and os.path.isfile(os.path.join(dist_dir, path))
     ):
         resp = send_from_directory(dist_dir, path)
-        resp.headers.update(no_cache_headers)
+        # ✅ 정적 파일은 캐싱 허용 (파일명에 해시가 포함된 경우 유리)
+        if any(path.endswith(ext) for ext in ['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.woff', '.woff2']):
+            resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+        else:
+            resp.headers.update(no_cache_headers)
         return resp
 
     # B. assets 폴더 내 파일 처리 (기존 호환성 유지)
@@ -153,7 +160,8 @@ def kweon21_index(path):
         file_path = os.path.join(assets_dir, filename)
         if os.path.exists(file_path) and os.path.isfile(file_path):
             resp = send_from_directory(assets_dir, filename)
-            resp.headers.update(no_cache_headers)
+            # ✅ 빌드 자산은 1년 캐시 허용
+            resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
             return resp
 
     # C. /app 경로는 위의 kweon21_app 라우트로 리다이렉트

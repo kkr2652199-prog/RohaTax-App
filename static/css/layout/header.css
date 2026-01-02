@@ -73,9 +73,7 @@
 }
 
 .navbar .nav-logo .logo-text {
-    position: absolute !important;
-    top: -18px !important;
-    left: -170px !important;
+    position: relative !important;
     font-weight: 800 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -86,6 +84,7 @@
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
     animation: brandShimmer 3s ease-in-out infinite !important;
+    font-size: 1.5rem !important;
 }
 
 @keyframes brandShimmer {
@@ -102,7 +101,7 @@
 .navbar .nav-menu {
     display: flex !important;
     align-items: center;
-    gap: 32px;
+    gap: 20px; /* 기존 32px에서 축소하여 겹침 방지 */
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -110,6 +109,26 @@
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 9999 !important;
+}
+
+/* 화면 너비에 따른 동적 간격 조정 */
+@media (max-width: 1400px) {
+    .navbar .nav-menu {
+        gap: 15px;
+    }
+    .navbar .nav-link {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .navbar .nav-menu {
+        gap: 10px;
+    }
+    .navbar .nav-link {
+        font-size: 0.85rem;
+    }
+    /* 중요도가 낮은 메뉴는 1200px 이하에서 숨기거나 조절 가능 */
 }
 
 .nav-menu {
@@ -449,6 +468,19 @@
     .navbar .user-menu-dropdown {
         right: -20px;
     }
+}
+
+/* Mobile Toggle & Menu Base (Hidden by default) */
+.mobile-menu-toggle {
+    display: none;
+}
+
+.mobile-side-menu {
+    display: none;
+}
+
+.mobile-side-menu-overlay {
+    display: none;
 }
 
 /* Beta Badge */

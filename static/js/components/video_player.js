@@ -68,15 +68,17 @@
         
         // ==================== 초기화 ====================
         
+        /* 
         console.log('비디오 플레이어 초기화 시작');
         console.log('비디오 요소:', video);
         console.log('비디오 소스:', video.src);
+        */
         
         // 비디오 메타데이터 로드 시
         video.addEventListener('loadedmetadata', function() {
-            console.log('비디오 메타데이터 로드 완료');
-            console.log('비디오 길이:', video.duration);
-            console.log('비디오 크기:', video.videoWidth, 'x', video.videoHeight);
+            // console.log('비디오 메타데이터 로드 완료');
+            // console.log('비디오 길이:', video.duration);
+            // console.log('비디오 크기:', video.videoWidth, 'x', video.videoHeight);
             
             if (durationDisplay) {
                 durationDisplay.textContent = formatTime(video.duration);
@@ -89,7 +91,7 @@
         
         // 비디오 로딩 중
         video.addEventListener('waiting', function() {
-            console.log('비디오 로딩 중...');
+            // console.log('비디오 로딩 중...');
             if (videoLoading) {
                 videoLoading.style.display = 'block';
             }
@@ -97,7 +99,7 @@
         
         // 비디오 재생 가능
         video.addEventListener('canplay', function() {
-            console.log('비디오 재생 가능');
+            // console.log('비디오 재생 가능');
             if (videoLoading) {
                 videoLoading.style.display = 'none';
             }
@@ -105,7 +107,7 @@
         
         // 비디오 재생 시작
         video.addEventListener('playing', function() {
-            console.log('비디오 재생 중');
+            // console.log('비디오 재생 중');
             if (videoLoading) {
                 videoLoading.style.display = 'none';
             }

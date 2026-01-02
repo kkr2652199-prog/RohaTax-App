@@ -67,8 +67,16 @@
     <link rel="stylesheet" href="/static/css/sections/pricing.css?v={{ timestamp }}">
     <link rel="stylesheet" href="/static/css/sections/cta.css?v={{ timestamp }}">
     
-    <!-- 스마트폰 전용 최적화 CSS (480px 이하만 적용) -->
-    <link rel="stylesheet" href="/static/css/mobile/smartphone_optimization.css?v={{ timestamp }}">
+    <!-- 스마트폰 전용 최적화 CSS (병렬 로딩 최적화) -->
+    <link rel="stylesheet" href="/static/css/mobile/01_global.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/02_header.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/03_hero.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/04_shop.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/05_showroom.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/06_buttons_forms.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/07_modals.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/08_footer.css?v={{ timestamp }}" media="(max-width: 480px)">
+    <link rel="stylesheet" href="/static/css/mobile/09_common.css?v={{ timestamp }}" media="(max-width: 480px)">
 </head>
 <body>
     <!-- 전역 헤더 -->

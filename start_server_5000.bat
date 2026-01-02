@@ -62,7 +62,7 @@ echo Python 3.14 confirmed: %PYTHON_VERSION%
 
 echo.
 echo Installing required packages...
-"%PYTHON_PATH%" -m pip install python-dotenv flask flask-sqlalchemy flask-login flask-wtf pandas openpyxl xlrd python-magic python-magic-bin cryptography bcrypt > nul 2>&1
+"%PYTHON_PATH%" -m pip install python-dotenv flask flask-sqlalchemy flask-login flask-wtf pandas openpyxl xlrd python-magic python-magic-bin cryptography bcrypt google-generativeai > nul 2>&1
 
 echo.
 echo Starting server...
