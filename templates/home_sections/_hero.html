@@ -10,16 +10,28 @@
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
-                    <span>국세청 표준 양식 100% 호환</span>
+                    <span class="hero-badge-desktop">국세청 표준 양식 100% 호환</span>
+                    <span class="hero-badge-mobile">국세청 100% 호환</span>
                 </div>
                 
                 <h1 class="hero-title">
-                    복잡한 세금계산서,<br>
-                    <strong>엑셀 씨름은 이제 끝.</strong>
+                    <span class="hero-copy-desktop">
+                        복잡한 세금계산서,<br>
+                        <strong>엑셀 씨름은 이제 끝.</strong>
+                    </span>
+                    <span class="hero-copy-mobile">
+                        <strong>엑셀 씨름 끝.</strong><br>
+                        세금계산서 변환은 1분.
+                    </span>
                 </h1>
                 <p class="hero-subtitle">
-                    로하택스로 배달대행/퀵서비스 정산서를<br>
-                    국세청 양식으로 <strong>1분 만에</strong> 변환하세요.
+                    <span class="hero-copy-desktop">
+                        로하택스로 배달대행/퀵서비스 정산서를<br>
+                        국세청 양식으로 <strong>1분 만에</strong> 변환하세요.
+                    </span>
+                    <span class="hero-copy-mobile">
+                        정산서 업로드 → <strong>즉시 변환</strong> → 홈택스 제출
+                    </span>
                 </p>
                 
                 <!-- 신뢰 지표 -->
@@ -43,7 +55,8 @@
                         무료로 시작하기
                     </button>
                     <button class="btn-secondary" onclick="alert('기능 섹션은 아직 구현되지 않았습니다.')" style="background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; padding: 14px 28px; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-left: 15px;">
-                        기능 둘러보기
+                        <span class="cta-label-full">기능 둘러보기</span>
+                        <span class="cta-label-short">기능</span>
                     </button>
                 </div>
                 
@@ -53,31 +66,35 @@
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
-                    <span>SSL 암호화 · 개인정보 보호 · 100% 안전</span>
+                    <span class="hero-security-desktop">SSL 암호화 · 개인정보 보호 · 100% 안전</span>
+                    <span class="hero-security-mobile">SSL · 개인정보보호 · 100% 안전</span>
                 </div>
             </div>
 
             <!-- 우측: 비주얼 영역 (브라우저 창 프레임 안에 대시보드 스크린샷) -->
             <div class="hero-visual-container">
-                <div class="hero-image-wrapper reveal reveal-delay-2">
-                    <!-- UI 전용 이미지 (노트북 베젤 없음) -->
-                    <img src="/static/images/hometax_guide/Generated.png" 
-                         alt="로하택스 대시보드 UI" 
-                         class="hero-dashboard-img">
-                </div>
-                
-                <!-- Featured 이미지 (16:9 와이드, 곡면 처리) -->
-                <div class="hero-featured-image-wrapper reveal reveal-delay-3">
-                    <img src="/static/images/hometax_guide/featured.jpeg" 
-                         alt="로하택스 Featured" 
-                         class="hero-featured-img">
-                </div>
-                
-                <!-- Kweo 이미지 (Featured 이미지 아래) -->
-                <div class="hero-kweo-image-wrapper reveal reveal-delay-3">
-                    <img src="/static/images/hometax_guide/kweo.jpg" 
-                         alt="로하택스 Kweo" 
-                         class="hero-kweo-img">
+                <!-- 모바일에서는 스와이프 레일로 사용 (PC/태블릿은 CSS로 레이아웃 영향 0) -->
+                <div class="hero-media-rail">
+                    <div class="hero-image-wrapper reveal reveal-delay-2">
+                        <!-- UI 전용 이미지 (노트북 베젤 없음) -->
+                        <img src="/static/images/hometax_guide/Generated.png" 
+                             alt="로하택스 대시보드 UI" 
+                             class="hero-dashboard-img">
+                    </div>
+                    
+                    <!-- Featured 이미지 (16:9 와이드, 곡면 처리) -->
+                    <div class="hero-featured-image-wrapper reveal reveal-delay-3">
+                        <img src="/static/images/hometax_guide/featured.jpeg" 
+                             alt="로하택스 Featured" 
+                             class="hero-featured-img">
+                    </div>
+                    
+                    <!-- Kweo 이미지 (Featured 이미지 아래) -->
+                    <div class="hero-kweo-image-wrapper reveal reveal-delay-3">
+                        <img src="/static/images/hometax_guide/kweo.jpg" 
+                             alt="로하택스 Kweo" 
+                             class="hero-kweo-img">
+                    </div>
                 </div>
                 
                 <!-- 타겟 고객 섹션 -->

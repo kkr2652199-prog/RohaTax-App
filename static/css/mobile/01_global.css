@@ -7,9 +7,10 @@
 
 @media (max-width: 480px) {
     /* 스크롤바 숨김 (iOS Safari 최적화) */
-    body {
+    html, body {
         -webkit-overflow-scrolling: touch;
-        overflow-x: hidden;
+        overflow-x: clip;
+        overscroll-behavior-x: contain;
     }
     
     /* 컨테이너 최적화 */
@@ -20,10 +21,12 @@
     }
 }
 
-/* 기본적으로 모바일 메뉴 숨김 (스마트폰에서만 표시) */
-.mobile-menu-toggle,
-.mobile-side-menu,
-.mobile-side-menu-overlay {
-    display: none !important;
+/* PC/태블릿에서는 모바일 메뉴 요소를 숨김 (스마트폰 UI/UX에는 영향 없음) */
+@media (min-width: 481px) {
+    .mobile-menu-toggle,
+    .mobile-side-menu,
+    .mobile-side-menu-overlay {
+        display: none !important;
+    }
 }
 

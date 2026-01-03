@@ -176,6 +176,13 @@
     display: contents !important; /* 컨테이너를 레이아웃에서 제거 */
 }
 
+/* Hero Media Rail
+   - PC/태블릿: 래퍼가 레이아웃에 영향을 주지 않도록 제거
+   - 모바일: mobile/03_hero.css에서 스와이프 레일로 재정의 */
+.hero-media-rail {
+    display: contents;
+}
+
 /* Hero Dashboard Image (이미지에 직접 16:9 와이드 크기 적용) */
 .hero-dashboard-img {
     width: 640px !important;

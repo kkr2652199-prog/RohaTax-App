@@ -153,8 +153,23 @@ def exempt_studio_from_rate_limit():
         pass
 
 
-# 서버 시작 시간 (캐시 무력화용 - 서버 재시작 시에만 변경됨)
+# 서버 시작 시간 (프로덕션 캐시 무력화용 - 서버 재시작 시에만 변경됨)
 VERSION_TIMESTAMP = int(time.time())
+
+
+def get_static_version_timestamp() -> int:
+    """
+    정적 리소스(cache bust)용 timestamp 반환.
+    - production: 서버 재시작 시에만 변경(캐시 효율 극대화)
+    - development/staging: 기본은 캐시 유지(속도/체감 우선). 필요 시 DEV_CACHE_BUST=1 로 즉시 반영.
+    """
+    if settings.ENVIRONMENT == "production":
+        return VERSION_TIMESTAMP
+
+    if os.environ.get("DEV_CACHE_BUST", "0") == "1":
+        return int(time.time())
+
+    return VERSION_TIMESTAMP
 
 # 전역 텍스트 주입
 @app.context_processor
@@ -163,7 +178,7 @@ def inject_text():
         "text": CONTENT_CACHE,
         "t": get_text,
         "csrf_token": generate_csrf_token,
-        "timestamp": VERSION_TIMESTAMP,  # 매번 바뀌지 않고 서버 재시작 시에만 갱신
+        "timestamp": get_static_version_timestamp(),
     }
 
 

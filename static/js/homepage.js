@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
             navbar.style.boxShadow = 'none';
         }
     });
-    
+
     // 부드러운 스크롤
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {

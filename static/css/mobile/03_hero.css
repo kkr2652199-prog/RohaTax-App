@@ -4,20 +4,122 @@
  */
 
 @media (max-width: 480px) {
+    /* PC/태블릿 문구는 유지하되, 모바일에서는 더 짧은 문구를 보여준다 */
+    #home .hero-copy-desktop {
+        display: none !important;
+    }
+
+    #home .hero-copy-mobile {
+        display: inline !important;
+    }
+
     .hero-section {
-        padding: 40px 16px !important;
+        /* 스마트폰 첫 화면: 여백 최소화 */
+        padding: 24px 16px 28px !important;
     }
     
     .hero-title {
-        font-size: 28px !important;
-        line-height: 1.3 !important;
-        margin-bottom: 16px !important;
+        font-size: 22px !important;
+        line-height: 1.15 !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 10px !important;
+        /* 텍스트가 '…'로 잘리는 느낌을 없애고, 타이포로 압축 */
+        word-break: keep-all !important;
+        text-wrap: balance !important;
     }
     
     .hero-subtitle {
-        font-size: 16px !important;
-        line-height: 1.5 !important;
-        margin-bottom: 24px !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 10px !important;
+        max-width: 26ch !important; /* 모바일에서는 더 짧게 */
+        word-break: keep-all !important;
+        text-wrap: pretty !important;
+    }
+
+    /* 쿠팡형(밀도): 모바일에서는 강제 <br> 줄바꿈을 제거해서 자연스럽게 2~3줄로 */
+    #home .hero-title br,
+    #home .hero-subtitle br {
+        display: none !important;
+    }
+
+    /* 배지/보안문구: 인라인 스타일의 과한 여백을 모바일에서만 축소 */
+    #home .hero-badge {
+        margin-bottom: 6px !important;
+        padding: 3px 6px !important;
+        font-size: 8px !important; /* 요청: 반으로 더 축소 */
+        line-height: 1.05 !important;
+        border-radius: 999px !important;
+        gap: 4px !important;
+        white-space: nowrap !important; /* 한 줄 고정 */
+        min-height: 22px !important;
+    }
+
+    /* 배지 아이콘도 같이 축소 */
+    #home .hero-badge svg {
+        width: 12px !important;
+        height: 12px !important;
+        flex: 0 0 12px !important;
+    }
+
+    /* 배지 텍스트: 모바일에서는 짧게(한 칸 한 줄) */
+    #home .hero-badge-desktop {
+        display: none !important;
+    }
+    #home .hero-badge-mobile {
+        display: inline !important;
+    }
+
+    #home .hero-security-note {
+        margin-top: 10px !important;
+        padding: 6px 0 !important;
+        font-size: 11px !important;
+        gap: 6px !important;
+        white-space: nowrap !important; /* 한 줄 고정 */
+        max-width: 100% !important;
+    }
+
+    /* 보안 문구: 모바일에서는 짧게(한 줄 유지) */
+    #home .hero-security-desktop {
+        display: none !important;
+    }
+    #home .hero-security-mobile {
+        display: inline !important;
+    }
+
+    /* --- 첫 화면: PC용 고정 레이아웃(큰 min-height/큰 gap/큰 margin)을 모바일에서 무력화 --- */
+    #home .hero-content {
+        padding: 0 !important;
+    }
+
+    /* --- 1단계: 첫 화면을 "텍스트(좌) + 이미지(우)" 가로 정렬 (CSS만) --- */
+    /* hero-visual-container를 display: contents로 평탄화해서,
+       내부의 .hero-image-wrapper(대시보드 이미지)만 2컬럼 오른쪽에 배치하고
+       타겟 카드(및 기타)는 아래로 유지 */
+    #home .hero-content-wrapper {
+        display: grid !important;
+        /* 첫 화면: 이미지 비중을 더 크게(PC 밸런스에 가깝게) */
+        grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr) !important;
+        grid-template-areas:
+            "copy media"
+            "below below" !important;
+        column-gap: 12px !important;
+        row-gap: 14px !important;
+        align-items: center !important; /* 텍스트/이미지 수직 밸런스 */
+        padding: 0 !important;
+        min-height: 0 !important; /* hero.css: 700px 제거 */
+    }
+
+    #home .hero-text-group,
+    #home .hero-copy.hero-text-group {
+        flex: 1 1 auto !important;
+        margin-top: 0 !important; /* hero.css: 40px 제거 */
+        grid-area: copy !important;
+    }
+
+    /* hero-visual-container를 레이아웃에서 제거(자식들이 grid item으로 참여) */
+    #home .hero-visual-container {
+        display: contents !important;
     }
     
     /* 히어로 이미지 최적화 */
@@ -27,8 +129,207 @@
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        aspect-ratio: 16/9 !important;
-        object-fit: contain !important;
+    }
+
+    /* === 스와이프 레일(이미지 3장): "가로로 밀면 빈 여백" → "가로로 넘기는 콘텐츠"로 전환 === */
+    #home .hero-media-rail {
+        grid-area: media !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 2px 4px !important;
+        margin: 0 !important;
+        position: relative !important;
+    }
+
+    #home .hero-media-rail::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* 오른쪽에 "더 있음" 페이드 힌트 */
+    #home .hero-media-rail::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 28px !important;
+        height: 100% !important;
+        pointer-events: none !important;
+        background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1)) !important;
+    }
+
+    #home .hero-media-rail > .hero-image-wrapper,
+    #home .hero-media-rail > .hero-featured-image-wrapper,
+    #home .hero-media-rail > .hero-kweo-image-wrapper {
+        position: relative !important; /* base(hero.css)의 absolute 무력화 */
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        height: auto !important;
+        flex: 0 0 94% !important; /* 카드 자체를 더 크게(한 장이 거의 꽉 차게) */
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 4px !important; /* 카드 안 여백을 줄여 이미지 면적 확보 */
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10) !important;
+    }
+
+    /* 대시보드 이미지: 모바일에서 '바로 보이게' (hero.css의 큰 여백/고정폭 제거) */
+    .hero-dashboard-img {
+        min-width: 0 !important; /* hero.css: 640px 제거 */
+        min-height: 0 !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        height: auto !important;
+        max-height: clamp(320px, 92vw, 560px) !important; /* 요청: 이미지 대폭 확대 */
+        aspect-ratio: 16 / 9 !important;
+        object-fit: cover !important;
+        object-position: center center !important;
+        border-radius: 12px !important;
+        box-shadow: none !important; /* wrapper에서 카드감 제공 */
+        margin: 0 !important; /* hero.css: 110px 제거 */
+    }
+
+    /* Featured/Kweo: 레일에서 보이도록 + 동일한 카드 이미지 규격 */
+    .hero-featured-image-wrapper,
+    .hero-kweo-image-wrapper {
+        display: block !important;
+    }
+
+    .hero-featured-img,
+    .hero-kweo-img {
+        width: 100% !important;
+        height: auto !important;
+        max-height: clamp(320px, 92vw, 560px) !important;
+        aspect-ratio: 16 / 9 !important;
+        object-fit: cover !important;
+        object-position: center center !important;
+        border-radius: 12px !important;
+    }
+
+    /* 타겟 카드 영역은 아래로 */
+    #home .hero-target-audience {
+        grid-area: below !important;
+        margin-top: 18px !important;
+        left: 0 !important;          /* base(hero.css)의 left:-680px 오버플로우 제거 */
+        padding-top: 0 !important;   /* base(hero.css)의 큰 패딩 제거 */
+        max-width: 100% !important;
+    }
+
+    /* 신뢰 지표: 1줄 고정 대신 2줄 그리드로 압축(인라인 스타일 무력화 필요) */
+    .hero-trust-indicators {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        margin: 8px 0 6px !important;
+        align-items: start !important;
+    }
+
+    .hero-trust-indicators .trust-item {
+        align-items: center !important;
+        background: #F8FAFC !important;
+        border: 1px solid rgba(15, 23, 42, 0.06) !important;
+        border-radius: 999px !important; /* 칩 느낌 */
+        padding: 6px 8px !important;
+        min-height: 34px !important;
+    }
+
+    .hero-trust-indicators .trust-number {
+        font-size: 11px !important;
+        line-height: 1 !important;
+        font-weight: 800 !important;
+    }
+
+    .hero-trust-indicators .trust-label {
+        display: none !important; /* 숫자만 남겨서 첫 화면 텍스트 밀도 과감히 축소 */
+    }
+
+    /* CTA 버튼: 모바일에서는 2개를 2열로(공간 활용) + 더 컴팩트 */
+    .hero-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 7px !important;
+        margin-top: 6px !important;
+        align-items: stretch !important;
+    }
+
+    /* CTA 텍스트: 모바일에서 더 짧게 표시(한 줄 유지) */
+    #home .cta-label-short {
+        display: inline !important;
+    }
+
+    #home .cta-label-full {
+        display: none !important;
+    }
+
+    .hero-actions .btn-primary,
+    .hero-actions .btn-secondary {
+        width: 100% !important;
+        margin-left: 0 !important; /* 인라인 margin-left 제거 */
+        min-height: 32px !important; /* 버튼 더 축소 */
+        border-radius: 10px !important;
+        font-size: 11px !important;
+        padding: 7px 8px !important; /* 인라인 padding 무력화 */
+        letter-spacing: -0.01em !important;
+        white-space: nowrap !important; /* 한줄 유지 */
+    }
+
+    /* 아주 작은 폰(<=360px)에서도 가로 정렬 유지 + 텍스트/이미지 밸런스만 더 압축 */
+    @media (max-width: 360px) {
+        .hero-section {
+            padding: 18px 14px 22px !important; /* ‘최소 폭’에서 여백 더 축소 */
+        }
+
+        .hero-title {
+            font-size: 20px !important;
+            line-height: 1.25 !important;
+            margin-bottom: 12px !important;
+        }
+
+        .hero-subtitle {
+            font-size: 13px !important;
+            line-height: 1.45 !important;
+            margin-bottom: 10px !important;
+        }
+
+        /* 아주 작은 폭에서도 "같은 칸" 유지 (요청) */
+        .hero-actions {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 7px !important;
+        }
+
+        /* 아주 작은 폭에서는 더 짧은 라벨 유지 */
+        #home .cta-label-short { display: inline !important; }
+        #home .cta-label-full { display: none !important; }
+
+        .hero-actions .btn-primary,
+        .hero-actions .btn-secondary {
+            min-height: 32px !important;
+            font-size: 11px !important;
+            padding: 7px 8px !important;
+        }
+
+        #home .hero-content-wrapper {
+            /* 좁은 화면에서는 이미지 컬럼을 더 얇게 */
+            grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr) !important;
+            column-gap: 10px !important;
+            row-gap: 12px !important;
+        }
+
+        .hero-dashboard-img {
+            max-height: clamp(180px, 62vw, 300px) !important;
+        }
+
+        .hero-trust-indicators {
+            gap: 8px !important;
+            margin: 10px 0 8px !important;
+        }
     }
     
     /* 타겟 오디언스 카드 최적화 */

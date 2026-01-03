@@ -72,6 +72,10 @@ echo ================================
 
 REM Start server
 set PORT=5000
+set FLASK_RUN_HOST=0.0.0.0
+set FLASK_RUN_PORT=5000
+REM 개발 서버: 스마트폰 UI/UX 테스트 중 요청 제한 비활성화
+set FLASK_ENV=development
 "%PYTHON_PATH%" app.py
 
 if %ERRORLEVEL% NEQ 0 (
