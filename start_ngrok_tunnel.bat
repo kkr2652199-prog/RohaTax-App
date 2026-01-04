@@ -6,7 +6,7 @@ REM ================================================================
 chcp 65001 > nul
 
 echo ================================
-echo Ngrok 터널 시작 (포트 5001)
+echo Ngrok 터널 시작 (포트 5000)
 echo ================================
 echo.
 
@@ -58,8 +58,8 @@ echo [확인] Ngrok 버전 확인 중...
 echo.
 
 REM 서버가 실행 중인지 확인
-echo [확인] 로컬 서버(포트 5001)가 실행 중인지 확인 중...
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:5001' -TimeoutSec 2 -UseBasicParsing; Write-Host '[확인] 서버가 실행 중입니다.' -ForegroundColor Green } catch { Write-Host '[경고] 서버가 실행 중이지 않을 수 있습니다. 먼저 start_server_5001.bat를 실행하세요.' -ForegroundColor Yellow }"
+echo [확인] 로컬 서버(포트 5000)가 실행 중인지 확인 중...
+powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:5000' -TimeoutSec 2 -UseBasicParsing; Write-Host '[확인] 서버가 실행 중입니다.' -ForegroundColor Green } catch { Write-Host '[경고] 서버가 실행 중이지 않을 수 있습니다. 먼저 start_server_5000.bat를 실행하세요.' -ForegroundColor Yellow }"
 
 echo.
 echo ================================
@@ -83,11 +83,11 @@ echo.
 echo ================================
 echo.
 
-REM Ngrok 실행 (포트 5001 - homepage1 기본 포트)
-echo [중요] 포트 5001로 터널을 생성합니다.
-echo [중요] 서버가 포트 5001에서 실행 중이어야 합니다.
+REM Ngrok 실행 (포트 5000 - 로컬 서버 기본 포트)
+echo [중요] 포트 5000으로 터널을 생성합니다.
+echo [중요] 서버가 포트 5000에서 실행 중이어야 합니다.
 echo.
-%NGROK_CMD% http 5001
+%NGROK_CMD% http 5000
 
 pause
 

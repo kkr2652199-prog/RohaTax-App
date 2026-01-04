@@ -239,6 +239,44 @@
     }
 }
 
+/* ✅ 스마트폰(<=480px): 여백 축소 + "Why RohaTax?" 제목을 조금 아래로 */
+@media (max-width: 480px) {
+    .problem-solution-section {
+        padding: 44px 0 54px;
+        margin-top: 56px !important; /* ✅ stats-section(통계 박스)와 겹침 방지 + 더 아래로 */
+    }
+
+    /* 기존 PC용 위치 보정(top:-100 / translateY)로 인해 모바일에서 레이아웃이 흔들릴 수 있어 무력화 */
+    .problem-solution-section .container {
+        top: 0 !important;
+    }
+
+    .problem-solution-section .section-header {
+        margin: 0 auto 18px !important;
+    }
+
+    /* 요청: 텍스트(제목) 아래로 */
+    .problem-solution-section .section-header.text-center {
+        transform: none !important;
+        margin-top: 150px !important; /* 요청: 대폭 아래(하단)로 */
+    }
+
+    .problem-solution-section .section-title {
+        margin-top: 22px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .problem-solution-section .section-subtitle {
+        margin-top: 12px !important;
+    }
+
+    /* 모바일 여백 추가 축소(과도한 공백 방지) */
+    .comparison-grid {
+        margin: 18px auto 0 !important;
+        gap: 18px !important;
+    }
+}
+
 /* ================================================================
    Problem & Solution Section - RohaTax
    ================================================================ */

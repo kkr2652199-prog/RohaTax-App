@@ -4,6 +4,18 @@
  */
 
 @media (max-width: 480px) {
+    /* ✅ 모바일에서 이미지가 "아예 안 보이는" 케이스 방지
+       - base(hero.css)의 overflow:hidden 및 .hero-image-wrapper{display:contents}가
+         레일/카드 레이아웃을 깨뜨리거나(=이미지 영역이 0처럼 보이거나)
+         bleed를 잘라먹을 수 있어 모바일에서만 무력화 */
+    #home.hero-section {
+        overflow: visible !important; /* 레일이 살짝 화면 밖으로 넘어가도 보이게 */
+    }
+
+    #home .hero-image-wrapper {
+        display: block !important; /* base(hero.css)의 display: contents 무력화 */
+    }
+
     /* PC/태블릿 문구는 유지하되, 모바일에서는 더 짧은 문구를 보여준다 */
     #home .hero-copy-desktop {
         display: none !important;
@@ -99,11 +111,11 @@
     #home .hero-content-wrapper {
         display: grid !important;
         /* 첫 화면: 이미지 비중을 더 크게(PC 밸런스에 가깝게) */
-        grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr) !important;
+        grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr) !important; /* 이미지 칸 더 확대 */
         grid-template-areas:
             "copy media"
             "below below" !important;
-        column-gap: 12px !important;
+        column-gap: 10px !important; /* 칼럼 간 여백 축소 → 이미지 실면적 증가 */
         row-gap: 14px !important;
         align-items: center !important; /* 텍스트/이미지 수직 밸런스 */
         padding: 0 !important;
@@ -141,8 +153,9 @@
         overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 0 2px 4px !important;
-        margin: 0 !important;
+        /* ✅ 이미지가 "살짝 화면 밖으로 넘어가도" 더 커 보이게: 오른쪽으로 bleed */
+        padding: 0 16px 6px 0 !important;
+        margin: 0 -16px 0 0 !important; /* 오른쪽만 살짝 확장 */
         position: relative !important;
     }
 
@@ -170,7 +183,7 @@
         left: auto !important;
         width: auto !important;
         height: auto !important;
-        flex: 0 0 94% !important; /* 카드 자체를 더 크게(한 장이 거의 꽉 차게) */
+        flex: 0 0 106% !important; /* ✅ 카드가 칸보다 조금 더 크게(요청: 사이드로 넘어가도 OK) */
         scroll-snap-align: start !important;
         scroll-snap-stop: always !important;
         background: #ffffff !important;
@@ -187,7 +200,7 @@
         max-width: 100% !important;
         max-height: none !important;
         height: auto !important;
-        max-height: clamp(320px, 92vw, 560px) !important; /* 요청: 이미지 대폭 확대 */
+        max-height: clamp(360px, 104vw, 640px) !important; /* 요청: 더 크게 */
         aspect-ratio: 16 / 9 !important;
         object-fit: cover !important;
         object-position: center center !important;
@@ -206,7 +219,7 @@
     .hero-kweo-img {
         width: 100% !important;
         height: auto !important;
-        max-height: clamp(320px, 92vw, 560px) !important;
+        max-height: clamp(360px, 104vw, 640px) !important;
         aspect-ratio: 16 / 9 !important;
         object-fit: cover !important;
         object-position: center center !important;
@@ -220,6 +233,64 @@
         left: 0 !important;          /* base(hero.css)의 left:-680px 오버플로우 제거 */
         padding-top: 0 !important;   /* base(hero.css)의 큰 패딩 제거 */
         max-width: 100% !important;
+    }
+
+    /* ✅ 2번 화면(타겟 섹션) 이미지 2장: 모바일에서 가로 스와이프 레일로 */
+    #home .target-media-rail {
+        display: flex !important;
+        gap: 10px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 6px 16px 10px 0 !important; /* 오른쪽 여백 + 스와이프 힌트 */
+        margin: 10px -16px 0 0 !important;   /* 오른쪽 bleed */
+        position: relative !important;
+    }
+
+    #home .target-media-rail::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* 오른쪽에 "더 있음" 페이드 힌트 */
+    #home .target-media-rail::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 28px !important;
+        height: 100% !important;
+        pointer-events: none !important;
+        background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1)) !important;
+    }
+
+    #home .target-media-rail > .hero-featured-image-wrapper,
+    #home .target-media-rail > .hero-kweo-image-wrapper {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        height: auto !important;
+        flex: 0 0 86% !important; /* 한 장이 크게 + 다음이 살짝 보이게 */
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 6px !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10) !important;
+    }
+
+    #home .target-media-rail .hero-featured-img,
+    #home .target-media-rail .hero-kweo-img {
+        width: 100% !important;
+        height: auto !important;
+        max-height: clamp(240px, 70vw, 420px) !important;
+        aspect-ratio: 16 / 9 !important;
+        object-fit: cover !important;
+        object-position: center center !important;
+        border-radius: 12px !important;
+        display: block !important;
     }
 
     /* 신뢰 지표: 1줄 고정 대신 2줄 그리드로 압축(인라인 스타일 무력화 필요) */
@@ -338,9 +409,121 @@
         margin-top: 32px !important;
     }
     
-    .target-card {
-        padding: 20px 16px !important;
-        margin-bottom: 16px !important;
+    /* ✅ 타겟 카드: 모바일에서 "빈칸 줄이고" 텍스트 밀도 높이기 (2열 + 탭 시 확장) */
+    #home .target-title {
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+        margin: 0 0 6px !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    #home .target-subtitle {
+        font-size: 13px !important;
+        line-height: 1.35 !important;
+        margin: 0 0 10px !important;
+        color: #64748B !important;
+    }
+
+    #home .target-cards {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+    }
+
+    #home .target-card {
+        margin: 0 !important; /* 기존 margin-bottom 제거 */
+        padding: 12px 10px !important;
+        border-radius: 14px !important;
+        background: #FFFFFF !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06) !important;
+        display: flex !important;
+        gap: 8px !important;
+        align-items: flex-start !important;
+        cursor: pointer !important;
+        min-height: 88px !important;
+    }
+
+    #home .target-card-icon {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 10px !important;
+        display: grid !important;
+        place-items: center !important;
+        background: #F1F5F9 !important;
+        color: #0F172A !important;
+        flex: 0 0 auto !important;
+        margin-top: 2px !important;
+    }
+
+    #home .target-card-content {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    #home .target-card-category {
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        margin-bottom: 4px !important;
+    }
+
+    #home .target-card-title {
+        font-size: 12.5px !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+        word-break: keep-all !important;
+    }
+
+    /* 기본(접힘): 긴 설명/디테일/링크는 숨겨서 "빈칸"과 높이를 줄임 */
+    #home .target-card-description,
+    #home .target-card-detail,
+    #home .target-card-footer {
+        display: none !important;
+    }
+
+    /* 탭으로 확장(모바일만): 해당 카드만 전체 폭으로 펼치고 상세 표시 */
+    #home .target-card.is-expanded {
+        grid-column: 1 / -1 !important;
+        min-height: 0 !important;
+        padding: 14px 12px !important;
+        cursor: default !important;
+    }
+
+    #home .target-card.is-expanded .target-card-title {
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
+    }
+
+    #home .target-card.is-expanded .target-card-description,
+    #home .target-card.is-expanded .target-card-detail,
+    #home .target-card.is-expanded .target-card-footer {
+        display: block !important;
+    }
+
+    #home .target-card.is-expanded .target-card-description {
+        font-size: 12.5px !important;
+        line-height: 1.35 !important;
+        margin: 0 0 6px !important;
+        color: #334155 !important;
+    }
+
+    #home .target-card.is-expanded .target-card-detail {
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+        margin: 0 0 8px !important;
+        color: #64748B !important;
+    }
+
+    #home .target-card.is-expanded .target-card-footer {
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        color: #2563EB !important;
+        text-decoration: none !important;
     }
 }
 

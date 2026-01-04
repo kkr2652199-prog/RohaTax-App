@@ -255,6 +255,61 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 초기 실행
     initHometaxGuideSlider();
+
+    // ✅ 모바일(<=480px): 타겟 카드 2열 요약 + 탭 시 확장/접기
+    function initMobileTargetCardToggle() {
+        if (window.innerWidth > 480) return;
+
+        const cards = document.querySelectorAll('#home .target-cards .target-card');
+        if (!cards || cards.length === 0) return;
+
+        cards.forEach((card) => {
+            card.addEventListener('click', (e) => {
+                // 확장 상태에서 링크 클릭은 링크 동작 우선
+                if (e.target && e.target.closest && e.target.closest('a')) return;
+
+                const willExpand = !card.classList.contains('is-expanded');
+                cards.forEach((c) => c.classList.remove('is-expanded'));
+                if (willExpand) card.classList.add('is-expanded');
+            });
+        });
+    }
+
+    initMobileTargetCardToggle();
+
+    // ✅ 모바일(<=480px): 2번 화면(타겟 섹션) 이미지 2장을 가로 스와이프 레일로 재배치
+    function initMobileTargetMediaRail() {
+        if (window.innerWidth > 480) return;
+
+        const home = document.getElementById('home');
+        if (!home) return;
+
+        const targetAudience = home.querySelector('.hero-target-audience');
+        if (!targetAudience) return;
+
+        // 이미 레일이 있으면 중복 실행 방지
+        if (targetAudience.querySelector('.target-media-rail')) return;
+
+        const featuredWrap = home.querySelector('.hero-featured-image-wrapper');
+        const kweoWrap = home.querySelector('.hero-kweo-image-wrapper');
+        if (!featuredWrap || !kweoWrap) return;
+
+        const rail = document.createElement('div');
+        rail.className = 'target-media-rail';
+
+        // 타겟 카드들 아래에 배치
+        const cards = targetAudience.querySelector('.target-cards');
+        if (cards && cards.parentNode) {
+            cards.parentNode.insertBefore(rail, cards.nextSibling);
+        } else {
+            targetAudience.appendChild(rail);
+        }
+
+        rail.appendChild(featuredWrap);
+        rail.appendChild(kweoWrap);
+    }
+
+    initMobileTargetMediaRail();
     
     // 전역 함수 등록
     window.scrollToSection = scrollToSection;
