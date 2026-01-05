@@ -25,6 +25,14 @@
         display: inline !important;
     }
 
+    /* CTA 라벨: 모바일에서는 짧게 (PC에서 '기능 둘러보기 기능'처럼 겹쳐 보이는 문제 방지) */
+    #home .cta-label-full {
+        display: none !important;
+    }
+    #home .cta-label-short {
+        display: inline !important;
+    }
+
     .hero-section {
         /* 스마트폰 첫 화면: 여백 최소화 */
         padding: 24px 16px 28px !important;

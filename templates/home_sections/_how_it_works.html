@@ -51,43 +51,51 @@
                 <div class="vs-container">
                     <!-- Left: Legacy (Loss) -->
                     <div class="vs-card legacy">
-                        <div class="vs-header">
-                            <h3>건별 수기 입력</h3>
-                            <span class="status-badge bad">Legacy Way</span>
+                        <div class="vs-card-top">
+                            <div class="vs-header">
+                                <h3>건별 수기 입력</h3>
+                                <span class="status-badge bad">Legacy Way</span>
+                            </div>
+                            <div class="cost-box loss">
+                                <span class="label">월 낭비 시간</span>
+                                <strong class="value">- 4.5시간</strong>
+                                <span class="sub-value">(연간 54시간 허비)</span>
+                            </div>
                         </div>
-                        <div class="cost-box loss">
-                            <span class="label">월 낭비 시간</span>
-                            <strong class="value">- 4.5시간</strong>
-                            <span class="sub-value">(연간 54시간 허비)</span>
+                        <div class="vs-card-bottom">
+                            <ul class="vs-list">
+                                <li class="bad">❌ 반복적인 로그인/로그아웃</li>
+                                <li class="bad">❌ 건마다 사업자 번호 타이핑</li>
+                                <li class="bad">❌ 오타 발생 시 수정 불가</li>
+                            </ul>
                         </div>
-                        <ul class="vs-list">
-                            <li class="bad">❌ 반복적인 로그인/로그아웃</li>
-                            <li class="bad">❌ 건마다 사업자 번호 타이핑</li>
-                            <li class="bad">❌ 오타 발생 시 수정 불가</li>
-                        </ul>
                     </div>
 
                     <!-- Right: RohaTax (Gain) -->
                     <div class="vs-card smart">
-                        <div class="recommended-badge">SMART CHOICE</div>
-                        <div class="vs-header">
-                            <h3>로하택스 일괄 변환</h3>
-                            <span class="status-badge good">New Standard</span>
+                        <div class="vs-card-top">
+                            <div class="recommended-badge">SMART CHOICE</div>
+                            <div class="vs-header">
+                                <h3>로하택스 일괄 변환</h3>
+                                <span class="status-badge good">New Standard</span>
+                            </div>
+                            <div class="cost-box gain">
+                                <span class="label">월 확보 시간</span>
+                                <strong class="value">+ 4시간 20분</strong>
+                                <span class="sub-value">(커피 한 잔 마실 시간이면 끝)</span>
+                            </div>
                         </div>
-                        <div class="cost-box gain">
-                            <span class="label">월 확보 시간</span>
-                            <strong class="value">+ 4시간 20분</strong>
-                            <span class="sub-value">(커피 한 잔 마실 시간이면 끝)</span>
-                        </div>
-                        <ul class="vs-list">
-                            <li class="good">✅ <strong>단 1번</strong>의 로그인</li>
-                            <li class="good">✅ 엑셀 그대로 업로드 (타이핑 Zero)</li>
-                            <li class="good">✅ <strong>1,000건도 10분</strong>이면 완료</li>
-                        </ul>
-                        <div class="vs-footer">
-                            <button class="btn-vs primary pulse-effect" onclick="document.querySelector('.monitor-frame').scrollIntoView({behavior: 'smooth'})">
-                                가이드 확인하기 ↓
-                            </button>
+                        <div class="vs-card-bottom">
+                            <ul class="vs-list">
+                                <li class="good">✅ <strong>단 1번</strong>의 로그인</li>
+                                <li class="good">✅ 엑셀 그대로 업로드 (타이핑 Zero)</li>
+                                <li class="good">✅ <strong>1,000건도 10분</strong>이면 완료</li>
+                            </ul>
+                            <div class="vs-footer">
+                                <button class="btn-vs primary pulse-effect" onclick="document.querySelector('.monitor-frame').scrollIntoView({behavior: 'smooth'})">
+                                    가이드 확인하기 ↓
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,10 +161,12 @@
                 
                 <!-- 슬라이드 컨테이너 -->
                 <div class="slide-container">
-                    <!-- 모니터 프레임 -->
-                    <div class="monitor-frame" id="monitor-frame">
-                        <!-- 슬라이드 이미지들 -->
-                        <div class="slide-wrapper">
+                    <!-- 모니터 스크롤 영역(모바일 가로 보기) -->
+                    <div class="monitor-scroll">
+                        <!-- 모니터 프레임 -->
+                        <div class="monitor-frame" id="monitor-frame">
+                            <!-- 슬라이드 이미지들 -->
+                            <div class="slide-wrapper">
                         <div class="slide active" data-step="1">
                             <img src="/static/images/hometax_guide/step1.png.jpg" alt="홈택스 가이드 1단계" class="guide-image">
                             <div class="slide-highlight" data-step="1"></div>
@@ -256,24 +266,25 @@
                         </div>
                     </div>
                     </div>
-                    <!-- 모니터 프레임 끝 -->
+                        <!-- 모니터 프레임 끝 -->
+                        </div>
+                        <!-- 슬라이드 컨트롤 버튼(모니터 위 오버레이) -->
+                        <div class="slide-controls">
+                            <button class="slide-btn prev-btn" id="prevBtn" title="이전 단계">
+                                <i data-lucide="chevron-left" class="btn-icon"></i>
+                            </button>
+                            <button class="slide-btn play-pause-btn" id="playPauseBtn" title="재생">
+                                <i data-lucide="play" class="btn-icon play-icon"></i>
+                            </button>
+                            <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
+                                <i data-lucide="chevron-right" class="btn-icon"></i>
+                            </button>
+                        </div>
+                    </div>
                     
                     <!-- 자막 영역 -->
                     <div class="subtitle-container">
                         <div class="subtitle-text" id="subtitleText"></div>
-                    </div>
-                    
-                    <!-- 슬라이드 컨트롤 버튼 -->
-                    <div class="slide-controls">
-                        <button class="slide-btn prev-btn" id="prevBtn" title="이전 단계">
-                            <i data-lucide="chevron-left" class="btn-icon"></i>
-                        </button>
-                        <button class="slide-btn play-pause-btn" id="playPauseBtn" title="재생">
-                            <i data-lucide="play" class="btn-icon play-icon"></i>
-                        </button>
-                        <button class="slide-btn next-btn" id="nextBtn" title="다음 단계">
-                            <i data-lucide="chevron-right" class="btn-icon"></i>
-                        </button>
                     </div>
                 </div>
             </div>

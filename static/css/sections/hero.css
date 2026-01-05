@@ -39,6 +39,26 @@
     font-weight: 500;
 }
 
+/* ------------------------------------------------
+   Desktop vs Mobile copy (기본값)
+   - PC/태블릿: desktop 문구만 표시
+   - 스마트폰: mobile/03_hero.css에서 뒤집음
+   목적: 로컬(5000)에서 문구/라벨이 "겹쳐 보이는" 현상 방지
+   ------------------------------------------------ */
+#home .hero-copy-desktop,
+#home .hero-badge-desktop,
+#home .hero-security-desktop,
+#home .cta-label-full {
+    display: inline;
+}
+
+#home .hero-copy-mobile,
+#home .hero-badge-mobile,
+#home .hero-security-mobile,
+#home .cta-label-short {
+    display: none;
+}
+
 /* Hero Title */
 .hero-title {
     font-size: 3.6rem;

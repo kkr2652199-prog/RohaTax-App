@@ -41,6 +41,781 @@
         display: block !important;
         width: 100% !important;
     }
+
+    /* ============================================================
+       Why RohaTax? (Problem & Solution) - 스마트폰 전용 밸런스 조정
+       - PC/태블릿은 절대 영향 없음
+       - 목표: 헤더 가독성 ↑, 2장 카드(LEGACY/ROHATAX) 가로 배치(2열)
+       ============================================================ */
+    .problem-solution-section {
+        padding: 44px 0 56px !important;
+        margin-top: 0 !important;
+    }
+
+    /* 원본(problem-solution.css)에서 모바일에 과도하게 내리는 보정 무력화 */
+    .problem-solution-section .container {
+        top: 0 !important;
+    }
+
+    .problem-solution-section .section-header {
+        /* 스마트폰에서 "카드(이미지/텍스트) 중간에서도" 계속 보이도록 sticky 처리 */
+        position: sticky !important;
+        top: 56px !important; /* 상단 네비(스티키) 아래 */
+        z-index: 30 !important;
+
+        margin: 0 auto 12px !important;
+        padding: 10px 12px !important;
+        text-align: left !important; /* 스마트폰에서 읽기 좋게 */
+
+        /* 배경을 살짝 깔아 텍스트가 항상 또렷하게 */
+        background: rgba(255, 255, 255, 0.92) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10) !important;
+    }
+
+    .problem-solution-section .section-header.text-center {
+        transform: none !important;
+        margin-top: 0 !important;
+    }
+
+    .problem-solution-section .section-title {
+        display: block !important; /* 누락(숨김) 방지 */
+        font-size: 22px !important;
+        line-height: 1.15 !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em !important;
+        margin: 0 0 8px 0 !important;
+    }
+
+    .problem-solution-section .section-subtitle {
+        display: block !important; /* 누락(숨김) 방지 */
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        color: #475569 !important;
+        margin: 0 !important;
+        word-break: keep-all !important;
+    }
+
+    /* 카드 2개를 스마트폰에서도 가로 2열로 (가독성 위해 내부 패딩/타이포 축소) */
+    .problem-solution-section .comparison-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin: 16px auto 0 !important;
+        padding: 0 16px !important;
+    }
+
+    .problem-solution-section .compare-card {
+        border-radius: 14px !important;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .problem-solution-section .card-image-box {
+        height: 110px !important;
+    }
+
+    .problem-solution-section .card-badge {
+        top: 10px !important;
+        left: 10px !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .problem-solution-section .compare-content {
+        padding: 12px !important;
+    }
+
+    .problem-solution-section .compare-content h3 {
+        font-size: 14px !important;
+        line-height: 1.2 !important;
+        margin: 0 0 10px 0 !important;
+        word-break: keep-all !important;
+    }
+
+    /* 카드 리스트를 더 촘촘하게 */
+    .problem-solution-section .compare-list li {
+        margin-bottom: 10px !important;
+        padding-left: 18px !important;
+    }
+
+    .problem-solution-section .compare-list li::before {
+        width: 14px !important;
+        height: 14px !important;
+        top: 4px !important;
+        font-size: 9px !important;
+    }
+
+    .problem-solution-section .compare-list li strong {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .problem-solution-section .compare-list li span {
+        font-size: 10px !important;
+        line-height: 1.35 !important;
+    }
+
+    /* ============================================================
+       Industry Solutions (Use Cases) - 스마트폰 가로 스와이프 3장
+       - 제목/부제 위치는 그대로(변경 없음)
+       - 카드만 가로로 넘겨 보게(공간 최대 활용)
+       ============================================================ */
+    .use-cases-section {
+        padding: 44px 0 76px !important; /* 아래 섹션(Seamless Workflow)과 시각적 구분/겹침 방지 */
+    }
+
+    /* 부제목: 스마트폰에서 "한 줄"로 보이도록 */
+    .use-cases-section .section-subtitle {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+        letter-spacing: -0.02em !important;
+        white-space: nowrap !important;
+        margin: 6px 0 0 0 !important;
+    }
+
+    .use-cases-section .use-cases-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 12px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin: 12px auto 0 !important;
+        padding: 0 16px 14px !important;
+    }
+
+    .use-cases-section .use-cases-grid::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .use-cases-section .immersive-card {
+        flex: 0 0 78% !important; /* 3장 모두가 "작게" 보이도록 폭 축소 */
+        height: 320px !important;
+        border-radius: 14px !important;
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16) !important;
+    }
+
+    .use-cases-section .immersive-content {
+        padding: 14px !important;
+    }
+
+    .use-cases-section .industry-badge {
+        font-size: 11px !important;
+        padding: 4px 10px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .use-cases-section .card-header h3 {
+        font-size: 16px !important;
+        margin: 0 0 8px 0 !important;
+        letter-spacing: -0.01em !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .use-cases-section .impact-text {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        margin: 0 0 8px 0 !important;
+    }
+
+    .use-cases-section .metric-box {
+        padding: 10px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .use-cases-section .metric-label {
+        font-size: 11px !important;
+    }
+
+    .use-cases-section .metric-value {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+    }
+
+    /* 다음 섹션(Seamless Workflow)과 구분선 */
+    .use-cases-section::after {
+        content: "" !important;
+        display: block !important;
+        height: 16px !important;
+        margin: 18px 16px 0 !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+    }
+
+    /* ============================================================
+       Seamless Workflow (How it Works) - 위 섹션과 겹침 방지
+       원인: how-it-works.css에서 .section-header가 absolute + top:-247px 로 "떠오름"
+       해결: 모바일에서 normal flow로 되돌려 섹션 간 겹침 제거
+       ============================================================ */
+    .how-it-works-section {
+        padding-top: 48px !important; /* 헤더가 정상 흐름으로 들어오므로 상단 여백만 적절히 */
+        overflow: hidden !important;  /* 헤더/배경이 위로 새어 나오는 현상 방지 */
+    }
+
+    .how-it-works-section .section-header {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: auto !important;
+        max-width: 100% !important;
+        margin: 0 0 16px 0 !important;
+        padding: 18px 16px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18) !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* theater-mode 블록도 모바일에서 과한 양옆 확장/마진 제거 */
+    .how-it-works-section .video-demo-section.theater-mode {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 16px 0 0 0 !important;
+        padding: 20px 16px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: 16px !important;
+    }
+
+    /* 프로세스 3단계: 모바일에서 가로 1줄(스크롤 가능) + 폰트/여백 축소 */
+    .how-it-works-section .video-demo-section.theater-mode .process-steps {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin: 0 0 14px 0 !important; /* 기존 60px ↓ */
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 0 6px 0 !important;
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .process-steps::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .step-item {
+        flex: 0 0 auto !important;
+        min-width: 120px !important; /* 화면에 맞게 작게 */
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        opacity: 1 !important;
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .step-num {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+        letter-spacing: 0.6px !important;
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .step-text {
+        font-size: 12px !important;
+        line-height: 1.25 !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important; /* 줄바꿈 방지 */
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .step-line {
+        flex: 0 0 18px !important;
+        width: 18px !important;
+        height: 2px !important;
+        opacity: 0.6 !important;
+    }
+
+    /* 비디오 영역 주변 여백 추가 축소 */
+    .how-it-works-section .video-demo-section.theater-mode .video-wrapper-glow {
+        transform: none !important; /* translateY(-20px) 제거 */
+        margin: 0 auto !important;
+        border-radius: 14px !important;
+    }
+
+    .how-it-works-section .video-demo-section.theater-mode .video-caption {
+        font-size: 12px !important;
+        margin-top: 10px !important;
+    }
+
+    /* ============================================================
+       REALITY CHECK(guide-header) + VS 카드 2개: 모바일 가로/축소
+       - 제목/부제목: 한 줄씩(깔끔) + 과하면 말줄임
+       - VS 카드: 2열 가로 배치 + 패딩/타이포 대폭 축소
+       ============================================================ */
+    .how-it-works-section .hometax-guide-slider-container {
+        margin: 0 !important;
+        padding: 0 !important; /* ✅ 위아래 여백 완전 제거 */
+    }
+
+    .how-it-works-section .guide-header {
+        margin: 0 0 16px 0 !important; /* 기존 60px ↓ */
+        padding: 0 16px !important;
+        text-align: center !important;
+    }
+
+    .how-it-works-section .guide-badge.warning {
+        font-size: 10px !important;
+        padding: 4px 10px !important;
+        border-radius: 999px !important;
+    }
+
+    .how-it-works-section .guide-header h2 {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        margin: 10px 0 6px !important;
+        line-height: 1.2 !important;
+        word-break: keep-all !important;
+    }
+
+    .how-it-works-section .guide-header p {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+        word-break: keep-all !important;
+    }
+
+    .how-it-works-section .guide-header p br {
+        display: none !important; /* 한 줄 유지 */
+    }
+
+    .how-it-works-section .vs-container {
+        /* 모바일: 2열 고정 대신, 카드 2장을 "가로 스와이프"로 보여줌 (정사각형 밸런스 유지) */
+        display: flex !important;
+        grid-template-columns: unset !important;
+        gap: 12px !important;
+        margin: 0 auto 18px !important; /* 기존 100px ↓ */
+        padding: 0 16px 10px !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .how-it-works-section .vs-container::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .how-it-works-section .vs-card {
+        /* 카드 자체는 "상단 정사각형 + 하단 텍스트" 구조로 확장 */
+        flex: 0 0 82% !important; /* 한 장 중심 + 다음 장 힌트 */
+        padding: 0 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06) !important;
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* 상단: 정사각형(1:1) 영역 */
+    .how-it-works-section .vs-card-top {
+        padding: 14px !important;
+        aspect-ratio: 1 / 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        overflow: hidden !important;
+    }
+
+    /* 하단: 텍스트/버튼 영역(공간 활용) */
+    .how-it-works-section .vs-card-bottom {
+        padding: 10px 14px 14px !important;
+        background: transparent !important;
+    }
+
+    .how-it-works-section .vs-header {
+        margin-bottom: 10px !important;
+    }
+
+    .how-it-works-section .vs-header h3 {
+        font-size: 13px !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+        word-break: keep-all !important;
+    }
+
+    .how-it-works-section .status-badge {
+        font-size: 10px !important;
+        padding: 3px 8px !important;
+        border-radius: 999px !important;
+    }
+
+    .how-it-works-section .cost-box {
+        padding: 8px 10px !important;
+        border-radius: 12px !important;
+        margin: 8px 0 !important;
+    }
+
+    .how-it-works-section .cost-box .label {
+        font-size: 10px !important;
+        margin-bottom: 6px !important;
+        opacity: 0.9 !important;
+    }
+
+    .how-it-works-section .cost-box .value {
+        font-size: 18px !important;      /* 핵심 숫자는 시원하게 */
+        line-height: 1.1 !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    .how-it-works-section .cost-box .sub-value {
+        font-size: 10px !important;
+        line-height: 1.15 !important;
+        margin-top: 4px !important;
+        opacity: 0.85 !important;
+    }
+
+    .how-it-works-section .vs-list {
+        margin: 8px 0 0 0 !important;
+        padding-left: 0 !important;
+        overflow: visible !important; /* 하단 텍스트는 잘리지 않게 */
+    }
+
+    .how-it-works-section .vs-list li {
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+        margin-bottom: 6px !important;
+        word-break: keep-all !important;
+        white-space: normal !important;
+        overflow: visible !important;
+    }
+
+    .how-it-works-section .recommended-badge {
+        /* 모바일: 배지가 텍스트를 가리지 않도록 "흐름 안"으로 넣기 */
+        position: static !important;
+        transform: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        font-size: 10px !important;
+        padding: 4px 10px !important;
+        border-radius: 999px !important;
+        margin: 0 auto 6px !important;
+    }
+
+    .how-it-works-section .vs-footer {
+        margin-top: 10px !important;
+    }
+
+    .how-it-works-section .btn-vs.primary {
+        font-size: 11px !important;     /* 버튼 대폭 축소 */
+        padding: 8px 10px !important;
+        border-radius: 10px !important;
+        width: auto !important;
+        min-height: 34px !important;
+        line-height: 1 !important;
+        box-shadow: none !important;    /* 모바일에서 과한 그림자 제거 */
+    }
+
+    /* cost-box 내부 텍스트가 "한 눈에" 들어오게 정렬 */
+    .how-it-works-section .cost-box .label,
+    .how-it-works-section .cost-box .sub-value {
+        word-break: keep-all !important;
+    }
+
+    /* loss/gain 박스가 너무 커 보이지 않도록 테두리/여백 살짝 다운 */
+    .how-it-works-section .cost-box.loss,
+    .how-it-works-section .cost-box.gain {
+        border-width: 1px !important;
+    }
+
+    /* ============================================================
+       홈택스 가이드(guide-tabs / monitor-frame / subtitle) - 모바일 최적화
+       ============================================================ */
+
+    /* 8개 탭: 모바일도 PC처럼 1~4 한 줄, 5~8 그 아래 줄 (2행 그리드) - 공간 효율화 */
+    .how-it-works-section .guide-tabs {
+        /* ✅ PC 화면 구성처럼 2행 그리드 */
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important; /* ✅ 4열 */
+        gap: 6px !important; /* ✅ 간격 축소 */
+        padding: 0 12px !important;
+        margin-bottom: 8px !important; /* ✅ 하단 여백 축소 */
+    }
+
+    .how-it-works-section .tab-item {
+        /* ✅ 텍스트가 모두 예쁘게 나오도록 박스 크기 자동 조절 - 공간 효율화 */
+        width: 100% !important; /* 그리드 셀 전체 사용 */
+        min-width: 0 !important; /* 그리드 오버플로우 방지 */
+        max-width: 100% !important;
+        padding: 8px 4px !important; /* ✅ 패딩 축소 */
+        border-radius: 10px !important; /* ✅ 둥근 모서리 축소 */
+        text-align: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    .how-it-works-section .tab-label {
+        font-size: 10px !important; /* ✅ 폰트 크기 축소 */
+        line-height: 1.2 !important; /* ✅ 줄간격 축소 */
+        margin-bottom: 2px !important; /* ✅ 하단 여백 축소 */
+        white-space: normal !important; /* ✅ 줄바꿈 허용 (텍스트가 모두 보이도록) */
+        overflow: visible !important;
+        text-overflow: clip !important;
+        display: block !important;
+        word-break: keep-all !important; /* ✅ 한글 단어 단위 줄바꿈 */
+        hyphens: auto !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    /* 모니터: 모바일에서는 "가로(랜드스케이프 느낌)"로 크게 보이게 - 공간 효율화 */
+    .how-it-works-section .slide-container {
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important; /* ✅ 여백 제거 */
+        min-height: 0 !important; /* ✅ 불필요한 빈 공간 제거 */
+        height: auto !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    .how-it-works-section .monitor-scroll {
+        /* 스와이프는 "프레임 안"에서 처리 */
+        overflow: visible !important;
+        width: 100% !important;
+        padding: 0 !important; /* ✅ 프레임 제거 시, 좌우 여백도 최소화 */
+        scroll-snap-type: none !important;
+    }
+
+    .how-it-works-section .monitor-scroll::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .how-it-works-section .monitor-frame {
+        width: 100% !important; /* ✅ 모바일: 프레임(베젤) 제거 → 슬라이더 자체를 풀폭 */
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        /* ✅ 모바일: 8장 "리뷰 슬라이드"처럼 가로 스와이프(네이티브 스크롤) - 독립 구간 강화 */
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important; /* ✅ 강제 스냅 */
+        scroll-padding: 0 !important; /* ✅ 스냅 패딩 제거 */
+        scroll-behavior: auto !important; /* ✅ 즉시 스냅 (부드러운 애니메이션 제거) */
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x !important;
+    }
+
+    .how-it-works-section .monitor-frame::before {
+        display: none !important; /* ✅ 상단 바(베젤) 제거 */
+        content: none !important;
+    }
+
+    .how-it-works-section .monitor-frame::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .how-it-works-section .monitor-frame .slide-wrapper {
+        /* ✅ 모바일: 8장 가로 나열 - 각 슬라이드가 정확히 프레임 폭의 100% - 공간 효율화 */
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        width: 800% !important; /* ✅ monitor-frame 폭의 8배 (정확히) */
+        height: min(70vh, 650px) !important; /* ✅ 이미지 영역 더 확대 (위아래 여백 제거로 공간 확보) */
+        background: #fff !important; /* 검정 배경 제거 */
+        position: relative !important;
+        /* ✅ slide-wrapper는 터치 이벤트를 받지 않음 (여백 클릭 방지) */
+        pointer-events: none !important;
+        margin: 0 !important; /* ✅ 위아래 여백 제거 */
+        padding: 0 !important; /* ✅ 위아래 여백 제거 */
+    }
+    
+    /* ✅ slide-wrapper 내부의 slide만 터치 이벤트 허용 (이미지만 확대) */
+    .how-it-works-section .monitor-frame .slide-wrapper .slide {
+        pointer-events: auto !important;
+    }
+
+    .how-it-works-section .monitor-frame .slide {
+        /* ✅ 각 슬라이드 = slide-wrapper 폭의 12.5% = monitor-frame 폭의 100% (정확히) */
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        flex: 0 0 12.5% !important;   /* ✅ slide-wrapper의 12.5% = monitor-frame의 100% */
+        width: 12.5% !important;
+        min-width: 12.5% !important;
+        max-width: 12.5% !important;
+        height: 100% !important;
+        opacity: 1 !important;
+        transition: none !important;
+        display: flex !important;
+        align-items: center !important; /* ✅ 이미지 중앙 정렬 */
+        justify-content: center !important; /* ✅ 이미지 중앙 정렬 */
+        padding: 0 !important; /* ✅ 여백 완전 제거 */
+        scroll-snap-align: start !important; /* ✅ 스크롤 스냅 시작점 */
+        scroll-snap-stop: always !important; /* ✅ 항상 스냅 (중간에 멈추지 않음) */
+        box-sizing: border-box !important;
+        /* ✅ 컨테이너 안정성: 기본 overflow 설정 */
+        overflow: visible !important;
+        /* ✅ slide 컨테이너 자체는 터치 이벤트를 받지 않음 (이미지만 확대) */
+        pointer-events: none !important;
+        /* ✅ 각 슬라이드를 독립된 공간으로 구분 */
+        isolation: isolate !important;
+    }
+    
+    /* ✅ slide 내부의 이미지만 터치 이벤트 허용 */
+    .how-it-works-section .monitor-frame .slide .guide-image {
+        pointer-events: auto !important;
+    }
+
+    .how-it-works-section .monitor-frame .guide-image {
+        /* ✅ 원본 이미지가 각 창에 정확히 들어가도록 (잘리지 않고 전체 표시) */
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important; /* ✅ 이미지 전체가 보이도록 (잘림 방지) */
+        object-position: center !important;
+        background-color: #f0f2f5 !important;
+        transition: none !important; /* ✅ 확대/축소 시 부드러운 전환 제거 (즉시 반영) */
+        touch-action: pan-x pan-y pinch-zoom !important; /* ✅ 핀치 줌 허용 */
+        display: block !important;
+        /* ✅ 자연스러운 핀치 줌을 위한 설정 */
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    /* ✅ 이미지 확대 상태 (핀치 줌) - 다른 슬라이드로 넘어가지 않도록 */
+    .how-it-works-section .monitor-frame .guide-image.zoomed {
+        /* transform은 JavaScript에서 동적으로 설정 (scale 값이 고정되지 않음) */
+        object-fit: contain !important; /* 확대 시 전체 보이게 */
+        z-index: 10000 !important; /* ✅ 다른 모든 요소 위에 표시 */
+        position: relative !important;
+        cursor: grab !important;
+        touch-action: pan-x pan-y !important; /* ✅ 팬과 핀치 줌 허용 */
+        /* ✅ 확대 시 컨테이너 안정성: transform-origin으로 중앙 확대 */
+        transform-origin: center center !important;
+        will-change: transform !important; /* 성능 최적화 */
+        /* ✅ 확대된 이미지가 컨테이너 밖으로 나가도 전체를 볼 수 있도록 */
+        max-width: none !important;
+        max-height: none !important;
+        /* ✅ 확대된 이미지가 다른 요소 위에 표시되도록 */
+        pointer-events: auto !important;
+        transition: none !important; /* ✅ 즉시 반영 */
+    }
+
+    .how-it-works-section .monitor-frame .guide-image.zoomed:active {
+        cursor: grabbing !important;
+    }
+    
+    /* ✅ 확대된 이미지가 있는 slide 컨테이너: overflow visible로 전체 영역 표시 */
+    .how-it-works-section .monitor-frame .slide:has(.guide-image.zoomed),
+    .how-it-works-section .monitor-frame .slide.scroll-locked {
+        overflow: visible !important; /* ✅ 확대된 이미지 전체를 볼 수 있도록 */
+        position: relative !important;
+        isolation: isolate !important; /* ✅ z-index 격리 */
+        z-index: 9999 !important; /* ✅ 확대된 이미지가 다른 슬라이드 위에 표시 */
+    }
+    
+    /* ✅ 확대된 이미지의 부모 컨테이너도 visible로 */
+    .how-it-works-section .monitor-frame:has(.guide-image.zoomed) {
+        overflow: visible !important; /* ✅ 확대된 이미지가 프레임 밖으로 나가도 보이도록 */
+    }
+
+    /* ✅ JavaScript로 동적 제어하지만, CSS로도 보조 지원 */
+    .how-it-works-section .monitor-frame.scroll-locked {
+        overflow-x: hidden !important; /* ✅ 가로 스크롤 차단 */
+        overflow-y: visible !important; /* ✅ 확대된 이미지가 위아래로 나가도 보이도록 */
+        scroll-snap-type: none !important; /* ✅ 스크롤 스냅 비활성화 */
+        touch-action: none !important; /* ✅ JavaScript로 직접 제어 */
+    }
+
+    .how-it-works-section .monitor-frame .slide.scroll-locked {
+        overflow: visible !important; /* ✅ 확대된 이미지 전체를 볼 수 있도록 */
+        touch-action: none !important; /* ✅ JavaScript로 직접 제어 */
+        position: relative !important;
+        isolation: isolate !important; /* ✅ z-index 격리로 안정성 향상 */
+        z-index: 999 !important;
+    }
+
+    /* 스와이프 방해 요소(하이라이트/마우스 효과/컨트롤 오버레이)가 터치를 먹지 않게 */
+    .how-it-works-section .slide-highlight,
+    .how-it-works-section .mouse-click-effect,
+    .how-it-works-section .mouse-click-effect *,
+    .how-it-works-section .slide-highlight * {
+        pointer-events: none !important;
+    }
+
+    /* 자막: 화면 아래 풀폭으로 길게(공간 낭비/가림 제거) */
+    .how-it-works-section .subtitle-container {
+        position: relative !important;
+        left: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: fit-content !important;     /* 풀폭 금지: 내용만큼 */
+        max-width: 92% !important;         /* 너무 길면 줄바꿈 */
+        margin: 10px auto 0 !important;    /* 프레임 기준 가로 중앙 */
+        padding: 10px 14px !important;
+        border-radius: 14px !important;    /* 캡슐형 */
+        background: rgba(15, 23, 42, 0.72) !important;
+        text-align: center !important;
+        pointer-events: none !important;
+        opacity: 1 !important;
+    }
+
+    .how-it-works-section .subtitle-container.show {
+        opacity: 1 !important;
+    }
+
+    .how-it-works-section .subtitle-text {
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+        font-weight: 600 !important;
+        word-break: keep-all !important;
+        /* ✅ 줄임말 금지 + 전체 노출(줄바꿈 허용) */
+        white-space: normal !important;
+        overflow: visible !important;
+    }
+
+    /* subtitle-text는 가로 스크롤을 쓰지 않으므로 scrollbar 숨김 규칙 불필요(유지해도 무방) */
+
+    /* 컨트롤: 모니터 위에만 올리고(자막과 분리), 여백 최소화 */
+    .how-it-works-section .slide-controls {
+        bottom: 10px !important;
+        padding: 6px 12px !important;
+        gap: 10px !important;
+        background: transparent !important;  /* 네모박스(흉물) 제거 */
+        box-shadow: none !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    /* 네모 컨트롤 박스 자체가 거슬리면: 모바일에서는 컨트롤을 숨김(탭으로 조작) */
+    .how-it-works-section .slide-controls {
+        display: none !important;
+    }
+
+    /* 파란 동그라미(재생/일시정지) 버튼: 모바일에서는 제거 */
+    .how-it-works-section #playPauseBtn {
+        display: none !important;
+    }
+
+    .how-it-works-section .slide-btn {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .how-it-works-section .play-pause-btn {
+        width: 42px !important;
+        height: 42px !important;
+    }
 }
 
 
