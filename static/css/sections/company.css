@@ -225,3 +225,73 @@
     }
 }
 
+/* ✅ 모바일 버전 (480px 이하) - 09_common.css가 완전히 제어하므로 여기서는 PC/태블릿 버전 스타일만 덮어씀 */
+@media (max-width: 480px) {
+    .company-vision-wrapper {
+        flex-direction: row !important; /* ✅ 768px 미디어 쿼리의 flex-direction: column 덮어씀 */
+        align-items: flex-start !important; /* ✅ 09_common.css와 동일하게 설정 */
+        gap: 24px !important; /* ✅ gap 증가 (20px → 24px), 요소 간 여유 공간 확보 */
+        overflow-x: auto !important; /* ✅ 가로 스크롤 활성화 */
+        overflow-y: visible !important; /* ✅ 이미지가 잘리지 않도록 */
+    }
+    
+    .vision-content {
+        flex: 0 0 280px !important; /* ✅ 고정 너비로 변경, 모바일에서 읽기 좋은 크기 */
+        min-width: 280px !important;
+        max-width: 280px !important;
+        flex-shrink: 0 !important; /* ✅ 축소 방지 */
+    }
+    
+    .vision-image-box {
+        order: 2 !important; /* ✅ 768px 미디어 쿼리의 order: -1 덮어씀, 이미지를 오른쪽으로 */
+        display: block !important; /* ✅ 이미지 박스 표시 */
+        visibility: visible !important; /* ✅ 이미지 박스 표시 */
+        opacity: 1 !important; /* ✅ 이미지 박스 표시 */
+        overflow: visible !important; /* ✅ 이미지가 잘리지 않도록 */
+        flex: 0 0 320px !important; /* ✅ 고정 너비로 변경, 이미지가 시원하게 보이도록 */
+        min-width: 320px !important;
+        max-width: 320px !important;
+        flex-shrink: 0 !important; /* ✅ 축소 방지 */
+    }
+    
+    .vision-title {
+        text-align: left !important; /* ✅ 768px 미디어 쿼리의 text-align: center 덮어씀 */
+    }
+    
+    .vision-desc {
+        text-align: left !important; /* ✅ 768px 미디어 쿼리의 text-align: center 덮어씀 */
+    }
+    
+    .vision-metrics {
+        justify-content: flex-start !important; /* ✅ 768px 미디어 쿼리의 justify-content: center 덮어씀 */
+    }
+    
+    .vision-badge {
+        display: inline-block !important; /* ✅ 768px 미디어 쿼리의 display: table 덮어씀 */
+        margin: 0 0 8px 0 !important; /* ✅ 768px 미디어 쿼리의 margin: 0 auto 20px 덮어씀 */
+    }
+    
+    .vision-img {
+        display: block !important; /* ✅ 이미지 표시 */
+        visibility: visible !important; /* ✅ 이미지 표시 */
+        opacity: 1 !important; /* ✅ 이미지 표시 */
+        width: 100% !important;
+        height: auto !important;
+        min-height: 320px !important; /* ✅ 최소 높이 증가 (280px → 320px), 더 시원하게 */
+        max-height: 450px !important; /* ✅ 최대 높이 증가 (400px → 450px), 더 시원하게 */
+        object-fit: cover !important; /* ✅ 이미지 비율 유지 */
+        border-radius: 16px !important; /* ✅ 둥근 모서리 */
+        box-shadow: 0 15px 35px -8px rgba(0, 0, 0, 0.25) !important; /* ✅ 그림자 강화 */
+    }
+    
+    .image-overlay-card {
+        left: auto !important; /* ✅ 768px 미디어 쿼리의 left: 50% 덮어씀 */
+        right: -8px !important; /* ✅ 오른쪽 정렬 */
+        transform: none !important; /* ✅ 768px 미디어 쿼리의 transform: translateX(-50%) 덮어씀 */
+        width: auto !important; /* ✅ 768px 미디어 쿼리의 width: 80% 덮어씀 */
+        display: flex !important; /* ✅ 오버레이 카드 표시 */
+        visibility: visible !important; /* ✅ 오버레이 카드 표시 */
+        opacity: 1 !important; /* ✅ 오버레이 카드 표시 */
+    }
+}
+

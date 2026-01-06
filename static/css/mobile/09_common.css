@@ -866,6 +866,568 @@
         width: 42px !important;
         height: 42px !important;
     }
+
+    /* ================================================================
+       Features Section (Bento Grid) - 모바일 버전
+       ================================================================ */
+    
+    /* ✅ 제목을 한 줄에 예쁘게 표시 */
+    .bento-section .section-title,
+    .features-section .section-title {
+        font-size: 1.35rem !important; /* ✅ 한 줄에 맞도록 크기 조정 */
+        font-weight: 700 !important;
+        text-align: center !important;
+        margin-bottom: 8px !important;
+        line-height: 1.4 !important;
+        white-space: nowrap !important; /* ✅ 줄바꿈 방지 */
+        overflow: hidden !important;
+        text-overflow: ellipsis !important; /* ✅ 필요시 말줄임표 */
+        padding: 0 16px !important; /* ✅ 좌우 여백 */
+        letter-spacing: -0.02em !important; /* ✅ 글자 간격 약간 줄여서 한 줄에 맞춤 */
+    }
+    
+    .bento-section .section-subtitle,
+    .features-section .section-subtitle {
+        font-size: 0.95rem !important;
+        text-align: center !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 24px !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* ✅ bento-grid를 가로 스크롤 가능하게 변경 */
+    .bento-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 16px !important;
+        padding: 8px 0 16px 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        /* 스크롤바 숨김 */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    .bento-grid::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    /* ✅ 각 bento-card를 가로로 나열 */
+    .bento-card {
+        flex: 0 0 280px !important; /* 고정 폭 (스마트폰 화면의 약 75%) */
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        height: auto !important;
+        min-height: 320px !important;
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        /* 카드 스타일 */
+        border-radius: 16px !important;
+        padding: 24px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        background: #ffffff !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ large, medium, small 구분 없이 동일한 크기 */
+    .bento-card-large,
+    .bento-card-medium,
+    .bento-card-small {
+        flex: 0 0 280px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        grid-column: unset !important;
+        grid-row: unset !important;
+    }
+    
+    /* ✅ 이미지 박스 크기 조정 */
+    .bento-card .tech-image-box {
+        width: 100% !important;
+        height: 140px !important;
+        min-height: 140px !important;
+        max-height: 140px !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .bento-card .tech-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+    
+    /* ✅ 제목과 설명 스타일 */
+    .bento-card-header {
+        margin-bottom: 12px !important;
+    }
+    
+    .bento-card .bento-title {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .bento-card .bento-description {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        color: var(--text-secondary) !important;
+        flex-grow: 1 !important;
+    }
+    
+    /* ✅ 첫 번째와 마지막 카드에 여백 추가 */
+    .bento-grid::before,
+    .bento-grid::after {
+        content: '' !important;
+        flex: 0 0 16px !important;
+    }
+
+    /* ================================================================
+       Pricing Section (멤버십) - 모바일 버전
+       ================================================================ */
+    
+    /* ✅ pricing-preview-section 자체 위치 조정 (bento-grid 아래로) */
+    .pricing-preview-section {
+        position: relative !important;
+        z-index: 1 !important;
+        padding: 180px 0 40px 0 !important; /* ✅ 상단 패딩 대폭 증가 (120px → 180px), 더 아래로 이동 */
+        margin-top: 80px !important; /* ✅ 추가 여백 증가 (60px → 80px) */
+    }
+    
+    /* ✅ container의 패딩도 제거하여 여백 최소화 */
+    .pricing-preview-section .container {
+        padding-top: 0 !important; /* ✅ 상단 패딩 제거 */
+        padding-bottom: 0 !important; /* ✅ 하단 패딩 제거 */
+    }
+    
+    /* ✅ 제목과 부제목이 모바일에서 보이도록 (부제목 아래에 상품 배치, 여백 완전 제거) */
+    .pricing-preview-section .section-header {
+        display: block !important;
+        text-align: center !important;
+        margin: 0 auto 0 !important; /* ✅ 하단 마진 완전 제거 */
+        max-width: 100% !important;
+        transform: none !important; /* ✅ PC 버전의 translateX 제거 */
+        padding: 0 16px 0 16px !important; /* ✅ 하단 패딩 제거 */
+        position: relative !important;
+        z-index: 10 !important; /* ✅ 다른 요소 위에 표시 */
+        background: var(--bg-color, #ffffff) !important; /* ✅ 배경색 추가로 겹침 방지 */
+    }
+    
+    .pricing-preview-section .section-header h2 {
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 4px !important; /* ✅ 제목-부제목 간격 */
+        margin-top: 0 !important; /* ✅ 상단 마진 제거 */
+        padding-bottom: 0 !important; /* ✅ 하단 패딩 제거 */
+        line-height: 1.3 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        letter-spacing: -0.02em !important;
+        color: var(--text-primary, #0f172a) !important;
+    }
+    
+    .pricing-preview-section .section-header p {
+        font-size: 0.95rem !important;
+        color: var(--text-secondary, #64748b) !important;
+        line-height: 1.3 !important;
+        margin-bottom: 0 !important;
+        margin-top: 0 !important; /* ✅ 상단 마진 제거 */
+        padding-bottom: 0 !important; /* ✅ 하단 패딩 제거 */
+        padding-top: 0 !important; /* ✅ 상단 패딩 제거 */
+    }
+    
+    /* ✅ 무료 상품 2종을 가로 스크롤로 배치 (빨간 줄 바로 아래 위치, 여백 완전 제거) */
+    .pricing-preview-grid-free,
+    .pricing-preview-grid-free.reveal {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 16px !important;
+        padding: 0 0 8px 0 !important; /* ✅ 상단 패딩 0px, 빨간 줄 바로 아래 */
+        margin: -24px auto 8px !important; /* ✅ 음수 상단 마진 대폭 증가 (-16px → -24px), 여백 완전 제거 */
+        position: relative !important;
+        z-index: 1 !important; /* ✅ section-header보다 낮은 z-index */
+        max-width: 100% !important;
+        transform: none !important; /* ✅ reveal 애니메이션의 translateY 제거 */
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        /* 스크롤바 숨김 */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    .pricing-preview-grid-free::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    /* ✅ 첫 번째와 마지막 카드에 여백 추가 */
+    .pricing-preview-grid-free::before,
+    .pricing-preview-grid-free::after {
+        content: '' !important;
+        flex: 0 0 16px !important;
+    }
+    
+    /* ✅ 무료 상품 카드 크기 조정 (모바일 환경에 맞게) */
+    .pricing-preview-grid-free .product-card {
+        flex: 0 0 260px !important; /* ✅ 모바일에 맞게 크기 축소 */
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+        height: auto !important;
+        min-height: 380px !important;
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        /* 카드 스타일 */
+        border-radius: 16px !important;
+        padding: 20px 16px !important; /* ✅ 패딩 축소 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ 카드 내부 요소 크기 조정 */
+    .pricing-preview-grid-free .product-icon {
+        font-size: 1.8rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .pricing-preview-grid-free .product-tagline {
+        font-size: 0.75rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .pricing-preview-grid-free .product-name {
+        font-size: 1.1rem !important;
+        margin-bottom: 8px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .pricing-preview-grid-free .product-description {
+        font-size: 0.85rem !important;
+        line-height: 1.4 !important;
+        margin-bottom: 12px !important;
+        max-width: 100% !important;
+    }
+    
+    .pricing-preview-grid-free .product-price {
+        font-size: 1.4rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .pricing-preview-grid-free .product-price-unit {
+        font-size: 0.85rem !important;
+    }
+    
+    .pricing-preview-grid-free .product-feature-list {
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .pricing-preview-grid-free .product-feature-list li {
+        font-size: 0.8rem !important;
+        line-height: 1.5 !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .pricing-preview-grid-free .event-main-benefit {
+        font-size: 0.95rem !important;
+    }
+    
+    .pricing-preview-grid-free .event-number {
+        font-size: 1.1rem !important;
+    }
+    
+    .pricing-preview-grid-free .event-note {
+        font-size: 0.75rem !important;
+    }
+    
+    /* ✅ 유료 상품 3종을 가로 스크롤로 배치 (여백 대폭 최소화) */
+    .pricing-preview-grid-paid,
+    .pricing-preview-grid-paid.reveal {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 16px !important;
+        padding: 0 0 8px 0 !important; /* ✅ 패딩 대폭 축소 (4px → 0px, 12px → 8px) */
+        margin: 0 auto 8px !important; /* ✅ 하단 마진 대폭 축소 (16px → 8px) */
+        position: relative !important;
+        z-index: 1 !important;
+        transform: none !important; /* ✅ reveal 애니메이션의 translateY 제거 */
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        /* 스크롤바 숨김 */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    .pricing-preview-grid-paid::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    /* ✅ 첫 번째와 마지막 카드에 여백 추가 */
+    .pricing-preview-grid-paid::before,
+    .pricing-preview-grid-paid::after {
+        content: '' !important;
+        flex: 0 0 16px !important;
+    }
+    
+    /* ✅ 유료 상품 카드 크기 조정 (모바일 환경에 맞게) */
+    .pricing-preview-grid-paid .product-card {
+        flex: 0 0 280px !important; /* ✅ 모바일에 맞게 크기 설정 */
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        height: auto !important;
+        min-height: 420px !important; /* ✅ 유료 상품은 내용이 많아 높이 증가 */
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important;
+        /* 카드 스타일 */
+        border-radius: 16px !important;
+        padding: 20px 16px !important; /* ✅ 패딩 축소 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ 유료 상품 카드 내부 요소 크기 조정 */
+    .pricing-preview-grid-paid .product-icon {
+        font-size: 1.6rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .pricing-preview-grid-paid .product-tagline {
+        font-size: 0.7rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .pricing-preview-grid-paid .product-name {
+        font-size: 1rem !important;
+        margin-bottom: 8px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .pricing-preview-grid-paid .product-description {
+        font-size: 0.8rem !important;
+        line-height: 1.4 !important;
+        margin-bottom: 12px !important;
+        max-width: 100% !important;
+    }
+    
+    .pricing-preview-grid-paid .product-price {
+        font-size: 1.3rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .pricing-preview-grid-paid .product-price-unit {
+        font-size: 0.8rem !important;
+    }
+    
+    .pricing-preview-grid-paid .product-feature-list {
+        font-size: 0.75rem !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .pricing-preview-grid-paid .product-feature-list li {
+        font-size: 0.75rem !important;
+        line-height: 1.5 !important;
+        margin-bottom: 6px !important;
+    }
+    
+    /* ✅ Premium 할인 배지 크기 조정 */
+    .pricing-preview-grid-paid .premium-discount-badge {
+        font-size: 0.7rem !important;
+        padding: 4px 10px !important;
+    }
+    
+    /* ✅ Gold 특별 기능 배지 크기 조정 */
+    .pricing-preview-grid-paid .gold-special-badge {
+        font-size: 0.7rem !important;
+        margin-top: 8px !important;
+    }
+    
+    /* ================================================================
+       Company Section - ABOUT US (모바일: 텍스트 왼쪽, 이미지 오른쪽)
+       ================================================================ */
+    .company-section {
+        padding: 40px 0 !important;
+    }
+    
+    .company-vision-wrapper {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start !important;
+        gap: 24px !important; /* ✅ gap 증가 (20px → 24px), 요소 간 여유 공간 확보 */
+        margin-bottom: 40px !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important; /* ✅ 이미지가 잘리지 않도록 */
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        padding: 0 16px 0 16px !important; /* ✅ 좌우 패딩 동일하게 */
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .company-vision-wrapper::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    .vision-content {
+        flex: 0 0 280px !important; /* ✅ 고정 너비로 변경 (48% → 280px), 모바일에서 읽기 좋은 크기 */
+        min-width: 280px !important;
+        max-width: 280px !important;
+        padding-right: 0 !important; /* ✅ 패딩 제거 */
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important; /* ✅ 스크롤 스냅 강화 */
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important; /* ✅ 축소 방지 */
+    }
+    
+    .vision-image-box {
+        flex: 0 0 320px !important; /* ✅ 고정 너비로 변경 (50% → 320px), 이미지가 시원하게 보이도록 */
+        min-width: 320px !important;
+        max-width: 320px !important;
+        position: relative !important;
+        scroll-snap-align: start !important;
+        scroll-snap-stop: always !important; /* ✅ 스크롤 스냅 강화 */
+        order: 2 !important; /* 이미지를 오른쪽으로 */
+        display: block !important; /* ✅ 이미지 박스 표시 */
+        visibility: visible !important; /* ✅ 이미지 박스 표시 */
+        opacity: 1 !important; /* ✅ 이미지 박스 표시 */
+        overflow: visible !important; /* ✅ 이미지가 잘리지 않도록 */
+        padding-left: 0 !important; /* ✅ 패딩 제거 */
+        flex-shrink: 0 !important; /* ✅ 축소 방지 */
+    }
+    
+    .vision-badge {
+        font-size: 0.7rem !important;
+        margin-bottom: 12px !important; /* ✅ 여백 증가 */
+        display: inline-block !important;
+        padding: 5px 12px !important; /* ✅ 패딩 증가 */
+    }
+    
+    .vision-title {
+        font-size: 1.3rem !important; /* ✅ 폰트 크기 증가 (1.25rem → 1.3rem) */
+        text-align: left !important;
+        line-height: 1.4 !important; /* ✅ 줄 간격 */
+        margin-bottom: 12px !important; /* ✅ 여백 증가 */
+        font-weight: 800 !important;
+        color: #1e293b !important;
+    }
+    
+    .vision-title strong {
+        color: #2563eb !important;
+    }
+    
+    .vision-desc {
+        font-size: 0.85rem !important; /* ✅ 폰트 크기 증가 (0.8rem → 0.85rem) */
+        text-align: left !important;
+        line-height: 1.65 !important; /* ✅ 줄 간격 증가 (1.6 → 1.65) */
+        margin-bottom: 16px !important; /* ✅ 여백 증가 */
+        color: #475569 !important;
+    }
+    
+    .vision-metrics {
+        gap: 16px !important; /* ✅ 간격 증가 (12px → 16px) */
+        flex-wrap: wrap !important;
+        display: flex !important;
+        align-items: center !important;
+        margin-top: 8px !important; /* ✅ 상단 여백 추가 */
+    }
+    
+    .metric-item {
+        flex: 1 1 auto !important;
+        min-width: 100px !important; /* ✅ 최소 너비 증가 (90px → 100px) */
+    }
+    
+    .metric-value {
+        font-size: 1.1rem !important; /* ✅ 폰트 크기 증가 (1rem → 1.1rem) */
+        font-weight: 700 !important;
+        display: block !important;
+        margin-bottom: 5px !important; /* ✅ 여백 증가 */
+    }
+    
+    .metric-label {
+        font-size: 0.75rem !important; /* ✅ 폰트 크기 증가 (0.7rem → 0.75rem) */
+        color: #64748b !important;
+    }
+    
+    .metric-line {
+        width: 1px !important;
+        height: 35px !important; /* ✅ 높이 증가 (30px → 35px) */
+        background-color: #cbd5e1 !important;
+    }
+    
+    .vision-img {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 320px !important; /* ✅ 최소 높이 증가 (280px → 320px), 더 시원하게 */
+        max-height: 450px !important; /* ✅ 최대 높이 증가 (400px → 450px), 더 시원하게 */
+        object-fit: cover !important; /* ✅ 이미지 비율 유지 */
+        border-radius: 16px !important; /* ✅ 둥근 모서리 */
+        box-shadow: 0 15px 35px -8px rgba(0, 0, 0, 0.25) !important; /* ✅ 그림자 강화 */
+        display: block !important; /* ✅ 이미지 표시 */
+        visibility: visible !important; /* ✅ 이미지 표시 */
+        opacity: 1 !important; /* ✅ 이미지 표시 */
+        position: relative !important;
+        z-index: 1 !important;
+        margin: 0 !important; /* ✅ 여백 제거 */
+    }
+    
+    .image-overlay-card {
+        position: absolute !important;
+        bottom: 12px !important; /* ✅ 하단 여백 증가 (이미지 내부로 이동) */
+        right: 12px !important; /* ✅ 오른쪽 여백 증가 (이미지 내부로 이동) */
+        left: auto !important;
+        transform: none !important;
+        width: auto !important;
+        min-width: 110px !important;
+        max-width: 150px !important;
+        padding: 8px 12px !important; /* ✅ 패딩 증가 */
+        font-size: 0.7rem !important; /* ✅ 폰트 크기 약간 증가 */
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important; /* ✅ gap 증가 */
+        z-index: 10 !important; /* ✅ 이미지 위에 표시 */
+        background: white !important;
+        border-radius: 12px !important; /* ✅ 둥근 모서리 증가 */
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important; /* ✅ 그림자 강화 */
+    }
+    
+    .overlay-icon {
+        font-size: 18px !important;
+    }
+    
+    .overlay-text strong {
+        font-size: 0.7rem !important;
+        display: block !important;
+    }
+    
+    .overlay-text span {
+        font-size: 0.6rem !important;
+        display: block !important;
+    }
 }
 
 

@@ -612,3 +612,56 @@
 
 /* === End of Enhancement === */
 
+/* ✅ 모바일 버전 (480px 이하) - 09_common.css가 완전히 제어하므로 여기서는 PC 버전 스타일만 덮어씀 */
+@media (max-width: 480px) {
+    /* ✅ PC 버전의 section-header 스타일을 모바일에서 완전히 덮어씀 */
+    .pricing-preview-section .section-header {
+        margin: 0 auto 0 !important; /* ✅ PC 버전의 margin: 150px auto 8px 덮어씀 */
+        transform: none !important; /* ✅ PC 버전의 transform: translateX(450px) 덮어씀 */
+        max-width: 100% !important; /* ✅ PC 버전의 max-width: 800px 덮어씀 */
+        padding: 0 16px 0 16px !important; /* ✅ 09_common.css와 동일하게 설정 */
+        display: block !important; /* ✅ 09_common.css와 동일하게 설정 */
+        text-align: center !important; /* ✅ 09_common.css와 동일하게 설정 */
+    }
+    
+    /* ✅ PC 버전의 pricing-preview-grid-free 스타일을 모바일에서 완전히 덮어씀 */
+    .pricing-preview-grid-free,
+    .pricing-preview-grid-free.reveal {
+        margin: -24px auto 8px !important; /* ✅ 09_common.css와 동일하게 설정 (음수 마진) */
+        max-width: 100% !important; /* ✅ PC 버전의 max-width: 800px 덮어씀 */
+        grid-template-columns: unset !important; /* ✅ PC 버전의 grid-template-columns 덮어씀 */
+        display: flex !important; /* ✅ 09_common.css와 동일하게 설정 */
+        flex-direction: row !important; /* ✅ 09_common.css와 동일하게 설정 */
+        flex-wrap: nowrap !important; /* ✅ 09_common.css와 동일하게 설정 */
+        overflow-x: auto !important; /* ✅ 09_common.css와 동일하게 설정 */
+        overflow-y: hidden !important; /* ✅ 09_common.css와 동일하게 설정 */
+        gap: 16px !important; /* ✅ 09_common.css와 동일하게 설정 */
+        padding: 0 0 8px 0 !important; /* ✅ 09_common.css와 동일하게 설정 */
+        transform: none !important; /* ✅ reveal 애니메이션의 translateY 제거 */
+    }
+    
+    /* ✅ PC 버전의 pricing-preview-grid-paid 스타일을 모바일에서 완전히 덮어씀 */
+    .pricing-preview-grid-paid,
+    .pricing-preview-grid-paid.reveal {
+        margin: 0 auto 8px !important; /* ✅ 09_common.css와 동일하게 설정 */
+        max-width: 100% !important; /* ✅ PC 버전의 max-width: 1200px 덮어씀 */
+        grid-template-columns: unset !important; /* ✅ PC 버전의 grid-template-columns 덮어씀 */
+        display: flex !important; /* ✅ 09_common.css와 동일하게 설정 */
+        flex-direction: row !important; /* ✅ 09_common.css와 동일하게 설정 */
+        flex-wrap: nowrap !important; /* ✅ 09_common.css와 동일하게 설정 */
+        overflow-x: auto !important; /* ✅ 09_common.css와 동일하게 설정 */
+        overflow-y: hidden !important; /* ✅ 09_common.css와 동일하게 설정 */
+        gap: 16px !important; /* ✅ 09_common.css와 동일하게 설정 */
+        padding: 0 0 8px 0 !important; /* ✅ 09_common.css와 동일하게 설정 */
+        transform: none !important; /* ✅ reveal 애니메이션의 translateY 제거 */
+    }
+    
+    /* ✅ 991px 미디어 쿼리의 스타일도 모바일에서 덮어씀 */
+    .pricing-preview-grid,
+    .pricing-preview-grid-free,
+    .pricing-preview-grid-paid {
+        grid-template-columns: unset !important; /* ✅ 991px 미디어 쿼리의 grid-template-columns: 1fr 덮어씀 */
+        gap: unset !important; /* ✅ 991px 미디어 쿼리의 gap: 24px 덮어씀 */
+    }
+}
+
