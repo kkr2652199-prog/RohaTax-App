@@ -246,6 +246,61 @@
             }
         }
         
+        /* ✅ 모바일 버전 (480px 이하) - 04_shop.css가 완전히 제어 */
+        @media (max-width: 480px) {
+            .event-product-grid {
+                display: flex !important;
+                flex-direction: row !important; /* ✅ 768px 미디어 쿼리의 flex-direction: column 덮어씀 */
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important; /* ✅ 가로 스크롤 활성화 */
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                scroll-snap-type: x mandatory !important;
+                gap: 16px !important;
+                justify-content: flex-start !important;
+                align-items: stretch !important;
+            }
+            
+            .event-product-grid .product-card {
+                flex: 0 0 240px !important; /* ✅ 크기 축소 (260px → 240px) */
+                min-width: 240px !important;
+                max-width: 240px !important;
+                width: 240px !important;
+                flex-shrink: 0 !important;
+                flex-grow: 0 !important;
+            }
+            
+            /* ✅ 유료 상품 그리드 - 가로 스크롤 */
+            .paid-product-grid {
+                display: flex !important;
+                flex-direction: row !important; /* ✅ 768px 미디어 쿼리의 grid-template-columns: 1fr 덮어씀 */
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important; /* ✅ 가로 스크롤 활성화 */
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                scroll-snap-type: x mandatory !important;
+                gap: 16px !important;
+                justify-content: flex-start !important;
+                align-items: stretch !important;
+                grid-template-columns: unset !important; /* ✅ grid 제거 */
+            }
+            
+            .paid-product-grid .product-card {
+                flex: 0 0 260px !important; /* ✅ 크기 축소 (280px → 260px) */
+                min-width: 260px !important;
+                max-width: 260px !important;
+                width: 260px !important;
+                flex-shrink: 0 !important;
+                flex-grow: 0 !important;
+            }
+            
+            .product-section-subtitle {
+                white-space: nowrap !important; /* ✅ 한 줄 표시 */
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+        }
+        
         /* Hero Section - 컴팩트하고 세련된 디자인 */
         .shop-hero-section {
             padding: 40px 20px;
