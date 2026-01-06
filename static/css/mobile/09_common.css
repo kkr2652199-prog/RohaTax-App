@@ -539,9 +539,9 @@
         /* ✅ PC 화면 구성처럼 2행 그리드 */
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important; /* ✅ 4열 */
-        gap: 6px !important; /* ✅ 간격 축소 */
-        padding: 0 12px !important;
-        margin-bottom: 8px !important; /* ✅ 하단 여백 축소 */
+        gap: 4px !important; /* ✅ 간격 더 축소 */
+        padding: 0 8px !important;
+        margin-bottom: 6px !important; /* ✅ 하단 여백 더 축소 */
     }
 
     .how-it-works-section .tab-item {
@@ -576,8 +576,8 @@
     /* 모니터: 모바일에서는 "가로(랜드스케이프 느낌)"로 크게 보이게 - 공간 효율화 */
     .how-it-works-section .slide-container {
         overflow: visible !important;
-        padding: 0 !important;
-        margin: 0 !important; /* ✅ 여백 제거 */
+        padding: 0 8px !important; /* ✅ 좌우 약간의 여백으로 프레임 구분 */
+        margin: 0 !important; /* ✅ 위아래 여백 제거 */
         min-height: 0 !important; /* ✅ 불필요한 빈 공간 제거 */
         height: auto !important;
         background: transparent !important;
@@ -598,20 +598,20 @@
     }
 
     .how-it-works-section .monitor-frame {
-        width: 100% !important; /* ✅ 모바일: 프레임(베젤) 제거 → 슬라이더 자체를 풀폭 */
+        width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto !important;
         border: 0 !important;
-        background: transparent !important;
-        padding: 0 !important;
+        background: #f8f9fa !important; /* ✅ 배경색 */
+        padding: 0 !important; /* ✅ 패딩 제거 */
         border-radius: 0 !important;
         box-shadow: none !important;
-        /* ✅ 모바일: 8장 "리뷰 슬라이드"처럼 가로 스와이프(네이티브 스크롤) - 독립 구간 강화 */
+        /* ✅ 가로 스와이프 - 한 번에 하나씩만 보이도록 */
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        scroll-snap-type: x mandatory !important; /* ✅ 강제 스냅 */
-        scroll-padding: 0 !important; /* ✅ 스냅 패딩 제거 */
-        scroll-behavior: auto !important; /* ✅ 즉시 스냅 (부드러운 애니메이션 제거) */
+        scroll-snap-type: x mandatory !important;
+        scroll-padding: 0 !important; /* ✅ 스크롤 패딩 제거 */
+        scroll-behavior: smooth !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-x !important;
     }
@@ -625,19 +625,30 @@
         display: none !important;
     }
 
+    /* ✅ monitor-scroll 래퍼 처리 (HTML에 있는 경우) */
+    .how-it-works-section .monitor-scroll {
+        overflow: visible !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+    
     .how-it-works-section .monitor-frame .slide-wrapper {
-        /* ✅ 모바일: 8장 가로 나열 - 각 슬라이드가 정확히 프레임 폭의 100% - 공간 효율화 */
+        /* ✅ 모바일: 8장 가로 나열 (각 슬라이드가 화면 전체 폭) */
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        width: 800% !important; /* ✅ monitor-frame 폭의 8배 (정확히) */
-        height: min(70vh, 650px) !important; /* ✅ 이미지 영역 더 확대 (위아래 여백 제거로 공간 확보) */
-        background: #fff !important; /* 검정 배경 제거 */
+        width: 800% !important; /* ✅ 8개 슬라이드 × 100% */
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        background: transparent !important;
         position: relative !important;
-        /* ✅ slide-wrapper는 터치 이벤트를 받지 않음 (여백 클릭 방지) */
-        pointer-events: none !important;
-        margin: 0 !important; /* ✅ 위아래 여백 제거 */
-        padding: 0 !important; /* ✅ 위아래 여백 제거 */
+        left: 0 !important; /* ✅ 초기 위치 명시적으로 설정 */
+        top: 0 !important; /* ✅ 초기 위치 명시적으로 설정 */
+        pointer-events: auto !important;
+        margin: 0 !important;
+        padding: 0 !important; /* ✅ 패딩 제거 */
+        gap: 0 !important; /* ✅ 간격 제거 */
     }
     
     /* ✅ slide-wrapper 내부의 slide만 터치 이벤트 허용 (이미지만 확대) */
@@ -645,31 +656,53 @@
         pointer-events: auto !important;
     }
 
-    .how-it-works-section .monitor-frame .slide {
-        /* ✅ 각 슬라이드 = slide-wrapper 폭의 12.5% = monitor-frame 폭의 100% (정확히) */
+    /* ✅ PC 버전의 .slide { opacity: 0, position: absolute } 규칙을 완전히 덮어씀 */
+    /* ✅ 더 구체적인 선택자로 CSS 특이도 높임 */
+    .how-it-works-section .monitor-frame .slide-wrapper .slide,
+    .how-it-works-section .monitor-frame .slide-wrapper .slide.active,
+    .how-it-works-section .monitor-frame .slide-wrapper .slide:not(.active),
+    .how-it-works-section .monitor-frame .slide,
+    .how-it-works-section .monitor-frame .slide.active,
+    .how-it-works-section .monitor-frame .slide:not(.active) {
+        /* ✅ 각 슬라이드 = 화면 폭의 100% (한 번에 하나만 보임) */
         position: relative !important;
         top: auto !important;
         left: auto !important;
-        flex: 0 0 12.5% !important;   /* ✅ slide-wrapper의 12.5% = monitor-frame의 100% */
+        flex: 0 0 12.5% !important; /* ✅ 800%의 12.5% = 화면 100% */
         width: 12.5% !important;
         min-width: 12.5% !important;
         max-width: 12.5% !important;
-        height: 100% !important;
-        opacity: 1 !important;
-        transition: none !important;
+        height: 60vh !important; /* ✅ 화면 높이의 60% */
+        min-height: 300px !important;
+        max-height: 500px !important;
+        opacity: 1 !important; /* ✅ 모든 슬라이드가 보이도록 (PC 버전의 opacity: 0 완전히 덮어씀) */
+        visibility: visible !important; /* ✅ visibility 명시적으로 설정 */
+        transition: none !important; /* ✅ PC 버전의 transition 제거 */
         display: flex !important;
-        align-items: center !important; /* ✅ 이미지 중앙 정렬 */
-        justify-content: center !important; /* ✅ 이미지 중앙 정렬 */
-        padding: 0 !important; /* ✅ 여백 완전 제거 */
-        scroll-snap-align: start !important; /* ✅ 스크롤 스냅 시작점 */
-        scroll-snap-stop: always !important; /* ✅ 항상 스냅 (중간에 멈추지 않음) */
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 8px !important;
+        scroll-snap-align: start !important; /* ✅ 시작점에 스냅 */
+        scroll-snap-stop: always !important;
         box-sizing: border-box !important;
-        /* ✅ 컨테이너 안정성: 기본 overflow 설정 */
-        overflow: visible !important;
-        /* ✅ slide 컨테이너 자체는 터치 이벤트를 받지 않음 (이미지만 확대) */
-        pointer-events: none !important;
-        /* ✅ 각 슬라이드를 독립된 공간으로 구분 */
+        overflow: hidden !important; /* ✅ 확대 시에도 다른 슬라이드 안 보이게 */
+        pointer-events: auto !important;
         isolation: isolate !important;
+        background: #ffffff !important;
+        border-radius: 0 !important; /* ✅ 테두리 없음 */
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* ✅ 마지막 슬라이드도 동일한 스타일 */
+    .how-it-works-section .monitor-frame .slide:last-child {
+        margin-right: 0 !important;
+    }
+    
+    /* ✅ slide-container 전체 높이 조정 */
+    .how-it-works-section .slide-container {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
     /* ✅ slide 내부의 이미지만 터치 이벤트 허용 */
@@ -678,72 +711,89 @@
     }
 
     .how-it-works-section .monitor-frame .guide-image {
-        /* ✅ 원본 이미지가 각 창에 정확히 들어가도록 (잘리지 않고 전체 표시) */
+        /* ✅ 이미지가 화면 폭에 맞춰 표시 (여백 최소화) */
         width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important; /* ✅ 이미지 전체가 보이도록 (잘림 방지) */
+        height: auto !important; /* ✅ 이미지 비율 유지 */
+        max-height: 60vh !important; /* ✅ 화면 높이의 60%로 제한 */
+        object-fit: contain !important;
         object-position: center !important;
-        background-color: #f0f2f5 !important;
-        transition: none !important; /* ✅ 확대/축소 시 부드러운 전환 제거 (즉시 반영) */
-        touch-action: pan-x pan-y pinch-zoom !important; /* ✅ 핀치 줌 허용 */
+        background-color: transparent !important;
+        /* ✅ 터치 관련 설정 */
+        transition: transform 0.15s ease-out !important;
+        touch-action: manipulation !important;
         display: block !important;
-        /* ✅ 자연스러운 핀치 줌을 위한 설정 */
         -webkit-user-select: none !important;
         user-select: none !important;
+        will-change: transform !important;
+        transform-origin: center center !important;
+        /* ✅ 스타일 */
+        border-radius: 8px !important;
+        border: none !important; /* ✅ 빨간 테두리 제거 */
+        box-shadow: none !important;
+        /* ✅ 클릭 가능 */
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        position: relative !important;
     }
 
-    /* ✅ 이미지 확대 상태 (핀치 줌) - 다른 슬라이드로 넘어가지 않도록 */
+    /* ✅ 이미지 확대 상태 (핀치 줌) - 안정적인 확대/축소 */
     .how-it-works-section .monitor-frame .guide-image.zoomed {
-        /* transform은 JavaScript에서 동적으로 설정 (scale 값이 고정되지 않음) */
-        object-fit: contain !important; /* 확대 시 전체 보이게 */
-        z-index: 10000 !important; /* ✅ 다른 모든 요소 위에 표시 */
+        object-fit: contain !important;
+        z-index: 10000 !important;
         position: relative !important;
         cursor: grab !important;
-        touch-action: pan-x pan-y !important; /* ✅ 팬과 핀치 줌 허용 */
-        /* ✅ 확대 시 컨테이너 안정성: transform-origin으로 중앙 확대 */
+        touch-action: none !important; /* ✅ JavaScript로 직접 제어 */
         transform-origin: center center !important;
-        will-change: transform !important; /* 성능 최적화 */
-        /* ✅ 확대된 이미지가 컨테이너 밖으로 나가도 전체를 볼 수 있도록 */
-        max-width: none !important;
-        max-height: none !important;
-        /* ✅ 확대된 이미지가 다른 요소 위에 표시되도록 */
+        will-change: transform !important;
+        /* ✅ 크기 고정 - 확대해도 레이아웃 안정 */
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: 60vh !important;
         pointer-events: auto !important;
-        transition: none !important; /* ✅ 즉시 반영 */
+        /* ✅ 부드러운 전환 (너무 빠르지 않게) */
+        transition: none !important; /* ✅ 드래그 중에는 transition 제거 */
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+        border-radius: 8px !important;
     }
 
     .how-it-works-section .monitor-frame .guide-image.zoomed:active {
         cursor: grabbing !important;
     }
     
-    /* ✅ 확대된 이미지가 있는 slide 컨테이너: overflow visible로 전체 영역 표시 */
-    .how-it-works-section .monitor-frame .slide:has(.guide-image.zoomed),
+    /* ✅ 확대된 이미지가 있는 slide 컨테이너 */
+    /* ✅ overflow: hidden 유지 (다른 슬라이드가 보이지 않도록) */
     .how-it-works-section .monitor-frame .slide.scroll-locked {
-        overflow: visible !important; /* ✅ 확대된 이미지 전체를 볼 수 있도록 */
+        overflow: hidden !important; /* ✅ 다른 슬라이드가 보이지 않도록 hidden 유지 */
         position: relative !important;
-        isolation: isolate !important; /* ✅ z-index 격리 */
-        z-index: 9999 !important; /* ✅ 확대된 이미지가 다른 슬라이드 위에 표시 */
+        isolation: isolate !important;
+        z-index: 9999 !important;
+        background: #fff !important;
+        pointer-events: auto !important;
     }
     
-    /* ✅ 확대된 이미지의 부모 컨테이너도 visible로 */
-    .how-it-works-section .monitor-frame:has(.guide-image.zoomed) {
-        overflow: visible !important; /* ✅ 확대된 이미지가 프레임 밖으로 나가도 보이도록 */
+    /* ✅ 확대된 이미지가 있는 slide 내부의 모든 요소도 pointer-events 허용 */
+    .how-it-works-section .monitor-frame .slide.scroll-locked * {
+        pointer-events: auto !important;
     }
-
-    /* ✅ JavaScript로 동적 제어하지만, CSS로도 보조 지원 */
+    
+    /* ✅ 확대된 이미지가 있을 때 monitor-frame (가로 스크롤 차단) */
     .how-it-works-section .monitor-frame.scroll-locked {
-        overflow-x: hidden !important; /* ✅ 가로 스크롤 차단 */
-        overflow-y: visible !important; /* ✅ 확대된 이미지가 위아래로 나가도 보이도록 */
+        overflow: hidden !important; /* ✅ 다른 슬라이드 안 보이게 */
+        scroll-behavior: auto !important;
         scroll-snap-type: none !important; /* ✅ 스크롤 스냅 비활성화 */
         touch-action: none !important; /* ✅ JavaScript로 직접 제어 */
+        position: relative !important;
+        z-index: 9998 !important;
+    }
+    
+    /* ✅ 확대된 이미지가 있을 때 slide-wrapper도 overflow hidden */
+    .how-it-works-section .monitor-frame.scroll-locked .slide-wrapper {
+        overflow: hidden !important;
+        position: relative !important;
     }
 
-    .how-it-works-section .monitor-frame .slide.scroll-locked {
-        overflow: visible !important; /* ✅ 확대된 이미지 전체를 볼 수 있도록 */
-        touch-action: none !important; /* ✅ JavaScript로 직접 제어 */
-        position: relative !important;
-        isolation: isolate !important; /* ✅ z-index 격리로 안정성 향상 */
-        z-index: 999 !important;
-    }
+    /* ✅ 중복 제거: 위에서 이미 .monitor-frame.scroll-locked와 .slide.scroll-locked 스타일 정의됨 */
 
     /* 스와이프 방해 요소(하이라이트/마우스 효과/컨트롤 오버레이)가 터치를 먹지 않게 */
     .how-it-works-section .slide-highlight,

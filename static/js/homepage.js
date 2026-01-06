@@ -146,30 +146,17 @@ document.addEventListener('DOMContentLoaded', function() {
         function scrollToSlide(index, behavior = 'auto') {
             if (!monitorFrame) return;
             if (window.innerWidth > 480) return; // ✅ 모바일에서만
-            // ✅ 프레임 폭을 정확히 계산 (패딩/보더 제외)
-            const rect = monitorFrame.getBoundingClientRect();
-            const w = rect.width;
-            if (!w || w <= 0) {
-                // 레이아웃이 아직 계산되지 않았으면 다음 프레임에서 재시도
-                requestAnimationFrame(() => scrollToSlide(index, behavior));
-                return;
+            
+            // ✅ 간단하게 계산: 프레임 폭 × 인덱스
+            const frameWidth = monitorFrame.clientWidth;
+            const scrollTarget = index * frameWidth;
+            
+            // ✅ 스크롤 적용
+            if (behavior === 'smooth') {
+                monitorFrame.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+            } else {
+                monitorFrame.scrollLeft = scrollTarget;
             }
-            // ✅ 정확한 스크롤 위치 계산 (각 슬라이드 = 프레임 폭의 100%)
-            // ✅ 각 슬라이드가 독립된 공간으로 구분되도록 정확히 계산
-            const scrollLeft = index * w;
-            
-            // ✅ 즉시 정확한 위치로 이동 (중간 영역이 보이지 않도록)
-            monitorFrame.scrollLeft = scrollLeft;
-            
-            // ✅ 스크롤 후 정확한 위치로 강제 조정 (스냅 보장, 중간에 멈추지 않음)
-            requestAnimationFrame(() => {
-                const currentScroll = monitorFrame.scrollLeft;
-                const targetScroll = index * w;
-                // 1px 이내 오차는 허용, 그 이상이면 재조정
-                if (Math.abs(currentScroll - targetScroll) > 1) {
-                    monitorFrame.scrollLeft = targetScroll;
-                }
-            });
         }
 
         function showSlide(index) {
@@ -446,19 +433,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             touch2.clientY - touch1.clientY
                         );
                         
-                        // 확대 비율 계산
+                        // ✅ 확대 비율 계산 (더 안정적인 계산)
                         const scaleChange = currentDistance / initialDistance;
-                        currentScale = Math.max(1, Math.min(5, initialScale * scaleChange)); // 1~5배 제한
+                        // ✅ 최소 1배, 최대 3배로 제한 (더 안정적)
+                        currentScale = Math.max(1, Math.min(3, initialScale * scaleChange));
                         
                         // 확대 상태 업데이트
-                        if (currentScale > 1) {
+                        if (currentScale > 1.05) { // ✅ 약간의 여유 (1.05 이상에서만 확대로 인식)
                             img.classList.add('zoomed');
                         } else {
                             img.classList.remove('zoomed');
+                            currentScale = 1; // ✅ 거의 1배면 정확히 1로 설정
                         }
                         
-                        // transform 적용
-                        img.style.transform = `scale(${currentScale}) translate(${initialTranslateX}px, ${initialTranslateY}px)`;
+                        // ✅ transform 적용 (소수점 2자리로 반올림하여 안정성 향상)
+                        const roundedScale = Math.round(currentScale * 100) / 100;
+                        img.style.transform = `scale(${roundedScale}) translate(${initialTranslateX}px, ${initialTranslateY}px)`;
                         
                         e.preventDefault();
                         e.stopPropagation();
@@ -514,26 +504,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         const scaledWidth = displayWidth * actualScale;
                         const scaledHeight = displayHeight * actualScale;
                         
-                        // 새로운 translate 값 계산
-                        currentTranslateX = initialTranslateX + deltaX;
-                        currentTranslateY = initialTranslateY + deltaY;
+                        // ✅ 새로운 translate 값 계산 (scale로 나눠서 정규화)
+                        // scale 후 translate는 증폭되므로, 미리 scale로 나눔
+                        const normalizedDeltaX = deltaX / actualScale;
+                        const normalizedDeltaY = deltaY / actualScale;
+                        
+                        currentTranslateX = initialTranslateX + normalizedDeltaX;
+                        currentTranslateY = initialTranslateY + normalizedDeltaY;
                         
                         // 이동 범위 제한 (이미지의 모든 영역을 볼 수 있도록)
                         if (slideRect) {
                             // 확대된 이미지가 컨테이너보다 큰 경우에만 이동 제한
+                            // ✅ maxTranslate도 scale로 나눠서 정규화
                             const maxTranslateX = scaledWidth > containerWidth 
-                                ? (scaledWidth - containerWidth) / 2 
+                                ? (scaledWidth - containerWidth) / (2 * actualScale)
                                 : 0;
                             const maxTranslateY = scaledHeight > containerHeight 
-                                ? (scaledHeight - containerHeight) / 2 
+                                ? (scaledHeight - containerHeight) / (2 * actualScale)
                                 : 0;
                             
-                            // 이동 범위 제한 (이미지의 모든 영역을 볼 수 있도록)
                             currentTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, currentTranslateX));
                             currentTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, currentTranslateY));
                         }
                         
-                        // transform 적용 (현재 확대 비율 사용)
+                        // ✅ transform 적용 (translate를 먼저, scale을 나중에 - 더 직관적인 동작)
                         img.style.transform = `scale(${actualScale}) translate(${currentTranslateX}px, ${currentTranslateY}px)`;
                         
                         e.preventDefault();
@@ -609,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             e.preventDefault();
                             e.stopPropagation();
                             clearTimeout(tapTimer);
+                            lastTap = 0; // ✅ 더블탭 후 초기화
                             
                             // 확대/축소 토글 (더블탭)
                             const isZoomed = img.classList.contains('zoomed') || currentScale > 1;
@@ -642,31 +637,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             // 스크롤 제어 업데이트
                             updateScrollLock(img);
                         } else {
-                            // 단일 탭: 확대 (더블탭 대기)
-                            clearTimeout(tapTimer);
-                            tapTimer = setTimeout(() => {
-                                // 단일 탭으로 확대 (더블탭이 아닌 경우)
-                                if (!img.classList.contains('zoomed') && currentScale <= 1) {
-                                    // 다른 확대된 이미지가 있으면 먼저 축소
-                                    document.querySelectorAll('.guide-image.zoomed').forEach(otherImg => {
-                                        if (otherImg !== img) {
-                                            otherImg.classList.remove('zoomed');
-                                            otherImg.style.transform = '';
-                                        }
-                                    });
-                                    // 확대: 기본 2배로 시작 (핀치 줌으로 조절 가능)
-                                    img.classList.add('zoomed');
-                                    currentScale = 2;
-                                    img.style.transform = 'scale(2) translate(0, 0)';
-                                    currentTranslateX = 0;
-                                    currentTranslateY = 0;
-                                    initialTranslateX = 0;
-                                    initialTranslateY = 0;
-                                    
-                                    // 스크롤 제어 업데이트
-                                    updateScrollLock(img);
-                                }
-                            }, 400);
+                            // ✅ 단일 탭: 더블탭 대기만 함 (자동 확대 제거 - 더블탭으로만 확대)
+                            lastTap = now;
+                            // 확대 상태가 아니면 단일 탭은 무시 (더블탭 대기)
                         }
                         lastTap = now;
                     }
@@ -737,8 +710,80 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             monitorFrame.addEventListener('scroll', onScroll, { passive: true });
-            // 초기 위치 보정
-            scrollToSlide(0, 'auto');
+            
+            // ✅ 초기화: 모든 슬라이드를 강제로 보이게 설정 (인라인 스타일로 완전히 덮어씀)
+            if (window.innerWidth <= 480) {
+                // ✅ 모바일에서만 실행
+                const slideWrapper = document.querySelector('.slide-wrapper');
+                if (slideWrapper) {
+                    // ✅ slide-wrapper 강제 설정
+                    slideWrapper.style.cssText = `
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        width: 800% !important;
+                        height: auto !important;
+                        position: relative !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        gap: 0 !important;
+                    `;
+                }
+                
+                // ✅ 모든 슬라이드에 인라인 스타일로 완전히 덮어씀
+                slides.forEach((slide, index) => {
+                    slide.style.cssText = `
+                        position: relative !important;
+                        top: auto !important;
+                        left: auto !important;
+                        flex: 0 0 12.5% !important;
+                        width: 12.5% !important;
+                        min-width: 12.5% !important;
+                        max-width: 12.5% !important;
+                        height: 60vh !important;
+                        min-height: 300px !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        transition: none !important;
+                    `;
+                });
+                
+                // ✅ monitor-scroll 래퍼도 확인 (있다면)
+                const monitorScroll = document.querySelector('.monitor-scroll');
+                if (monitorScroll) {
+                    monitorScroll.style.cssText = `
+                        overflow: visible !important;
+                        width: 100% !important;
+                    `;
+                }
+                
+                // ✅ 초기 위치 보정: 레이아웃 계산 후 스크롤 위치 설정
+                const initScroll = () => {
+                    monitorFrame.scrollLeft = 0;
+                    requestAnimationFrame(() => {
+                        monitorFrame.scrollLeft = 0;
+                        setTimeout(() => {
+                            monitorFrame.scrollLeft = 0;
+                            scrollToSlide(0, 'auto');
+                            requestAnimationFrame(() => {
+                                monitorFrame.scrollLeft = 0;
+                            });
+                        }, 200);
+                    });
+                };
+                
+                // ✅ 즉시 실행 + DOMContentLoaded 후 + load 후
+                initScroll();
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initScroll);
+                }
+                window.addEventListener('load', initScroll);
+            }
         }
     }
     

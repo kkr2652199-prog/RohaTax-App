@@ -561,9 +561,47 @@
     }
 }
 
+/* ✅ 모바일 버전 (480px 이하) - 09_common.css가 완전히 제어하므로 여기서는 최소한만 설정 */
+/* ✅ PC/태블릿 버전은 이 파일의 기본 스타일 사용 */
 @media (max-width: 480px) {
+    /* ✅ 모바일: 슬라이드가 가로로 나열되도록 핵심 스타일 설정 */
+    /* ✅ 이 규칙들이 PC 버전의 position: absolute를 덮어씀 */
+    
     .slide-wrapper {
-        height: 250px;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        width: 800% !important; /* 8개 슬라이드 × 100% */
+        height: auto !important;
+        min-height: 300px !important;
+        overflow: visible !important;
+        background: transparent !important;
+    }
+    
+    /* ✅ PC 버전의 .slide { opacity: 0, position: absolute } 규칙을 완전히 덮어씀 */
+    /* ✅ 더 구체적인 선택자로 CSS 특이도 높임 */
+    .how-it-works-section .monitor-frame .slide-wrapper .slide,
+    .how-it-works-section .monitor-frame .slide-wrapper .slide.active,
+    .how-it-works-section .monitor-frame .slide-wrapper .slide:not(.active),
+    .how-it-works-section .monitor-frame .slide,
+    .how-it-works-section .monitor-frame .slide.active,
+    .how-it-works-section .monitor-frame .slide:not(.active),
+    .slide,
+    .slide.active,
+    .slide:not(.active) {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        flex: 0 0 12.5% !important; /* 800%의 12.5% = 화면 100% */
+        width: 12.5% !important;
+        height: auto !important;
+        min-height: 300px !important;
+        opacity: 1 !important; /* ✅ 모든 슬라이드가 보이도록 (PC 버전의 opacity: 0 덮어씀) */
+        visibility: visible !important; /* ✅ visibility도 명시적으로 설정 */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: none !important; /* ✅ PC 버전의 transition 제거 */
     }
     
     .slide-controls {
